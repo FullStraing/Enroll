@@ -20,3 +20,19 @@ class RegisterSerializer(serializers.ModelSerializer):
         user.save()
         StudentProfile.objects.create(user=user)
         return user
+
+
+class StudentProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StudentProfile
+        fields = [
+            "full_name",
+            "country",
+            "school_name",
+            "gpa",
+            "ielts_overall",
+            "toefl_total",
+            "sat_total",
+            "activities_level",
+            "target_country",
+        ]
