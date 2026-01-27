@@ -28,7 +28,7 @@ python backend/manage.py runserver
 ## Основные модули
 
 - **Users**: регистрация и профиль студента (`/api/auth/register/`, `/api/auth/profile/`).【F:backend/apps/users/urls.py†L1-L7】
-- **Universities**: список вузов и “мои университеты”.【F:backend/apps/universities/urls.py†L1-L14】
+- **Universities**: список вузов, “мои университеты” и Applications API.【F:backend/apps/universities/urls.py†L1-L14】
 - **Core**: системные эндпоинты `ping` и `me`.【F:backend/apps/core/urls.py†L12-L29】
 
 ## Структура профиля студента (MVP)
@@ -39,3 +39,7 @@ python backend/manage.py runserver
 
 - Архитектура: `docs/ARCHITECTURE.md`
 - API: `docs/API.md`
+
+## Быстрая проверка Applications через браузер
+
+Откройте `http://127.0.0.1:8000/applications-ui/` и вставьте JWT access token, затем загрузите список и создайте запись. Страница работает поверх `/api/applications/`.【F:backend/config/urls.py†L1-L8】【F:backend/apps/universities/urls.py†L1-L14】

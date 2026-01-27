@@ -116,3 +116,38 @@ class StudentUniversity(models.Model):
             ]
         )
         return int(done / total * 100)
+
+
+class Application(models.Model):
+    STATUS_CHOICES = [
+        ("planned", "Planned"),
+        ("in_progress", "In progress"),
+        ("submitted", "Submitted"),
+    ]
+
+    student = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="applications",
+    )
+    university = models.ForeignKey(
+        University,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="applications",
+    )
+    university_name = models.CharField(max_length=200, blank=True)
+    deadline_date = models.DateField(null=True, blank=True)
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="planned",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        if self.university:
+            return f"{self.student.username} – {self.university.name}"
+        return f"{self.student.username} – {self.university_name}"

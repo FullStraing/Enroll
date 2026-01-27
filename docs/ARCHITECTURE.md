@@ -23,8 +23,8 @@ Backend построен на Django + DRF. Конфигурация в `config`
 
 ### `apps.universities`
 
-- `University` хранит базовые сведения о вузе; `StudentUniversity` — связь студента с университетом и прогресс по заявке.【F:backend/apps/universities/models.py†L5-L118】
-- Вьюхи предоставляют чтение/обновление списков университетов и личных заявок студента.【F:backend/apps/universities/views.py†L6-L34】
+- `University` хранит базовые сведения о вузе; `StudentUniversity` — связь студента с университетом и прогресс по заявке; `Application` — MVP‑заявка студента с дедлайном и статусом.【F:backend/apps/universities/models.py†L5-L158】
+- Вьюхи предоставляют чтение/обновление списков университетов и Applications API.【F:backend/apps/universities/views.py†L6-L58】
 
 ## Аутентификация и доступ
 
@@ -32,4 +32,4 @@ Backend построен на Django + DRF. Конфигурация в `config`
 
 ## Текущий статус MVP
 
-На данный момент реализованы: регистрация, профиль студента, базовый справочник университетов и личные списки. Дальнейшие шаги — задачи, документы, генерация AI черновиков (см. `docs/API.md`).【F:backend/apps/users/urls.py†L1-L7】【F:backend/apps/universities/urls.py†L1-L14】
+На данный момент реализованы: регистрация, профиль студента, справочник университетов, Applications API и минимальная браузерная форма для проверок. Дальнейшие шаги — задачи, документы, генерация AI черновиков (см. `docs/API.md`).【F:backend/apps/users/urls.py†L1-L7】【F:backend/apps/universities/urls.py†L1-L14】【F:backend/config/urls.py†L1-L9】

@@ -24,19 +24,27 @@
 - `GET /api/my-universities/<id>/` / `PUT` / `DELETE` — управление записью.
 【F:backend/apps/universities/urls.py†L1-L14】
 
+### Applications
+- `GET /api/applications/` — список заявок пользователя.
+- `POST /api/applications/` — создать заявку (ручное имя или university_id).
+- `GET /api/applications/<id>/` — детали заявки.
+- `PUT /api/applications/<id>/` — обновить статус/дедлайн.
+【F:backend/apps/universities/urls.py†L1-L14】
+
+### Минимальный UI для проверки
+- `GET /applications-ui/` — браузерная форма для теста Applications API. Страница ожидает JWT access token в поле ввода.
+【F:backend/config/urls.py†L1-L8】
+
 ## Запланировано в MVP (ещё не реализовано)
 
 Согласно `MVP_SPEC.md`, нужно добавить следующие эндпоинты (без интеграции с Common App, только черновики/проверки):
 
-### Applications + Tasks
-- `GET /applications`
-- `POST /applications` (manual add or from university_id)
-- `PUT /applications/:id` (deadline/status)
+### Tasks
 - `GET /tasks?status=&application_id=`
 - `POST /tasks`
 - `POST /tasks/generate`
 - `PUT /tasks/:id`
-【F:MVP_SPEC.md†L228-L245】
+【F:MVP_SPEC.md†L236-L245】
 
 ### Documents + Versions
 - `GET /documents`
