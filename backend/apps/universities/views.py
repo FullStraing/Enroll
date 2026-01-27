@@ -1,6 +1,11 @@
 from rest_framework import generics, permissions
-from .models import University, StudentUniversity
-from .serializers import UniversitySerializer, StudentUniversitySerializer
+from django.views.generic import TemplateView
+from .models import University, StudentUniversity, Application
+from .serializers import (
+    UniversitySerializer,
+    StudentUniversitySerializer,
+    ApplicationSerializer,
+)
 
 
 class UniversityListView(generics.ListAPIView):
@@ -32,3 +37,26 @@ class StudentUniversityDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def get_queryset(self):
         return StudentUniversity.objects.filter(student=self.request.user).select_related("university")
+
+
+class ApplicationListCreateView(generics.ListCreateAPIView):
+    serializer_class = ApplicationSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Application.objects.filter(student=self.request.user).select_related("university").order_by("-updated_at")
+
+    def perform_create(self, serializer):
+        serializer.save(student=self.request.user)
+
+
+class ApplicationDetailView(generics.RetrieveUpdateAPIView):
+    serializer_class = ApplicationSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Application.objects.filter(student=self.request.user).select_related("university")
+
+
+class ApplicationsBrowserView(TemplateView):
+    template_name = "applications.html"

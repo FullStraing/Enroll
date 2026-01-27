@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import University, StudentUniversity
+from .models import University, StudentUniversity, Application
 
 
 class UniversitySerializer(serializers.ModelSerializer):
@@ -43,3 +43,37 @@ class StudentUniversitySerializer(serializers.ModelSerializer):
             "notes",
             "progress_percent",
         ]
+
+
+class ApplicationSerializer(serializers.ModelSerializer):
+    university = UniversitySerializer(read_only=True)
+    university_id = serializers.PrimaryKeyRelatedField(
+        queryset=University.objects.all(),
+        source="university",
+        write_only=True,
+        required=False,
+        allow_null=True,
+    )
+
+    class Meta:
+        model = Application
+        fields = [
+            "id",
+            "university",
+            "university_id",
+            "university_name",
+            "deadline_date",
+            "status",
+        ]
+
+    def validate(self, attrs):
+        university = attrs.get("university", getattr(self.instance, "university", None))
+        university_name = attrs.get(
+            "university_name",
+            getattr(self.instance, "university_name", ""),
+        )
+        if not university and not university_name:
+            raise serializers.ValidationError(
+                "Provide university_id or university_name."
+            )
+        return attrs
