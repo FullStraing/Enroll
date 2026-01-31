@@ -6,6 +6,11 @@ Backend построен на Django + DRF. Конфигурация в `config`
 
 Корневой роутинг включает `/admin/` и `/api/`, а дальше маршруты распределяются по приложениям.【F:backend/config/urls.py†L1-L7】
 
+<<<<<<< HEAD
+=======
+База данных по умолчанию — PostgreSQL (можно временно включить SQLite через `USE_SQLITE=1`).【F:backend/config/settings.py†L44-L73】
+
+>>>>>>> 44eec72 (Update applications flow and focs)
 ## Приложения
 
 ### `apps.core`
@@ -32,4 +37,8 @@ Backend построен на Django + DRF. Конфигурация в `config`
 
 ## Текущий статус MVP
 
+<<<<<<< HEAD
 На данный момент реализованы: регистрация, профиль студента, справочник университетов, Applications API и минимальная браузерная форма для проверок. Дальнейшие шаги — задачи, документы, генерация AI черновиков (см. `docs/API.md`).【F:backend/apps/users/urls.py†L1-L7】【F:backend/apps/universities/urls.py†L1-L14】【F:backend/config/urls.py†L1-L9】
+=======
+На данный момент реализованы: регистрация, профиль студента, справочник университетов, Applications API, MVP‑консоль `/app/` и минимальная браузерная форма `/applications-ui/`. Дальнейшие шаги — задачи, документы, генерация AI черновиков (см. `docs/API.md`).【F:backend/apps/users/urls.py†L1-L7】【F:backend/apps/universities/urls.py†L1-L14】【F:backend/config/urls.py†L1-L9】
+>>>>>>> 44eec72 (Update applications flow and focs)

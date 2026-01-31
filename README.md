@@ -9,9 +9,19 @@ Backend для MVP платформы поступления (CIS → USA) на 
 
 ```bash
 python -m venv .venv
+<<<<<<< HEAD
 source .venv/bin/activate
 pip install -r backend/requirements.txt
 python backend/manage.py migrate
+=======
+# Windows PowerShell:
+.\.venv\Scripts\Activate.ps1
+# macOS/Linux:
+source .venv/bin/activate
+pip install -r backend/requirements.txt
+python backend/manage.py migrate
+python backend/manage.py loaddata universities
+>>>>>>> 44eec72 (Update applications flow and focs)
 python backend/manage.py runserver
 ```
 
@@ -25,6 +35,32 @@ python backend/manage.py runserver
 - `POST /api/auth/token/` — получение пары токенов.
 - `POST /api/auth/token/refresh/` — обновление токена.【F:backend/apps/core/urls.py†L22-L28】
 
+<<<<<<< HEAD
+=======
+## База данных (PostgreSQL по умолчанию)
+
+По умолчанию проект использует PostgreSQL. Создайте `.env` в папке `backend`:
+
+```bash
+POSTGRES_DB=enroll
+POSTGRES_USER=enroll
+POSTGRES_PASSWORD=change_me
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+```
+
+Для быстрой локальной проверки без PostgreSQL можно временно включить SQLite:
+
+```bash
+USE_SQLITE=1
+```
+
+Чтобы полностью отключить SQLite:
+- удалите `backend/db.sqlite3`;
+- убедитесь, что `USE_SQLITE` нигде не задан;
+- работайте только через PostgreSQL (миграции выполняйте уже в PostgreSQL).
+
+>>>>>>> 44eec72 (Update applications flow and focs)
 ## Основные модули
 
 - **Users**: регистрация и профиль студента (`/api/auth/register/`, `/api/auth/profile/`).【F:backend/apps/users/urls.py†L1-L7】
@@ -40,6 +76,15 @@ python backend/manage.py runserver
 - Архитектура: `docs/ARCHITECTURE.md`
 - API: `docs/API.md`
 
+<<<<<<< HEAD
 ## Быстрая проверка Applications через браузер
 
 Откройте `http://127.0.0.1:8000/applications-ui/` и вставьте JWT access token, затем загрузите список и создайте запись. Страница работает поверх `/api/applications/`.【F:backend/config/urls.py†L1-L8】【F:backend/apps/universities/urls.py†L1-L14】
+=======
+## Быстрая проверка через браузер
+
+- `http://127.0.0.1:8000/app/` — основная MVP‑консоль (Auth, Profile, Universities, My Universities, Applications + заготовки Tasks/Documents/AI).
+- `http://127.0.0.1:8000/applications-ui/` — минимальная форма для Applications API.
+
+Откройте `/app/` и выполните регистрацию/логин, затем используйте UI для демонстрации API. Страница `/applications-ui/` оставлена как простой тестовый экран для Applications. 【F:backend/config/urls.py†L1-L9】【F:backend/apps/universities/urls.py†L1-L14】
+>>>>>>> 44eec72 (Update applications flow and focs)

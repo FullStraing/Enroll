@@ -26,14 +26,25 @@
 
 ### Applications
 - `GET /api/applications/` — список заявок пользователя.
+<<<<<<< HEAD
 - `POST /api/applications/` — создать заявку (ручное имя или university_id).
+=======
+- `POST /api/applications/` — создать заявку (только university_id из “My Universities”).
+>>>>>>> 44eec72 (Update applications flow and focs)
 - `GET /api/applications/<id>/` — детали заявки.
 - `PUT /api/applications/<id>/` — обновить статус/дедлайн.
 【F:backend/apps/universities/urls.py†L1-L14】
 
+<<<<<<< HEAD
 ### Минимальный UI для проверки
 - `GET /applications-ui/` — браузерная форма для теста Applications API. Страница ожидает JWT access token в поле ввода.
 【F:backend/config/urls.py†L1-L8】
+=======
+### UI для проверки
+- `GET /app/` — MVP‑консоль для демонстрации текущих API (Auth, Profile, Universities, My Universities, Applications) + заготовки для Tasks/Documents/AI.
+- `GET /applications-ui/` — минимальная браузерная форма для теста Applications API. Страница ожидает JWT access token в поле ввода.
+【F:backend/config/urls.py†L1-L9】
+>>>>>>> 44eec72 (Update applications flow and focs)
 
 ## Запланировано в MVP (ещё не реализовано)
 

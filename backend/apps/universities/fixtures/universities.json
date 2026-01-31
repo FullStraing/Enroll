@@ -1,0 +1,104 @@
+[
+  {
+    "model": "universities.university",
+    "pk": 1,
+    "fields": {
+      "name": "Harvard University",
+      "country": "USA",
+      "city": "Cambridge",
+      "state": "MA",
+      "selectivity": "high",
+      "website_url": "https://www.harvard.edu/",
+      "main_deadline": "2026-11-01",
+      "min_profile_score": 90,
+      "avg_profile_score": 97,
+      "created_at": "2026-01-29T00:00:00Z",
+      "updated_at": "2026-01-29T00:00:00Z"
+    }
+  },
+  {
+    "model": "universities.university",
+    "pk": 2,
+    "fields": {
+      "name": "Stanford University",
+      "country": "USA",
+      "city": "Stanford",
+      "state": "CA",
+      "selectivity": "high",
+      "website_url": "https://www.stanford.edu/",
+      "main_deadline": "2026-11-01",
+      "min_profile_score": 90,
+      "avg_profile_score": 96,
+      "created_at": "2026-01-29T00:00:00Z",
+      "updated_at": "2026-01-29T00:00:00Z"
+    }
+  },
+  {
+    "model": "universities.university",
+    "pk": 3,
+    "fields": {
+      "name": "Massachusetts Institute of Technology",
+      "country": "USA",
+      "city": "Cambridge",
+      "state": "MA",
+      "selectivity": "high",
+      "website_url": "https://www.mit.edu/",
+      "main_deadline": "2026-11-01",
+      "min_profile_score": 90,
+      "avg_profile_score": 98,
+      "created_at": "2026-01-29T00:00:00Z",
+      "updated_at": "2026-01-29T00:00:00Z"
+    }
+  },
+  {
+    "model": "universities.university",
+    "pk": 4,
+    "fields": {
+      "name": "University of Michigan",
+      "country": "USA",
+      "city": "Ann Arbor",
+      "state": "MI",
+      "selectivity": "medium",
+      "website_url": "https://umich.edu/",
+      "main_deadline": "2026-12-01",
+      "min_profile_score": 75,
+      "avg_profile_score": 85,
+      "created_at": "2026-01-29T00:00:00Z",
+      "updated_at": "2026-01-29T00:00:00Z"
+    }
+  },
+  {
+    "model": "universities.university",
+    "pk": 5,
+    "fields": {
+      "name": "New York University",
+      "country": "USA",
+      "city": "New York",
+      "state": "NY",
+      "selectivity": "medium",
+      "website_url": "https://www.nyu.edu/",
+      "main_deadline": "2026-12-15",
+      "min_profile_score": 70,
+      "avg_profile_score": 82,
+      "created_at": "2026-01-29T00:00:00Z",
+      "updated_at": "2026-01-29T00:00:00Z"
+    }
+  },
+  {
+    "model": "universities.university",
+    "pk": 6,
+    "fields": {
+      "name": "Arizona State University",
+      "country": "USA",
+      "city": "Tempe",
+      "state": "AZ",
+      "selectivity": "low",
+      "website_url": "https://www.asu.edu/",
+      "main_deadline": "2026-12-15",
+      "min_profile_score": 55,
+      "avg_profile_score": 70,
+      "created_at": "2026-01-29T00:00:00Z",
+      "updated_at": "2026-01-29T00:00:00Z"
+    }
+  }
+]
