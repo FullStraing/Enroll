@@ -52,7 +52,7 @@ class ApplicationSerializer(serializers.ModelSerializer):
         source="university",
         write_only=True,
         required=False,
-        allow_null=True,
+        allow_null=False,
     )
 
     class Meta:
@@ -65,15 +65,22 @@ class ApplicationSerializer(serializers.ModelSerializer):
             "deadline_date",
             "status",
         ]
+        read_only_fields = ["university_name"]
 
     def validate(self, attrs):
         university = attrs.get("university", getattr(self.instance, "university", None))
-        university_name = attrs.get(
-            "university_name",
-            getattr(self.instance, "university_name", ""),
-        )
-        if not university and not university_name:
-            raise serializers.ValidationError(
-                "Provide university_id or university_name."
-            )
+        if not university and self.instance is None:
+            raise serializers.ValidationError("Provide university_id.")
+        request = self.context.get("request")
+        if (
+            university
+            and request
+            and request.user
+            and request.user.is_authenticated
+            and not StudentUniversity.objects.filter(
+                student=request.user,
+                university=university,
+            ).exists()
+        ):
+            raise serializers.ValidationError("Select university from My Universities.")
         return attrs

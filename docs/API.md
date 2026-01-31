@@ -26,48 +26,42 @@
 
 ### Applications
 - `GET /api/applications/` — список заявок пользователя.
-<<<<<<< HEAD
-- `POST /api/applications/` — создать заявку (ручное имя или university_id).
-=======
 - `POST /api/applications/` — создать заявку (только university_id из “My Universities”).
->>>>>>> 44eec72 (Update applications flow and focs)
 - `GET /api/applications/<id>/` — детали заявки.
 - `PUT /api/applications/<id>/` — обновить статус/дедлайн.
 【F:backend/apps/universities/urls.py†L1-L14】
 
-<<<<<<< HEAD
-### Минимальный UI для проверки
-- `GET /applications-ui/` — браузерная форма для теста Applications API. Страница ожидает JWT access token в поле ввода.
-【F:backend/config/urls.py†L1-L8】
-=======
+### Tasks
+- `GET /api/tasks?status=&application_id=` — список задач пользователя.
+- `POST /api/tasks` — создать задачу вручную.
+- `POST /api/tasks/generate` — генерация задач из шаблонов.
+- `PUT /api/tasks/:id` — обновить задачу.
+【F:backend/apps/tasks/urls.py†L1-L7】
+
+### Documents + Versions
+- `GET /api/documents`
+- `POST /api/documents`
+- `GET /api/documents/:id`
+- `POST /api/documents/:id/versions`
+- `GET /api/documents/:id/versions`
+【F:backend/apps/documents/urls.py†L1-L9】
+
+### AI (stub)
+- `POST /api/ai/next-step/`
+- `POST /api/ai/document-draft/`
+- `POST /api/ai/document-feedback/`
+- `POST /api/ai/commonapp-draft/`
+【F:backend/apps/ai/urls.py†L1-L9】
+
 ### UI для проверки
 - `GET /app/` — MVP‑консоль для демонстрации текущих API (Auth, Profile, Universities, My Universities, Applications) + заготовки для Tasks/Documents/AI.
 - `GET /applications-ui/` — минимальная браузерная форма для теста Applications API. Страница ожидает JWT access token в поле ввода.
 【F:backend/config/urls.py†L1-L9】
->>>>>>> 44eec72 (Update applications flow and focs)
 
 ## Запланировано в MVP (ещё не реализовано)
 
 Согласно `MVP_SPEC.md`, нужно добавить следующие эндпоинты (без интеграции с Common App, только черновики/проверки):
 
-### Tasks
-- `GET /tasks?status=&application_id=`
-- `POST /tasks`
-- `POST /tasks/generate`
-- `PUT /tasks/:id`
-【F:MVP_SPEC.md†L236-L245】
-
-### Documents + Versions
-- `GET /documents`
-- `POST /documents`
-- `GET /documents/:id`
-- `POST /documents/:id/versions`
-- `GET /documents/:id/versions`
-【F:MVP_SPEC.md†L246-L256】
-
-### AI (черновики/feedback)
-- `POST /ai/next-step`
-- `POST /ai/document-draft`
-- `POST /ai/document-feedback`
-- `POST /ai/commonapp-draft`
-【F:MVP_SPEC.md†L258-L266】
+### UI страницы
+- Onboarding → Dashboard → Applications → Tasks → Documents → Common App Draft
+【F:MVP_SPEC.md†L271-L271】

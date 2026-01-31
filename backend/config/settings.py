@@ -49,6 +49,9 @@ INSTALLED_APPS = [
     "apps.core",
     "apps.users",
     "apps.universities",
+    "apps.tasks",
+    "apps.documents",
+    "apps.ai",
 ]
 
 

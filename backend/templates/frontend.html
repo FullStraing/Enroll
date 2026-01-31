@@ -544,7 +544,11 @@
             <label for="task-due-date">Due date</label>
             <input id="task-due-date" type="date" />
             <label for="task-status">Status</label>
-            <input id="task-status" type="text" placeholder="planned / in_progress / done" />
+            <select id="task-status">
+              <option value="planned">planned</option>
+              <option value="in_progress">in_progress</option>
+              <option value="done">done</option>
+            </select>
             <label for="task-priority">Priority</label>
             <select id="task-priority">
               <option value="low">low</option>
@@ -654,10 +658,10 @@
         <div id="ai-availability" class="status info"></div>
         <label for="ai-endpoint">Endpoint</label>
         <select id="ai-endpoint">
-          <option value="/api/ai/next-step">/api/ai/next-step</option>
-          <option value="/api/ai/document-draft">/api/ai/document-draft</option>
-          <option value="/api/ai/document-feedback">/api/ai/document-feedback</option>
-          <option value="/api/ai/commonapp-draft">/api/ai/commonapp-draft</option>
+          <option value="/api/ai/next-step/">/api/ai/next-step/</option>
+          <option value="/api/ai/document-draft/">/api/ai/document-draft/</option>
+          <option value="/api/ai/document-feedback/">/api/ai/document-feedback/</option>
+          <option value="/api/ai/commonapp-draft/">/api/ai/commonapp-draft/</option>
         </select>
         <label for="ai-payload">Payload (JSON)</label>
         <textarea id="ai-payload" placeholder='{"context_type":"profile","context_id":1}'></textarea>
@@ -742,7 +746,7 @@
         return value === null || value === undefined ? "" : value;
       }
 
-      function setupFeatureToggle(key, message) {
+      function setupFeatureToggle(key, message, defaultEnabled = true) {
         const toggle = el(`${key}-enabled`);
         const status = el(`${key}-availability`);
         if (!toggle || !status) return;
@@ -755,7 +759,8 @@
           });
           setStatus(status, enabled ? "API enabled." : message, enabled ? "success" : "info");
         };
-        toggle.checked = localStorage.getItem(storageKey) === "1";
+        const stored = localStorage.getItem(storageKey);
+        toggle.checked = stored === null ? defaultEnabled : stored === "1";
         toggle.addEventListener("change", apply);
         apply();
       }
@@ -1236,9 +1241,9 @@
         const stored = localStorage.getItem(tokenStorageKey) || "";
         tokenInput.value = stored;
 
-        setupFeatureToggle("tasks", "Tasks API not implemented yet. Enable when backend is ready.");
-        setupFeatureToggle("documents", "Documents API not implemented yet. Enable when backend is ready.");
-        setupFeatureToggle("ai", "AI API not implemented yet. Enable when backend is ready.");
+        setupFeatureToggle("tasks", "Tasks API disabled.");
+        setupFeatureToggle("documents", "Documents API disabled.");
+        setupFeatureToggle("ai", "AI API disabled.");
 
         el("register-btn").addEventListener("click", registerUser);
         el("login-btn").addEventListener("click", loginUser);

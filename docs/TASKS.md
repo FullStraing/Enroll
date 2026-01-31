@@ -6,12 +6,11 @@
 ## Сделано
 - Auth + базовая структура проекта.
 - StudentProfile CRUD.
-- Applications CRUD (manual add + deadline).
-- Минимальный UI для проверок: `/app/` и `/applications-ui/`.
+- Applications CRUD (только из My Universities) + deadline.
+- Tasks CRUD + генерация задач из шаблонов.
+- Documents + Versions.
+- AI endpoints (stub).
+- Минимальный UI для проверок: `/app/` и `/applications-ui/` (с навигацией).
 
 ## Дальше по MVP (из MVP_SPEC.md)
-- Roadmap stages (seed) + Tasks CRUD.
-- Генерация задач из шаблонов (простые правила).
-- Documents + Versions.
-- AI endpoints (stub → потом подключение провайдера).
 - UI страницы: Onboarding → Dashboard → Applications → Tasks → Documents → Common App Draft.
