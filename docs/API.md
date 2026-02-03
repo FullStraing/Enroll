@@ -53,15 +53,20 @@
 - `POST /api/ai/commonapp-draft/`
 【F:backend/apps/ai/urls.py†L1-L9】
 
-### UI для проверки
-- `GET /app/` — MVP‑консоль для демонстрации текущих API (Auth, Profile, Universities, My Universities, Applications) + заготовки для Tasks/Documents/AI.
-- `GET /applications-ui/` — минимальная браузерная форма для теста Applications API. Страница ожидает JWT access token в поле ввода.
-【F:backend/config/urls.py†L1-L9】
+### UI страницы
+- `GET /` — публичный лендинг Enroll AI.
+- `GET /register` — регистрация.
+- `GET /login` — вход.
+- `GET /dashboard/` — основная точка входа.
+- `GET /onboarding/` — заполнение профиля.
+- `GET /applications/` — управление списком университетов (applications flow финализируем позже).
+- `GET /tasks/` — задачи и генерация чеклиста.
+- `GET /documents/` — документы и версии.
+- `GET /common-app/` — Common App Draft (AI stub).
+- `GET /app/` — API консоль.
+- `GET /applications-ui/` — минимальная форма для Applications API.
+【F:backend/config/urls.py†L1-L18】
 
 ## Запланировано в MVP (ещё не реализовано)
 
-Согласно `MVP_SPEC.md`, нужно добавить следующие эндпоинты (без интеграции с Common App, только черновики/проверки):
-
-### UI страницы
-- Onboarding → Dashboard → Applications → Tasks → Documents → Common App Draft
-【F:MVP_SPEC.md†L271-L271】
+- Финализация Applications workflow (последний этап).

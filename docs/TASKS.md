@@ -10,7 +10,9 @@
 - Tasks CRUD + генерация задач из шаблонов.
 - Documents + Versions.
 - AI endpoints (stub).
+- UI страницы для структуры: Dashboard, Onboarding, Universities, Tasks, Documents, Common App Draft.
 - Минимальный UI для проверок: `/app/` и `/applications-ui/` (с навигацией).
+- Публичный лендинг Enroll AI + страницы входа/регистрации.
 
 ## Дальше по MVP (из MVP_SPEC.md)
-- UI страницы: Onboarding → Dashboard → Applications → Tasks → Documents → Common App Draft.
+- Финализация Applications workflow (последний этап).

@@ -1,0 +1,167 @@
+{% extends "ui/base.html" %}
+
+{% block content %}
+  <section class="card">
+    <h2>Tasks</h2>
+    <p>Manage roadmap tasks and generate a baseline checklist.</p>
+  </section>
+
+  <section class="card">
+    <div class="grid-2">
+      <div>
+        <h2>Create task</h2>
+        <label for="task-title">Title</label>
+        <input id="task-title" type="text" />
+        <label for="task-description">Description</label>
+        <textarea id="task-description"></textarea>
+        <label for="task-due-date">Due date</label>
+        <input id="task-due-date" type="date" />
+        <label for="task-status">Status</label>
+        <select id="task-status">
+          <option value="planned">planned</option>
+          <option value="in_progress">in_progress</option>
+          <option value="done">done</option>
+        </select>
+        <label for="task-priority">Priority</label>
+        <select id="task-priority">
+          <option value="low">low</option>
+          <option value="medium" selected>medium</option>
+          <option value="high">high</option>
+        </select>
+        <label for="task-application-id">Application ID (optional)</label>
+        <input id="task-application-id" type="number" />
+        <button id="create-task">Create task</button>
+        <div id="task-create-status" class="status info"></div>
+      </div>
+      <div>
+        <h2>Generate from templates</h2>
+        <label for="task-generate-application">Application ID (optional)</label>
+        <input id="task-generate-application" type="number" />
+        <button id="generate-tasks" class="secondary">Generate tasks</button>
+        <div id="task-generate-status" class="status info"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Task list</h2>
+    <div class="grid-2">
+      <div>
+        <label for="task-filter-status">Status filter</label>
+        <input id="task-filter-status" type="text" placeholder="planned / in_progress / done" />
+        <label for="task-filter-application">Application ID filter</label>
+        <input id="task-filter-application" type="number" />
+        <button id="load-tasks" class="secondary">Load tasks</button>
+        <div id="task-load-status" class="status info"></div>
+      </div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Title</th>
+          <th>Status</th>
+          <th>Due</th>
+          <th>Priority</th>
+        </tr>
+      </thead>
+      <tbody id="tasks-body"></tbody>
+    </table>
+  </section>
+{% endblock %}
+
+{% block scripts %}
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const api = window.api;
+      if (!api || !api.request) {
+        console.error("API helpers not loaded.");
+        return;
+      }
+      const { request, setStatus, toNumber } = api;
+
+      function renderTasks(items) {
+        const body = document.getElementById("tasks-body");
+        body.innerHTML = items
+          .map(
+            (item) => `
+              <tr>
+                <td>${item.id}</td>
+                <td>${item.title}</td>
+                <td>${item.status}</td>
+                <td>${item.due_date || "-"}</td>
+                <td>${item.priority}</td>
+              </tr>
+            `
+          )
+          .join("");
+      }
+
+      async function loadTasks() {
+        const status = document.getElementById("task-load-status");
+        setStatus(status, "Loading tasks...");
+        try {
+          const params = new URLSearchParams();
+          const statusValue = document.getElementById("task-filter-status").value.trim();
+          const appValue = document.getElementById("task-filter-application").value.trim();
+          if (statusValue) params.append("status", statusValue);
+          if (appValue) params.append("application_id", appValue);
+          const query = params.toString();
+          const url = query ? `/api/tasks/?${query}` : "/api/tasks/";
+          const data = await request(url);
+          renderTasks(data);
+          setStatus(status, `Loaded ${data.length}.`, "success");
+        } catch (error) {
+          setStatus(status, error.message, "error");
+        }
+      }
+
+      async function createTask() {
+        const status = document.getElementById("task-create-status");
+        setStatus(status, "Creating task...");
+        try {
+          await request("/api/tasks/", {
+            method: "POST",
+            body: JSON.stringify({
+              title: document.getElementById("task-title").value.trim(),
+              description: document.getElementById("task-description").value.trim(),
+              due_date: document.getElementById("task-due-date").value || null,
+              status: document.getElementById("task-status").value,
+              priority: document.getElementById("task-priority").value,
+              application_id: toNumber(document.getElementById("task-application-id").value),
+            }),
+          });
+          setStatus(status, "Task created.", "success");
+          await loadTasks();
+        } catch (error) {
+          setStatus(status, error.message, "error");
+        }
+      }
+
+      async function generateTasks() {
+        const status = document.getElementById("task-generate-status");
+        setStatus(status, "Generating tasks...");
+        try {
+          const payload = {
+            application_id: toNumber(document.getElementById("task-generate-application").value),
+          };
+          if (!payload.application_id) {
+            delete payload.application_id;
+          }
+          await request("/api/tasks/generate/", {
+            method: "POST",
+            body: JSON.stringify(payload),
+          });
+          setStatus(status, "Tasks generated.", "success");
+          await loadTasks();
+        } catch (error) {
+          setStatus(status, error.message, "error");
+        }
+      }
+
+      document.getElementById("load-tasks").addEventListener("click", loadTasks);
+      document.getElementById("create-task").addEventListener("click", createTask);
+      document.getElementById("generate-tasks").addEventListener("click", generateTasks);
+    });
+  </script>
+{% endblock %}

@@ -7,6 +7,8 @@ Backend построен на Django + DRF. Конфигурация в `config`
 Корневой роутинг включает `/admin/` и `/api/`, а дальше маршруты распределяются по приложениям.【F:backend/config/urls.py†L1-L7】
 
 База данных по умолчанию — PostgreSQL (можно временно включить SQLite через `USE_SQLITE=1`).【F:backend/config/settings.py†L44-L73】
+
+UI страницы находятся в `templates/ui/` и подключены через `config.urls`; публичный лендинг — `templates/landing.html`, auth‑страницы — `templates/auth/`.【F:backend/config/urls.py†L1-L18】
 ## Приложения
 
 ### `apps.core`

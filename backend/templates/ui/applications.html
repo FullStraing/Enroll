@@ -1,0 +1,175 @@
+{% extends "ui/base.html" %}
+
+{% block content %}
+  <section class="card">
+    <h2>Universities</h2>
+    <p>Build your university list. Applications workflow will be finalized later.</p>
+  </section>
+
+  <section class="card">
+    <h2>Available universities</h2>
+    <button id="load-universities">Load universities</button>
+    <div id="universities-status" class="status info"></div>
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Country</th>
+          <th>State</th>
+        </tr>
+      </thead>
+      <tbody id="universities-body"></tbody>
+    </table>
+  </section>
+
+  <section class="card">
+    <h2>My Universities</h2>
+    <div class="grid-2">
+      <div>
+        <label for="my-uni-select">University</label>
+        <select id="my-uni-select">
+          <option value="">-- load list first --</option>
+        </select>
+        <label for="my-uni-category">Category</label>
+        <select id="my-uni-category">
+          <option value="reach">reach</option>
+          <option value="target" selected>target</option>
+          <option value="safety">safety</option>
+        </select>
+        <label for="my-uni-status">Status</label>
+        <select id="my-uni-status">
+          <option value="planning">planning</option>
+          <option value="preparing">preparing</option>
+          <option value="applying">applying</option>
+          <option value="submitted">submitted</option>
+          <option value="admitted">admitted</option>
+          <option value="rejected">rejected</option>
+        </select>
+        <label for="my-uni-notes">Notes</label>
+        <textarea id="my-uni-notes"></textarea>
+        <button id="add-my-university" class="secondary">Add to My Universities</button>
+        <div id="my-uni-create-status" class="status info"></div>
+      </div>
+      <div>
+        <button id="load-my-universities" class="secondary">Load My Universities</button>
+        <div id="my-uni-load-status" class="status info"></div>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>University</th>
+              <th>Category</th>
+              <th>Status</th>
+              <th>Progress</th>
+            </tr>
+          </thead>
+          <tbody id="my-universities-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+{% endblock %}
+
+{% block scripts %}
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const api = window.api;
+      if (!api || !api.request) {
+        console.error("API helpers not loaded.");
+        return;
+      }
+      const { request, setStatus } = api;
+
+      function renderUniversities(items) {
+        const body = document.getElementById("universities-body");
+        body.innerHTML = items
+          .map(
+            (item) => `
+              <tr>
+                <td>${item.id}</td>
+                <td>${item.name}</td>
+                <td>${item.country || "-"}</td>
+                <td>${item.state || "-"}</td>
+              </tr>
+            `
+          )
+          .join("");
+
+        const select = document.getElementById("my-uni-select");
+        select.innerHTML = `<option value="">-- select university --</option>` + items
+          .map((item) => `<option value="${item.id}">${item.name}</option>`)
+          .join("");
+      }
+
+      function renderMyUniversities(items) {
+        const body = document.getElementById("my-universities-body");
+        body.innerHTML = items
+          .map(
+            (item) => `
+              <tr>
+                <td>${item.id}</td>
+                <td>${item.university?.name || "-"}</td>
+                <td>${item.category}</td>
+                <td>${item.status}</td>
+                <td>${item.progress_percent ?? 0}%</td>
+              </tr>
+            `
+          )
+          .join("");
+      }
+
+      async function loadUniversities() {
+        const status = document.getElementById("universities-status");
+        setStatus(status, "Loading universities...");
+        try {
+          const data = await request("/api/universities/");
+          renderUniversities(data);
+          setStatus(status, `Loaded ${data.length}.`, "success");
+        } catch (error) {
+          setStatus(status, error.message, "error");
+        }
+      }
+
+      async function loadMyUniversities() {
+        const status = document.getElementById("my-uni-load-status");
+        setStatus(status, "Loading list...");
+        try {
+          const data = await request("/api/my-universities/");
+          renderMyUniversities(data);
+          setStatus(status, `Loaded ${data.length}.`, "success");
+        } catch (error) {
+          setStatus(status, error.message, "error");
+        }
+      }
+
+      async function addMyUniversity() {
+        const status = document.getElementById("my-uni-create-status");
+        setStatus(status, "Adding...");
+        try {
+          const universityId = document.getElementById("my-uni-select").value;
+          if (!universityId) {
+            throw new Error("Select a university.");
+          }
+          await request("/api/my-universities/", {
+            method: "POST",
+            body: JSON.stringify({
+              university_id: Number(universityId),
+              category: document.getElementById("my-uni-category").value,
+              status: document.getElementById("my-uni-status").value,
+              notes: document.getElementById("my-uni-notes").value.trim(),
+            }),
+          });
+          setStatus(status, "Added.", "success");
+          await loadMyUniversities();
+        } catch (error) {
+          setStatus(status, error.message, "error");
+        }
+      }
+
+      document.getElementById("load-universities").addEventListener("click", loadUniversities);
+      document.getElementById("load-my-universities").addEventListener("click", loadMyUniversities);
+      document.getElementById("add-my-university").addEventListener("click", addMyUniversity);
+    });
+  </script>
+{% endblock %}

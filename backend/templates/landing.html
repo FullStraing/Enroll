@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Enroll AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-[#0B0F19] text-white">
+    <div class="relative overflow-hidden">
+      <div
+        aria-hidden="true"
+        class="pointer-events-none absolute -top-40 left-1/2 h-80 w-80 -translate-x-1/2 rounded-full bg-[radial-gradient(circle_at_center,rgba(167,139,250,0.18),transparent_70%)] opacity-70 blur-3xl animate-[pulse_8s_ease-in-out_infinite]"
+      ></div>
+      <div
+        aria-hidden="true"
+        class="pointer-events-none absolute top-40 right-10 h-72 w-72 rounded-full bg-[radial-gradient(circle_at_center,rgba(34,211,238,0.18),transparent_70%)] opacity-70 blur-3xl animate-[pulse_10s_ease-in-out_infinite]"
+      ></div>
+    </div>
+
+    <main class="relative z-10 mx-auto flex max-w-6xl flex-col gap-16 px-6 pb-20 pt-14 sm:px-10">
+      {% include "landing/hero.html" %}
+      {% include "landing/features.html" %}
+      {% include "landing/steps.html" %}
+      {% include "landing/faq.html" %}
+      {% include "landing/cta.html" %}
+      <footer id="footer-disclaimer" class="text-xs text-slate-400"></footer>
+    </main>
+
+    <script>
+      const LANDING_CONFIG = {
+        colors: {
+          bg: "#0B0F19",
+          card: "rgba(255,255,255,0.04)",
+          cardBorder: "rgba(255,255,255,0.08)",
+          accentCyan: "#22D3EE",
+          accentViolet: "#A78BFA",
+          textMuted: "#E2E8F0",
+        },
+        copy: {
+          brand: "Enroll AI",
+          heroTitle: "Поступление в США — без хаоса.",
+          heroSub:
+            "Enroll AI ведёт по шагам: профиль → дедлайны → документы → черновики для Common App (без интеграции в MVP).",
+          primaryAuthed: "Перейти в Dashboard",
+          primaryGuest: "Создать аккаунт",
+          secondaryCta: "Войти",
+          finalTitle: "Готов начать структурно?",
+          finalSub: "Сделай первый шаг и получи понятный план.",
+        disclaimer: "Не гарантия поступления. Решение принимает университет.",
+        },
+        features: [
+          {
+            title: "Roadmap",
+            text: "Понятные этапы и прогресс.",
+          },
+          {
+            title: "Дедлайны",
+            text: "Ничего не пропустишь.",
+          },
+          {
+            title: "Документы + ИИ",
+            text: "Версии, правки, черновики.",
+          },
+        ],
+        steps: [
+          "Заполни профиль",
+          "Добавь университеты",
+          "Получи план и задачи",
+          "Готовь документы и подавай",
+        ],
+        faq: [
+          {
+            q: "Это гарантия поступления?",
+            a: "Нет. Мы даём систему подготовки. Решение принимает университет.",
+          },
+          {
+            q: "Вы заполняете Common App за меня?",
+            a: "В MVP — нет. Мы готовим черновики и проверку, ты переносишь в Common App вручную.",
+          },
+          {
+            q: "Сколько времени занять старт?",
+            a: "10–15 минут, чтобы заполнить профиль и получить план.",
+          },
+        ],
+        routes: {
+          dashboard: "/dashboard/",
+          register: "/register",
+          login: "/login",
+        },
+      };
+
+      const tokenKey = "enroll_token";
+
+      function applyColors() {
+        const root = document.documentElement;
+        root.style.setProperty("--bg", LANDING_CONFIG.colors.bg);
+        root.style.setProperty("--card", LANDING_CONFIG.colors.card);
+        root.style.setProperty("--card-border", LANDING_CONFIG.colors.cardBorder);
+        root.style.setProperty("--accent-cyan", LANDING_CONFIG.colors.accentCyan);
+        root.style.setProperty("--accent-violet", LANDING_CONFIG.colors.accentViolet);
+      }
+
+      function isAuthed() {
+        return Boolean(localStorage.getItem(tokenKey));
+      }
+
+      function setText(id, value) {
+        const el = document.getElementById(id);
+        if (el) el.textContent = value;
+      }
+
+      function renderFeatures() {
+        const container = document.getElementById("features-grid");
+        if (!container) return;
+        container.innerHTML = LANDING_CONFIG.features
+          .map(
+            (item) => `
+              <a
+                href="${LANDING_CONFIG.routes.dashboard}"
+                data-auth-required="true"
+                class="group rounded-2xl border border-[color:var(--card-border)] bg-[color:var(--card)] p-6 transition hover:-translate-y-1 hover:border-[color:var(--accent-cyan)] hover:shadow-[0_0_16px_rgba(34,211,238,0.2)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-cyan)] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0B0F19]"
+              >
+                <h3 class="text-lg font-semibold text-white">${item.title}</h3>
+                <p class="mt-2 text-sm text-slate-200">${item.text}</p>
+                <span class="mt-4 inline-flex text-xs font-semibold uppercase tracking-[0.3em] text-[color:var(--accent-violet)] opacity-70 group-hover:opacity-100">
+                  Подробнее
+                </span>
+              </a>
+            `
+          )
+          .join("");
+      }
+
+      function renderSteps() {
+        const container = document.getElementById("steps-list");
+        if (!container) return;
+        container.innerHTML = LANDING_CONFIG.steps
+          .map(
+            (step, index) => `
+              <li class="flex items-start gap-4 rounded-2xl border border-[color:var(--card-border)] bg-[color:var(--card)] p-5">
+                <span class="flex h-9 w-9 items-center justify-center rounded-full border border-[color:var(--accent-cyan)] text-sm font-semibold text-[color:var(--accent-cyan)]">
+                  0${index + 1}
+                </span>
+                <div>
+                  <p class="text-sm font-semibold text-white">${step}</p>
+                </div>
+              </li>
+            `
+          )
+          .join("");
+      }
+
+      function renderFaq() {
+        const container = document.getElementById("faq-list");
+        if (!container) return;
+        container.innerHTML = LANDING_CONFIG.faq
+          .map(
+            (item) => `
+              <div class="rounded-2xl border border-[color:var(--card-border)] bg-[color:var(--card)] p-5">
+                <p class="text-sm font-semibold text-white">${item.q}</p>
+                <p class="mt-2 text-sm text-slate-200">${item.a}</p>
+              </div>
+            `
+          )
+          .join("");
+      }
+
+      function setupCtas() {
+        const authed = isAuthed();
+        const primary = document.getElementById("primary-cta");
+        const finalPrimary = document.getElementById("final-primary-cta");
+
+        const primaryLabel = authed
+          ? LANDING_CONFIG.copy.primaryAuthed
+          : LANDING_CONFIG.copy.primaryGuest;
+        const primaryHref = authed
+          ? LANDING_CONFIG.routes.dashboard
+          : LANDING_CONFIG.routes.register;
+
+        if (primary) {
+          primary.textContent = primaryLabel;
+          primary.href = primaryHref;
+        }
+        if (finalPrimary) {
+          finalPrimary.textContent = primaryLabel;
+          finalPrimary.href = primaryHref;
+        }
+
+        const secondary = document.getElementById("secondary-cta");
+        if (secondary) secondary.textContent = LANDING_CONFIG.copy.secondaryCta;
+      }
+
+      function guardAuthLinks() {
+        document.querySelectorAll("[data-auth-required='true']").forEach((el) => {
+          el.addEventListener("click", (event) => {
+            if (!isAuthed()) {
+              event.preventDefault();
+              window.location.href = LANDING_CONFIG.routes.register;
+            }
+          });
+        });
+      }
+
+      function setupReveal() {
+        const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        const targets = document.querySelectorAll("[data-reveal]");
+        targets.forEach((el) => {
+          el.classList.add("opacity-0", "translate-y-6", "transition", "duration-700", "ease-out");
+        });
+        if (prefersReduced) {
+          targets.forEach((el) => {
+            el.classList.remove("opacity-0", "translate-y-6");
+            el.classList.add("opacity-100", "translate-y-0");
+          });
+          return;
+        }
+        const observer = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                entry.target.classList.add("opacity-100", "translate-y-0");
+                entry.target.classList.remove("opacity-0", "translate-y-6");
+                observer.unobserve(entry.target);
+              }
+            });
+          },
+          { threshold: 0.15 }
+        );
+        targets.forEach((el) => observer.observe(el));
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        applyColors();
+        setText("brand", LANDING_CONFIG.copy.brand);
+        setText("hero-title", LANDING_CONFIG.copy.heroTitle);
+        setText("hero-sub", LANDING_CONFIG.copy.heroSub);
+        setText("final-title", LANDING_CONFIG.copy.finalTitle);
+        setText("final-sub", LANDING_CONFIG.copy.finalSub);
+        setText("footer-disclaimer", LANDING_CONFIG.copy.disclaimer);
+        renderFeatures();
+        renderSteps();
+        renderFaq();
+        setupCtas();
+        guardAuthLinks();
+        setupReveal();
+      });
+    </script>
+  </body>
+</html>

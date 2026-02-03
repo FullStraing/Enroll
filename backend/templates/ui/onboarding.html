@@ -1,0 +1,110 @@
+{% extends "ui/base.html" %}
+
+{% block content %}
+  <section class="card">
+    <h2>Onboarding</h2>
+    <p>Capture the core profile needed to structure the admissions plan.</p>
+    <div class="grid-2">
+      <div>
+        <label for="full-name">Full name</label>
+        <input id="full-name" type="text" />
+        <label for="country">Country</label>
+        <input id="country" type="text" />
+        <label for="school-name">School name</label>
+        <input id="school-name" type="text" />
+        <label for="graduation-year">Graduation year</label>
+        <input id="graduation-year" type="number" />
+      </div>
+      <div>
+        <label for="intended-major">Intended major</label>
+        <input id="intended-major" type="text" />
+        <label for="budget-range">Budget range</label>
+        <select id="budget-range">
+          <option value="">-</option>
+          <option value="low">low</option>
+          <option value="medium">medium</option>
+          <option value="high">high</option>
+        </select>
+        <label for="target-country">Target country</label>
+        <input id="target-country" type="text" />
+        <label for="activities-level">Activities level</label>
+        <select id="activities-level">
+          <option value="low">low</option>
+          <option value="medium">medium</option>
+          <option value="high">high</option>
+        </select>
+      </div>
+    </div>
+    <div style="margin-top: 12px; display: flex; gap: 10px; flex-wrap: wrap;">
+      <button id="load-profile">Load profile</button>
+      <button id="save-profile" class="secondary">Save profile</button>
+    </div>
+    <div id="profile-status" class="status info"></div>
+  </section>
+{% endblock %}
+
+{% block scripts %}
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const api = window.api;
+      if (!api || !api.request) {
+        console.error("API helpers not loaded.");
+        return;
+      }
+      const { request, setStatus, toNumber, toValue } = api;
+
+      function readForm() {
+        return {
+          full_name: document.getElementById("full-name").value.trim(),
+          country: document.getElementById("country").value.trim(),
+          school_name: document.getElementById("school-name").value.trim(),
+          graduation_year: toNumber(document.getElementById("graduation-year").value),
+          intended_major: document.getElementById("intended-major").value.trim(),
+          budget_range: document.getElementById("budget-range").value,
+          target_country: document.getElementById("target-country").value.trim() || "USA",
+          activities_level: document.getElementById("activities-level").value,
+        };
+      }
+
+      function writeForm(data) {
+        document.getElementById("full-name").value = toValue(data.full_name);
+        document.getElementById("country").value = toValue(data.country);
+        document.getElementById("school-name").value = toValue(data.school_name);
+        document.getElementById("graduation-year").value = toValue(data.graduation_year);
+        document.getElementById("intended-major").value = toValue(data.intended_major);
+        document.getElementById("budget-range").value = toValue(data.budget_range);
+        document.getElementById("target-country").value = toValue(data.target_country || "USA");
+        document.getElementById("activities-level").value = toValue(data.activities_level || "low");
+      }
+
+      async function loadProfile() {
+        const status = document.getElementById("profile-status");
+        setStatus(status, "Loading profile...");
+        try {
+          const data = await request("/api/auth/profile/");
+          writeForm(data);
+          setStatus(status, "Profile loaded.", "success");
+        } catch (error) {
+          setStatus(status, error.message, "error");
+        }
+      }
+
+      async function saveProfile() {
+        const status = document.getElementById("profile-status");
+        setStatus(status, "Saving profile...");
+        try {
+          await request("/api/auth/profile/", {
+            method: "PUT",
+            body: JSON.stringify(readForm()),
+          });
+          setStatus(status, "Profile saved.", "success");
+        } catch (error) {
+          setStatus(status, error.message, "error");
+        }
+      }
+
+      document.getElementById("load-profile").addEventListener("click", loadProfile);
+      document.getElementById("save-profile").addEventListener("click", saveProfile);
+    });
+  </script>
+{% endblock %}

@@ -1,0 +1,95 @@
+{% extends "ui/base.html" %}
+
+{% block content %}
+  <section class="card">
+    <h2>Dashboard</h2>
+    <p>Quick overview of the admissions workspace.</p>
+    <div class="grid-2">
+      <div class="card">
+        <h2>Profile</h2>
+        <p id="profile-summary" class="status info">Load to see progress.</p>
+        <button id="profile-check" class="secondary">Check profile</button>
+      </div>
+      <div class="card">
+        <h2>My Universities</h2>
+        <p id="universities-summary" class="status info">Load to see count.</p>
+        <button id="universities-check" class="secondary">Check list</button>
+      </div>
+      <div class="card">
+        <h2>Tasks</h2>
+        <p id="tasks-summary" class="status info">Load to see count.</p>
+        <button id="tasks-check" class="secondary">Check tasks</button>
+      </div>
+      <div class="card">
+        <h2>Documents</h2>
+        <p id="documents-summary" class="status info">Load to see count.</p>
+        <button id="documents-check" class="secondary">Check documents</button>
+      </div>
+    </div>
+  </section>
+{% endblock %}
+
+{% block scripts %}
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const api = window.api;
+      if (!api || !api.request) {
+        console.error("API helpers not loaded.");
+        return;
+      }
+      const { request, setStatus } = api;
+
+      async function checkProfile() {
+        const target = document.getElementById("profile-summary");
+        setStatus(target, "Loading profile...");
+        try {
+          const profile = await request("/api/auth/profile/");
+          const filled = ["full_name", "country", "graduation_year", "intended_major"].filter(
+            (key) => profile[key]
+          ).length;
+          setStatus(target, `Profile fields filled: ${filled}/4`, "success");
+        } catch (error) {
+          setStatus(target, error.message, "error");
+        }
+      }
+
+      async function checkMyUniversities() {
+        const target = document.getElementById("universities-summary");
+        setStatus(target, "Loading list...");
+        try {
+          const data = await request("/api/my-universities/");
+          setStatus(target, `My universities: ${data.length}`, "success");
+        } catch (error) {
+          setStatus(target, error.message, "error");
+        }
+      }
+
+      async function checkTasks() {
+        const target = document.getElementById("tasks-summary");
+        setStatus(target, "Loading tasks...");
+        try {
+          const data = await request("/api/tasks/");
+          setStatus(target, `Tasks: ${data.length}`, "success");
+        } catch (error) {
+          setStatus(target, error.message, "error");
+        }
+      }
+
+      async function checkDocuments() {
+        const target = document.getElementById("documents-summary");
+        setStatus(target, "Loading documents...");
+        try {
+          const data = await request("/api/documents/");
+          setStatus(target, `Documents: ${data.length}`, "success");
+        } catch (error) {
+          setStatus(target, error.message, "error");
+        }
+      }
+
+      document.getElementById("profile-check").addEventListener("click", checkProfile);
+      document.getElementById("universities-check").addEventListener("click", checkMyUniversities);
+      document.getElementById("tasks-check").addEventListener("click", checkTasks);
+      document.getElementById("documents-check").addEventListener("click", checkDocuments);
+    });
+  </script>
+{% endblock %}

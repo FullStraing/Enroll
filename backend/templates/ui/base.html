@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Enroll MVP</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600&display=swap");
+
+      :root {
+        --ink: #1a1a1a;
+        --muted: #5b6370;
+        --panel: #ffffff;
+        --accent: #2f6bff;
+        --accent-2: #ffb84d;
+        --border: #e4e7ee;
+        --success: #1b8f5a;
+        --danger: #c64242;
+        --shadow: 0 12px 30px rgba(17, 24, 39, 0.12);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Space Grotesk", "Segoe UI", sans-serif;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at 15% 10%, rgba(47, 107, 255, 0.12), transparent 45%),
+          radial-gradient(circle at 85% 20%, rgba(255, 184, 77, 0.16), transparent 40%),
+          linear-gradient(120deg, #f6f7fb 0%, #eef1ff 100%);
+        min-height: 100vh;
+      }
+
+      header {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 28px 24px 10px;
+      }
+
+      header h1 {
+        margin: 0 0 6px;
+        font-size: clamp(1.6rem, 1.2rem + 1vw, 2.4rem);
+      }
+
+      header p {
+        margin: 0;
+        color: var(--muted);
+      }
+
+      .nav {
+        margin-top: 12px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .nav a {
+        text-decoration: none;
+        color: var(--accent);
+        font-weight: 600;
+        background: #eef2ff;
+        padding: 6px 12px;
+        border-radius: 999px;
+      }
+
+      .session {
+        margin-top: 16px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 12px;
+        box-shadow: var(--shadow);
+      }
+
+      .session-row {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: minmax(0, 1fr) auto auto;
+        align-items: center;
+      }
+
+      main {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 12px 24px 48px;
+        display: grid;
+        gap: 18px;
+      }
+
+      .grid-2 {
+        display: grid;
+        gap: 18px;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      }
+
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        box-shadow: var(--shadow);
+        padding: 18px;
+      }
+
+      .card h2 {
+        margin: 0 0 8px;
+        font-size: 1.1rem;
+      }
+
+      label {
+        display: block;
+        margin-top: 10px;
+        font-weight: 600;
+        font-size: 0.85rem;
+      }
+
+      input,
+      select,
+      textarea {
+        width: 100%;
+        margin-top: 4px;
+        padding: 8px 10px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        font-family: inherit;
+        font-size: 0.9rem;
+      }
+
+      textarea {
+        min-height: 90px;
+        resize: vertical;
+      }
+
+      button {
+        appearance: none;
+        border: none;
+        background: var(--accent);
+        color: #fff;
+        padding: 8px 14px;
+        border-radius: 10px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      button.secondary {
+        background: var(--accent-2);
+        color: #2b1d00;
+      }
+
+      button.ghost {
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--ink);
+      }
+
+      button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .status {
+        margin-top: 8px;
+        font-size: 0.85rem;
+      }
+
+      .status.info {
+        color: var(--muted);
+      }
+
+      .status.success {
+        color: var(--success);
+      }
+
+      .status.error {
+        color: var(--danger);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.85rem;
+      }
+
+      th,
+      td {
+        text-align: left;
+        padding: 8px 6px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      @media (max-width: 720px) {
+        header,
+        main {
+          padding-left: 16px;
+          padding-right: 16px;
+        }
+
+        .session-row {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Enroll MVP</h1>
+      <p>Structured admissions workspace.</p>
+      <nav class="nav">
+        <a href="/dashboard/">Dashboard</a>
+        <a href="/onboarding/">Onboarding</a>
+        <a href="/applications/">Universities</a>
+        <a href="/tasks/">Tasks</a>
+        <a href="/documents/">Documents</a>
+        <a href="/common-app/">Common App Draft</a>
+        <a href="/app/">API Console</a>
+        <a href="/applications-ui/">Applications quick test</a>
+      </nav>
+      <div class="session">
+        <label for="token-input">JWT access token</label>
+        <div class="session-row">
+          <input id="token-input" type="text" placeholder="Access token" />
+          <button id="save-token">Save</button>
+          <button id="clear-token" class="ghost">Clear</button>
+        </div>
+        <div id="token-status" class="status info"></div>
+      </div>
+    </header>
+    <main>
+      {% block content %}{% endblock %}
+    </main>
+    <script>
+      const tokenStorageKey = "enroll_token";
+
+      function setStatus(target, message, type = "info") {
+        if (!target) return;
+        target.textContent = message;
+        target.className = `status ${type}`;
+      }
+
+      function getToken() {
+        const input = document.getElementById("token-input");
+        return input ? input.value.trim() : "";
+      }
+
+      function saveToken(token) {
+        const input = document.getElementById("token-input");
+        if (input) {
+          input.value = token;
+        }
+        localStorage.setItem(tokenStorageKey, token);
+        setStatus(
+          document.getElementById("token-status"),
+          token ? "Token stored." : "Add token (get it in /app/ login).",
+          "info"
+        );
+      }
+
+      function authHeaders() {
+        const token = getToken();
+        return token ? { Authorization: `Bearer ${token}` } : {};
+      }
+
+      async function request(path, options = {}) {
+        const response = await fetch(path, {
+          headers: {
+            "Content-Type": "application/json",
+            ...authHeaders(),
+            ...options.headers,
+          },
+          ...options,
+        });
+        const contentType = response.headers.get("content-type") || "";
+        const data = contentType.includes("application/json")
+          ? await response.json()
+          : await response.text();
+        if (!response.ok) {
+          const message = data?.detail || data?.error || JSON.stringify(data) || response.statusText;
+          throw new Error(message);
+        }
+        return data;
+      }
+
+      function toNumber(value) {
+        if (value === "" || value === null || value === undefined) return null;
+        const num = Number(value);
+        return Number.isNaN(num) ? null : num;
+      }
+
+      function toValue(value) {
+        return value === null || value === undefined ? "" : value;
+      }
+
+      function parseList(value) {
+        if (!value) return [];
+        return value
+          .split(",")
+          .map((item) => item.trim())
+          .filter(Boolean);
+      }
+
+      function joinList(list) {
+        if (!Array.isArray(list)) return "";
+        return list.join(", ");
+      }
+
+      window.api = {
+        request,
+        setStatus,
+        toNumber,
+        toValue,
+        parseList,
+        joinList,
+      };
+
+      document.addEventListener("DOMContentLoaded", () => {
+        const stored = localStorage.getItem(tokenStorageKey) || "";
+        saveToken(stored);
+        const saveBtn = document.getElementById("save-token");
+        if (saveBtn) {
+          saveBtn.addEventListener("click", () => saveToken(getToken()));
+        }
+        const clearBtn = document.getElementById("clear-token");
+        if (clearBtn) {
+          clearBtn.addEventListener("click", () => saveToken(""));
+        }
+      });
+    </script>
+    {% block scripts %}{% endblock %}
+  </body>
+</html>

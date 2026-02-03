@@ -47,7 +47,16 @@ python backend/manage.py runserver
 
 ## Быстрая проверка через браузер
 
-- `http://127.0.0.1:8000/app/` — основная MVP‑консоль (Auth, Profile, Universities, My Universities, Applications, Tasks, Documents, AI).
+- `http://127.0.0.1:8000/` — публичный лендинг Enroll AI.
+- `http://127.0.0.1:8000/register` — регистрация.
+- `http://127.0.0.1:8000/login` — вход.
+- `http://127.0.0.1:8000/dashboard/` — основная точка входа.
+- `http://127.0.0.1:8000/onboarding/` — заполнение профиля.
+- `http://127.0.0.1:8000/applications/` — управление списком университетов.
+- `http://127.0.0.1:8000/tasks/` — задачи и генерация чеклиста.
+- `http://127.0.0.1:8000/documents/` — документы и версии.
+- `http://127.0.0.1:8000/common-app/` — Common App Draft (AI stub).
+- `http://127.0.0.1:8000/app/` — API‑консоль.
 - `http://127.0.0.1:8000/applications-ui/` — минимальная форма для Applications API.
 
 Откройте `/app/` и выполните регистрацию/логин, затем используйте UI для демонстрации API. Страница `/applications-ui/` оставлена как простой тестовый экран для Applications. 【F:backend/config/urls.py†L1-L9】【F:backend/apps/universities/urls.py†L1-L14】
