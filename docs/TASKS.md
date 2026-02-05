@@ -13,6 +13,9 @@
 - UI страницы для структуры: Dashboard, Onboarding, Universities, Tasks, Documents, Common App Draft.
 - Минимальный UI для проверок: `/app/` и `/applications-ui/` (с навигацией).
 - Публичный лендинг Enroll AI + страницы входа/регистрации.
+- Лендинг обновлён по `docs/ENROLL_UI_REFERENCE.md` (новая навигация, каталожные карточки, сториблок, FAQ, тариф, футер).
+- Обновлён визуал внутренних UI страниц (Dashboard, Onboarding, Universities, Tasks, Documents, Common App) под единый стиль.
+- Добавлены настройки профиля: Settings страница, смена пароля, выход из аккаунта.
 
 ## Дальше по MVP (из MVP_SPEC.md)
 - Финализация Applications workflow (последний этап).

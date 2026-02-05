@@ -1,15 +1,18 @@
-{% extends "ui/base.html" %}
+﻿{% extends "ui/base.html" %}
+{% load static %}
+
+{% block page_title %}Documents{% endblock %}
+{% block page_heading %}Documents{% endblock %}
+{% block page_subtitle %}Store drafts, manage versions, and track outputs.{% endblock %}
 
 {% block content %}
   <section class="card">
-    <h2>Documents</h2>
-    <p>Store drafts and manage versions.</p>
-  </section>
-
-  <section class="card">
+    <div class="card-title">
+      <img src="{% static 'icons/documents.svg' %}" alt="" />
+      <h2>Create document</h2>
+    </div>
     <div class="grid-2">
       <div>
-        <h2>Create document</h2>
         <label for="doc-title">Title</label>
         <input id="doc-title" type="text" />
         <label for="doc-type">Type</label>
@@ -21,11 +24,16 @@
         </select>
         <label for="doc-application-id">Application ID (optional)</label>
         <input id="doc-application-id" type="number" />
-        <button id="create-document">Create document</button>
+        <div class="form-actions">
+          <button id="create-document">Create document</button>
+        </div>
         <div id="document-create-status" class="status info"></div>
       </div>
       <div>
-        <h2>Add version</h2>
+        <div class="card-title">
+          <img src="{% static 'icons/documents.svg' %}" alt="" />
+          <h2>Add version</h2>
+        </div>
         <label for="doc-version-id">Document ID</label>
         <input id="doc-version-id" type="number" />
         <label for="doc-version-content">Content</label>
@@ -35,26 +43,35 @@
           <option value="user">user</option>
           <option value="ai">ai</option>
         </select>
-        <button id="create-version" class="secondary">Add version</button>
+        <div class="form-actions">
+          <button id="create-version" class="secondary">Add version</button>
+        </div>
         <div id="document-version-status" class="status info"></div>
       </div>
     </div>
   </section>
 
   <section class="card">
-    <h2>Document list</h2>
-    <button id="load-documents" class="secondary">Load documents</button>
+    <div class="card-title">
+      <img src="{% static 'icons/documents.svg' %}" alt="" />
+      <h2>Document list</h2>
+    </div>
+    <div class="form-actions">
+      <button id="load-documents" class="secondary">Load documents</button>
+    </div>
     <div id="document-load-status" class="status info"></div>
-    <table>
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Title</th>
-          <th>Type</th>
-        </tr>
-      </thead>
-      <tbody id="documents-body"></tbody>
-    </table>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Title</th>
+            <th>Type</th>
+          </tr>
+        </thead>
+        <tbody id="documents-body"></tbody>
+      </table>
+    </div>
   </section>
 {% endblock %}
 
@@ -67,6 +84,7 @@
         return;
       }
       const { request, setStatus, toNumber } = api;
+      const { createSkeletonRows, setButtonLoading } = window.ui || {};
 
       function renderDocuments(items) {
         const body = document.getElementById("documents-body");
@@ -85,18 +103,28 @@
 
       async function loadDocuments() {
         const status = document.getElementById("document-load-status");
+        const button = document.getElementById("load-documents");
+        if (setButtonLoading) setButtonLoading(button, true);
         setStatus(status, "Loading documents...");
+        const body = document.getElementById("documents-body");
+        if (body && createSkeletonRows) {
+          body.innerHTML = createSkeletonRows(3, 4);
+        }
         try {
           const data = await request("/api/documents/");
           renderDocuments(data);
           setStatus(status, `Loaded ${data.length}.`, "success");
         } catch (error) {
           setStatus(status, error.message, "error");
+        } finally {
+          if (setButtonLoading) setButtonLoading(button, false);
         }
       }
 
       async function createDocument() {
         const status = document.getElementById("document-create-status");
+        const button = document.getElementById("create-document");
+        if (setButtonLoading) setButtonLoading(button, true);
         setStatus(status, "Creating document...");
         try {
           await request("/api/documents/", {
@@ -111,11 +139,15 @@
           await loadDocuments();
         } catch (error) {
           setStatus(status, error.message, "error");
+        } finally {
+          if (setButtonLoading) setButtonLoading(button, false);
         }
       }
 
       async function addVersion() {
         const status = document.getElementById("document-version-status");
+        const button = document.getElementById("create-version");
+        if (setButtonLoading) setButtonLoading(button, true);
         setStatus(status, "Adding version...");
         try {
           const docId = toNumber(document.getElementById("doc-version-id").value);
@@ -132,6 +164,8 @@
           setStatus(status, "Version added.", "success");
         } catch (error) {
           setStatus(status, error.message, "error");
+        } finally {
+          if (setButtonLoading) setButtonLoading(button, false);
         }
       }
 

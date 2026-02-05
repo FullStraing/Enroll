@@ -1,9 +1,16 @@
-{% extends "ui/base.html" %}
+﻿{% extends "ui/base.html" %}
+{% load static %}
+
+{% block page_title %}Onboarding{% endblock %}
+{% block page_heading %}Onboarding{% endblock %}
+{% block page_subtitle %}Capture the core profile needed to structure the admissions plan.{% endblock %}
 
 {% block content %}
   <section class="card">
-    <h2>Onboarding</h2>
-    <p>Capture the core profile needed to structure the admissions plan.</p>
+    <div class="card-title">
+      <img src="{% static 'icons/onboarding.svg' %}" alt="" />
+      <h2>Student profile</h2>
+    </div>
     <div class="grid-2">
       <div>
         <label for="full-name">Full name</label>
@@ -35,9 +42,9 @@
         </select>
       </div>
     </div>
-    <div style="margin-top: 12px; display: flex; gap: 10px; flex-wrap: wrap;">
-      <button id="load-profile">Load profile</button>
-      <button id="save-profile" class="secondary">Save profile</button>
+    <div class="form-actions">
+      <button id="load-profile" class="secondary">Load profile</button>
+      <button id="save-profile">Save profile</button>
     </div>
     <div id="profile-status" class="status info"></div>
   </section>
@@ -52,6 +59,7 @@
         return;
       }
       const { request, setStatus, toNumber, toValue } = api;
+      const { setButtonLoading } = window.ui || {};
 
       function readForm() {
         return {
@@ -79,6 +87,8 @@
 
       async function loadProfile() {
         const status = document.getElementById("profile-status");
+        const button = document.getElementById("load-profile");
+        if (setButtonLoading) setButtonLoading(button, true);
         setStatus(status, "Loading profile...");
         try {
           const data = await request("/api/auth/profile/");
@@ -86,11 +96,15 @@
           setStatus(status, "Profile loaded.", "success");
         } catch (error) {
           setStatus(status, error.message, "error");
+        } finally {
+          if (setButtonLoading) setButtonLoading(button, false);
         }
       }
 
       async function saveProfile() {
         const status = document.getElementById("profile-status");
+        const button = document.getElementById("save-profile");
+        if (setButtonLoading) setButtonLoading(button, true);
         setStatus(status, "Saving profile...");
         try {
           await request("/api/auth/profile/", {
@@ -100,6 +114,8 @@
           setStatus(status, "Profile saved.", "success");
         } catch (error) {
           setStatus(status, error.message, "error");
+        } finally {
+          if (setButtonLoading) setButtonLoading(button, false);
         }
       }
 

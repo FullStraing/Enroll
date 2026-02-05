@@ -1,3 +1,4 @@
+﻿{% load static %}
 <!doctype html>
 <html lang="ru">
   <head>
@@ -6,68 +7,123 @@
     <title>Enroll AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
   </head>
-  <body class="bg-[#0B0F19] text-white">
-    <div class="relative overflow-hidden">
-      <div
-        aria-hidden="true"
-        class="pointer-events-none absolute -top-40 left-1/2 h-80 w-80 -translate-x-1/2 rounded-full bg-[radial-gradient(circle_at_center,rgba(167,139,250,0.18),transparent_70%)] opacity-70 blur-3xl animate-[pulse_8s_ease-in-out_infinite]"
-      ></div>
-      <div
-        aria-hidden="true"
-        class="pointer-events-none absolute top-40 right-10 h-72 w-72 rounded-full bg-[radial-gradient(circle_at_center,rgba(34,211,238,0.18),transparent_70%)] opacity-70 blur-3xl animate-[pulse_10s_ease-in-out_infinite]"
-      ></div>
-    </div>
+  <body class="bg-[color:var(--bg)] text-[color:var(--text)] antialiased">
+    <div class="relative min-h-screen overflow-hidden">
+      <div aria-hidden="true" class="pointer-events-none absolute inset-0">
+        <div
+          class="absolute inset-0"
+          style="background: linear-gradient(135deg, var(--bg) 0%, #050b20 45%, rgba(30,75,255,0.18) 100%);"
+        ></div>
+        <div
+          class="absolute -top-48 right-[-8rem] h-96 w-96 rounded-full opacity-60 blur-3xl"
+          style="background: radial-gradient(circle at center, rgba(30,75,255,0.35), transparent 70%);"
+        ></div>
+        <div
+          class="absolute left-[-10rem] top-1/3 h-80 w-80 rounded-full opacity-40 blur-3xl"
+          style="background: radial-gradient(circle at center, rgba(191,231,255,0.35), transparent 70%);"
+        ></div>
+      </div>
 
-    <main class="relative z-10 mx-auto flex max-w-6xl flex-col gap-16 px-6 pb-20 pt-14 sm:px-10">
-      {% include "landing/hero.html" %}
-      {% include "landing/features.html" %}
-      {% include "landing/steps.html" %}
-      {% include "landing/faq.html" %}
-      {% include "landing/cta.html" %}
-      <footer id="footer-disclaimer" class="text-xs text-slate-400"></footer>
-    </main>
+      <div class="relative z-10 mx-auto flex min-h-screen max-w-7xl flex-col px-6 sm:px-10">
+        {% include "landing/nav.html" %}
+
+        <main class="flex flex-col gap-20 pb-20 pt-6 sm:pt-10">
+          {% include "landing/hero.html" %}
+          {% include "landing/features.html" %}
+          {% include "landing/story.html" %}
+          {% include "landing/faq.html" %}
+          {% include "landing/cta.html" %}
+        </main>
+
+        {% include "landing/footer.html" %}
+      </div>
+    </div>
 
     <script>
       const LANDING_CONFIG = {
         colors: {
-          bg: "#0B0F19",
-          card: "rgba(255,255,255,0.04)",
-          cardBorder: "rgba(255,255,255,0.08)",
-          accentCyan: "#22D3EE",
-          accentViolet: "#A78BFA",
-          textMuted: "#E2E8F0",
+          bg: "#050608",
+          panel: "rgba(255,255,255,0.04)",
+          border: "rgba(255,255,255,0.10)",
+          text: "#F5F7FF",
+          muted: "rgba(245,247,255,0.70)",
+          accentBlue: "#1E4BFF",
+          accentIce: "#BFE7FF",
+          accentSilver: "#DCE3EA",
         },
         copy: {
-          brand: "Enroll AI",
-          heroTitle: "Поступление в США — без хаоса.",
+          brand: "ENROLL",
+          navProduct: "О продукте",
+          navPricing: "Тариф",
+          navLogin: "Войти",
+          heroTitle: "Поступление в США — по шагам.",
           heroSub:
-            "Enroll AI ведёт по шагам: профиль → дедлайны → документы → черновики для Common App (без интеграции в MVP).",
+            "Профиль → дедлайны → документы → черновики для Common App (без интеграции в MVP).",
+          heroNote: "Не гарантия поступления. Решение принимает университет.",
           primaryAuthed: "Перейти в Dashboard",
           primaryGuest: "Создать аккаунт",
           secondaryCta: "Войти",
-          finalTitle: "Готов начать структурно?",
-          finalSub: "Сделай первый шаг и получи понятный план.",
-        disclaimer: "Не гарантия поступления. Решение принимает университет.",
+          featuresTitle: "Каталог возможностей",
+          featuresHint: "Прокрути →",
+          storyTitle: "Почему Enroll",
+          faqTitle: "FAQ",
+          pricingTitle: "Тариф",
+          pricingSub: "MVP доступ. Детали после регистрации.",
+          pricingPlanTitle: "MVP доступ",
+          pricingPlanText:
+            "Базовые функции подготовки: roadmap, дедлайны, документы, черновики.",
+          footerPrivacy: "Политика",
+          footerTerms: "Условия",
+          footerContact: "Контакт",
+          footerDisclaimer: "Не гарантия поступления. Решение принимает университет.",
         },
         features: [
           {
-            title: "Roadmap",
-            text: "Понятные этапы и прогресс.",
+            title: "Roadmap поступления",
+            subtitle: "Этапы и прогресс.",
+            gradient:
+              "linear-gradient(135deg, rgba(30,75,255,0.45), rgba(5,6,8,0))",
           },
           {
-            title: "Дедлайны",
-            text: "Ничего не пропустишь.",
+            title: "Дедлайны и напоминания",
+            subtitle: "Всегда в срок.",
+            gradient:
+              "linear-gradient(135deg, rgba(191,231,255,0.4), rgba(5,6,8,0))",
           },
           {
-            title: "Документы + ИИ",
-            text: "Версии, правки, черновики.",
+            title: "Документы и версии",
+            subtitle: "Статусы и история.",
+            gradient:
+              "linear-gradient(135deg, rgba(220,227,234,0.4), rgba(5,6,8,0))",
+          },
+          {
+            title: "Проверка эссе",
+            subtitle: "Фидбек и ревизии.",
+            gradient:
+              "linear-gradient(135deg, rgba(30,75,255,0.3), rgba(5,6,8,0))",
+          },
+          {
+            title: "Подбор университетов",
+            subtitle: "Список и приоритет.",
+            gradient:
+              "linear-gradient(135deg, rgba(191,231,255,0.35), rgba(5,6,8,0))",
+          },
+          {
+            title: "Черновики для Common App",
+            subtitle: "Без интеграции в MVP.",
+            gradient:
+              "linear-gradient(135deg, rgba(220,227,234,0.35), rgba(5,6,8,0))",
           },
         ],
-        steps: [
-          "Заполни профиль",
-          "Добавь университеты",
-          "Получи план и задачи",
-          "Готовь документы и подавай",
+        story: [
+          {
+            title: "Почему это нужно",
+            text: "Хаос дедлайнов и документов превращается в систему с понятным прогрессом.",
+          },
+          {
+            title: "Для кого",
+            text: "Для абитуриентов СНГ, которые поступают в США и хотят держать процесс под контролем.",
+          },
         ],
         faq: [
           {
@@ -79,7 +135,7 @@
             a: "В MVP — нет. Мы готовим черновики и проверку, ты переносишь в Common App вручную.",
           },
           {
-            q: "Сколько времени занять старт?",
+            q: "Сколько времени занимает старт?",
             a: "10–15 минут, чтобы заполнить профиль и получить план.",
           },
         ],
@@ -87,6 +143,9 @@
           dashboard: "/dashboard/",
           register: "/register",
           login: "/login",
+          privacy: "#",
+          terms: "#",
+          contact: "mailto:hello@enroll.ai",
         },
       };
 
@@ -95,10 +154,13 @@
       function applyColors() {
         const root = document.documentElement;
         root.style.setProperty("--bg", LANDING_CONFIG.colors.bg);
-        root.style.setProperty("--card", LANDING_CONFIG.colors.card);
-        root.style.setProperty("--card-border", LANDING_CONFIG.colors.cardBorder);
-        root.style.setProperty("--accent-cyan", LANDING_CONFIG.colors.accentCyan);
-        root.style.setProperty("--accent-violet", LANDING_CONFIG.colors.accentViolet);
+        root.style.setProperty("--panel", LANDING_CONFIG.colors.panel);
+        root.style.setProperty("--border", LANDING_CONFIG.colors.border);
+        root.style.setProperty("--text", LANDING_CONFIG.colors.text);
+        root.style.setProperty("--muted", LANDING_CONFIG.colors.muted);
+        root.style.setProperty("--accent-blue", LANDING_CONFIG.colors.accentBlue);
+        root.style.setProperty("--accent-ice", LANDING_CONFIG.colors.accentIce);
+        root.style.setProperty("--accent-silver", LANDING_CONFIG.colors.accentSilver);
       }
 
       function isAuthed() {
@@ -110,8 +172,15 @@
         if (el) el.textContent = value;
       }
 
+      function setLink(id, label, href) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (label) el.textContent = label;
+        if (href) el.setAttribute("href", href);
+      }
+
       function renderFeatures() {
-        const container = document.getElementById("features-grid");
+        const container = document.getElementById("features-strip");
         if (!container) return;
         container.innerHTML = LANDING_CONFIG.features
           .map(
@@ -119,33 +188,35 @@
               <a
                 href="${LANDING_CONFIG.routes.dashboard}"
                 data-auth-required="true"
-                class="group rounded-2xl border border-[color:var(--card-border)] bg-[color:var(--card)] p-6 transition hover:-translate-y-1 hover:border-[color:var(--accent-cyan)] hover:shadow-[0_0_16px_rgba(34,211,238,0.2)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-cyan)] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0B0F19]"
+                class="group relative min-w-[240px] flex-1 overflow-hidden rounded-2xl border border-[color:var(--border)] bg-[color:var(--panel)] p-5 transition duration-200 hover:-translate-y-1 hover:border-[color:var(--accent-ice)] hover:shadow-[0_0_18px_rgba(191,231,255,0.25)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-blue)] focus-visible:ring-offset-2 focus-visible:ring-offset-[#050608]"
               >
-                <h3 class="text-lg font-semibold text-white">${item.title}</h3>
-                <p class="mt-2 text-sm text-slate-200">${item.text}</p>
-                <span class="mt-4 inline-flex text-xs font-semibold uppercase tracking-[0.3em] text-[color:var(--accent-violet)] opacity-70 group-hover:opacity-100">
-                  Подробнее
-                </span>
+                <div
+                  class="pointer-events-none absolute inset-0 opacity-70"
+                  style="background-image: ${item.gradient};"
+                ></div>
+                <div class="relative z-10">
+                  <p class="text-xs uppercase tracking-[0.2em] text-[color:var(--accent-silver)]">
+                    Enroll
+                  </p>
+                  <h3 class="mt-4 text-lg font-semibold text-white">${item.title}</h3>
+                  <p class="mt-2 text-sm text-[color:var(--muted)]">${item.subtitle}</p>
+                </div>
               </a>
             `
           )
           .join("");
       }
 
-      function renderSteps() {
-        const container = document.getElementById("steps-list");
+      function renderStory() {
+        const container = document.getElementById("story-grid");
         if (!container) return;
-        container.innerHTML = LANDING_CONFIG.steps
+        container.innerHTML = LANDING_CONFIG.story
           .map(
-            (step, index) => `
-              <li class="flex items-start gap-4 rounded-2xl border border-[color:var(--card-border)] bg-[color:var(--card)] p-5">
-                <span class="flex h-9 w-9 items-center justify-center rounded-full border border-[color:var(--accent-cyan)] text-sm font-semibold text-[color:var(--accent-cyan)]">
-                  0${index + 1}
-                </span>
-                <div>
-                  <p class="text-sm font-semibold text-white">${step}</p>
-                </div>
-              </li>
+            (item) => `
+              <div class="rounded-2xl border border-[color:var(--border)] bg-[color:var(--panel)] p-6">
+                <h3 class="text-lg font-semibold text-white">${item.title}</h3>
+                <p class="mt-3 text-sm text-[color:var(--muted)]">${item.text}</p>
+              </div>
             `
           )
           .join("");
@@ -157,20 +228,41 @@
         container.innerHTML = LANDING_CONFIG.faq
           .map(
             (item) => `
-              <div class="rounded-2xl border border-[color:var(--card-border)] bg-[color:var(--card)] p-5">
+              <div class="rounded-2xl border border-[color:var(--border)] bg-[color:var(--panel)] p-5">
                 <p class="text-sm font-semibold text-white">${item.q}</p>
-                <p class="mt-2 text-sm text-slate-200">${item.a}</p>
+                <p class="mt-2 text-sm text-[color:var(--muted)]">${item.a}</p>
               </div>
             `
           )
           .join("");
       }
 
+      function setupCopy() {
+        setText("brand-text", LANDING_CONFIG.copy.brand);
+        setText("hero-title", LANDING_CONFIG.copy.heroTitle);
+        setText("hero-sub", LANDING_CONFIG.copy.heroSub);
+        setText("hero-note", LANDING_CONFIG.copy.heroNote);
+        setText("features-title", LANDING_CONFIG.copy.featuresTitle);
+        setText("features-hint", LANDING_CONFIG.copy.featuresHint);
+        setText("story-title", LANDING_CONFIG.copy.storyTitle);
+        setText("faq-title", LANDING_CONFIG.copy.faqTitle);
+        setText("pricing-title", LANDING_CONFIG.copy.pricingTitle);
+        setText("pricing-sub", LANDING_CONFIG.copy.pricingSub);
+        setText("pricing-plan-title", LANDING_CONFIG.copy.pricingPlanTitle);
+        setText("pricing-plan-text", LANDING_CONFIG.copy.pricingPlanText);
+        setText("footer-disclaimer", LANDING_CONFIG.copy.footerDisclaimer);
+
+        setLink("nav-product", LANDING_CONFIG.copy.navProduct);
+        setLink("nav-pricing", LANDING_CONFIG.copy.navPricing);
+        setLink("nav-login", LANDING_CONFIG.copy.navLogin, LANDING_CONFIG.routes.login);
+        setLink("hero-secondary-cta", LANDING_CONFIG.copy.secondaryCta, LANDING_CONFIG.routes.login);
+        setLink("footer-privacy", LANDING_CONFIG.copy.footerPrivacy, LANDING_CONFIG.routes.privacy);
+        setLink("footer-terms", LANDING_CONFIG.copy.footerTerms, LANDING_CONFIG.routes.terms);
+        setLink("footer-contact", LANDING_CONFIG.copy.footerContact, LANDING_CONFIG.routes.contact);
+      }
+
       function setupCtas() {
         const authed = isAuthed();
-        const primary = document.getElementById("primary-cta");
-        const finalPrimary = document.getElementById("final-primary-cta");
-
         const primaryLabel = authed
           ? LANDING_CONFIG.copy.primaryAuthed
           : LANDING_CONFIG.copy.primaryGuest;
@@ -178,17 +270,9 @@
           ? LANDING_CONFIG.routes.dashboard
           : LANDING_CONFIG.routes.register;
 
-        if (primary) {
-          primary.textContent = primaryLabel;
-          primary.href = primaryHref;
-        }
-        if (finalPrimary) {
-          finalPrimary.textContent = primaryLabel;
-          finalPrimary.href = primaryHref;
-        }
-
-        const secondary = document.getElementById("secondary-cta");
-        if (secondary) secondary.textContent = LANDING_CONFIG.copy.secondaryCta;
+        setLink("nav-primary-cta", primaryLabel, primaryHref);
+        setLink("hero-primary-cta", primaryLabel, primaryHref);
+        setLink("pricing-cta", primaryLabel, primaryHref);
       }
 
       function guardAuthLinks() {
@@ -232,14 +316,9 @@
 
       document.addEventListener("DOMContentLoaded", () => {
         applyColors();
-        setText("brand", LANDING_CONFIG.copy.brand);
-        setText("hero-title", LANDING_CONFIG.copy.heroTitle);
-        setText("hero-sub", LANDING_CONFIG.copy.heroSub);
-        setText("final-title", LANDING_CONFIG.copy.finalTitle);
-        setText("final-sub", LANDING_CONFIG.copy.finalSub);
-        setText("footer-disclaimer", LANDING_CONFIG.copy.disclaimer);
+        setupCopy();
         renderFeatures();
-        renderSteps();
+        renderStory();
         renderFaq();
         setupCtas();
         guardAuthLinks();

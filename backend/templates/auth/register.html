@@ -30,6 +30,8 @@
     </main>
     <script>
       const tokenKey = "enroll_token";
+      const refreshKey = "enroll_refresh";
+      const cookieMaxAge = 60 * 60 * 24 * 30;
       const statusEl = document.getElementById("register-status");
 
       function setStatus(text, isError = false) {
@@ -67,6 +69,8 @@
           }
           const data = await loginResponse.json();
           localStorage.setItem(tokenKey, data.access);
+          localStorage.setItem(refreshKey, data.refresh || "");
+          document.cookie = `${tokenKey}=${data.access}; Path=/; Max-Age=${cookieMaxAge}; SameSite=Lax`;
           window.location.href = "/dashboard/";
         } catch (error) {
           setStatus(error.message, true);

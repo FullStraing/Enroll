@@ -1,15 +1,18 @@
-{% extends "ui/base.html" %}
+﻿{% extends "ui/base.html" %}
+{% load static %}
+
+{% block page_title %}Tasks{% endblock %}
+{% block page_heading %}Tasks{% endblock %}
+{% block page_subtitle %}Manage roadmap tasks and generate a baseline checklist.{% endblock %}
 
 {% block content %}
   <section class="card">
-    <h2>Tasks</h2>
-    <p>Manage roadmap tasks and generate a baseline checklist.</p>
-  </section>
-
-  <section class="card">
+    <div class="card-title">
+      <img src="{% static 'icons/tasks.svg' %}" alt="" />
+      <h2>Create task</h2>
+    </div>
     <div class="grid-2">
       <div>
-        <h2>Create task</h2>
         <label for="task-title">Title</label>
         <input id="task-title" type="text" />
         <label for="task-description">Description</label>
@@ -30,43 +33,57 @@
         </select>
         <label for="task-application-id">Application ID (optional)</label>
         <input id="task-application-id" type="number" />
-        <button id="create-task">Create task</button>
+        <div class="form-actions">
+          <button id="create-task">Create task</button>
+        </div>
         <div id="task-create-status" class="status info"></div>
       </div>
       <div>
-        <h2>Generate from templates</h2>
+        <div class="card-title">
+          <img src="{% static 'icons/dashboard.svg' %}" alt="" />
+          <h2>Generate from templates</h2>
+        </div>
         <label for="task-generate-application">Application ID (optional)</label>
         <input id="task-generate-application" type="number" />
-        <button id="generate-tasks" class="secondary">Generate tasks</button>
+        <div class="form-actions">
+          <button id="generate-tasks" class="secondary">Generate tasks</button>
+        </div>
         <div id="task-generate-status" class="status info"></div>
       </div>
     </div>
   </section>
 
   <section class="card">
-    <h2>Task list</h2>
+    <div class="card-title">
+      <img src="{% static 'icons/tasks.svg' %}" alt="" />
+      <h2>Task list</h2>
+    </div>
     <div class="grid-2">
       <div>
         <label for="task-filter-status">Status filter</label>
         <input id="task-filter-status" type="text" placeholder="planned / in_progress / done" />
         <label for="task-filter-application">Application ID filter</label>
         <input id="task-filter-application" type="number" />
-        <button id="load-tasks" class="secondary">Load tasks</button>
+        <div class="form-actions">
+          <button id="load-tasks" class="secondary">Load tasks</button>
+        </div>
         <div id="task-load-status" class="status info"></div>
       </div>
     </div>
-    <table>
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Title</th>
-          <th>Status</th>
-          <th>Due</th>
-          <th>Priority</th>
-        </tr>
-      </thead>
-      <tbody id="tasks-body"></tbody>
-    </table>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Title</th>
+            <th>Status</th>
+            <th>Due</th>
+            <th>Priority</th>
+          </tr>
+        </thead>
+        <tbody id="tasks-body"></tbody>
+      </table>
+    </div>
   </section>
 {% endblock %}
 
@@ -79,6 +96,7 @@
         return;
       }
       const { request, setStatus, toNumber } = api;
+      const { createSkeletonRows, setButtonLoading } = window.ui || {};
 
       function renderTasks(items) {
         const body = document.getElementById("tasks-body");
@@ -99,7 +117,13 @@
 
       async function loadTasks() {
         const status = document.getElementById("task-load-status");
+        const button = document.getElementById("load-tasks");
+        if (setButtonLoading) setButtonLoading(button, true);
         setStatus(status, "Loading tasks...");
+        const body = document.getElementById("tasks-body");
+        if (body && createSkeletonRows) {
+          body.innerHTML = createSkeletonRows(5, 4);
+        }
         try {
           const params = new URLSearchParams();
           const statusValue = document.getElementById("task-filter-status").value.trim();
@@ -113,11 +137,15 @@
           setStatus(status, `Loaded ${data.length}.`, "success");
         } catch (error) {
           setStatus(status, error.message, "error");
+        } finally {
+          if (setButtonLoading) setButtonLoading(button, false);
         }
       }
 
       async function createTask() {
         const status = document.getElementById("task-create-status");
+        const button = document.getElementById("create-task");
+        if (setButtonLoading) setButtonLoading(button, true);
         setStatus(status, "Creating task...");
         try {
           await request("/api/tasks/", {
@@ -135,11 +163,15 @@
           await loadTasks();
         } catch (error) {
           setStatus(status, error.message, "error");
+        } finally {
+          if (setButtonLoading) setButtonLoading(button, false);
         }
       }
 
       async function generateTasks() {
         const status = document.getElementById("task-generate-status");
+        const button = document.getElementById("generate-tasks");
+        if (setButtonLoading) setButtonLoading(button, true);
         setStatus(status, "Generating tasks...");
         try {
           const payload = {
@@ -156,6 +188,8 @@
           await loadTasks();
         } catch (error) {
           setStatus(status, error.message, "error");
+        } finally {
+          if (setButtonLoading) setButtonLoading(button, false);
         }
       }
 

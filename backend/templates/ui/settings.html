@@ -1,0 +1,159 @@
+﻿{% extends "ui/base.html" %}
+{% load static %}
+
+{% block page_title %}Settings{% endblock %}
+{% block page_heading %}Settings{% endblock %}
+{% block page_subtitle %}Manage profile, security, and access.{% endblock %}
+
+{% block content %}
+  <section class="card">
+    <div class="card-title">
+      <img src="{% static 'icons/settings.svg' %}" alt="" />
+      <h2>Profile</h2>
+    </div>
+    <div class="grid-2">
+      <div>
+        <label for="profile-username">Username</label>
+        <input id="profile-username" type="text" readonly />
+        <label for="profile-full-name">Full name</label>
+        <input id="profile-full-name" type="text" />
+      </div>
+      <div>
+        <label for="profile-country">Country</label>
+        <input id="profile-country" type="text" />
+        <label for="profile-major">Intended major</label>
+        <input id="profile-major" type="text" />
+      </div>
+    </div>
+    <div class="form-actions">
+      <button id="load-profile" class="secondary">Load profile</button>
+      <button id="save-profile">Save profile</button>
+    </div>
+    <div id="profile-status" class="status info"></div>
+  </section>
+
+  <section class="card">
+    <div class="card-title">
+      <img src="{% static 'icons/documents.svg' %}" alt="" />
+      <h2>Change password</h2>
+    </div>
+    <div class="grid-2">
+      <div>
+        <label for="old-password">Current password</label>
+        <input id="old-password" type="password" />
+      </div>
+      <div>
+        <label for="new-password">New password</label>
+        <input id="new-password" type="password" />
+      </div>
+    </div>
+    <div class="form-actions">
+      <button id="change-password">Update password</button>
+    </div>
+    <div id="password-status" class="status info"></div>
+  </section>
+
+  <section class="card">
+    <div class="card-title">
+      <img src="{% static 'icons/dashboard.svg' %}" alt="" />
+      <h2>Session</h2>
+    </div>
+    <p>Sign out from this device.</p>
+    <div class="form-actions">
+      <button id="logout-now" class="ghost">Выйти</button>
+    </div>
+  </section>
+{% endblock %}
+
+{% block scripts %}
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const api = window.api;
+      if (!api || !api.request) {
+        console.error("API helpers not loaded.");
+        return;
+      }
+      const { request, setStatus, toValue } = api;
+      const { setButtonLoading } = window.ui || {};
+
+      async function loadProfile() {
+        const status = document.getElementById("profile-status");
+        const button = document.getElementById("load-profile");
+        if (setButtonLoading) setButtonLoading(button, true);
+        setStatus(status, "Loading profile...");
+        try {
+          const profile = await request("/api/auth/profile/");
+          const me = await request("/api/me/");
+          document.getElementById("profile-username").value = toValue(me.username);
+          document.getElementById("profile-full-name").value = toValue(profile.full_name);
+          document.getElementById("profile-country").value = toValue(profile.country);
+          document.getElementById("profile-major").value = toValue(profile.intended_major);
+          setStatus(status, "Profile loaded.", "success");
+        } catch (error) {
+          setStatus(status, error.message, "error");
+        } finally {
+          if (setButtonLoading) setButtonLoading(button, false);
+        }
+      }
+
+      async function saveProfile() {
+        const status = document.getElementById("profile-status");
+        const button = document.getElementById("save-profile");
+        if (setButtonLoading) setButtonLoading(button, true);
+        setStatus(status, "Saving profile...");
+        try {
+          await request("/api/auth/profile/", {
+            method: "PUT",
+            body: JSON.stringify({
+              full_name: document.getElementById("profile-full-name").value.trim(),
+              country: document.getElementById("profile-country").value.trim(),
+              intended_major: document.getElementById("profile-major").value.trim(),
+            }),
+          });
+          setStatus(status, "Profile saved.", "success");
+        } catch (error) {
+          setStatus(status, error.message, "error");
+        } finally {
+          if (setButtonLoading) setButtonLoading(button, false);
+        }
+      }
+
+      async function changePassword() {
+        const status = document.getElementById("password-status");
+        const button = document.getElementById("change-password");
+        if (setButtonLoading) setButtonLoading(button, true);
+        setStatus(status, "Updating password...");
+        try {
+          await request("/api/auth/change-password/", {
+            method: "POST",
+            body: JSON.stringify({
+              old_password: document.getElementById("old-password").value,
+              new_password: document.getElementById("new-password").value,
+            }),
+          });
+          document.getElementById("old-password").value = "";
+          document.getElementById("new-password").value = "";
+          setStatus(status, "Password updated.", "success");
+        } catch (error) {
+          setStatus(status, error.message, "error");
+        } finally {
+          if (setButtonLoading) setButtonLoading(button, false);
+        }
+      }
+
+      function logoutNow() {
+        localStorage.removeItem("enroll_token");
+        localStorage.removeItem("enroll_refresh");
+        document.cookie = "enroll_token=; Path=/; Max-Age=0; SameSite=Lax";
+        window.location.href = "/";
+      }
+
+      document.getElementById("load-profile").addEventListener("click", loadProfile);
+      document.getElementById("save-profile").addEventListener("click", saveProfile);
+      document.getElementById("change-password").addEventListener("click", changePassword);
+      document.getElementById("logout-now").addEventListener("click", logoutNow);
+
+      loadProfile();
+    });
+  </script>
+{% endblock %}

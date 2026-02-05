@@ -15,6 +15,7 @@ urlpatterns = [
     path("tasks/", TemplateView.as_view(template_name="ui/tasks.html"), name="tasks"),
     path("documents/", TemplateView.as_view(template_name="ui/documents.html"), name="documents"),
     path("common-app/", TemplateView.as_view(template_name="ui/common_app.html"), name="common_app"),
+    path("settings/", TemplateView.as_view(template_name="ui/settings.html"), name="settings"),
     path("admin/", admin.site.urls),
     path("api/", include("apps.core.urls")),
     path("applications-ui/", ApplicationsBrowserView.as_view(), name="applications_ui"),

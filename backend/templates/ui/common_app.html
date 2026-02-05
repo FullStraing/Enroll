@@ -1,12 +1,16 @@
-{% extends "ui/base.html" %}
+﻿{% extends "ui/base.html" %}
+{% load static %}
+
+{% block page_title %}Common App Draft{% endblock %}
+{% block page_heading %}Common App Draft{% endblock %}
+{% block page_subtitle %}Generate draft responses per section. AI is currently a stub.{% endblock %}
 
 {% block content %}
   <section class="card">
-    <h2>Common App Draft</h2>
-    <p>Generate draft responses per section. AI is currently a stub.</p>
-  </section>
-
-  <section class="card">
+    <div class="card-title">
+      <img src="{% static 'icons/common-app.svg' %}" alt="" />
+      <h2>Common App Draft</h2>
+    </div>
     <label for="commonapp-section">Section</label>
     <select id="commonapp-section">
       <option value="personal_info">Personal info</option>
@@ -17,7 +21,9 @@
     </select>
     <label for="commonapp-input">Your notes</label>
     <textarea id="commonapp-input" placeholder="Write key points for this section"></textarea>
-    <button id="generate-commonapp">Generate draft</button>
+    <div class="form-actions">
+      <button id="generate-commonapp">Generate draft</button>
+    </div>
     <div id="commonapp-status" class="status info"></div>
     <label for="commonapp-output">Draft output</label>
     <textarea id="commonapp-output" readonly></textarea>
