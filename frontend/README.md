@@ -27,6 +27,7 @@ Protected:
 - `/dashboard`
 - `/onboarding`
 - `/applications`
+- `/calendar`
 - `/tasks`
 - `/documents`
 - `/common-app`
@@ -36,4 +37,5 @@ Protected:
 
 - Auth uses the same JWT flow as backend (`/api/auth/token/`) with `enroll_token` cookie and localStorage.
 - Middleware protects workspace routes and redirects unauthenticated users to `/login`.
-- Backend templates can remain in repo for fallback/admin usage, but product flow is handled by Next.js.
+- Main planning flow is on `/calendar`; `/tasks` is kept as a compatibility redirect to `/calendar`.
+- Backend now runs as API/admin only (`/api/*`, `/admin/*`), and product UI is fully handled by Next.js.

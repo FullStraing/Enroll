@@ -16,9 +16,9 @@ python backend/manage.py migrate
 python backend/manage.py runserver
 ```
 
-## Next.js frontend (инкрементальная миграция без поломки текущего UI)
+## Next.js frontend (основной продуктовый UI)
 
-Текущий Django UI продолжает работать как раньше на `http://127.0.0.1:8000/*`.
+Django работает в режиме API/admin: `http://127.0.0.1:8000/api/*`, `http://127.0.0.1:8000/admin/`.
 
 Новый frontend вынесен в отдельную папку `frontend/` и запускается параллельно:
 
@@ -66,16 +66,14 @@ Next.js использует существующий backend API (`/api/*`) и 
 
 ## Быстрая проверка через браузер
 
-- `http://127.0.0.1:8000/` — публичный лендинг Enroll AI.
-- `http://127.0.0.1:8000/register` — регистрация.
-- `http://127.0.0.1:8000/login` — вход.
-- `http://127.0.0.1:8000/dashboard/` — основная точка входа.
-- `http://127.0.0.1:8000/onboarding/` — заполнение профиля.
-- `http://127.0.0.1:8000/applications/` — управление списком университетов.
-- `http://127.0.0.1:8000/tasks/` — задачи и генерация чеклиста.
-- `http://127.0.0.1:8000/documents/` — документы и версии.
-- `http://127.0.0.1:8000/common-app/` — Common App Draft (AI stub).
-- `http://127.0.0.1:8000/app/` — API‑консоль.
-- `http://127.0.0.1:8000/applications-ui/` — минимальная форма для Applications API.
-
-Откройте `/app/` и выполните регистрацию/логин, затем используйте UI для демонстрации API. Страница `/applications-ui/` оставлена как простой тестовый экран для Applications. 【F:backend/config/urls.py†L1-L9】【F:backend/apps/universities/urls.py†L1-L14】
+- `http://127.0.0.1:3000/` — публичный лендинг Enroll AI (Next.js).
+- `http://127.0.0.1:3000/login` — вход.
+- `http://127.0.0.1:3000/register` — регистрация.
+- `http://127.0.0.1:3000/dashboard` — dashboard.
+- `http://127.0.0.1:3000/onboarding` — профиль.
+- `http://127.0.0.1:3000/applications` — университеты и заявки.
+- `http://127.0.0.1:3000/calendar` — календарь задач и дедлайнов.
+- `http://127.0.0.1:3000/documents` — документы и версии.
+- `http://127.0.0.1:3000/common-app` — Common App Draft (AI stub).
+- `http://127.0.0.1:3000/settings` — настройки профиля/пароля.
+- `http://127.0.0.1:8000/api/ping/` — проверка backend API.

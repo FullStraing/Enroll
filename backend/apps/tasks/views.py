@@ -83,7 +83,7 @@ class TaskListCreateView(generics.ListCreateAPIView):
             queryset = queryset.filter(status=status_param)
         if application_id:
             queryset = queryset.filter(application_id=application_id)
-        return queryset.select_related("roadmap_stage", "application")
+        return queryset.select_related("roadmap_stage", "application", "application__university")
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
@@ -97,6 +97,7 @@ class TaskDetailView(generics.RetrieveUpdateAPIView):
         return Task.objects.filter(user=self.request.user).select_related(
             "roadmap_stage",
             "application",
+            "application__university",
         )
 
 

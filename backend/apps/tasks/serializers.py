@@ -10,8 +10,23 @@ class RoadmapStageSerializer(serializers.ModelSerializer):
         fields = ["id", "code", "title", "order"]
 
 
+class TaskApplicationSerializer(serializers.ModelSerializer):
+    university_id = serializers.IntegerField(source="university_id", read_only=True)
+    university_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Application
+        fields = ["id", "university_id", "university_name", "deadline_date", "status"]
+
+    def get_university_name(self, obj):
+        if obj.university:
+            return obj.university.name
+        return obj.university_name
+
+
 class TaskSerializer(serializers.ModelSerializer):
     roadmap_stage = RoadmapStageSerializer(read_only=True)
+    application = TaskApplicationSerializer(read_only=True)
     roadmap_stage_id = serializers.PrimaryKeyRelatedField(
         queryset=RoadmapStage.objects.all(),
         source="roadmap_stage",
@@ -37,6 +52,7 @@ class TaskSerializer(serializers.ModelSerializer):
             "status",
             "priority",
             "roadmap_stage",
+            "application",
             "roadmap_stage_id",
             "application_id",
         ]

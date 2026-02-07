@@ -10,7 +10,7 @@ const nav = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/onboarding", label: "Onboarding" },
   { href: "/applications", label: "Universities" },
-  { href: "/tasks", label: "Tasks" },
+  { href: "/calendar", label: "Calendar" },
   { href: "/documents", label: "Documents" },
   { href: "/common-app", label: "Common App" },
   { href: "/settings", label: "Settings" },

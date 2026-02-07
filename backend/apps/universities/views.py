@@ -1,5 +1,4 @@
 from rest_framework import generics, permissions
-from django.views.generic import TemplateView
 from .models import University, StudentUniversity, Application
 from .serializers import (
     UniversitySerializer,
@@ -56,7 +55,3 @@ class ApplicationDetailView(generics.RetrieveUpdateAPIView):
 
     def get_queryset(self):
         return Application.objects.filter(student=self.request.user).select_related("university")
-
-
-class ApplicationsBrowserView(TemplateView):
-    template_name = "applications.html"
