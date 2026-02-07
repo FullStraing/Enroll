@@ -1,0 +1,20 @@
+﻿@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  @apply bg-bg text-white antialiased;
+  background-image:
+    radial-gradient(circle at 12% 12%, rgba(30, 75, 255, 0.22), transparent 40%),
+    radial-gradient(circle at 85% 10%, rgba(191, 231, 255, 0.16), transparent 42%),
+    linear-gradient(140deg, #050608 0%, #050b20 40%, #0b1020 100%);
+  min-height: 100vh;
+}
+
+.glass {
+  @apply border border-border bg-panel backdrop-blur-sm shadow-glass;
+}
