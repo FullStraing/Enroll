@@ -1,6 +1,6 @@
 ﻿# Enroll Next.js Frontend
 
-Separate frontend layer for incremental migration from Django templates.
+Frontend is now fully implemented in Next.js and talks to the existing Django API.
 
 ## Run
 
@@ -14,8 +14,26 @@ Default API target:
 
 - `NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000`
 
+## Current routes
+
+Public:
+
+- `/` landing
+- `/login`
+- `/register`
+
+Protected:
+
+- `/dashboard`
+- `/onboarding`
+- `/applications`
+- `/tasks`
+- `/documents`
+- `/common-app`
+- `/settings`
+
 ## Notes
 
-- Existing Django pages remain available at `http://127.0.0.1:8000`.
-- Protected routes in Next.js use the same JWT token cookie (`enroll_token`).
-- Current migration scope: landing/login/register/dashboard implemented, other workspace routes scaffolded and linked back to Django pages.
+- Auth uses the same JWT flow as backend (`/api/auth/token/`) with `enroll_token` cookie and localStorage.
+- Middleware protects workspace routes and redirects unauthenticated users to `/login`.
+- Backend templates can remain in repo for fallback/admin usage, but product flow is handled by Next.js.

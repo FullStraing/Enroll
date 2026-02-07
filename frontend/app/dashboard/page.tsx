@@ -67,7 +67,7 @@ export default function DashboardPage() {
         </div>
         <div className="glass mt-5 rounded-2xl p-5">
           <h2 className="text-lg font-semibold">Workspace status</h2>
-          <p className="mt-2 text-sm text-white/70">Current Django pages continue to work at http://127.0.0.1:8000.</p>
+          <p className="mt-2 text-sm text-white/70">Единый frontend на Next.js подключен к API. Здесь видна текущая загрузка рабочего пространства.</p>
           {loading ? (
             <div className="mt-4">
               <Loader size="md" label="Загружаем данные..." />
