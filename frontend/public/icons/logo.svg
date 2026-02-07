@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="260" viewBox="0 0 1200 260">
+  <defs>
+    <!-- subtle glow -->
+    <filter id="softGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="1.6" result="blur"/>
+      <feColorMatrix in="blur" type="matrix"
+        values="1 0 0 0 0
+                0 1 0 0 0
+                0 0 1 0 0
+                0 0 0 0.55 0" result="glow"/>
+      <feMerge>
+        <feMergeNode in="glow"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Transparent background by default -->
+  <g filter="url(#softGlow)">
+    <text x="50%" y="55%" text-anchor="middle" dominant-baseline="middle"
+      font-family="Inter, Montserrat, Arial Black, system-ui, -apple-system, Segoe UI, Roboto, sans-serif"
+      font-size="160"
+      font-weight="900"
+      letter-spacing="14"
+      fill="#FFFFFF">
+      ENROLL
+    </text>
+  </g>
+</svg>

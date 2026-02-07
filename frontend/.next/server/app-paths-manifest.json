@@ -1,0 +1,12 @@
+{
+  "/login/page": "app/login/page.js",
+  "/register/page": "app/register/page.js",
+  "/page": "app/page.js",
+  "/onboarding/page": "app/onboarding/page.js",
+  "/tasks/page": "app/tasks/page.js",
+  "/documents/page": "app/documents/page.js",
+  "/applications/page": "app/applications/page.js",
+  "/dashboard/page": "app/dashboard/page.js",
+  "/common-app/page": "app/common-app/page.js",
+  "/settings/page": "app/settings/page.js"
+}

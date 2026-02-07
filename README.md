@@ -16,6 +16,25 @@ python backend/manage.py migrate
 python backend/manage.py runserver
 ```
 
+## Next.js frontend (инкрементальная миграция без поломки текущего UI)
+
+Текущий Django UI продолжает работать как раньше на `http://127.0.0.1:8000/*`.
+
+Новый frontend вынесен в отдельную папку `frontend/` и запускается параллельно:
+
+```bash
+cd frontend
+npm install
+cp .env.example .env.local
+npm run dev
+```
+
+После запуска:
+- Next.js: `http://127.0.0.1:3000`
+- Django: `http://127.0.0.1:8000`
+
+Next.js использует существующий backend API (`/api/*`) и JWT-механику проекта.
+
 > При отсутствии Django в окружении запуск `manage.py` выдаст ошибку импорта.【F:backend/manage.py†L7-L17】
 
 ## Аутентификация
