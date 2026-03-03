@@ -340,7 +340,6 @@ export default function UniversityProfilePage() {
   const locationContact = parseLocationContact(m.get("location_contact"), university);
   const mapQuery = encodeURIComponent(locationContact.addressLines.join(", ") || `${university?.name || ""}, ${university?.state || ""}`);
   const officialWebsiteHref = toExternalUrl(university?.website_url);
-  const sourceHref = toExternalUrl(university?.source_url);
 
   return (
     <ProtectedPage>
@@ -369,11 +368,6 @@ export default function UniversityProfilePage() {
                     ) : (
                       <span className="rounded-lg border border-white/15 px-2 py-1 text-white/50">official site: -</span>
                     )}
-                    {sourceHref ? (
-                      <a href={sourceHref} target="_blank" rel="noreferrer" className="rounded-lg border border-cyan-300/30 bg-cyan-500/10 px-2 py-1 text-cyan-200">
-                        data source
-                      </a>
-                    ) : null}
                   </div>
                 </div>
                 <Link href="/applications" className="rounded-xl border border-white/20 px-3 py-2 text-sm hover:bg-white/10">

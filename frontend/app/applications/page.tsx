@@ -42,6 +42,7 @@ type PaginatedResponse<T> = {
 };
 
 const PAGE_SIZE_OPTIONS = [5, 10, 20, 40];
+const PAGE_SIZE_STORAGE_KEY = "enroll_universities_page_size";
 
 type MyUniversity = {
   id: number;
@@ -142,7 +143,15 @@ export default function ApplicationsPage() {
   }
 
   useEffect(() => {
-    void loadAll(1);
+    let initialPageSize = 5;
+    if (typeof window !== "undefined") {
+      const saved = Number(window.localStorage.getItem(PAGE_SIZE_STORAGE_KEY));
+      if (PAGE_SIZE_OPTIONS.includes(saved)) {
+        initialPageSize = saved;
+      }
+    }
+    setUniversitiesPageSize(initialPageSize);
+    void loadAll(1, initialPageSize);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -220,9 +229,6 @@ export default function ApplicationsPage() {
                 <h2 className="text-lg font-semibold">University Cards</h2>
                 <p className="mt-1 text-sm text-white/65">Каждый университет с полным профилем: admissions, factors, diversity, living expenses, fees.</p>
               </div>
-              <div className="flex items-center gap-2 rounded-xl border border-cyan-300/30 bg-cyan-500/10 px-3 py-1 text-xs text-cyan-200">
-                Источник: GradGPT
-              </div>
             </div>
 
             <div className="mt-4 flex flex-wrap items-center gap-3">
@@ -241,6 +247,9 @@ export default function ApplicationsPage() {
                   onChange={(e) => {
                     const nextSize = Number(e.target.value) || 5;
                     setUniversitiesPageSize(nextSize);
+                    if (typeof window !== "undefined") {
+                      window.localStorage.setItem(PAGE_SIZE_STORAGE_KEY, String(nextSize));
+                    }
                     void loadAll(1, nextSize);
                   }}
                   className="rounded-lg border border-white/15 bg-white/5 px-2 py-1 text-sm"
@@ -284,7 +293,6 @@ export default function ApplicationsPage() {
                         <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
                           <span className="rounded-lg border border-white/15 px-2 py-1 text-white/75">Selectivity: {selectivityLabel[u.selectivity || ""] || u.selectivity || "-"}</span>
                           <span className="rounded-lg border border-white/15 px-2 py-1 text-white/75">Freshness: {u.data_freshness_days != null ? `${u.data_freshness_days}d` : "-"}</span>
-                          <span className="rounded-lg border border-white/15 px-2 py-1 text-white/75">Provider: {u.source_provider || u.source || "-"}</span>
                         </div>
                       </div>
                     </div>
