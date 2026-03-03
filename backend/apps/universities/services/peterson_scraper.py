@@ -138,14 +138,14 @@ def _extract_majors(section: dict[str, Any]) -> list[str]:
 
 def _extract_gpa(admissions_text: str, test_text: str, tables: list[dict[str, Any]], fallback_text: str = "") -> float | None:
     blob = f"{admissions_text} {test_text} {fallback_text}"
-    match = re.search(r"(average|avg)\s*gpa[^0-9]{0,15}([0-4](?:\\.[0-9]{1,2})?)", blob, re.IGNORECASE)
+    match = re.search(r"(average|avg)\s*gpa[^0-9]{0,15}([0-4](?:\.[0-9]{1,2})?)", blob, re.IGNORECASE)
     if match:
         return _to_number(match.group(2))
     for table in tables:
         rows = table.get("rows", [])
         for row in rows:
             row_text = " ".join(row)
-            m = re.search(r"(average|avg)\s*gpa[^0-9]{0,15}([0-4](?:\\.[0-9]{1,2})?)", row_text, re.IGNORECASE)
+            m = re.search(r"(average|avg)\s*gpa[^0-9]{0,15}([0-4](?:\.[0-9]{1,2})?)", row_text, re.IGNORECASE)
             if m:
                 return _to_number(m.group(2))
     return None

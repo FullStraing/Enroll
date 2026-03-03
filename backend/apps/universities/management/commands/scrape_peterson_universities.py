@@ -3,7 +3,6 @@ from __future__ import annotations
 import time
 
 from django.core.management.base import BaseCommand
-from django.db.models import Q
 from django.utils import timezone
 
 from apps.universities.models import ScrapeRun, ScrapeRunItem, University, UniversityMetric
@@ -120,33 +119,6 @@ class Command(BaseCommand):
         existing = UniversityMetric.objects.filter(university=university, key="avg_gpa").first()
         if existing and existing.value_number is not None:
             return
-        if existing and isinstance(existing.value_json, dict):
-            lo = existing.value_json.get("min")
-            hi = existing.value_json.get("max")
-            if isinstance(lo, (int, float)) and isinstance(hi, (int, float)):
-                existing.value_number = round((float(lo) + float(hi)) / 2, 2)
-                existing.value_text = existing.value_text or f"{existing.value_number:.2f}"
-                existing.source_url = source_url or existing.source_url
-                existing.save(update_fields=["value_number", "value_text", "source_url", "updated_at"])
-                return
-        fallback = (
-            UniversityMetric.objects.filter(university=university, key__in=["avg_gpa_weighted", "avg_gpa_unweighted"])
-            .exclude(value_number__isnull=True)
-            .order_by("key")
-            .first()
-        )
-        if not fallback:
-            return
-        UniversityMetric.objects.update_or_create(
-            university=university,
-            key="avg_gpa",
-            defaults={
-                "unit": "count",
-                "value_number": fallback.value_number,
-                "value_text": fallback.value_text or f"{fallback.value_number:.2f}",
-                "value_json": None,
-                "source_url": source_url or fallback.source_url,
-                "section_key": "peterson_profile",
-                "confidence": 0.8,
-            },
-        )
+        # Do not synthesize GPA from fallback fields. If Peterson does not explicitly provide GPA,
+        # UI should show N/A.
+        return

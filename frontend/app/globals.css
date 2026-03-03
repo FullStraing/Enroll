@@ -3,18 +3,49 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 body {
-  @apply bg-bg text-white antialiased;
-  background-image:
-    radial-gradient(circle at 12% 12%, rgba(30, 75, 255, 0.22), transparent 40%),
-    radial-gradient(circle at 85% 10%, rgba(191, 231, 255, 0.16), transparent 42%),
-    linear-gradient(140deg, #050608 0%, #050b20 40%, #0b1020 100%);
+  @apply antialiased;
+  color: #111111;
+  background-color: #f9f5f6;
+  background-image: radial-gradient(rgba(0, 0, 0, 0.05) 1px, transparent 1px);
+  background-size: 6px 6px;
   min-height: 100vh;
 }
 
 .glass {
-  @apply border border-border bg-panel shadow-glass;
+  border: 2px solid #000;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 8px 0 #000;
+}
+
+.theme-home [class*="text-white"] {
+  color: rgba(0, 0, 0, 0.82) !important;
+}
+
+.theme-home [class*="border-white/"] {
+  border-color: rgba(0, 0, 0, 0.18) !important;
+}
+
+.theme-home [class*="bg-white/"] {
+  background-color: rgba(0, 0, 0, 0.04) !important;
+}
+
+.theme-home [class*="bg-black/"] {
+  background-color: rgba(255, 255, 255, 0.75) !important;
+}
+
+.theme-home [class*="hover:bg-white/"]:hover {
+  background-color: rgba(0, 0, 0, 0.07) !important;
+}
+
+.theme-home .card-shadow-hover {
+  transition: transform 150ms ease, box-shadow 150ms ease;
+}
+
+.theme-home .card-shadow-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 0 #000;
 }

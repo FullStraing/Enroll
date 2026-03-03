@@ -29,6 +29,7 @@ type UniversityMetric = {
 type UniversitySnapshot = {
   raw_payload?: {
     standard_profile?: {
+      gpa_value?: number | null;
       important_factors?: Array<{ factor_name?: string; importance_level?: string }>;
       campus_diversity?: {
         diversity_breakdown?: Array<{ group_name?: string; count?: number | null; source_text?: string }>;
@@ -329,7 +330,8 @@ export default function UniversityProfilePage() {
   const avgAct = asNumber(m.get("avg_act"));
   const act25 = asNumber(m.get("act_25th_p"));
   const act75 = asNumber(m.get("act_75th_p"));
-  const avgGpa = asNumber(m.get("avg_gpa"));
+  const snapshotGpa = snapshot?.raw_payload?.standard_profile?.gpa_value;
+  const avgGpa = typeof snapshotGpa === "number" ? snapshotGpa : null;
   const inState = asNumber(m.get("net_price_in_state")) ?? asNumber(m.get("tuition_in_state"));
   const outState = asNumber(m.get("net_price_out_state")) ?? asNumber(m.get("tuition_out_state"));
   const factors = snapshot?.raw_payload?.standard_profile?.important_factors || [];
@@ -467,7 +469,7 @@ export default function UniversityProfilePage() {
               <article className="rounded-2xl border border-white/15 bg-white/5 p-5">
                 <h2 className="text-xl font-semibold">Average GPA</h2>
                 <p className="mt-2 text-sm text-white/70">Unweighted scale (0-4)</p>
-                <p className="mt-2 text-5xl font-black">{avgGpa != null ? avgGpa.toFixed(2) : "-"}</p>
+                <p className="mt-2 text-5xl font-black">{avgGpa != null ? avgGpa.toFixed(2) : "N/A"}</p>
               </article>
             </section>
 

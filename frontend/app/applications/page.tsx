@@ -118,27 +118,29 @@ export default function ApplicationsPage() {
   async function loadAll(page = universitiesPage, pageSize = universitiesPageSize) {
     const token = getToken();
     if (!token) return;
-    setStatus("Загружаем данные...");
+    setStatus("????????? ??????...");
     try {
-      const [uniPage, myUni, apps] = await Promise.all([
-        apiFetch<PaginatedResponse<University>>(
-          `/api/universities/?page=${page}&page_size=${pageSize}`,
-          { method: "GET" },
-          token,
-        ),
-        apiFetch<MyUniversity[]>("/api/my-universities/", { method: "GET" }, token),
-        apiFetch<Application[]>("/api/applications/", { method: "GET" }, token),
-      ]);
+      const uniPage = await apiFetch<PaginatedResponse<University>>(
+        `/api/universities/?page=${page}&page_size=${pageSize}`,
+        { method: "GET" },
+        token,
+      );
       setUniversities(uniPage.results);
       setUniversitiesCount(uniPage.count);
       const totalPages = Math.max(1, Math.ceil(uniPage.count / pageSize));
       setUniversitiesTotalPages(totalPages);
       setUniversitiesPage(page);
-      setMyUniversities(myUni);
-      setApplications(apps);
-      setStatus("Готово.");
+      if (showLegacyForms) {
+        const [myUni, apps] = await Promise.all([
+          apiFetch<MyUniversity[]>("/api/my-universities/", { method: "GET" }, token),
+          apiFetch<Application[]>("/api/applications/", { method: "GET" }, token),
+        ]);
+        setMyUniversities(myUni);
+        setApplications(apps);
+      }
+      setStatus("??????.");
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Ошибка загрузки");
+      setStatus(error instanceof Error ? error.message : "?????? ????????");
     }
   }
 
@@ -285,7 +287,7 @@ export default function ApplicationsPage() {
             <div className="mt-4 grid gap-4 xl:grid-cols-2">
               {filteredUniversities.map((u) => (
                 <Link key={u.id} href={`/universities/${u.id}`} className="block">
-                  <article className="rounded-2xl border border-white/10 bg-white/5 p-4 transition hover:-translate-y-0.5 hover:border-cyan-300/40 hover:bg-white/10">
+                  <article className="card-shadow-hover rounded-2xl border border-white/10 bg-white/5 p-4 transition hover:border-cyan-300/40 hover:bg-white/10">
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
                         <h3 className="text-base font-semibold">{u.name}</h3>
