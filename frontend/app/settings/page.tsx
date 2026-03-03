@@ -4,9 +4,10 @@ import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { ProtectedPage } from "@/components/protected-page";
-import { getToken, clearTokens } from "@/lib/auth";
+import { getToken } from "@/lib/auth";
 import { apiFetch } from "@/lib/api";
 import { Loader } from "@/components/loader";
+import { useAuth } from "@/components/auth-provider";
 
 type ProfileForm = {
   full_name: string;
@@ -32,6 +33,7 @@ const initialForm: ProfileForm = {
 
 export default function SettingsPage() {
   const router = useRouter();
+  const { logout: logoutSession } = useAuth();
   const [form, setForm] = useState<ProfileForm>(initialForm);
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -102,8 +104,8 @@ export default function SettingsPage() {
     }
   }
 
-  function logout() {
-    clearTokens();
+  function handleLogout() {
+    logoutSession();
     router.push("/");
   }
 
@@ -190,7 +192,7 @@ export default function SettingsPage() {
             <div className="mt-8 border-t border-white/10 pt-5">
               <h3 className="text-sm font-semibold uppercase tracking-wide text-white/65">Сессия</h3>
               <p className="mt-2 text-sm text-white/70">Выход очищает локальные токены и cookie, затем возвращает на landing.</p>
-              <button onClick={logout} className="mt-3 rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-sm hover:bg-white/10">
+              <button onClick={handleLogout} className="mt-3 rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-sm hover:bg-white/10">
                 Выйти из аккаунта
               </button>
             </div>

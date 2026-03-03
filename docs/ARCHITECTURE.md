@@ -51,3 +51,40 @@ UI страницы находятся в `templates/ui/` и подключен�
 ## Текущий статус MVP
 
 На данный момент реализованы: регистрация, профиль студента, справочник университетов, Applications API, Tasks, Documents, AI stub‑эндпоинты, MVP‑консоль `/app/` и минимальная браузерная форма `/applications-ui/`. Дальнейшие шаги — UI страницы по флоу (Onboarding → Dashboard → Applications → Tasks → Documents → Common App Draft).【F:backend/apps/users/urls.py†L1-L7】【F:backend/apps/universities/urls.py†L1-L14】【F:backend/apps/tasks/urls.py†L1-L7】【F:backend/apps/documents/urls.py†L1-L9】【F:backend/apps/ai/urls.py†L1-L9】【F:backend/config/urls.py†L1-L9】
+
+
+## Niche full-data scraping pipeline
+
+The universities module now includes a multi-layer scraping storage model:
+
+- `UniversitySourceSnapshot`: full aggregated raw payload by scrape run.
+- `UniversitySourceSection`: per-page/per-section parsed blocks and status.
+- `UniversityMetric`: normalized metrics used by product UI and filters.
+- `UniversityMediaRef`: media metadata references (URL only, no binary copy).
+- `ScrapeRun` and `ScrapeRunItem`: operational logs for each scraping execution.
+
+Management commands:
+- `niche_session_bootstrap`
+- `scrape_niche_universities`
+- `reparse_snapshots`
+
+
+## Licensed ingestion pipeline
+
+Primary ingestion is `LicensedFeedConnector` (mock/api modes), with Niche scraping reserved for fallback/enrichment.
+
+Pipeline stages:
+1. connector fetch (full or delta)
+2. normalize + quality gate
+3. snapshot + metrics/media persistence
+4. read-model projection to `University`
+5. run logging in `ScrapeRun`/`ScrapeRunItem`
+
+Automation commands:
+- `ingest_universities_full`
+- `ingest_universities_delta`
+- `ingest_backfill`
+- `ingest_quality_report`
+- `run_ingestion_scheduler` (APScheduler fallback)
+
+- Added Niche automation runtime: Celery workers + persistent Playwright profiles + proxy pool rotation for anti-bot resilience.

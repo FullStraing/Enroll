@@ -19,6 +19,7 @@ Default API target:
 Public:
 
 - `/` landing
+- `/pilot` trial request page
 - `/login`
 - `/register`
 
@@ -39,3 +40,14 @@ Protected:
 - Middleware protects workspace routes and redirects unauthenticated users to `/login`.
 - Main planning flow is on `/calendar`; `/tasks` is kept as a compatibility redirect to `/calendar`.
 - Backend now runs as API/admin only (`/api/*`, `/admin/*`), and product UI is fully handled by Next.js.
+- Sales execution assets are in `docs/sales/`.
+
+
+## Data freshness in UI
+
+`/applications` renders ingestion freshness and cost/housing projections when backend metrics are available:
+- `data_freshness_days`
+- `net_price`
+- `room_and_board`
+- `housing_cost`
+- `source_provider`

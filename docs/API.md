@@ -70,3 +70,47 @@
 ## Запланировано в MVP (ещё не реализовано)
 
 - Финализация Applications workflow (последний этап).
+
+
+## Niche scraper additions (2026-02-28)
+
+- `GET /api/universities/<id>/source-snapshot/` -> latest snapshot payload for internal/admin usage.
+- `GET /api/universities/<id>/metrics/` -> normalized key/value metrics for filtering and analytics.
+
+Extended fields on `GET /api/universities/`:
+- `last_scraped_at`
+- `data_freshness_days`
+- `net_price`
+- `room_and_board`
+- `housing_cost`
+
+
+## Automated ingestion endpoints/fields (licensed pipeline)
+
+University object now includes read-only metadata for ingestion:
+- `source_provider`
+- `external_id`
+- `is_active`
+- `last_ingested_at`
+- `last_scraped_at`
+- `data_freshness_days`
+
+Internal endpoints (already protected):
+- `GET /api/universities/<id>/source-snapshot/`
+- `GET /api/universities/<id>/metrics/`
+
+- University payload now includes ingestion fields: `source_provider`, `external_id`, `is_active`, `last_ingested_at`.
+
+## Deadlines API (2026-03-03)
+
+- `GET /api/universities/{id}/deadlines/`
+  - returns typed deadlines (`EA`, `ED1`, `ED2`, `REA`, `RD`, `TRANSFER_*`, `PRIORITY`, `ROLLING`, `OTHER`)
+  - includes `deadline_date`, `deadline_text`, `notification_date`, `notification_text`, `is_rolling`, `source_url`, `source_label`, `confidence`
+
+## Peterson enrichment metrics (2026-03-03)
+
+- Existing `GET /api/universities/{id}/metrics/` now may include additional keys:
+  - `location_contact`, `majors_degrees`, `admission_requirements_matrix`,
+  - `female_admissions`, `male_admissions`, `test_policy_details`,
+  - `financial_aid_extended`, `campus_life`, `athletics`,
+  - `majors_count`, `avg_gpa`.

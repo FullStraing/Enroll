@@ -2,9 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { clearTokens, getToken } from "@/lib/auth";
-import { apiFetch } from "@/lib/api";
-import { useEffect, useState } from "react";
+import { useAuth } from "@/components/auth-provider";
 
 const nav = [
   { href: "/dashboard", label: "Dashboard" },
@@ -27,18 +25,9 @@ export function AppShell({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [name, setName] = useState("User");
+  const { profile, logout } = useAuth();
 
-  useEffect(() => {
-    const token = getToken();
-    if (!token) return;
-    apiFetch<{ full_name?: string; username?: string; email?: string }>("/api/auth/profile/", { method: "GET" }, token)
-      .then((profile) => {
-        const resolved = profile.full_name || profile.username || profile.email || "User";
-        setName(resolved);
-      })
-      .catch(() => setName("User"));
-  }, []);
+  const name = profile?.full_name || profile?.username || profile?.email || "User";
 
   return (
     <div className="mx-auto grid min-h-screen max-w-[1500px] grid-cols-1 gap-6 p-6 lg:grid-cols-[260px_1fr]">
@@ -78,7 +67,7 @@ export function AppShell({
             </span>
             <button
               onClick={() => {
-                clearTokens();
+                logout();
                 router.push("/");
               }}
               className="rounded-xl border border-white/15 bg-white/5 px-3 py-1.5 text-sm hover:bg-white/10"

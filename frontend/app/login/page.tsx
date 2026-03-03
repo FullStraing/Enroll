@@ -4,11 +4,12 @@ import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { apiFetch } from "@/lib/api";
-import { saveTokens } from "@/lib/auth";
 import { Loader } from "@/components/loader";
+import { useAuth } from "@/components/auth-provider";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { setSession } = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [pending, setPending] = useState(false);
@@ -23,7 +24,7 @@ export default function LoginPage() {
         method: "POST",
         body: JSON.stringify({ username, password }),
       });
-      saveTokens(data.access, data.refresh);
+      await setSession(data.access, data.refresh);
       router.push("/dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");

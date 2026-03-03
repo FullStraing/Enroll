@@ -9,11 +9,20 @@
       "state": "MA",
       "selectivity": "high",
       "website_url": "https://www.harvard.edu/",
-      "main_deadline": "2026-11-01",
+      "main_deadline": "2026-01-01",
       "min_profile_score": 90,
       "avg_profile_score": 97,
       "created_at": "2026-01-29T00:00:00Z",
-      "updated_at": "2026-01-29T00:00:00Z"
+      "updated_at": "2026-01-29T00:00:00Z",
+      "acceptance_rate": 3,
+      "sat_range": "1490-1580",
+      "act_range": "34-36",
+      "source": "niche",
+      "source_url": "https://www.niche.com/colleges/harvard-university/admissions/",
+      "source_provider": "niche",
+      "external_id": "niche-1",
+      "is_active": true,
+      "last_ingested_at": null
     }
   },
   {
@@ -26,11 +35,20 @@
       "state": "CA",
       "selectivity": "high",
       "website_url": "https://www.stanford.edu/",
-      "main_deadline": "2026-11-01",
+      "main_deadline": "2026-01-05",
       "min_profile_score": 90,
       "avg_profile_score": 96,
       "created_at": "2026-01-29T00:00:00Z",
-      "updated_at": "2026-01-29T00:00:00Z"
+      "updated_at": "2026-01-29T00:00:00Z",
+      "acceptance_rate": 4,
+      "sat_range": "1500-1570",
+      "act_range": "34-35",
+      "source": "niche",
+      "source_url": "https://www.niche.com/colleges/stanford-university/admissions/",
+      "source_provider": "niche",
+      "external_id": "niche-2",
+      "is_active": true,
+      "last_ingested_at": null
     }
   },
   {
@@ -43,11 +61,20 @@
       "state": "MA",
       "selectivity": "high",
       "website_url": "https://www.mit.edu/",
-      "main_deadline": "2026-11-01",
+      "main_deadline": "2026-01-06",
       "min_profile_score": 90,
       "avg_profile_score": 98,
       "created_at": "2026-01-29T00:00:00Z",
-      "updated_at": "2026-01-29T00:00:00Z"
+      "updated_at": "2026-01-29T00:00:00Z",
+      "acceptance_rate": 4,
+      "sat_range": "1520-1570",
+      "act_range": "35-36",
+      "source": "niche",
+      "source_url": "https://www.niche.com/colleges/massachusetts-institute-of-technology/admissions/",
+      "source_provider": "niche",
+      "external_id": "niche-3",
+      "is_active": true,
+      "last_ingested_at": null
     }
   },
   {
@@ -60,11 +87,20 @@
       "state": "MI",
       "selectivity": "medium",
       "website_url": "https://umich.edu/",
-      "main_deadline": "2026-12-01",
+      "main_deadline": "2026-02-01",
       "min_profile_score": 75,
       "avg_profile_score": 85,
       "created_at": "2026-01-29T00:00:00Z",
-      "updated_at": "2026-01-29T00:00:00Z"
+      "updated_at": "2026-01-29T00:00:00Z",
+      "acceptance_rate": 18,
+      "sat_range": "1350-1530",
+      "act_range": "31-34",
+      "source": "niche",
+      "source_url": "https://www.niche.com/colleges/university-of-michigan-ann-arbor/admissions/",
+      "source_provider": "niche",
+      "external_id": "niche-4",
+      "is_active": true,
+      "last_ingested_at": null
     }
   },
   {
@@ -77,11 +113,20 @@
       "state": "NY",
       "selectivity": "medium",
       "website_url": "https://www.nyu.edu/",
-      "main_deadline": "2026-12-15",
+      "main_deadline": "2026-01-05",
       "min_profile_score": 70,
       "avg_profile_score": 82,
       "created_at": "2026-01-29T00:00:00Z",
-      "updated_at": "2026-01-29T00:00:00Z"
+      "updated_at": "2026-01-29T00:00:00Z",
+      "acceptance_rate": 13,
+      "sat_range": "1470-1570",
+      "act_range": "33-35",
+      "source": "niche",
+      "source_url": "https://www.niche.com/colleges/new-york-university/admissions/",
+      "source_provider": "niche",
+      "external_id": "niche-5",
+      "is_active": true,
+      "last_ingested_at": null
     }
   },
   {
@@ -98,7 +143,16 @@
       "min_profile_score": 55,
       "avg_profile_score": 70,
       "created_at": "2026-01-29T00:00:00Z",
-      "updated_at": "2026-01-29T00:00:00Z"
+      "updated_at": "2026-01-29T00:00:00Z",
+      "acceptance_rate": null,
+      "sat_range": "",
+      "act_range": "",
+      "source": "manual",
+      "source_url": "",
+      "source_provider": "other",
+      "external_id": null,
+      "is_active": true,
+      "last_ingested_at": null
     }
   }
 ]

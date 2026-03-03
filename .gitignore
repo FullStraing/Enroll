@@ -17,6 +17,9 @@ backend/venv/
 backend/.env
 frontend/.env.local
 frontend/.env.*.local
+backend/.secrets/
+tmp/
+*.log
 
 # Next.js / Node
 frontend/node_modules/

@@ -77,3 +77,81 @@ Next.js использует существующий backend API (`/api/*`) и 
 - `http://127.0.0.1:3000/common-app` — Common App Draft (AI stub).
 - `http://127.0.0.1:3000/settings` — настройки профиля/пароля.
 - `http://127.0.0.1:8000/api/ping/` — проверка backend API.
+
+
+## Automated University Ingestion (licensed-first)
+
+Commands:
+
+```bash
+python backend/manage.py ingest_universities_full --limit 100
+python backend/manage.py ingest_universities_delta --since-days 1
+python backend/manage.py ingest_backfill --start-offset 0 --limit 100
+python backend/manage.py ingest_quality_report
+```
+
+Scheduler fallback (APScheduler):
+
+```bash
+python backend/manage.py run_ingestion_scheduler
+```
+
+Safe cleanup (keeps node_modules):
+
+```powershell
+./scripts/clean_local.ps1
+```
+
+More details: `docs/INGESTION_AUTOMATION.md`.
+
+
+## Niche-first automation queue
+
+Run Redis + worker:
+
+```bash
+celery -A config worker -l info --concurrency=4
+```
+
+Enqueue scraping runs:
+
+```bash
+python backend/manage.py niche_enqueue_full_weekly --limit 1000
+python backend/manage.py niche_enqueue_delta_daily --since-days 1
+python backend/manage.py niche_enqueue_recovery_failed
+```
+
+Scheduler fallback:
+
+```bash
+python backend/manage.py run_niche_scheduler
+```
+
+## GradGPT scraping (primary)
+
+Use GradGPT Common Data Set as primary source:
+
+```bash
+python backend/manage.py scrape_gradgpt_universities --dry-run --limit 5
+python backend/manage.py scrape_gradgpt_universities --limit 50
+```
+
+Optional:
+
+- `--only-url https://www.gradgpt.com/common-data-set/harvard-university`
+- `--index-url https://www.gradgpt.com/common-data-set`
+- `--timeout 30`
+
+## Deadlines ingestion (official admissions)
+
+```bash
+python backend/manage.py ingest_university_deadlines --limit 100 --source petersons
+python backend/manage.py deadline_quality_report
+python backend/manage.py recompute_main_deadline_from_deadlines
+```
+
+## Peterson profile enrichment (extra blocks)
+
+```bash
+python backend/manage.py scrape_peterson_universities --limit 100
+```

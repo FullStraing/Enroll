@@ -46,10 +46,21 @@ type MyUniversityItem = {
   } | null;
 };
 
+type UniversityDeadlineItem = {
+  id: number;
+  deadline_type: string;
+  term: string;
+  deadline_date: string | null;
+  deadline_text: string;
+  is_rolling: boolean;
+  confidence: number;
+};
+
 type CalendarEvent = {
   id: string;
   date: string;
   type: "task" | "deadline";
+  deadlineType?: string;
   title: string;
   status: string;
   universityId?: number | null;
@@ -136,6 +147,7 @@ export default function CalendarPage() {
   const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [applications, setApplications] = useState<ApplicationItem[]>([]);
   const [myUniversities, setMyUniversities] = useState<MyUniversityItem[]>([]);
+  const [universityDeadlines, setUniversityDeadlines] = useState<Record<number, UniversityDeadlineItem[]>>({});
   const [viewMode, setViewMode] = useState<ViewMode>("month");
   const [anchorDate, setAnchorDate] = useState<Date>(new Date());
   const [eventTypeFilter, setEventTypeFilter] = useState<"all" | "task" | "deadline">("all");
@@ -158,9 +170,19 @@ export default function CalendarPage() {
         apiFetch<ApplicationItem[]>("/api/applications/", { method: "GET" }, token),
         apiFetch<MyUniversityItem[]>("/api/my-universities/", { method: "GET" }, token),
       ]);
+      const uniIds = myUniData.map((item) => item.university?.id).filter((value): value is number => Boolean(value));
+      const deadlinesPairs = await Promise.all(
+        uniIds.map(async (uniId) => ({
+          uniId,
+          deadlines: await apiFetch<UniversityDeadlineItem[]>(`/api/universities/${uniId}/deadlines/`, { method: "GET" }, token),
+        })),
+      );
+      const deadlinesMap: Record<number, UniversityDeadlineItem[]> = {};
+      for (const pair of deadlinesPairs) deadlinesMap[pair.uniId] = pair.deadlines;
       setTasks(taskData);
       setApplications(appData);
       setMyUniversities(myUniData);
+      setUniversityDeadlines(deadlinesMap);
       setStatusText("");
     } catch (error) {
       setStatusText(error instanceof Error ? error.message : "Не удалось загрузить календарь.");
@@ -192,13 +214,35 @@ export default function CalendarPage() {
         id: `deadline-${item.id}`,
         date: item.deadline_date as string,
         type: "deadline",
+        deadlineType: "APPLICATION",
         title: `Дедлайн: ${item.university?.name || item.university_name || `Application #${item.id}`}`,
         status: item.status,
         universityId: item.university?.id || null,
       }));
 
-    return [...taskEvents, ...deadlineEvents];
-  }, [tasks, applications]);
+    const blockedUniversityIds = new Set(
+      applications.filter((item) => Boolean(item.deadline_date) && item.university?.id).map((item) => item.university?.id as number),
+    );
+    const universityDeadlineEvents: CalendarEvent[] = [];
+    for (const [uniIdText, deadlines] of Object.entries(universityDeadlines)) {
+      const uniId = Number(uniIdText);
+      if (blockedUniversityIds.has(uniId)) continue;
+      for (const deadline of deadlines) {
+        if (!deadline.deadline_date || deadline.is_rolling) continue;
+        universityDeadlineEvents.push({
+          id: `uni-deadline-${deadline.id}`,
+          date: deadline.deadline_date,
+          type: "deadline",
+          deadlineType: deadline.deadline_type,
+          title: `${deadline.deadline_type}: ${myUniversities.find((item) => item.university?.id === uniId)?.university?.name || `University #${uniId}`}`,
+          status: "planned",
+          universityId: uniId,
+        });
+      }
+    }
+
+    return [...taskEvents, ...deadlineEvents, ...universityDeadlineEvents];
+  }, [tasks, applications, universityDeadlines, myUniversities]);
 
   const filteredEvents = useMemo(() => {
     return events.filter((item) => {
@@ -457,7 +501,22 @@ export default function CalendarPage() {
                               }
                             }}
                             disabled={savingTaskId === eventItem.task?.id}
-                            className={`w-full rounded-lg px-2 py-1 text-left text-xs ${eventItem.type === "deadline" ? "bg-violet-500/25 text-violet-100" : "bg-cyan-500/20 text-cyan-100"}`}
+                            className={`w-full rounded-lg px-2 py-1 text-left text-xs ${
+                              eventItem.type === "deadline"
+                                ? eventItem.deadlineType === "RD"
+                                  ? "bg-violet-500/25 text-violet-100"
+                                  : eventItem.deadlineType === "EA" ||
+                                      eventItem.deadlineType === "ED1" ||
+                                      eventItem.deadlineType === "ED2" ||
+                                      eventItem.deadlineType === "REA"
+                                    ? "bg-cyan-500/25 text-cyan-100"
+                                    : eventItem.deadlineType?.startsWith("TRANSFER")
+                                      ? "bg-amber-500/25 text-amber-100"
+                                      : eventItem.deadlineType === "ROLLING"
+                                        ? "bg-slate-500/25 text-slate-100"
+                                        : "bg-violet-500/25 text-violet-100"
+                                : "bg-cyan-500/20 text-cyan-100"
+                            }`}
                           >
                             {eventItem.type === "task" ? "Task" : "Deadline"}: {eventItem.title}
                           </button>

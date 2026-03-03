@@ -16,5 +16,5 @@ body {
 }
 
 .glass {
-  @apply border border-border bg-panel backdrop-blur-sm shadow-glass;
+  @apply border border-border bg-panel shadow-glass;
 }

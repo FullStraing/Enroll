@@ -1,8 +1,24 @@
 from rest_framework import serializers
-from .models import University, StudentUniversity, Application
+from .models import (
+    Application,
+    StudentUniversity,
+    University,
+    UniversityDeadline,
+    UniversityMetric,
+    UniversitySourceSnapshot,
+)
 
 
 class UniversitySerializer(serializers.ModelSerializer):
+    last_scraped_at = serializers.DateTimeField(read_only=True)
+    data_freshness_days = serializers.IntegerField(read_only=True)
+    net_price = serializers.SerializerMethodField()
+    room_and_board = serializers.SerializerMethodField()
+    housing_cost = serializers.SerializerMethodField()
+    deadlines_count = serializers.IntegerField(read_only=True)
+    has_deadlines = serializers.BooleanField(read_only=True)
+    deadline_freshness_days = serializers.IntegerField(read_only=True)
+
     class Meta:
         model = University
         fields = [
@@ -14,6 +30,98 @@ class UniversitySerializer(serializers.ModelSerializer):
             "selectivity",
             "website_url",
             "main_deadline",
+            "min_profile_score",
+            "avg_profile_score",
+            "acceptance_rate",
+            "sat_range",
+            "act_range",
+            "source",
+            "source_provider",
+            "external_id",
+            "source_url",
+            "is_active",
+            "last_ingested_at",
+            "last_scraped_at",
+            "data_freshness_days",
+            "net_price",
+            "room_and_board",
+            "housing_cost",
+            "deadlines_count",
+            "has_deadlines",
+            "deadline_freshness_days",
+        ]
+
+    def _metric_value(self, obj, key):
+        prefetched = getattr(obj, "_prefetched_objects_cache", {})
+        metrics = prefetched.get("metrics")
+        if metrics is None:
+            metric = obj.metrics.filter(key=key).first()
+            if not metric:
+                return None
+            return metric.value_number if metric.value_number is not None else metric.value_text or metric.value_json
+
+        for metric in metrics:
+            if metric.key == key:
+                return metric.value_number if metric.value_number is not None else metric.value_text or metric.value_json
+        return None
+
+    def get_net_price(self, obj):
+        return self._metric_value(obj, "net_price")
+
+    def get_room_and_board(self, obj):
+        return self._metric_value(obj, "room_and_board")
+
+    def get_housing_cost(self, obj):
+        return self._metric_value(obj, "housing_cost")
+
+
+class UniversityMetricSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UniversityMetric
+        fields = [
+            "key",
+            "value_number",
+            "value_text",
+            "value_json",
+            "unit",
+            "source_url",
+            "section_key",
+            "confidence",
+            "updated_at",
+        ]
+
+
+class UniversityDeadlineSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UniversityDeadline
+        fields = [
+            "id",
+            "deadline_type",
+            "term",
+            "deadline_date",
+            "deadline_text",
+            "notification_date",
+            "notification_text",
+            "is_rolling",
+            "source_url",
+            "source_label",
+            "confidence",
+            "last_verified_at",
+        ]
+
+
+class UniversitySourceSnapshotSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UniversitySourceSnapshot
+        fields = [
+            "id",
+            "source",
+            "root_url",
+            "fetched_at",
+            "status",
+            "parser_version",
+            "raw_payload",
+            "error_summary",
         ]
 
 

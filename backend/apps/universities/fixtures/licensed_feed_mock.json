@@ -1,0 +1,115 @@
+[
+  {
+    "external_id": "licensed-harvard",
+    "name": "Harvard University",
+    "country": "USA",
+    "city": "Cambridge",
+    "state": "MA",
+    "website_url": "https://www.harvard.edu/",
+    "source_url": "https://www.niche.com/colleges/harvard-university/admissions/",
+    "updated_at": "2026-02-28T00:00:00Z",
+    "metrics": {
+      "acceptance_rate": 3,
+      "sat_range": "1490-1580",
+      "act_range": "34-36",
+      "application_deadline": "Jan 1",
+      "net_price": 19800,
+      "room_and_board": 20500,
+      "housing_cost": 20500,
+      "tuition_out_state": 57261
+    },
+    "media": [
+      {
+        "url": "https://www.harvard.edu/assets/logo.svg",
+        "media_type": "image",
+        "alt_text": "Harvard logo"
+      }
+    ],
+    "metadata": {
+      "provider": "licensed_mock",
+      "category": "ivy"
+    }
+  },
+  {
+    "external_id": "licensed-stanford",
+    "name": "Stanford University",
+    "country": "USA",
+    "city": "Stanford",
+    "state": "CA",
+    "website_url": "https://www.stanford.edu/",
+    "source_url": "https://www.niche.com/colleges/stanford-university/admissions/",
+    "updated_at": "2026-02-27T00:00:00Z",
+    "metrics": {
+      "acceptance_rate": 4,
+      "sat_range": "1500-1570",
+      "act_range": "34-35",
+      "application_deadline": "Jan 5",
+      "net_price": 19000,
+      "room_and_board": 21400,
+      "housing_cost": 21400
+    },
+    "media": [],
+    "metadata": {}
+  },
+  {
+    "external_id": "licensed-mit",
+    "name": "Massachusetts Institute of Technology",
+    "country": "USA",
+    "city": "Cambridge",
+    "state": "MA",
+    "website_url": "https://www.mit.edu/",
+    "source_url": "https://www.niche.com/colleges/massachusetts-institute-of-technology/admissions/",
+    "updated_at": "2026-02-27T12:00:00Z",
+    "metrics": {
+      "acceptance_rate": 4,
+      "sat_range": "1520-1570",
+      "act_range": "35-36",
+      "application_deadline": "Jan 6",
+      "net_price": 18600,
+      "room_and_board": 20100,
+      "housing_cost": 20100
+    },
+    "media": [],
+    "metadata": {}
+  },
+  {
+    "external_id": "licensed-nyu",
+    "name": "New York University",
+    "country": "USA",
+    "city": "New York",
+    "state": "NY",
+    "website_url": "https://www.nyu.edu/",
+    "source_url": "https://www.niche.com/colleges/new-york-university/admissions/",
+    "updated_at": "2026-02-26T10:00:00Z",
+    "metrics": {
+      "acceptance_rate": 13,
+      "sat_range": "1470-1570",
+      "act_range": "33-35",
+      "application_deadline": "Jan 5",
+      "net_price": 49000,
+      "room_and_board": 22600
+    },
+    "media": [],
+    "metadata": {}
+  },
+  {
+    "external_id": "licensed-umich",
+    "name": "University of Michigan - Ann Arbor",
+    "country": "USA",
+    "city": "Ann Arbor",
+    "state": "MI",
+    "website_url": "https://umich.edu/",
+    "source_url": "https://www.niche.com/colleges/university-of-michigan-ann-arbor/admissions/",
+    "updated_at": "2026-02-25T18:00:00Z",
+    "metrics": {
+      "acceptance_rate": 18,
+      "sat_range": "1350-1530",
+      "act_range": "31-34",
+      "application_deadline": "Feb 1",
+      "net_price": 19300,
+      "room_and_board": 13600
+    },
+    "media": [],
+    "metadata": {}
+  }
+]
