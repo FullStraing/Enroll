@@ -24,6 +24,7 @@ class UniversityListView(generics.ListAPIView):
     pagination_class = UniversityPagination
 
     def get_queryset(self):
+        query = (self.request.query_params.get("q") or "").strip()
         core_keys = [
             "acceptance_rate",
             "avg_sat",
@@ -35,8 +36,17 @@ class UniversityListView(generics.ListAPIView):
             "net_price_out_state",
             "housing_cost",
         ]
+        qs = University.objects.filter(is_active=True)
+        if query:
+            qs = qs.filter(
+                models.Q(name__icontains=query)
+                | models.Q(city__icontains=query)
+                | models.Q(state__icontains=query)
+                | models.Q(country__icontains=query)
+            )
+
         return (
-            University.objects.filter(is_active=True)
+            qs
             .annotate(
                 core_metrics_count=models.Count(
                     "metrics",
