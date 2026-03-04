@@ -8,7 +8,7 @@ export const Progress = React.forwardRef<
   React.ElementRef<typeof ProgressPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof ProgressPrimitive.Root> & {
     indicatorClassName?: string;
-    variant?: "primary" | "cyan" | "orange" | "striped";
+    variant?: "primary" | "cyan";
   }
 >(({ className, value, indicatorClassName, variant = "primary", ...props }, ref) => (
   <ProgressPrimitive.Root
@@ -20,10 +20,7 @@ export const Progress = React.forwardRef<
       className={cn(
         "h-full w-full flex-1 transition-all",
         variant === "primary" && "bg-[#FFDB58]",
-        variant === "cyan" && "bg-[#DAF5F0]",
-        variant === "orange" && "bg-[#F8D6B3]",
-        variant === "striped" &&
-          "bg-[linear-gradient(45deg,#FFDB58_25%,#F8D6B3_25%,#F8D6B3_50%,#FFDB58_50%,#FFDB58_75%,#F8D6B3_75%,#F8D6B3_100%)] [background-size:18px_18px]",
+        variant === "cyan" && "bg-[#84DCCB]",
         indicatorClassName,
       )}
       style={{ transform: `translateX(-${100 - (value || 0)}%)` }}

@@ -27,7 +27,7 @@ export function CircularProgress({
   return (
     <div className={cn("relative inline-grid place-items-center", className)} style={{ width: size, height: size }}>
       <div
-        className="absolute inset-0 rounded-full"
+        className="absolute inset-0 rounded-full border border-black/10"
         style={{
           background: `conic-gradient(${fillColor} ${safeValue * 3.6}deg, ${trackColor} 0deg)`,
         }}
@@ -36,7 +36,7 @@ export function CircularProgress({
         className="relative grid place-items-center rounded-full shadow-[inset_0_0_0_1px_rgba(0,0,0,0.08)]"
         style={{ width: innerSize, height: innerSize, backgroundColor: centerColor, color: textColor }}
       >
-        <div className="rounded-md border border-black/10 bg-[#F9F5F6] px-3 py-1 text-5xl font-black leading-none tracking-tight">{safeValue}%</div>
+        <div className="text-5xl font-black leading-none tracking-tight">{safeValue}%</div>
         {label ? <p className="mt-2 text-xs text-black/65">{label}</p> : null}
       </div>
     </div>
