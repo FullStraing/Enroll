@@ -4,6 +4,11 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
 import { ProtectedPage } from "@/components/protected-page";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
 import { getToken } from "@/lib/auth";
 import { apiFetch } from "@/lib/api";
 
@@ -44,6 +49,7 @@ export default function ApplicationsPage() {
   const [universitiesTotalPages, setUniversitiesTotalPages] = useState(1);
   const [universitiesPageSize, setUniversitiesPageSize] = useState(5);
   const [status, setStatus] = useState("");
+  const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
 
@@ -51,6 +57,7 @@ export default function ApplicationsPage() {
     const token = getToken();
     if (!token) return;
 
+    setLoading(true);
     try {
       const searchParam = q.trim() ? `&q=${encodeURIComponent(q.trim())}` : "";
       const uniPage = await apiFetch<PaginatedResponse<University>>(
@@ -66,6 +73,8 @@ export default function ApplicationsPage() {
       setStatus("Готово.");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Ошибка загрузки университетов");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -109,7 +118,7 @@ export default function ApplicationsPage() {
               placeholder="Найти университет по названию, городу или штату..."
               className="w-full max-w-xl rounded-xl border border-black/15 bg-black/[0.03] px-3 py-2 text-sm"
             />
-            <span className="text-sm text-black/65">Показано: {universities.length}</span>
+            <span className="text-sm text-black/65">Показано: {loading ? "-" : universities.length}</span>
             <span className="text-sm text-black/65">Всего найдено: {universitiesCount}</span>
             <label className="ml-auto flex items-center gap-2 text-sm text-black/65">
               На странице
@@ -135,42 +144,61 @@ export default function ApplicationsPage() {
           </div>
 
           <div className="mt-4 flex items-center justify-end gap-2">
-            <button
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => void loadUniversities(Math.max(1, universitiesPage - 1), universitiesPageSize, search)}
               disabled={universitiesPage <= 1}
-              className="rounded-lg border border-black/20 px-3 py-1.5 text-xs disabled:cursor-not-allowed disabled:opacity-40"
             >
               Назад
-            </button>
+            </Button>
             <span className="text-xs text-black/70">
               Стр. {universitiesPage} / {universitiesTotalPages}
             </span>
-            <button
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => void loadUniversities(Math.min(universitiesTotalPages, universitiesPage + 1), universitiesPageSize, search)}
               disabled={universitiesPage >= universitiesTotalPages}
-              className="rounded-lg border border-black/20 px-3 py-1.5 text-xs disabled:cursor-not-allowed disabled:opacity-40"
             >
               Далее
-            </button>
+            </Button>
           </div>
 
           <div className="mt-4 grid gap-4 xl:grid-cols-2">
-            {universities.map((u) => (
+            {loading
+              ? Array.from({ length: Math.min(universitiesPageSize, 6) }).map((_, idx) => (
+                  <Card key={`sk-${idx}`} className="shadow-none">
+                    <Skeleton className="h-6 w-2/3" />
+                    <Skeleton className="mt-2 h-4 w-1/2" />
+                    <div className="mt-3 flex gap-2">
+                      <Skeleton className="h-6 w-24" />
+                      <Skeleton className="h-6 w-24" />
+                    </div>
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-full" />
+                    </div>
+                  </Card>
+                ))
+              : universities.map((u) => (
               <Link key={u.id} href={`/universities/${u.id}`} className="block">
-                <article className="card-shadow-hover rounded-2xl border border-black/15 bg-black/[0.03] p-4 transition">
+                <Card className="card-shadow-hover shadow-none">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
-                      <h3 className="text-base font-semibold">{u.name}</h3>
+                      <CardTitle>{u.name}</CardTitle>
                       <p className="mt-1 text-xs text-black/60">
                         {u.city || "-"}, {u.state || "-"}, {u.country || "USA"}
                       </p>
                       <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
-                        <span className="rounded-lg border border-black/15 px-2 py-1 text-black/75">
+                        <Badge>
                           Selectivity: {selectivityLabel[u.selectivity || ""] || u.selectivity || "-"}
-                        </span>
-                        <span className="rounded-lg border border-black/15 px-2 py-1 text-black/75">
+                        </Badge>
+                        <Badge variant="cyan">
                           Freshness: {u.data_freshness_days != null ? `${u.data_freshness_days}d` : "-"}
-                        </span>
+                        </Badge>
                       </div>
                     </div>
                   </div>
@@ -189,12 +217,16 @@ export default function ApplicationsPage() {
                       <span className="text-black/60">Deadline:</span> {u.main_deadline || "-"}
                     </p>
                   </div>
-                </article>
+                </Card>
               </Link>
             ))}
           </div>
 
-          {status ? <p className="mt-4 text-sm text-black/70">{status}</p> : null}
+          {loading ? (
+            <div className="mt-4">
+              <Spinner size="sm" label="Загружаем университеты..." />
+            </div>
+          ) : status ? <p className="mt-4 text-sm text-black/70">{status}</p> : null}
         </section>
       </AppShell>
     </ProtectedPage>

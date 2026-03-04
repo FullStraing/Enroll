@@ -4,7 +4,11 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
+import { Card, CardDescription, CardTitle } from "@/components/ui/card";
+import { CircularProgress } from "@/components/ui/circular-progress";
 import { ProtectedPage } from "@/components/protected-page";
+import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
 import { apiFetch } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 
@@ -142,13 +146,6 @@ function parseGenderAdmissions(metric?: UniversityMetric): GenderAdmissionsStats
 function formatInt(value: number | null): string {
   if (value == null) return "-";
   return Math.round(value).toLocaleString();
-}
-
-function rateStyle(rate: number | null, color: string): { background: string } {
-  const bounded = Math.max(0, Math.min(100, rate || 0));
-  return {
-    background: `conic-gradient(${color} ${bounded * 3.6}deg, #ffffff20 0deg)`,
-  };
 }
 
 function uniqueStrings(items: string[]): string[] {
@@ -348,14 +345,14 @@ export default function UniversityProfilePage() {
       <AppShell title="University Card" subtitle="Полная карточка университета в простом формате">
         {loading ? (
           <div className="grid gap-4">
-            <div className="h-24 animate-pulse rounded-2xl bg-white/10" />
-            <div className="h-72 animate-pulse rounded-2xl bg-white/10" />
+            <Skeleton className="h-24 rounded-2xl" />
+            <Skeleton className="h-72 rounded-2xl" />
           </div>
         ) : error ? (
           <p className="text-rose-300">{error}</p>
         ) : university ? (
           <div className="grid gap-5">
-            <section className="rounded-3xl border border-white/15 bg-white/5 p-5">
+            <Card className="rounded-3xl shadow-none">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
                   <h1 className="text-3xl font-black">{university.name}</h1>
@@ -376,24 +373,22 @@ export default function UniversityProfilePage() {
                   Назад к списку
                 </Link>
               </div>
-            </section>
+            </Card>
 
             <section className="grid gap-4 md:grid-cols-2">
-              <article className="rounded-2xl border border-white/15 bg-white/5 p-5">
-                <h2 className="text-xl font-semibold">Acceptance rate</h2>
+              <Card className="shadow-none">
+                <CardTitle>Acceptance rate</CardTitle>
                 <div className="mt-4 flex items-center justify-between gap-4">
                   <div>
-                    <p className="text-sm text-white/70">Total undergraduates</p>
+                    <CardDescription>Total undergraduates</CardDescription>
                     <p className="text-3xl font-bold">{totalUndergrads ? Math.round(totalUndergrads).toLocaleString() : "-"}</p>
                   </div>
-                  <div className="grid h-28 w-28 place-items-center rounded-full border border-white/20" style={rateStyle(acceptance, "#7c3aed")}>
-                    <div className="grid h-20 w-20 place-items-center rounded-full bg-[#0b1020] text-3xl font-black">{Math.round(acceptance)}%</div>
-                  </div>
+                  <CircularProgress value={Math.round(acceptance)} size={116} thickness={16} fillColor="#FFDB58" />
                 </div>
-              </article>
+              </Card>
 
-              <article className="rounded-2xl border border-white/15 bg-white/5 p-5">
-                <h2 className="text-xl font-semibold">Can I afford it?</h2>
+              <Card className="shadow-none">
+                <CardTitle>Can I afford it?</CardTitle>
                 <div className="mt-4 grid gap-3 sm:grid-cols-2">
                   <div className="rounded-xl border border-white/10 bg-black/20 p-3">
                     <p className="text-sm text-white/60">In state</p>
@@ -404,7 +399,7 @@ export default function UniversityProfilePage() {
                     <p className="text-3xl font-black">{prettyMoney(outState)}</p>
                   </div>
                 </div>
-              </article>
+              </Card>
             </section>
 
             <section className="rounded-2xl border border-white/15 bg-white/5 p-5">
@@ -474,7 +469,7 @@ export default function UniversityProfilePage() {
             </section>
 
             <section className="grid gap-4 md:grid-cols-2">
-              <article className="rounded-2xl border border-white/15 bg-white/5 p-5">
+              <Card className="shadow-none">
                 <h2 className="flex items-center gap-2 text-xl font-semibold">
                   <span aria-hidden>👩‍🎓</span>
                   Female Admissions
@@ -488,15 +483,11 @@ export default function UniversityProfilePage() {
                     <p className="text-3xl font-black">{formatInt(femaleAdmissions.accepted)}</p>
                     <p className="text-xs text-white/60">Females Accepted</p>
                   </div>
-                  <div className="grid h-20 w-20 place-items-center rounded-full border border-white/20" style={rateStyle(femaleAdmissions.rate, "#fb7185")}>
-                    <div className="grid h-14 w-14 place-items-center rounded-full bg-[#0b1020] text-2xl font-black">
-                      {femaleAdmissions.rate != null ? `${Math.round(femaleAdmissions.rate)}%` : "-"}
-                    </div>
-                  </div>
+                  <CircularProgress value={Math.round(femaleAdmissions.rate || 0)} size={88} thickness={12} fillColor="#F8D6B3" />
                 </div>
-              </article>
+              </Card>
 
-              <article className="rounded-2xl border border-white/15 bg-white/5 p-5">
+              <Card className="shadow-none">
                 <h2 className="flex items-center gap-2 text-xl font-semibold">
                   <span aria-hidden>👨‍🎓</span>
                   Male Admissions
@@ -510,13 +501,9 @@ export default function UniversityProfilePage() {
                     <p className="text-3xl font-black">{formatInt(maleAdmissions.accepted)}</p>
                     <p className="text-xs text-white/60">Males Accepted</p>
                   </div>
-                  <div className="grid h-20 w-20 place-items-center rounded-full border border-white/20" style={rateStyle(maleAdmissions.rate, "#7dd3fc")}>
-                    <div className="grid h-14 w-14 place-items-center rounded-full bg-[#0b1020] text-2xl font-black">
-                      {maleAdmissions.rate != null ? `${Math.round(maleAdmissions.rate)}%` : "-"}
-                    </div>
-                  </div>
+                  <CircularProgress value={Math.round(maleAdmissions.rate || 0)} size={88} thickness={12} fillColor="#84DCCB" />
                 </div>
-              </article>
+              </Card>
             </section>
 
             <section className="rounded-2xl border border-white/15 bg-white/5 p-5">
@@ -526,9 +513,7 @@ export default function UniversityProfilePage() {
                   factors.map((f, idx) => (
                     <div key={`${f.factor_name || "factor"}-${idx}`} className="grid grid-cols-[1fr_140px] items-center gap-3">
                       <p className="truncate text-sm">{(f.factor_name || "-").replaceAll("_", " ")}</p>
-                      <div className="h-2 rounded-full bg-white/15">
-                        <div className="h-2 rounded-full bg-violet-400" style={{ width: `${factorWeight(f.importance_level)}%` }} />
-                      </div>
+                      <Progress value={factorWeight(f.importance_level)} variant="primary" className="h-2" />
                     </div>
                   ))
                 ) : (

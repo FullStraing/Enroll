@@ -2,10 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/app-shell";
+import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { ProtectedPage } from "@/components/protected-page";
+import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
 import { apiFetch } from "@/lib/api";
 import { getToken } from "@/lib/auth";
-import { Loader } from "@/components/loader";
 
 type Stats = {
   profileFilled: string;
@@ -16,10 +19,10 @@ type Stats = {
 
 function StatCard({ title, value, loading }: { title: string; value: string; loading: boolean }) {
   return (
-    <div className="glass rounded-2xl p-4">
-      <p className="text-sm text-white/70">{title}</p>
-      {loading ? <div className="mt-3 h-6 w-24 animate-pulse rounded bg-white/10" /> : <p className="mt-3 text-2xl font-semibold">{value}</p>}
-    </div>
+    <Card className="shadow-none">
+      <CardDescription>{title}</CardDescription>
+      {loading ? <Skeleton className="mt-3 h-8 w-24" /> : <p className="mt-3 text-2xl font-semibold">{value}</p>}
+    </Card>
   );
 }
 
@@ -65,15 +68,18 @@ export default function DashboardPage() {
           <StatCard title="Tasks" value={String(stats.tasks)} loading={loading} />
           <StatCard title="Documents" value={String(stats.documents)} loading={loading} />
         </div>
-        <div className="glass mt-5 rounded-2xl p-5">
-          <h2 className="text-lg font-semibold">Workspace status</h2>
-          <p className="mt-2 text-sm text-white/70">Единый frontend на Next.js подключен к API. Здесь видна текущая загрузка рабочего пространства.</p>
+        <Card className="mt-5 shadow-none">
+          <CardTitle>Workspace status</CardTitle>
+          <CardDescription className="mt-2">Единый frontend на Next.js подключен к API. Здесь видна текущая загрузка рабочего пространства.</CardDescription>
+          <div className="mt-4">
+            <Progress value={loading ? 35 : 100} variant="primary" className="h-3" />
+          </div>
           {loading ? (
             <div className="mt-4">
-              <Loader size="md" label="Загружаем данные..." />
+              <Spinner size="md" label="Загружаем данные..." />
             </div>
           ) : null}
-        </div>
+        </Card>
       </AppShell>
     </ProtectedPage>
   );
