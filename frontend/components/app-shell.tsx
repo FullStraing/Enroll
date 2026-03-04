@@ -11,6 +11,7 @@ const nav = [
   { href: "/ui-lab", label: "UI Lab" },
   { href: "/calendar", label: "Calendar" },
   { href: "/documents", label: "Documents" },
+  { href: "/essays", label: "Essays" },
   { href: "/common-app", label: "Common App" },
   { href: "/settings", label: "Settings" },
 ];

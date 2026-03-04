@@ -114,3 +114,18 @@ Internal endpoints (already protected):
   - `female_admissions`, `male_admissions`, `test_policy_details`,
   - `financial_aid_extended`, `campus_life`, `athletics`,
   - `majors_count`, `avg_gpa`.
+
+## Essays API (Phase 1 + 3 + 4 baseline, 2026-03-04)
+
+- `GET /api/essays/` - list current user's essays (manager view).
+- `POST /api/essays/` - create essay and auto-create `v1 Initial draft`.
+- `GET /api/essays/{id}/` - essay detail.
+- `PUT /api/essays/{id}/` - update essay metadata.
+- `DELETE /api/essays/{id}/` - delete essay with all versions.
+- `GET /api/essays/{id}/versions/` - list versions for essay.
+- `POST /api/essays/{id}/versions/` - create next version (`vN+1`).
+- `GET /api/essay-versions/{id}/` - version detail.
+- `PUT /api/essay-versions/{id}/` - update content/label for one version.
+
+Validation rules:
+- `supplemental_essay` requires `university` and non-empty `prompt_title`.

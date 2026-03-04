@@ -65,3 +65,19 @@
 - Added official-first admission deadlines ingestion pipeline with typed deadlines (`EA/ED1/ED2/RD/Transfer/Priority/Rolling`) and API endpoint `/api/universities/{id}/deadlines/`.
 - Switched deadlines ingestion primary source to Peterson's (`--source petersons`) with table parser for `Application Closing`, `Notification Date`, and `Rolling Admissions`.
 - Added Peterson profile enrichment command for missing blocks in cards: `Location & Contact`, `Majors & Degrees`, `Applying/Admission Requirements`, `Female/Male Admissions`, `Test policy`, `Financial Aid`, `Campus Life`, `Athletics`, plus GPA backfill metric (`avg_gpa`).
+
+## Essays roadmap progress (2026-03-04)
+
+- Implemented Phase 1 foundation:
+  - New backend app `apps.essays` with `Essay` and `EssayVersion` models.
+  - API routes for essay manager and versions.
+  - Auto-created `v1 Initial draft` on essay creation.
+- Implemented Phase 3 (without AI):
+  - New Next.js page `/essays` as Essay Manager.
+  - Card-based list of essays with versions count and last edited timestamp.
+  - `+ New Essay` flow with supplemental essay validation fields.
+- Implemented Phase 4 baseline:
+  - New Next.js workspace `/essays/[id]`.
+  - Left panel versions list + create new version.
+  - Center editor with autosave and manual save.
+  - Right panel compare mode (`vX vs vY`) with line-based diff view.

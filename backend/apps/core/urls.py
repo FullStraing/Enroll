@@ -28,5 +28,6 @@ urlpatterns = [
     path("", include("apps.universities.urls")),
     path("", include("apps.tasks.urls")),
     path("", include("apps.documents.urls")),
+    path("", include("apps.essays.urls")),
     path("", include("apps.ai.urls")),
 ]

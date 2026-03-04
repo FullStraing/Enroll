@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     "apps.universities",
     "apps.tasks",
     "apps.documents",
+    "apps.essays",
     "apps.ai",
 ]
 
