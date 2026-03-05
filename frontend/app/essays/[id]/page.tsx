@@ -48,6 +48,13 @@ type DiffRow = {
   right: string;
 };
 
+type CompareResponse = {
+  essay_id: number;
+  from_version: { id: number; version_number: number; label: string };
+  to_version: { id: number; version_number: number; label: string };
+  rows: DiffRow[];
+};
+
 function buildDiffRows(leftText: string, rightText: string): DiffRow[] {
   const leftLines = leftText.split("\n");
   const rightLines = rightText.split("\n");
@@ -133,6 +140,8 @@ export default function EssayWorkspacePage() {
   const [creatingVersion, setCreatingVersion] = useState(false);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "retrying" | "saved" | "error">("idle");
   const [statusText, setStatusText] = useState("");
+  const [compareRows, setCompareRows] = useState<DiffRow[]>([]);
+  const [compareLoading, setCompareLoading] = useState(false);
   const [aiPanelVisible, setAiPanelVisible] = useState(() => {
     if (typeof window === "undefined") return true;
     return window.localStorage.getItem("essay_ai_panel_visible") !== "0";
@@ -322,11 +331,28 @@ export default function EssayWorkspacePage() {
     return normalized.split(/\s+/).length;
   }, [editorPlainText]);
 
-  const diffRows = useMemo(() => {
-    const left = htmlToText(versions.find((item) => item.id === compareLeftId)?.content || "");
-    const right = htmlToText(versions.find((item) => item.id === compareRightId)?.content || "");
-    return buildDiffRows(left, right);
-  }, [compareLeftId, compareRightId, versions]);
+  useEffect(() => {
+    async function loadCompare() {
+      const token = getToken();
+      if (!token || !essayId || !compareLeftId || !compareRightId) return;
+      setCompareLoading(true);
+      try {
+        const data = await apiFetch<CompareResponse>(
+          `/api/essays/${essayId}/compare/?from_version=${compareLeftId}&to_version=${compareRightId}`,
+          { method: "GET" },
+          token,
+        );
+        setCompareRows(data.rows || []);
+      } catch {
+        const left = htmlToText(versions.find((item) => item.id === compareLeftId)?.content || "");
+        const right = htmlToText(versions.find((item) => item.id === compareRightId)?.content || "");
+        setCompareRows(buildDiffRows(left, right));
+      } finally {
+        setCompareLoading(false);
+      }
+    }
+    void loadCompare();
+  }, [essayId, compareLeftId, compareRightId, versions]);
   const wordTargetState = useMemo(
     () => getWordTargetState(wordCount, essay?.target_word_count || 0),
     [wordCount, essay?.target_word_count],
@@ -392,7 +418,8 @@ export default function EssayWorkspacePage() {
           </select>
         </div>
         <div className="mt-3 max-h-[420px] space-y-2 overflow-auto rounded-xl border border-black/10 bg-white p-3 text-xs">
-          {diffRows.map((row, index) => (
+          {compareLoading ? <p className="text-black/60">Loading diff...</p> : null}
+          {compareRows.map((row, index) => (
             <div
               key={`diff-${index}`}
               className={`rounded-lg border px-2 py-1 ${

@@ -141,6 +141,15 @@ Validation rules:
 - Final status rule:
   - when one version becomes `final`, previous `final` versions in same essay are auto-demoted to `revised`.
 
+## Essays compare endpoint (Phase 9 start, 2026-03-05)
+
+- `GET /api/essays/{essay_id}/compare/?from_version={id}&to_version={id}`
+  - owner-only access
+  - returns:
+    - `from_version` metadata
+    - `to_version` metadata
+    - `rows[]` with line-level diff kind: `same | added | removed | changed`
+
 ## Essays onboarding preference (2026-03-05)
 
 - `GET /api/auth/profile/` now includes:

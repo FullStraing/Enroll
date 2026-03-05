@@ -1,8 +1,12 @@
+import re
+
 from django.db import models
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 from rest_framework import generics, permissions
 from rest_framework.exceptions import PermissionDenied, ValidationError
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from apps.essays.models import Essay, EssayVersion
 from apps.essays.serializers import EssaySerializer, EssayVersionSerializer
@@ -119,3 +123,62 @@ class EssayVersionDetailView(generics.RetrieveUpdateAPIView):
 
         version = serializer.save()
         Essay.objects.filter(pk=version.essay_id).update(updated_at=timezone.now())
+
+
+def _html_to_text(value: str) -> str:
+    return (
+        value.replace("<br>", "\n")
+        .replace("<br/>", "\n")
+        .replace("<br />", "\n")
+        .replace("</p>", "\n")
+    )
+
+
+def _strip_tags(value: str) -> str:
+    return re.sub(r"<[^>]+>", " ", value).replace("\xa0", " ").strip()
+
+
+def _build_diff_rows(left_text: str, right_text: str):
+    left_lines = left_text.splitlines() or [""]
+    right_lines = right_text.splitlines() or [""]
+    max_len = max(len(left_lines), len(right_lines))
+    rows = []
+    for idx in range(max_len):
+        left = left_lines[idx] if idx < len(left_lines) else ""
+        right = right_lines[idx] if idx < len(right_lines) else ""
+        if left and right and left == right:
+            kind = "same"
+        elif not left and right:
+            kind = "added"
+        elif left and not right:
+            kind = "removed"
+        else:
+            kind = "changed"
+        rows.append({"kind": kind, "left": left, "right": right})
+    return rows
+
+
+class EssayCompareView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, essay_id: int):
+        essay = generics.get_object_or_404(Essay, pk=essay_id, student=request.user)
+        from_version_id = request.query_params.get("from_version")
+        to_version_id = request.query_params.get("to_version")
+        if not from_version_id or not to_version_id:
+            raise ValidationError({"detail": "from_version and to_version are required."})
+
+        left = generics.get_object_or_404(EssayVersion, pk=from_version_id, essay=essay)
+        right = generics.get_object_or_404(EssayVersion, pk=to_version_id, essay=essay)
+
+        left_text = _strip_tags(_html_to_text(left.content or ""))
+        right_text = _strip_tags(_html_to_text(right.content or ""))
+        rows = _build_diff_rows(left_text, right_text)
+        return Response(
+            {
+                "essay_id": essay.id,
+                "from_version": {"id": left.id, "version_number": left.version_number, "label": left.label},
+                "to_version": {"id": right.id, "version_number": right.version_number, "label": right.label},
+                "rows": rows,
+            }
+        )

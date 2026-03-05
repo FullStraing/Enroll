@@ -130,3 +130,11 @@
   - Added target state evaluation (`start`, `below`, `on target`, `over target`).
   - Added visual target badge and progress bar in workspace.
   - Added contextual word guidance hints based on current count vs target.
+
+## Essays compare API progress (2026-03-05)
+
+- Started Phase 9.1:
+  - Added backend endpoint `/api/essays/{id}/compare/` with `from_version` + `to_version`.
+  - Added owner-scope validation and response payload for diff rows.
+- Updated workspace compare panel to consume backend compare endpoint.
+- Added frontend fallback to local compare if endpoint call fails.
