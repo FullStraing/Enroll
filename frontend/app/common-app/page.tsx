@@ -123,9 +123,9 @@ function FieldInput({
     const isYesNo = options.length === 2 && options.includes("Yes") && options.includes("No");
     if (isYesNo) {
       return (
-        <div className="mt-2 space-y-2">
+        <div className="mt-2 space-y-3">
           {options.map((option) => (
-            <label key={option} className="flex items-center gap-2 text-sm text-black/80">
+            <label key={option} className="flex items-center gap-3 text-sm text-black/80">
               <input
                 type="radio"
                 name={`${field.path}-${field.id}`}
@@ -475,13 +475,13 @@ export default function CommonAppPage() {
                 </Badge>
               </div>
 
-              <div className="mt-4 space-y-3">
+              <div className="mt-6 space-y-5">
                 {visibleFields.map((field) => {
                   const fieldKey = `${currentStep.section.key}.${currentStep.subsection.key}.${field.id}`;
                   const required = isFieldRequired(currentStep, field);
                   return (
-                    <label key={field.id} className="text-sm text-black/80">
-                      <span className="inline-flex items-center gap-2 font-semibold">
+                    <label key={field.id} className="block text-sm text-black/80">
+                      <span className="inline-flex items-center gap-2 pb-2 text-[1.02rem] font-semibold">
                         <span>
                           {field.label}
                           {required ? <span className="ml-1 text-red-600">*</span> : null}
