@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
 import { Button } from "@/components/ui/button";
 
@@ -71,11 +71,20 @@ export function AppShell({
             variant="outline"
             size="sm"
             onClick={toggleSidebar}
-            className="h-8 w-8 px-0"
+            className="relative h-8 w-8 overflow-hidden px-0"
             aria-label={collapsed ? "Expand menu" : "Collapse menu"}
             title={collapsed ? "Expand menu" : "Collapse menu"}
           >
-            {collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
+            <Menu
+              className={`absolute h-4 w-4 transition-all duration-200 ${
+                collapsed ? "rotate-90 scale-0 opacity-0" : "rotate-0 scale-100 opacity-100"
+              }`}
+            />
+            <X
+              className={`absolute h-4 w-4 transition-all duration-200 ${
+                collapsed ? "rotate-0 scale-100 opacity-100" : "-rotate-90 scale-0 opacity-0"
+              }`}
+            />
           </Button>
         </div>
 

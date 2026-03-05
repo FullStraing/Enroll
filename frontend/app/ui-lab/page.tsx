@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Menu, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { Menu, PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { Badge } from "@/components/ui/badge";
 import { ProtectedPage } from "@/components/protected-page";
@@ -15,6 +15,7 @@ import { Spinner } from "@/components/ui/spinner";
 export default function UiLabPage() {
   const [progress, setProgress] = useState(42);
   const [menuPreviewCollapsed, setMenuPreviewCollapsed] = useState(false);
+  const [classicMenuOpen, setClassicMenuOpen] = useState(false);
 
   return (
     <ProtectedPage>
@@ -41,9 +42,23 @@ export default function UiLabPage() {
             <div className="mt-4 grid gap-3 md:grid-cols-3">
               <Card className="shadow-none">
                 <CardTitle className="text-base">Classic</CardTitle>
-                <CardDescription className="mt-1">Simple menu icon.</CardDescription>
-                <Button variant="outline" size="sm" className="mt-3 h-9 w-9 px-0">
-                  <Menu className="h-4 w-4" />
+                <CardDescription className="mt-1">Animated menu/close state.</CardDescription>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="relative mt-3 h-9 w-9 overflow-hidden px-0"
+                  onClick={() => setClassicMenuOpen((prev) => !prev)}
+                >
+                  <Menu
+                    className={`absolute h-4 w-4 transition-all duration-200 ${
+                      classicMenuOpen ? "rotate-90 scale-0 opacity-0" : "rotate-0 scale-100 opacity-100"
+                    }`}
+                  />
+                  <X
+                    className={`absolute h-4 w-4 transition-all duration-200 ${
+                      classicMenuOpen ? "rotate-0 scale-100 opacity-100" : "-rotate-90 scale-0 opacity-0"
+                    }`}
+                  />
                 </Button>
               </Card>
               <Card className="shadow-none">
