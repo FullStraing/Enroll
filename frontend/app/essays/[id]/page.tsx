@@ -13,6 +13,7 @@ import { Card, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Spinner } from "@/components/ui/spinner";
 import { Skeleton } from "@/components/ui/skeleton";
+import { EssayRichEditor } from "@/components/essay-rich-editor";
 
 type Essay = {
   id: number;
@@ -60,13 +61,25 @@ function buildDiffRows(leftText: string, rightText: string): DiffRow[] {
   return rows;
 }
 
+function htmlToText(value: string): string {
+  return value
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/p>/gi, "\n")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\u00a0/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 export default function EssayWorkspacePage() {
   const params = useParams<{ id: string }>();
   const essayId = Number(params.id);
   const [essay, setEssay] = useState<Essay | null>(null);
   const [versions, setVersions] = useState<EssayVersion[]>([]);
   const [selectedVersionId, setSelectedVersionId] = useState<number | null>(null);
-  const [editorText, setEditorText] = useState("");
+  const [editorContent, setEditorContent] = useState("");
+  const [editorPlainText, setEditorPlainText] = useState("");
+  const [loadedVersionId, setLoadedVersionId] = useState<number | null>(null);
   const [newVersionLabel, setNewVersionLabel] = useState("Revision");
   const [compareLeftId, setCompareLeftId] = useState<number | null>(null);
   const [compareRightId, setCompareRightId] = useState<number | null>(null);
@@ -93,7 +106,9 @@ export default function EssayWorkspacePage() {
       setVersions(versionData);
       const first = versionData[0] || null;
       setSelectedVersionId(first?.id || null);
-      setEditorText(first?.content || "");
+      setEditorContent(first?.content || "<p></p>");
+      setEditorPlainText(htmlToText(first?.content || ""));
+      setLoadedVersionId(first?.id || null);
       setCompareLeftId(versionData[1]?.id || first?.id || null);
       setCompareRightId(first?.id || null);
       setStatusText("");
@@ -115,13 +130,16 @@ export default function EssayWorkspacePage() {
 
   useEffect(() => {
     if (!selectedVersion) return;
-    setEditorText(selectedVersion.content || "");
+    if (loadedVersionId === selectedVersion.id) return;
+    setEditorContent(selectedVersion.content || "<p></p>");
+    setLoadedVersionId(selectedVersion.id);
+    setEditorPlainText(htmlToText(selectedVersion.content || ""));
     setSaveState("idle");
-  }, [selectedVersion]);
+  }, [selectedVersion, loadedVersionId]);
 
   useEffect(() => {
     if (!selectedVersion) return;
-    if (editorText === selectedVersion.content) return;
+    if (editorContent === selectedVersion.content) return;
     const token = getToken();
     if (!token) return;
 
@@ -130,7 +148,7 @@ export default function EssayWorkspacePage() {
       try {
         const updated = await apiFetch<EssayVersion>(
           `/api/essay-versions/${selectedVersion.id}/`,
-          { method: "PUT", body: JSON.stringify({ label: selectedVersion.label, content: editorText, source: selectedVersion.source }) },
+          { method: "PUT", body: JSON.stringify({ label: selectedVersion.label, content: editorContent, source: selectedVersion.source }) },
           token,
         );
         setVersions((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
@@ -141,7 +159,7 @@ export default function EssayWorkspacePage() {
     }, 700);
 
     return () => clearTimeout(timer);
-  }, [editorText, selectedVersion]);
+  }, [editorContent, selectedVersion]);
 
   async function createVersion(event: FormEvent) {
     event.preventDefault();
@@ -151,12 +169,13 @@ export default function EssayWorkspacePage() {
     try {
       const created = await apiFetch<EssayVersion>(
         `/api/essays/${essayId}/versions/`,
-        { method: "POST", body: JSON.stringify({ label: newVersionLabel.trim() || "Revision", content: editorText }) },
+        { method: "POST", body: JSON.stringify({ label: newVersionLabel.trim() || "Revision", content: editorContent }) },
         token,
       );
       const nextVersions = [created, ...versions];
       setVersions(nextVersions);
       setSelectedVersionId(created.id);
+      setLoadedVersionId(created.id);
       setCompareRightId(created.id);
       setStatusText("New version created.");
     } catch (error) {
@@ -174,7 +193,7 @@ export default function EssayWorkspacePage() {
     try {
       const updated = await apiFetch<EssayVersion>(
         `/api/essay-versions/${selectedVersion.id}/`,
-        { method: "PUT", body: JSON.stringify({ label: selectedVersion.label, content: editorText, source: selectedVersion.source }) },
+        { method: "PUT", body: JSON.stringify({ label: selectedVersion.label, content: editorContent, source: selectedVersion.source }) },
         token,
       );
       setVersions((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
@@ -188,14 +207,14 @@ export default function EssayWorkspacePage() {
   }
 
   const wordCount = useMemo(() => {
-    const normalized = editorText.trim();
+    const normalized = editorPlainText.trim();
     if (!normalized) return 0;
     return normalized.split(/\s+/).length;
-  }, [editorText]);
+  }, [editorPlainText]);
 
   const diffRows = useMemo(() => {
-    const left = versions.find((item) => item.id === compareLeftId)?.content || "";
-    const right = versions.find((item) => item.id === compareRightId)?.content || "";
+    const left = htmlToText(versions.find((item) => item.id === compareLeftId)?.content || "");
+    const right = htmlToText(versions.find((item) => item.id === compareRightId)?.content || "");
     return buildDiffRows(left, right);
   }, [compareLeftId, compareRightId, versions]);
 
@@ -367,13 +386,15 @@ export default function EssayWorkspacePage() {
                 </div>
               </div>
 
-              <textarea
-                value={editorText}
-                onChange={(event) => setEditorText(event.target.value)}
-                rows={18}
-                className="mt-4 w-full rounded-2xl border border-black/20 bg-white px-3 py-3 text-sm leading-6"
-                placeholder="Write your essay here..."
-              />
+              <div className="mt-4">
+                <EssayRichEditor
+                  content={editorContent}
+                  onChange={(html, text) => {
+                    setEditorContent(html);
+                    setEditorPlainText(text);
+                  }}
+                />
+              </div>
 
               <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-sm">
                 <div className="text-black/65">

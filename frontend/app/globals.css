@@ -55,3 +55,15 @@ body {
     transform: translateX(100%);
   }
 }
+
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: rgba(0, 0, 0, 0.42);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+.ProseMirror:focus {
+  outline: none;
+}

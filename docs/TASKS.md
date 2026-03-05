@@ -97,3 +97,12 @@
   - Added Show/Hide toggle for right panel with localStorage persistence.
   - Added mobile-friendly collapsed section (`details/summary`) for AI+Compare content.
   - Kept compare UI inside right panel as MVP placeholder until dedicated compare API phase.
+
+## Essays editor progress (2026-03-05)
+
+- Started Phase 7.1:
+  - Integrated Rich Text Editor (Tiptap) in `/essays/[id]` workspace.
+  - Added formatting toolbar (paragraph, bold, italic, bullet list, ordered list).
+  - Autosave now persists editor HTML content.
+  - Word count is computed from plain text extracted from editor content.
+  - Diff view now renders text-normalized compare output (not raw HTML tags).
