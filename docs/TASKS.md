@@ -138,3 +138,15 @@
   - Added owner-scope validation and response payload for diff rows.
 - Updated workspace compare panel to consume backend compare endpoint.
 - Added frontend fallback to local compare if endpoint call fails.
+
+## Dashboard Common App progress start (2026-03-05)
+
+- Added backend profile draft storage:
+  - `StudentProfile.common_app_profile` (JSON draft for Common App-only fields).
+- Added new endpoint:
+  - `GET /api/auth/common-app-progress/` with section/subsection/field completion.
+- Dashboard now shows:
+  - overall required completion
+  - progress by section (Profile, Family, Education)
+  - subsection forms with inline help text and save actions.
+- Dashboard saves subsection data through `PATCH /api/auth/profile/` (model + json merge).

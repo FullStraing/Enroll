@@ -157,3 +157,15 @@ Validation rules:
 - `PATCH /api/auth/profile/` accepts:
   - `{ "essays_onboarding_seen": true }`
   - used to skip/show first-time Essays onboarding modal.
+
+## Common App progress API (Dashboard, 2026-03-05)
+
+- `GET /api/auth/common-app-progress/`
+  - returns:
+    - `overall` required completion summary
+    - `sections[]` with subsection progress and field metadata
+  - each field includes:
+    - `label`, `type`, `required`, `readonly`, `help`, `bind`, `path`, `value`, `filled`
+- `PATCH /api/auth/profile/`
+  - supports partial updates for both direct profile fields and `common_app_profile` json draft payload
+  - `common_app_profile` is merged on update (not fully overwritten by partial patch).

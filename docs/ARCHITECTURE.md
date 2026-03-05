@@ -96,3 +96,13 @@ Automation commands:
 - Essays page shows onboarding modal only when the flag is `false`.
 - Modal outcome persists via `PATCH /api/auth/profile/` with `{ "essays_onboarding_seen": true }`.
 - This keeps onboarding state cross-device and independent from browser localStorage.
+
+## Dashboard Common App completion architecture
+
+- Profile data is split into:
+  - typed model fields (`StudentProfile` columns),
+  - flexible JSON draft (`StudentProfile.common_app_profile`) for Common App fields not yet formalized.
+- Progress endpoint `GET /api/auth/common-app-progress/` computes:
+  - required completion at overall/section/subsection levels,
+  - field metadata with descriptions/help text for guided data entry.
+- Dashboard writes via existing `PATCH /api/auth/profile/`, and serializer merges `common_app_profile` patches.

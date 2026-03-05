@@ -69,6 +69,7 @@ class StudentProfile(models.Model):
         max_length=100,
         default="USA",
     )
+    common_app_profile = models.JSONField(default=dict, blank=True)
     essays_onboarding_seen = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)

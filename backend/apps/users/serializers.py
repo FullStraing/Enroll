@@ -46,5 +46,15 @@ class StudentProfileSerializer(serializers.ModelSerializer):
             "budget_range",
             "activities_level",
             "target_country",
+            "common_app_profile",
             "essays_onboarding_seen",
         ]
+
+    def update(self, instance, validated_data):
+        # Merge Common App draft payload instead of overwriting whole object on partial updates.
+        if "common_app_profile" in validated_data:
+            incoming = validated_data.pop("common_app_profile") or {}
+            merged = dict(instance.common_app_profile or {})
+            merged.update(incoming)
+            instance.common_app_profile = merged
+        return super().update(instance, validated_data)
