@@ -203,6 +203,16 @@ export default function CommonAppPage() {
     );
   }, [progressData]);
 
+  const sectionStartIndexes = useMemo(() => {
+    const map: Record<string, number> = {};
+    let cursor = 0;
+    for (const section of progressData?.sections || []) {
+      map[section.key] = cursor;
+      cursor += section.subsections.length;
+    }
+    return map;
+  }, [progressData]);
+
   const currentStep = steps[currentStepIndex] || null;
   const visibleFields = useMemo(
     () => currentStep?.subsection.fields.filter((field) => field.visible !== false) || [],
@@ -354,23 +364,29 @@ export default function CommonAppPage() {
         {!loading && currentStep ? (
           <div className="mt-5 grid gap-4 lg:grid-cols-[260px_1fr]">
             <Card className="h-fit shadow-none">
-              <CardTitle>Шаги</CardTitle>
-              <div className="mt-3 space-y-2">
-                {steps.map((step, index) => (
-                  <button
-                    key={step.id}
-                    type="button"
-                    onClick={() => setCurrentStepIndex(index)}
-                    className={`w-full rounded-xl border px-3 py-2 text-left text-sm transition ${
-                      index === currentStepIndex
-                        ? "border-black bg-white font-semibold"
-                        : "border-black/10 bg-white/70 hover:border-black/30"
-                    }`}
-                  >
-                    <p className="text-xs text-black/55">{step.sectionTitle}</p>
-                    <p>{step.subsectionTitle}</p>
-                  </button>
-                ))}
+              <div className="mt-1 space-y-1">
+                {(progressData?.sections || []).map((section) => {
+                  const startIndex = sectionStartIndexes[section.key] ?? 0;
+                  const active = currentStep.section.key === section.key;
+                  return (
+                    <button
+                      key={section.key}
+                      type="button"
+                      onClick={() => setCurrentStepIndex(startIndex)}
+                      className={`flex w-full items-center justify-between rounded-xl border px-3 py-3 text-left text-base transition ${
+                        active
+                          ? "border-black bg-white font-semibold"
+                          : "border-black/10 bg-white/70 hover:border-black/30"
+                      }`}
+                    >
+                      <span className="inline-flex items-center gap-2">
+                        <span className="text-base">{active ? "⌄" : "›"}</span>
+                        <span>{section.title}</span>
+                      </span>
+                      <span className="h-4 w-4 rounded-full border border-dashed border-black/35" />
+                    </button>
+                  );
+                })}
               </div>
             </Card>
 
