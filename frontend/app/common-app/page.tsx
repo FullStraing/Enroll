@@ -25,6 +25,7 @@ type ProgressField = {
   value: string | number | boolean | string[] | null;
   filled: boolean;
   options?: string[];
+  visible?: boolean;
 };
 
 type Subsection = {
@@ -103,6 +104,28 @@ function FieldInput({
   }
 
   if (field.type === "choice") {
+    const options = field.options || [];
+    const isYesNo =
+      options.length === 2 && options.includes("Yes") && options.includes("No");
+    if (isYesNo) {
+      return (
+        <div className="mt-2 space-y-2">
+          {options.map((option) => (
+            <label key={option} className="flex items-center gap-2 text-sm text-black/80">
+              <input
+                type="radio"
+                name={`${field.path}-${field.id}`}
+                checked={value === option}
+                disabled={field.readonly}
+                onChange={() => onChange(option)}
+                className="h-4 w-4 border-black/30"
+              />
+              <span>{option === "Yes" ? "Да" : "Нет"}</span>
+            </label>
+          ))}
+        </div>
+      );
+    }
     return (
       <select
         value={typeof value === "string" ? value : ""}
@@ -192,6 +215,7 @@ export default function CommonAppPage() {
     const payloadJson: Record<string, unknown> = {};
 
     for (const field of subsection.fields) {
+      if (field.visible === false) continue;
       if (field.readonly || field.bind === "user") continue;
       const key = `${section.key}.${subsection.key}.${field.id}`;
       const value = draftValues[key];
@@ -272,6 +296,7 @@ export default function CommonAppPage() {
                     </summary>
                     <div className="mt-3 grid gap-3 md:grid-cols-2">
                       {subsection.fields.map((field) => {
+                        if (field.visible === false) return null;
                         const fieldKey = `${section.key}.${subsection.key}.${field.id}`;
                         return (
                           <label key={field.id} className="text-sm text-black/75">

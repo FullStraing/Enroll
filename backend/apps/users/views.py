@@ -7,6 +7,11 @@ from django.contrib.auth.models import User
 from .serializers import RegisterSerializer, StudentProfileSerializer
 from .models import StudentProfile
 
+
+def _choice_yes_no_field_options():
+    return ["Yes", "No"]
+
+
 COMMON_APP_SCHEMA = [
     {
         "key": "profile",
@@ -24,10 +29,20 @@ COMMON_APP_SCHEMA = [
                         "path": "has_preferred_first_name",
                         "type": "choice",
                         "required": True,
-                        "options": ["Yes", "No"],
+                        "options": _choice_yes_no_field_options(),
                         "help": "If yes, fill preferred first name below.",
                     },
-                    {"id": "preferred_first_name", "label": "Preferred first name", "bind": "json", "path": "preferred_first_name", "type": "text", "required": False, "help": "Optional nickname/used first name."},
+                    {
+                        "id": "preferred_first_name",
+                        "label": "Preferred first name",
+                        "bind": "json",
+                        "path": "preferred_first_name",
+                        "type": "text",
+                        "required": False,
+                        "required_if": {"field_id": "has_preferred_first_name", "equals": "Yes"},
+                        "show_if": {"field_id": "has_preferred_first_name", "equals": "Yes"},
+                        "help": "Fill this only when you selected Yes above.",
+                    },
                     {"id": "middle_name", "label": "Middle name", "bind": "json", "path": "middle_name", "type": "text", "required": False, "help": "Leave blank if not applicable."},
                     {"id": "last_name", "label": "Last/family/surname", "bind": "json", "path": "last_name", "type": "text", "required": True, "help": "Use family name from passport/legal docs."},
                     {
@@ -47,8 +62,41 @@ COMMON_APP_SCHEMA = [
                         "path": "former_legal_name_materials",
                         "type": "choice",
                         "required": True,
-                        "options": ["Yes", "No"],
+                        "options": _choice_yes_no_field_options(),
                         "help": "For example, records under a maiden/previous legal name.",
+                    },
+                    {
+                        "id": "former_first_name",
+                        "label": "Former first name",
+                        "bind": "json",
+                        "path": "former_first_name",
+                        "type": "text",
+                        "required": False,
+                        "required_if": {"field_id": "former_legal_name_materials", "equals": "Yes"},
+                        "show_if": {"field_id": "former_legal_name_materials", "equals": "Yes"},
+                        "help": "Fill only if records exist under former name.",
+                    },
+                    {
+                        "id": "former_middle_name",
+                        "label": "Former middle name",
+                        "bind": "json",
+                        "path": "former_middle_name",
+                        "type": "text",
+                        "required": False,
+                        "required_if": {"field_id": "former_legal_name_materials", "equals": "Yes"},
+                        "show_if": {"field_id": "former_legal_name_materials", "equals": "Yes"},
+                        "help": "Fill only if records exist under former name.",
+                    },
+                    {
+                        "id": "former_last_name",
+                        "label": "Former last name",
+                        "bind": "json",
+                        "path": "former_last_name",
+                        "type": "text",
+                        "required": False,
+                        "required_if": {"field_id": "former_legal_name_materials", "equals": "Yes"},
+                        "show_if": {"field_id": "former_legal_name_materials", "equals": "Yes"},
+                        "help": "Fill only if records exist under former name.",
                     },
                     {"id": "date_of_birth", "label": "Date of birth", "bind": "json", "path": "date_of_birth", "type": "date", "required": True, "help": "Use format YYYY-MM-DD."},
                 ],
@@ -383,6 +431,14 @@ def _resolve_value(profile: StudentProfile, field_config: dict):
     return (profile.common_app_profile or {}).get(path)
 
 
+def _condition_matches(condition: dict, field_values: dict):
+    if not condition:
+        return True
+    field_id = condition.get("field_id")
+    expected = condition.get("equals")
+    return field_values.get(field_id) == expected
+
+
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = RegisterSerializer
@@ -416,12 +472,16 @@ class CommonAppProgressView(APIView):
                 sub_required = 0
                 sub_completed = 0
                 fields_payload = []
+                field_values = {field["id"]: _resolve_value(profile, field) for field in subsection["fields"]}
 
                 for field in subsection["fields"]:
-                    value = _resolve_value(profile, field)
+                    value = field_values.get(field["id"])
+                    visible = _condition_matches(field.get("show_if"), field_values)
                     required = bool(field.get("required", False))
+                    if field.get("required_if"):
+                        required = _condition_matches(field.get("required_if"), field_values)
                     filled = _is_filled(value)
-                    if required:
+                    if visible and required:
                         sub_required += 1
                         total_required += 1
                         section_required += 1
@@ -436,6 +496,7 @@ class CommonAppProgressView(APIView):
                             "label": field["label"],
                             "type": field["type"],
                             "options": field.get("options", []),
+                            "visible": visible,
                             "required": required,
                             "readonly": bool(field.get("readonly", False)),
                             "help": field["help"],
