@@ -483,7 +483,7 @@ export default function UniversityProfilePage() {
                     <p className="text-3xl font-black">{formatInt(femaleAdmissions.accepted)}</p>
                     <p className="text-xs text-white/60">Females Accepted</p>
                   </div>
-                  <CircularProgress value={Math.round(femaleAdmissions.rate || 0)} size={88} thickness={12} fillColor="#F8D6B3" />
+                  <CircularProgress value={Math.round(femaleAdmissions.rate || 0)} size={88} thickness={12} fillColor="#F4A6C8" />
                 </div>
               </Card>
 
@@ -501,7 +501,7 @@ export default function UniversityProfilePage() {
                     <p className="text-3xl font-black">{formatInt(maleAdmissions.accepted)}</p>
                     <p className="text-xs text-white/60">Males Accepted</p>
                   </div>
-                  <CircularProgress value={Math.round(maleAdmissions.rate || 0)} size={88} thickness={12} fillColor="#84DCCB" />
+                  <CircularProgress value={Math.round(maleAdmissions.rate || 0)} size={88} thickness={12} fillColor="#7FB6FF" />
                 </div>
               </Card>
             </section>
