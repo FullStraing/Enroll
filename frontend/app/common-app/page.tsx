@@ -13,6 +13,11 @@ import { Button } from "@/components/ui/button";
 
 type FieldType = "text" | "number" | "boolean" | "list" | "choice" | "date";
 
+type FieldCondition = {
+  field_id: string;
+  equals: string | number | boolean | null;
+};
+
 type ProgressField = {
   id: string;
   label: string;
@@ -26,6 +31,8 @@ type ProgressField = {
   filled: boolean;
   options?: string[];
   visible?: boolean;
+  show_if?: FieldCondition | null;
+  required_if?: FieldCondition | null;
 };
 
 type Subsection = {
@@ -214,15 +221,44 @@ export default function CommonAppPage() {
   }, [progressData]);
 
   const currentStep = steps[currentStepIndex] || null;
-  const visibleFields = useMemo(
-    () => currentStep?.subsection.fields.filter((field) => field.visible !== false) || [],
-    [currentStep],
+  const getDraftKey = useCallback((step: Step, fieldId: string) => {
+    return `${step.section.key}.${step.subsection.key}.${fieldId}`;
+  }, []);
+
+  const matchesCondition = useCallback(
+    (step: Step, condition?: FieldCondition | null) => {
+      if (!condition) return true;
+      const key = getDraftKey(step, condition.field_id);
+      return draftValues[key] === condition.equals;
+    },
+    [draftValues, getDraftKey],
   );
 
+  const isFieldVisible = useCallback(
+    (step: Step, field: ProgressField) => {
+      return matchesCondition(step, field.show_if);
+    },
+    [matchesCondition],
+  );
+
+  const isFieldRequired = useCallback(
+    (step: Step, field: ProgressField) => {
+      if (field.required_if) return matchesCondition(step, field.required_if);
+      return field.required;
+    },
+    [matchesCondition],
+  );
+
+  const visibleFields = useMemo(() => {
+    if (!currentStep) return [];
+    return currentStep.subsection.fields.filter((field) => isFieldVisible(currentStep, field));
+  }, [currentStep, isFieldVisible]);
+
   const stepEstimatedMinutes = useMemo(() => {
-    const requiredCount = visibleFields.filter((field) => field.required).length;
+    if (!currentStep) return 1;
+    const requiredCount = visibleFields.filter((field) => isFieldRequired(currentStep, field)).length;
     return Math.max(1, Math.ceil(requiredCount / 2));
-  }, [visibleFields]);
+  }, [currentStep, isFieldRequired, visibleFields]);
 
   async function loadData() {
     const token = getToken();
@@ -265,7 +301,7 @@ export default function CommonAppPage() {
     const payloadJson: Record<string, unknown> = {};
 
     for (const field of step.subsection.fields) {
-      if (field.visible === false) continue;
+      if (!isFieldVisible(step, field)) continue;
       if (field.readonly || field.bind === "user") continue;
       const key = `${step.section.key}.${step.subsection.key}.${field.id}`;
       const value = draftValues[key];
@@ -294,7 +330,7 @@ export default function CommonAppPage() {
     } finally {
       setSaving(false);
     }
-  }, [draftValues]);
+  }, [draftValues, isFieldVisible]);
 
   useEffect(() => {
     if (!currentStep || loading) return;
@@ -302,7 +338,7 @@ export default function CommonAppPage() {
     autosaveTimerRef.current = setTimeout(async () => {
       const subset: Record<string, unknown> = {};
       for (const field of currentStep.subsection.fields) {
-        if (field.visible === false || field.readonly || field.bind === "user") continue;
+        if (!isFieldVisible(currentStep, field) || field.readonly || field.bind === "user") continue;
         const key = `${currentStep.section.key}.${currentStep.subsection.key}.${field.id}`;
         subset[key] = draftValues[key];
       }
@@ -317,7 +353,7 @@ export default function CommonAppPage() {
     return () => {
       if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
     };
-  }, [draftValues, currentStep, loading, saveStep]);
+  }, [draftValues, currentStep, isFieldVisible, loading, saveStep]);
 
   async function handleContinue() {
     if (!currentStep) return;
@@ -401,15 +437,16 @@ export default function CommonAppPage() {
                 </Badge>
               </div>
 
-              <div className="mt-4 grid gap-3 md:grid-cols-2">
+              <div className="mt-4 space-y-3">
                 {visibleFields.map((field) => {
                   const fieldKey = `${currentStep.section.key}.${currentStep.subsection.key}.${field.id}`;
+                  const required = isFieldRequired(currentStep, field);
                   return (
                     <label key={field.id} className="text-sm text-black/80">
                       <span className="inline-flex items-center gap-2 font-semibold">
                         <span>
                           {field.label}
-                          {field.required ? <span className="ml-1 text-red-600">*</span> : null}
+                          {required ? <span className="ml-1 text-red-600">*</span> : null}
                           {field.readonly ? <span className="ml-1 text-xs text-black/45">(только чтение)</span> : null}
                         </span>
                         <span

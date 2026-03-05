@@ -496,6 +496,8 @@ class CommonAppProgressView(APIView):
                             "label": field["label"],
                             "type": field["type"],
                             "options": field.get("options", []),
+                            "show_if": field.get("show_if"),
+                            "required_if": field.get("required_if"),
                             "visible": visible,
                             "required": required,
                             "readonly": bool(field.get("readonly", False)),
