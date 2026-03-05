@@ -3,6 +3,7 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { Bot, GitCompare, PanelRightClose, PanelRightOpen, Sparkles } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { ProtectedPage } from "@/components/protected-page";
 import { getToken } from "@/lib/auth";
@@ -74,6 +75,10 @@ export default function EssayWorkspacePage() {
   const [creatingVersion, setCreatingVersion] = useState(false);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [statusText, setStatusText] = useState("");
+  const [aiPanelVisible, setAiPanelVisible] = useState(() => {
+    if (typeof window === "undefined") return true;
+    return window.localStorage.getItem("essay_ai_panel_visible") !== "0";
+  });
 
   const loadWorkspace = useCallback(async () => {
     const token = getToken();
@@ -194,17 +199,113 @@ export default function EssayWorkspacePage() {
     return buildDiffRows(left, right);
   }, [compareLeftId, compareRightId, versions]);
 
+  function toggleAiPanel() {
+    setAiPanelVisible((prev) => {
+      const next = !prev;
+      window.localStorage.setItem("essay_ai_panel_visible", next ? "1" : "0");
+      return next;
+    });
+  }
+
+  const gridClass = aiPanelVisible
+    ? "grid gap-4 lg:grid-cols-[260px_1fr] xl:grid-cols-[260px_1fr_420px]"
+    : "grid gap-4 lg:grid-cols-[260px_1fr]";
+
+  const rightPanel = (
+    <Card className="shadow-none">
+      <div className="flex items-center justify-between gap-2">
+        <CardTitle className="flex items-center gap-2">
+          <Bot className="h-4 w-4" />
+          AI Mentor
+        </CardTitle>
+        <Badge variant="cyan">Phase 5</Badge>
+      </div>
+      <div className="mt-3 rounded-xl border border-black/15 bg-[#DAF5F0]/40 p-3 text-sm text-black/75">
+        AI actions are not enabled yet. In next phase this panel will run:
+        <ul className="mt-2 list-disc pl-5">
+          <li>Create draft (Hook / Conflict / Growth / Impact)</li>
+          <li>Selection-based improvements</li>
+          <li>Admissions-style review</li>
+        </ul>
+      </div>
+
+      <div className="mt-4 border-t border-black/10 pt-4">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <GitCompare className="h-4 w-4" />
+          Compare versions
+        </CardTitle>
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <select
+            value={compareLeftId || ""}
+            onChange={(event) => setCompareLeftId(Number(event.target.value))}
+            className="rounded-xl border border-black/20 bg-white px-2 py-2 text-sm"
+          >
+            {versions.map((item) => (
+              <option key={`left-${item.id}`} value={item.id}>
+                v{item.version_number} {item.label || "Draft"}
+              </option>
+            ))}
+          </select>
+          <select
+            value={compareRightId || ""}
+            onChange={(event) => setCompareRightId(Number(event.target.value))}
+            className="rounded-xl border border-black/20 bg-white px-2 py-2 text-sm"
+          >
+            {versions.map((item) => (
+              <option key={`right-${item.id}`} value={item.id}>
+                v{item.version_number} {item.label || "Draft"}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="mt-3 max-h-[420px] space-y-2 overflow-auto rounded-xl border border-black/10 bg-white p-3 text-xs">
+          {diffRows.map((row, index) => (
+            <div
+              key={`diff-${index}`}
+              className={`rounded-lg border px-2 py-1 ${
+                row.kind === "added"
+                  ? "border-emerald-200 bg-emerald-50"
+                  : row.kind === "removed"
+                    ? "border-rose-200 bg-rose-50"
+                    : row.kind === "changed"
+                      ? "border-amber-200 bg-amber-50"
+                      : "border-black/10 bg-white"
+              }`}
+            >
+              <p className="font-semibold uppercase text-[10px] text-black/50">
+                {row.kind === "same" ? "=" : row.kind === "added" ? "+" : row.kind === "removed" ? "-" : "~"}
+              </p>
+              {row.kind !== "added" ? <p className="text-black/70">{row.left || "(empty)"}</p> : null}
+              {row.kind !== "removed" ? <p className="text-black">{row.right || "(empty)"}</p> : null}
+            </div>
+          ))}
+        </div>
+      </div>
+    </Card>
+  );
+
   return (
     <ProtectedPage>
       <AppShell
         title={essay ? `Essay Workspace - ${essay.title}` : "Essay Workspace"}
         subtitle="Versions (left) + Editor (center) + Compare mode (no AI yet)"
       >
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2 text-sm text-black/70">
+            <Sparkles className="h-4 w-4" />
+            Right panel is a placeholder for upcoming AI actions.
+          </div>
+          <Button variant="outline" size="sm" onClick={toggleAiPanel}>
+            {aiPanelVisible ? <PanelRightClose className="h-4 w-4" /> : <PanelRightOpen className="h-4 w-4" />}
+            <span>{aiPanelVisible ? "Hide AI panel" : "Show AI panel"}</span>
+          </Button>
+        </div>
+
         {loading ? (
-          <div className="grid gap-4 lg:grid-cols-[260px_1fr] xl:grid-cols-[260px_1fr_420px]">
+          <div className={gridClass}>
             <Card className="shadow-none"><Skeleton className="h-72 w-full" /></Card>
             <Card className="shadow-none"><Skeleton className="h-72 w-full" /></Card>
-            <Card className="shadow-none"><Skeleton className="h-72 w-full" /></Card>
+            {aiPanelVisible ? <Card className="shadow-none"><Skeleton className="h-72 w-full" /></Card> : null}
           </div>
         ) : !essay ? (
           <Card className="shadow-none">
@@ -214,7 +315,7 @@ export default function EssayWorkspacePage() {
             </Link>
           </Card>
         ) : (
-          <div className="grid gap-4 lg:grid-cols-[260px_1fr] xl:grid-cols-[260px_1fr_420px]">
+          <div className={gridClass}>
             <Card className="shadow-none">
               <div className="flex items-center justify-between gap-2">
                 <CardTitle>Versions</CardTitle>
@@ -296,57 +397,16 @@ export default function EssayWorkspacePage() {
               </div>
             </Card>
 
-            <Card className="shadow-none">
-              <CardTitle>Compare versions</CardTitle>
-              <div className="mt-3 grid grid-cols-2 gap-2">
-                <select
-                  value={compareLeftId || ""}
-                  onChange={(event) => setCompareLeftId(Number(event.target.value))}
-                  className="rounded-xl border border-black/20 bg-white px-2 py-2 text-sm"
-                >
-                  {versions.map((item) => (
-                    <option key={`left-${item.id}`} value={item.id}>
-                      v{item.version_number} {item.label || "Draft"}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  value={compareRightId || ""}
-                  onChange={(event) => setCompareRightId(Number(event.target.value))}
-                  className="rounded-xl border border-black/20 bg-white px-2 py-2 text-sm"
-                >
-                  {versions.map((item) => (
-                    <option key={`right-${item.id}`} value={item.id}>
-                      v{item.version_number} {item.label || "Draft"}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="mt-3 max-h-[520px] space-y-2 overflow-auto rounded-xl border border-black/10 bg-white p-3 text-xs">
-                {diffRows.map((row, index) => (
-                  <div
-                    key={`diff-${index}`}
-                    className={`rounded-lg border px-2 py-1 ${
-                      row.kind === "added"
-                        ? "border-emerald-200 bg-emerald-50"
-                        : row.kind === "removed"
-                          ? "border-rose-200 bg-rose-50"
-                          : row.kind === "changed"
-                            ? "border-amber-200 bg-amber-50"
-                            : "border-black/10 bg-white"
-                    }`}
-                  >
-                    <p className="font-semibold uppercase text-[10px] text-black/50">
-                      {row.kind === "same" ? "=" : row.kind === "added" ? "+" : row.kind === "removed" ? "-" : "~"}
-                    </p>
-                    {row.kind !== "added" ? <p className="text-black/70">{row.left || "(empty)"}</p> : null}
-                    {row.kind !== "removed" ? <p className="text-black">{row.right || "(empty)"}</p> : null}
-                  </div>
-                ))}
-              </div>
-            </Card>
+            {aiPanelVisible ? <div className="hidden xl:block">{rightPanel}</div> : null}
           </div>
         )}
+
+        {aiPanelVisible && !loading && essay ? (
+          <details className="mt-4 rounded-2xl border border-black/15 bg-white p-3 xl:hidden">
+            <summary className="cursor-pointer text-sm font-semibold">AI Mentor & Compare (mobile)</summary>
+            <div className="mt-3">{rightPanel}</div>
+          </details>
+        ) : null}
 
         {statusText ? <p className="mt-4 text-sm text-black/65">{statusText}</p> : null}
       </AppShell>

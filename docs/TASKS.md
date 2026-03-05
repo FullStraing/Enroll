@@ -89,3 +89,11 @@
   - Added onboarding modal on `/essays` with adaptive demo duration (~24s).
   - Added Watch demo / Skip / Continue actions.
   - On skip/complete, preference persists via `/api/auth/profile/` PATCH.
+
+## Essays workspace layout progress (2026-03-05)
+
+- Started Phase 5:
+  - Added explicit right-side `AI Mentor` placeholder panel in `/essays/[id]`.
+  - Added Show/Hide toggle for right panel with localStorage persistence.
+  - Added mobile-friendly collapsed section (`details/summary`) for AI+Compare content.
+  - Kept compare UI inside right panel as MVP placeholder until dedicated compare API phase.
