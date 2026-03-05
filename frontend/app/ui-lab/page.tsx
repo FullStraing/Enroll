@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Menu, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { Badge } from "@/components/ui/badge";
 import { ProtectedPage } from "@/components/protected-page";
@@ -13,6 +14,7 @@ import { Spinner } from "@/components/ui/spinner";
 
 export default function UiLabPage() {
   const [progress, setProgress] = useState(42);
+  const [menuPreviewCollapsed, setMenuPreviewCollapsed] = useState(false);
 
   return (
     <ProtectedPage>
@@ -30,6 +32,39 @@ export default function UiLabPage() {
               <Button variant="primary" size="lg">
                 Large
               </Button>
+            </div>
+          </section>
+
+          <section className="glass rounded-2xl p-5">
+            <h2 className="text-lg font-semibold">Burger Menu</h2>
+            <p className="mt-2 text-sm text-black/65">Preview and choose one style for sidebar toggle.</p>
+            <div className="mt-4 grid gap-3 md:grid-cols-3">
+              <Card className="shadow-none">
+                <CardTitle className="text-base">Classic</CardTitle>
+                <CardDescription className="mt-1">Simple menu icon.</CardDescription>
+                <Button variant="outline" size="sm" className="mt-3 h-9 w-9 px-0">
+                  <Menu className="h-4 w-4" />
+                </Button>
+              </Card>
+              <Card className="shadow-none">
+                <CardTitle className="text-base">Panel (recommended)</CardTitle>
+                <CardDescription className="mt-1">Matches sidebar expand/collapse logic.</CardDescription>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-3 h-9 w-9 px-0"
+                  onClick={() => setMenuPreviewCollapsed((prev) => !prev)}
+                >
+                  {menuPreviewCollapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
+                </Button>
+              </Card>
+              <Card className="shadow-none">
+                <CardTitle className="text-base">Primary accent</CardTitle>
+                <CardDescription className="mt-1">Same icon with primary color button.</CardDescription>
+                <Button variant="primary" size="sm" className="mt-3 h-9 w-9 px-0">
+                  <PanelLeftClose className="h-4 w-4" />
+                </Button>
+              </Card>
             </div>
           </section>
 

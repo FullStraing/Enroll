@@ -59,6 +59,9 @@ export default function EssaysPage() {
   const router = useRouter();
   const [essays, setEssays] = useState<Essay[]>([]);
   const [universities, setUniversities] = useState<University[]>([]);
+  const [universitiesLoading, setUniversitiesLoading] = useState(false);
+  const [universitiesLoaded, setUniversitiesLoaded] = useState(false);
+  const [universitySearch, setUniversitySearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [statusText, setStatusText] = useState("");
@@ -79,12 +82,8 @@ export default function EssaysPage() {
     if (!token) return;
     setLoading(true);
     try {
-      const [essayData, universitiesPage] = await Promise.all([
-        apiFetch<Essay[]>("/api/essays/", { method: "GET" }, token),
-        apiFetch<PaginatedResponse<University>>("/api/universities/?page=1&page_size=300", { method: "GET" }, token),
-      ]);
+      const essayData = await apiFetch<Essay[]>("/api/essays/", { method: "GET" }, token);
       setEssays(essayData);
-      setUniversities(universitiesPage.results);
       setStatusText("");
     } catch (error) {
       setStatusText(error instanceof Error ? error.message : "Failed to load essays.");
@@ -93,9 +92,48 @@ export default function EssaysPage() {
     }
   }
 
+  async function loadUniversities(query = "") {
+    const token = getToken();
+    if (!token) return;
+    setUniversitiesLoading(true);
+    try {
+      const q = query.trim();
+      const suffix = q ? `&q=${encodeURIComponent(q)}` : "";
+      const universitiesPage = await apiFetch<PaginatedResponse<University>>(
+        `/api/universities/?page=1&page_size=50${suffix}`,
+        { method: "GET" },
+        token,
+      );
+      setUniversities(universitiesPage.results);
+      setUniversitiesLoaded(true);
+      setStatusText("");
+    } catch (error) {
+      setStatusText(error instanceof Error ? error.message : "Failed to load universities.");
+    } finally {
+      setUniversitiesLoading(false);
+    }
+  }
+
   useEffect(() => {
     void loadData();
   }, []);
+
+  useEffect(() => {
+    if (!showCreate) return;
+    if (!requireSupplementalFields) return;
+    if (universitiesLoaded) return;
+    void loadUniversities();
+  }, [showCreate, requireSupplementalFields, universitiesLoaded]);
+
+  useEffect(() => {
+    if (!showCreate) return;
+    if (!requireSupplementalFields) return;
+    if (!universitySearch.trim() && universitiesLoaded) return;
+    const timer = setTimeout(() => {
+      void loadUniversities(universitySearch);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [universitySearch, showCreate, requireSupplementalFields, universitiesLoaded]);
 
   const sortedUniversities = useMemo(
     () => [...universities].sort((a, b) => a.name.localeCompare(b.name)),
@@ -188,12 +226,24 @@ export default function EssaysPage() {
                 {requireSupplementalFields ? (
                   <>
                     <label className="text-sm text-black/70">
+                      Search university
+                      <input
+                        value={universitySearch}
+                        onChange={(event) => setUniversitySearch(event.target.value)}
+                        placeholder="Type to search..."
+                        className="mt-1 w-full rounded-xl border border-black/20 bg-white px-3 py-2"
+                      />
+                    </label>
+
+                    <label className="text-sm text-black/70">
                       University
                       <select
                         value={form.university}
                         onChange={(event) => setForm((prev) => ({ ...prev, university: event.target.value }))}
+                        disabled={universitiesLoading}
                         className="mt-1 w-full rounded-xl border border-black/20 bg-white px-3 py-2"
                       >
+                        {universitiesLoading ? <option value="">Loading...</option> : null}
                         <option value="">Select university</option>
                         {sortedUniversities.map((item) => (
                           <option key={item.id} value={item.id}>
