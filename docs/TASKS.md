@@ -123,3 +123,10 @@
   - Added anti-race guard so stale autosave responses do not overwrite latest state.
   - Added explicit `retrying` save state in UI.
   - Manual `Save now` now uses the same hardened persistence path.
+
+## Essays word target UX progress (2026-03-05)
+
+- Started Phase 7.3:
+  - Added target state evaluation (`start`, `below`, `on target`, `over target`).
+  - Added visual target badge and progress bar in workspace.
+  - Added contextual word guidance hints based on current count vs target.

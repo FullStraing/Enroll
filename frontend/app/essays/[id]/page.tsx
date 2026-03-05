@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Spinner } from "@/components/ui/spinner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EssayRichEditor } from "@/components/essay-rich-editor";
+import { Progress } from "@/components/ui/progress";
 
 type Essay = {
   id: number;
@@ -75,6 +76,43 @@ function htmlToText(value: string): string {
 
 function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function getWordTargetState(wordCount: number, target: number) {
+  if (!target) return { label: "No target", hint: "Set target to enable guidance.", variant: "default" as const, progress: 0 };
+
+  const delta = wordCount - target;
+  const progress = Math.min(100, Math.round((wordCount / target) * 100));
+  if (wordCount === 0) {
+    return {
+      label: "Start writing",
+      hint: "No content yet.",
+      variant: "default" as const,
+      progress: 0,
+    };
+  }
+  if (Math.abs(delta) <= 25) {
+    return {
+      label: "On target",
+      hint: `Great range: ${wordCount}/${target}.`,
+      variant: "cyan" as const,
+      progress,
+    };
+  }
+  if (delta < 0) {
+    return {
+      label: "Below target",
+      hint: `${Math.abs(delta)} words left to reach target.`,
+      variant: "orange" as const,
+      progress,
+    };
+  }
+  return {
+    label: "Over target",
+    hint: `Over by ${delta} words. Consider trimming.`,
+    variant: "primary" as const,
+    progress,
+  };
 }
 
 export default function EssayWorkspacePage() {
@@ -289,6 +327,10 @@ export default function EssayWorkspacePage() {
     const right = htmlToText(versions.find((item) => item.id === compareRightId)?.content || "");
     return buildDiffRows(left, right);
   }, [compareLeftId, compareRightId, versions]);
+  const wordTargetState = useMemo(
+    () => getWordTargetState(wordCount, essay?.target_word_count || 0),
+    [wordCount, essay?.target_word_count],
+  );
 
   function toggleAiPanel() {
     setAiPanelVisible((prev) => {
@@ -466,6 +508,7 @@ export default function EssayWorkspacePage() {
                 <div className="flex items-center gap-2">
                   <Badge variant="cyan">Words: {wordCount}</Badge>
                   <Badge>Target: {essay.target_word_count}</Badge>
+                  <Badge variant={wordTargetState.variant}>{wordTargetState.label}</Badge>
                   {selectedVersion ? <Badge>{selectedVersion.status}</Badge> : null}
                 </div>
               </div>
@@ -523,6 +566,17 @@ export default function EssayWorkspacePage() {
               {!selectedIsLatest ? (
                 <p className="mt-2 text-xs text-amber-700">Read-only version. Create a new version to continue editing.</p>
               ) : null}
+
+              <div className="mt-3 rounded-xl border border-black/10 bg-white p-3">
+                <div className="flex items-center justify-between gap-2 text-sm">
+                  <p className="font-semibold">Word target guidance</p>
+                  <p className="text-black/65">{wordCount}/{essay.target_word_count}</p>
+                </div>
+                <div className="mt-2">
+                  <Progress value={wordTargetState.progress} variant={wordTargetState.variant === "cyan" ? "cyan" : "primary"} className="h-3" />
+                </div>
+                <p className="mt-2 text-xs text-black/70">{wordTargetState.hint}</p>
+              </div>
 
               <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-sm">
                 <div className="text-black/65">
