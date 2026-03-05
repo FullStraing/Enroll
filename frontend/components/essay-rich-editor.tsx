@@ -23,6 +23,7 @@ export function EssayRichEditor({
   onChange,
 }: EssayRichEditorProps) {
   const editor = useEditor({
+    immediatelyRender: false,
     extensions: [
       StarterKit,
       Placeholder.configure({
