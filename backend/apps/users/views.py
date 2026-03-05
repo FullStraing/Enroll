@@ -139,10 +139,29 @@ COMMON_APP_SCHEMA = [
                         "type": "choice",
                         "required": True,
                         "options": ["Home", "Mobile"],
+                        "ui": "radio",
+                        "clearable": True,
                         "help": "Primary phone type for colleges to contact you.",
                     },
-                    {"id": "preferred_phone_country_code", "label": "Preferred phone country code", "bind": "json", "path": "preferred_phone_country_code", "type": "text", "required": False, "help": "For example +996, +1."},
-                    {"id": "preferred_phone_number", "label": "Preferred phone number", "bind": "json", "path": "preferred_phone_number", "type": "text", "required": True, "help": "Include number without spaces/symbols if possible."},
+                    {
+                        "id": "preferred_phone_country_code",
+                        "label": "Country code",
+                        "bind": "json",
+                        "path": "preferred_phone_country_code",
+                        "type": "choice",
+                        "required": True,
+                        "options": ["+1", "+7", "+44", "+91", "+996", "+998", "+380"],
+                        "help": "Phone includes country code and number.",
+                    },
+                    {
+                        "id": "preferred_phone_number",
+                        "label": "Preferred phone number",
+                        "bind": "json",
+                        "path": "preferred_phone_number",
+                        "type": "text",
+                        "required": True,
+                        "help": "Phone includes country code and number.",
+                    },
                     {
                         "id": "alternate_phone_type",
                         "label": "Alternate phone",
@@ -151,10 +170,33 @@ COMMON_APP_SCHEMA = [
                         "type": "choice",
                         "required": True,
                         "options": ["No other telephone", "Home", "Mobile"],
+                        "ui": "radio",
+                        "clearable": True,
                         "help": "Set backup phone option if needed.",
                     },
-                    {"id": "alternate_phone_country_code", "label": "Alternate phone country code", "bind": "json", "path": "alternate_phone_country_code", "type": "text", "required": False, "help": "Only if alternate phone is provided."},
-                    {"id": "alternate_phone_number", "label": "Alternate phone number", "bind": "json", "path": "alternate_phone_number", "type": "text", "required": False, "help": "Only if alternate phone is provided."},
+                    {
+                        "id": "alternate_phone_country_code",
+                        "label": "Alternate country code",
+                        "bind": "json",
+                        "path": "alternate_phone_country_code",
+                        "type": "choice",
+                        "required": False,
+                        "required_if": {"field_id": "alternate_phone_type", "in": ["Home", "Mobile"]},
+                        "show_if": {"field_id": "alternate_phone_type", "in": ["Home", "Mobile"]},
+                        "options": ["+1", "+7", "+44", "+91", "+996", "+998", "+380"],
+                        "help": "Only if alternate phone is provided.",
+                    },
+                    {
+                        "id": "alternate_phone_number",
+                        "label": "Alternate phone number",
+                        "bind": "json",
+                        "path": "alternate_phone_number",
+                        "type": "text",
+                        "required": False,
+                        "required_if": {"field_id": "alternate_phone_type", "in": ["Home", "Mobile"]},
+                        "show_if": {"field_id": "alternate_phone_type", "in": ["Home", "Mobile"]},
+                        "help": "Only if alternate phone is provided.",
+                    },
                 ],
             },
             {
@@ -435,8 +477,12 @@ def _condition_matches(condition: dict, field_values: dict):
     if not condition:
         return True
     field_id = condition.get("field_id")
+    current = field_values.get(field_id)
+    if "in" in condition:
+        allowed = condition.get("in") or []
+        return current in allowed
     expected = condition.get("equals")
-    return field_values.get(field_id) == expected
+    return current == expected
 
 
 class RegisterView(generics.CreateAPIView):
@@ -496,6 +542,8 @@ class CommonAppProgressView(APIView):
                             "label": field["label"],
                             "type": field["type"],
                             "options": field.get("options", []),
+                            "ui": field.get("ui"),
+                            "clearable": bool(field.get("clearable", False)),
                             "show_if": field.get("show_if"),
                             "required_if": field.get("required_if"),
                             "visible": visible,

@@ -15,7 +15,8 @@ type FieldType = "text" | "number" | "boolean" | "list" | "choice" | "date";
 
 type FieldCondition = {
   field_id: string;
-  equals: string | number | boolean | null;
+  equals?: string | number | boolean | null;
+  in?: Array<string | number | boolean>;
 };
 
 type ProgressField = {
@@ -31,6 +32,8 @@ type ProgressField = {
   filled: boolean;
   options?: string[];
   visible?: boolean;
+  ui?: string | null;
+  clearable?: boolean;
   show_if?: FieldCondition | null;
   required_if?: FieldCondition | null;
 };
@@ -78,6 +81,7 @@ function FieldInput({
   field: ProgressField;
   value: unknown;
   onChange: (next: unknown) => void;
+  onClear?: () => void;
 }) {
   if (field.type === "boolean") {
     return (
@@ -121,7 +125,8 @@ function FieldInput({
   if (field.type === "choice") {
     const options = field.options || [];
     const isYesNo = options.length === 2 && options.includes("Yes") && options.includes("No");
-    if (isYesNo) {
+    const useRadio = isYesNo || field.ui === "radio";
+    if (useRadio) {
       return (
         <div className="mt-2 space-y-3">
           {options.map((option) => (
@@ -137,6 +142,15 @@ function FieldInput({
               <span>{option === "Yes" ? "Да" : "Нет"}</span>
             </label>
           ))}
+          {field.clearable && onClear ? (
+            <button
+              type="button"
+              onClick={onClear}
+              className="rounded-full border-2 border-black/35 px-4 py-1.5 text-sm font-semibold text-black/60 transition hover:bg-black/[0.03]"
+            >
+              Clear answer
+            </button>
+          ) : null}
         </div>
       );
     }
@@ -241,7 +255,9 @@ export default function CommonAppPage() {
     (step: Step, condition?: FieldCondition | null) => {
       if (!condition) return true;
       const key = getDraftKey(step, condition.field_id);
-      return draftValues[key] === condition.equals;
+      const current = draftValues[key];
+      if (condition.in && condition.in.length) return condition.in.includes(current as never);
+      return current === condition.equals;
     },
     [draftValues, getDraftKey],
   );
@@ -489,6 +505,52 @@ export default function CommonAppPage() {
 
               <div className="mt-6 space-y-5">
                 {visibleFields.map((field) => {
+                  if (
+                    currentStep.subsection.key === "contact_details" &&
+                    field.id === "preferred_phone_country_code"
+                  ) {
+                    const numberField = visibleFields.find((item) => item.id === "preferred_phone_number");
+                    if (!numberField) return null;
+                    const codeKey = `${currentStep.section.key}.${currentStep.subsection.key}.${field.id}`;
+                    const numberKey = `${currentStep.section.key}.${currentStep.subsection.key}.${numberField.id}`;
+                    const required = isFieldRequired(currentStep, numberField);
+                    return (
+                      <label key={field.id} className="block text-sm text-black/80">
+                        <span className="inline-flex items-center gap-2 pb-2 text-[1.02rem] font-semibold">
+                          <span>
+                            {numberField.label}
+                            {required ? <span className="ml-1 text-red-600">*</span> : null}
+                          </span>
+                          <span
+                            title={numberField.help}
+                            className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-black/30 text-xs text-black/60"
+                          >
+                            ?
+                          </span>
+                        </span>
+                        <div className="grid grid-cols-[140px_1fr] gap-2">
+                          <FieldInput
+                            field={field}
+                            value={draftValues[codeKey]}
+                            onChange={(next) => setDraftValues((prev) => ({ ...prev, [codeKey]: next }))}
+                          />
+                          <FieldInput
+                            field={numberField}
+                            value={draftValues[numberKey]}
+                            onChange={(next) => setDraftValues((prev) => ({ ...prev, [numberKey]: next }))}
+                          />
+                        </div>
+                        <span className="mt-1 block text-xs text-black/55">{numberField.help}</span>
+                      </label>
+                    );
+                  }
+                  if (
+                    currentStep.subsection.key === "contact_details" &&
+                    field.id === "preferred_phone_number"
+                  ) {
+                    return null;
+                  }
+
                   const fieldKey = `${currentStep.section.key}.${currentStep.subsection.key}.${field.id}`;
                   const required = isFieldRequired(currentStep, field);
                   return (
@@ -510,6 +572,7 @@ export default function CommonAppPage() {
                         field={field}
                         value={draftValues[fieldKey]}
                         onChange={(next) => setDraftValues((prev) => ({ ...prev, [fieldKey]: next }))}
+                        onClear={() => setDraftValues((prev) => ({ ...prev, [fieldKey]: "" }))}
                       />
                     </label>
                   );
