@@ -69,6 +69,7 @@ class StudentProfile(models.Model):
         max_length=100,
         default="USA",
     )
+    essays_onboarding_seen = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

@@ -46,4 +46,5 @@ class StudentProfileSerializer(serializers.ModelSerializer):
             "budget_range",
             "activities_level",
             "target_country",
+            "essays_onboarding_seen",
         ]

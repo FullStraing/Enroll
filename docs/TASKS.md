@@ -81,3 +81,11 @@
   - Left panel versions list + create new version.
   - Center editor with autosave and manual save.
   - Right panel compare mode (`vX vs vY`) with line-based diff view.
+
+## Essays onboarding progress (2026-03-05)
+
+- Started Phase 2 (First-time Onboarding):
+  - Added user preference flag `essays_onboarding_seen` in `StudentProfile`.
+  - Added onboarding modal on `/essays` with adaptive demo duration (~24s).
+  - Added Watch demo / Skip / Continue actions.
+  - On skip/complete, preference persists via `/api/auth/profile/` PATCH.

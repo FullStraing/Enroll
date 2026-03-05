@@ -129,3 +129,11 @@ Internal endpoints (already protected):
 
 Validation rules:
 - `supplemental_essay` requires `university` and non-empty `prompt_title`.
+
+## Essays onboarding preference (2026-03-05)
+
+- `GET /api/auth/profile/` now includes:
+  - `essays_onboarding_seen: boolean`
+- `PATCH /api/auth/profile/` accepts:
+  - `{ "essays_onboarding_seen": true }`
+  - used to skip/show first-time Essays onboarding modal.

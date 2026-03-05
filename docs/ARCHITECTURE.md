@@ -88,3 +88,11 @@ Automation commands:
 - `run_ingestion_scheduler` (APScheduler fallback)
 
 - Added Niche automation runtime: Celery workers + persistent Playwright profiles + proxy pool rotation for anti-bot resilience.
+
+## Essays onboarding architecture (Phase 2)
+
+- Preference storage lives in backend profile model: `StudentProfile.essays_onboarding_seen`.
+- Auth bootstrap returns this flag via `/api/auth/profile/` so client can decide first-visit flow.
+- Essays page shows onboarding modal only when the flag is `false`.
+- Modal outcome persists via `PATCH /api/auth/profile/` with `{ "essays_onboarding_seen": true }`.
+- This keeps onboarding state cross-device and independent from browser localStorage.

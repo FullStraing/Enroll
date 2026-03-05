@@ -10,6 +10,7 @@ type AuthProfile = {
   full_name?: string;
   username?: string;
   email?: string;
+  essays_onboarding_seen?: boolean;
 };
 
 type AuthContextValue = {

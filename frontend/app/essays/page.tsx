@@ -5,6 +5,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { ProtectedPage } from "@/components/protected-page";
+import { useAuth } from "@/components/auth-provider";
 import { getToken } from "@/lib/auth";
 import { apiFetch } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,7 @@ import { Card, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
+import { Progress } from "@/components/ui/progress";
 
 type EssayType = "personal_statement" | "motivation_essay" | "supplemental_essay" | "other";
 
@@ -49,6 +51,7 @@ const essayTypeOptions: Array<{ value: EssayType; label: string }> = [
   { value: "supplemental_essay", label: "Supplemental Essay" },
   { value: "other", label: "Other" },
 ];
+const DEMO_DURATION_SECONDS = 24;
 
 function formatEssayType(value: EssayType) {
   const match = essayTypeOptions.find((item) => item.value === value);
@@ -57,6 +60,7 @@ function formatEssayType(value: EssayType) {
 
 export default function EssaysPage() {
   const router = useRouter();
+  const { profile, refreshSession } = useAuth();
   const [essays, setEssays] = useState<Essay[]>([]);
   const [universities, setUniversities] = useState<University[]>([]);
   const [universitiesLoading, setUniversitiesLoading] = useState(false);
@@ -64,7 +68,11 @@ export default function EssaysPage() {
   const [universitySearch, setUniversitySearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [savingOnboarding, setSavingOnboarding] = useState(false);
   const [statusText, setStatusText] = useState("");
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [demoPlaying, setDemoPlaying] = useState(false);
+  const [demoSeconds, setDemoSeconds] = useState(0);
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState({
     title: "",
@@ -117,6 +125,26 @@ export default function EssaysPage() {
   useEffect(() => {
     void loadData();
   }, []);
+
+  useEffect(() => {
+    if (profile?.essays_onboarding_seen === false) {
+      setShowOnboarding(true);
+    }
+  }, [profile?.essays_onboarding_seen]);
+
+  useEffect(() => {
+    if (!demoPlaying) return;
+    const timer = setInterval(() => {
+      setDemoSeconds((prev) => {
+        if (prev >= DEMO_DURATION_SECONDS) {
+          setDemoPlaying(false);
+          return DEMO_DURATION_SECONDS;
+        }
+        return prev + 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [demoPlaying]);
 
   useEffect(() => {
     if (!showCreate) return;
@@ -182,9 +210,85 @@ export default function EssaysPage() {
     }
   }
 
+  async function markOnboardingSeen() {
+    const token = getToken();
+    if (!token) return;
+    setSavingOnboarding(true);
+    try {
+      await apiFetch("/api/auth/profile/", { method: "PATCH", body: JSON.stringify({ essays_onboarding_seen: true }) }, token);
+      await refreshSession();
+      setShowOnboarding(false);
+      setDemoPlaying(false);
+      setDemoSeconds(0);
+    } catch (error) {
+      setStatusText(error instanceof Error ? error.message : "Failed to save onboarding state.");
+    } finally {
+      setSavingOnboarding(false);
+    }
+  }
+
+  async function handleSkip() {
+    await markOnboardingSeen();
+  }
+
+  async function handleWatchDemo() {
+    if (!demoPlaying) {
+      setDemoSeconds(0);
+      setDemoPlaying(true);
+    }
+  }
+
+  const demoProgress = Math.round((demoSeconds / DEMO_DURATION_SECONDS) * 100);
+
   return (
     <ProtectedPage>
       <AppShell title="Essays" subtitle="Essay Manager: one essay -> many versions">
+        {showOnboarding ? (
+          <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/45 p-4">
+            <div className="w-full max-w-3xl rounded-3xl border-2 border-black bg-white p-6 shadow-2xl">
+              <h3 className="text-2xl font-black">Essay Workspace Demo</h3>
+              <p className="mt-2 text-sm text-black/65">
+                Short guided intro before you start. Demo can be longer than 10 seconds and is adaptive.
+              </p>
+
+              <div className="mt-4 rounded-2xl border-2 border-black bg-[#DAF5F0] p-4">
+                <p className="text-sm font-semibold">What you will see:</p>
+                <ul className="mt-2 grid gap-1 text-sm text-black/80">
+                  <li>1. Git-like versions for each essay.</li>
+                  <li>2. Workspace flow: manager → editor → compare.</li>
+                  <li>3. Score/AI placeholders and university linkage direction.</li>
+                </ul>
+                <p className="mt-4 text-sm text-black/65">Demo length: ~{DEMO_DURATION_SECONDS}s (adjustable).</p>
+                <div className="mt-2">
+                  <Progress value={demoProgress} variant="primary" className="h-3" />
+                </div>
+                <p className="mt-2 text-xs text-black/60">
+                  {demoPlaying
+                    ? `Playing... ${demoSeconds}s / ${DEMO_DURATION_SECONDS}s`
+                    : demoSeconds >= DEMO_DURATION_SECONDS
+                      ? "Demo completed."
+                      : "Ready to start demo."}
+                </p>
+              </div>
+
+              <div className="mt-5 flex flex-wrap gap-2">
+                <Button onClick={() => void handleWatchDemo()} disabled={savingOnboarding || demoPlaying || demoSeconds >= DEMO_DURATION_SECONDS}>
+                  {demoPlaying ? "Playing..." : demoSeconds >= DEMO_DURATION_SECONDS ? "Demo completed" : "Watch demo"}
+                </Button>
+                <Button variant="outline" onClick={() => void handleSkip()} disabled={savingOnboarding}>
+                  {savingOnboarding ? <Spinner size="sm" /> : null}
+                  <span>Skip</span>
+                </Button>
+                {demoSeconds >= DEMO_DURATION_SECONDS ? (
+                  <Button variant="secondary" onClick={() => void markOnboardingSeen()} disabled={savingOnboarding}>
+                    Continue to Essay Manager
+                  </Button>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        ) : null}
+
         <section className="glass rounded-2xl p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
