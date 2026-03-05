@@ -220,6 +220,18 @@ export default function CommonAppPage() {
     return map;
   }, [progressData]);
 
+  const subsectionStepIndexes = useMemo(() => {
+    const map: Record<string, number> = {};
+    let cursor = 0;
+    for (const section of progressData?.sections || []) {
+      for (const subsection of section.subsections) {
+        map[`${section.key}.${subsection.key}`] = cursor;
+        cursor += 1;
+      }
+    }
+    return map;
+  }, [progressData]);
+
   const currentStep = steps[currentStepIndex] || null;
   const getDraftKey = useCallback((step: Step, fieldId: string) => {
     return `${step.section.key}.${step.subsection.key}.${fieldId}`;
@@ -405,22 +417,48 @@ export default function CommonAppPage() {
                   const startIndex = sectionStartIndexes[section.key] ?? 0;
                   const active = currentStep.section.key === section.key;
                   return (
-                    <button
-                      key={section.key}
-                      type="button"
-                      onClick={() => setCurrentStepIndex(startIndex)}
-                      className={`flex w-full items-center justify-between rounded-xl border px-3 py-3 text-left text-base transition ${
-                        active
-                          ? "border-black bg-white font-semibold"
-                          : "border-black/10 bg-white/70 hover:border-black/30"
-                      }`}
-                    >
-                      <span className="inline-flex items-center gap-2">
-                        <span className="text-base">{active ? "⌄" : "›"}</span>
-                        <span>{section.title}</span>
-                      </span>
-                      <span className="h-4 w-4 rounded-full border border-dashed border-black/35" />
-                    </button>
+                    <div key={section.key} className="rounded-xl border border-black/10 bg-white/70">
+                      <button
+                        type="button"
+                        onClick={() => setCurrentStepIndex(startIndex)}
+                        className={`flex w-full items-center justify-between px-3 py-3 text-left text-base transition ${
+                          active ? "font-semibold" : "hover:bg-black/[0.03]"
+                        }`}
+                      >
+                        <span className="inline-flex items-center gap-2">
+                          <span className="text-base">{active ? "⌄" : "›"}</span>
+                          <span>{section.title}</span>
+                        </span>
+                        <span className="h-4 w-4 rounded-full border border-dashed border-black/35" />
+                      </button>
+
+                      {active ? (
+                        <div className="space-y-1 border-t border-black/10 px-2 pb-2 pt-2">
+                          {section.subsections.map((subsection) => {
+                            const stepIndex = subsectionStepIndexes[`${section.key}.${subsection.key}`] ?? startIndex;
+                            const isCurrent = currentStep.subsection.key === subsection.key;
+                            return (
+                              <button
+                                key={subsection.key}
+                                type="button"
+                                onClick={() => setCurrentStepIndex(stepIndex)}
+                                className={`flex w-full items-center justify-between rounded-lg px-2 py-2 text-left text-sm transition ${
+                                  isCurrent
+                                    ? "bg-black/10 font-semibold"
+                                    : "hover:bg-black/[0.05]"
+                                }`}
+                              >
+                                <span className="inline-flex items-center gap-2">
+                                  <span className="h-3 w-3 rounded-full border border-dashed border-black/35" />
+                                  <span>{subsection.title}</span>
+                                </span>
+                                <span className="text-xs text-black/60">{subsection.percent}%</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      ) : null}
+                    </div>
                   );
                 })}
               </div>
