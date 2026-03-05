@@ -35,6 +35,8 @@ type EssayVersion = {
   label: string;
   content: string;
   source: "user" | "ai";
+  status: "draft" | "revised" | "ai_improved" | "final";
+  is_latest: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -81,6 +83,7 @@ export default function EssayWorkspacePage() {
   const [editorPlainText, setEditorPlainText] = useState("");
   const [loadedVersionId, setLoadedVersionId] = useState<number | null>(null);
   const [newVersionLabel, setNewVersionLabel] = useState("Revision");
+  const [newVersionStatus, setNewVersionStatus] = useState<EssayVersion["status"]>("revised");
   const [compareLeftId, setCompareLeftId] = useState<number | null>(null);
   const [compareRightId, setCompareRightId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
@@ -127,6 +130,7 @@ export default function EssayWorkspacePage() {
     () => versions.find((item) => item.id === selectedVersionId) || null,
     [versions, selectedVersionId],
   );
+  const selectedIsLatest = Boolean(selectedVersion?.is_latest);
 
   useEffect(() => {
     if (!selectedVersion) return;
@@ -139,6 +143,7 @@ export default function EssayWorkspacePage() {
 
   useEffect(() => {
     if (!selectedVersion) return;
+    if (!selectedIsLatest) return;
     if (editorContent === selectedVersion.content) return;
     const token = getToken();
     if (!token) return;
@@ -159,7 +164,7 @@ export default function EssayWorkspacePage() {
     }, 700);
 
     return () => clearTimeout(timer);
-  }, [editorContent, selectedVersion]);
+  }, [editorContent, selectedVersion, selectedIsLatest]);
 
   async function createVersion(event: FormEvent) {
     event.preventDefault();
@@ -169,13 +174,21 @@ export default function EssayWorkspacePage() {
     try {
       const created = await apiFetch<EssayVersion>(
         `/api/essays/${essayId}/versions/`,
-        { method: "POST", body: JSON.stringify({ label: newVersionLabel.trim() || "Revision", content: editorContent }) },
+        {
+          method: "POST",
+          body: JSON.stringify({
+            label: newVersionLabel.trim() || "Revision",
+            content: editorContent,
+            status: newVersionStatus,
+          }),
+        },
         token,
       );
       const nextVersions = [created, ...versions];
       setVersions(nextVersions);
       setSelectedVersionId(created.id);
       setLoadedVersionId(created.id);
+      setNewVersionStatus("revised");
       setCompareRightId(created.id);
       setStatusText("New version created.");
     } catch (error) {
@@ -187,6 +200,10 @@ export default function EssayWorkspacePage() {
 
   async function saveNow() {
     if (!selectedVersion) return;
+    if (!selectedIsLatest) {
+      setStatusText("This version is read-only. Create a new version to edit.");
+      return;
+    }
     const token = getToken();
     if (!token) return;
     setSaving(true);
@@ -203,6 +220,29 @@ export default function EssayWorkspacePage() {
       setSaveState("error");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function updateLatestVersionMeta(field: "status" | "label", value: string) {
+    if (!selectedVersion || !selectedIsLatest) return;
+    const token = getToken();
+    if (!token) return;
+    try {
+      const payload = {
+        label: field === "label" ? value : selectedVersion.label,
+        content: editorContent,
+        source: selectedVersion.source,
+        status: field === "status" ? value : selectedVersion.status,
+      };
+      const updated = await apiFetch<EssayVersion>(
+        `/api/essay-versions/${selectedVersion.id}/`,
+        { method: "PUT", body: JSON.stringify(payload) },
+        token,
+      );
+      setVersions((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
+      setStatusText("Version metadata updated.");
+    } catch (error) {
+      setStatusText(error instanceof Error ? error.message : "Failed to update version metadata.");
     }
   }
 
@@ -353,6 +393,7 @@ export default function EssayWorkspacePage() {
                     }`}
                   >
                     <p className="font-semibold">v{item.version_number} {item.label || "Draft"}</p>
+                    <p className="text-xs text-black/60">status: {item.status}</p>
                     <p className="text-xs text-black/60">{new Date(item.updated_at).toLocaleString("ru-RU")}</p>
                   </button>
                 ))}
@@ -366,6 +407,16 @@ export default function EssayWorkspacePage() {
                   className="rounded-xl border border-black/20 bg-white px-3 py-2 text-sm"
                   placeholder="Revision label"
                 />
+                <select
+                  className="rounded-xl border border-black/20 bg-white px-3 py-2 text-sm"
+                  value={newVersionStatus}
+                  onChange={(event) => setNewVersionStatus(event.target.value as EssayVersion["status"])}
+                >
+                  <option value="draft">Status: draft</option>
+                  <option value="revised">Status: revised</option>
+                  <option value="ai_improved">Status: ai_improved</option>
+                  <option value="final">Status: final</option>
+                </select>
                 <Button type="submit" disabled={creatingVersion}>
                   {creatingVersion ? <Spinner size="sm" /> : null}
                   <span>{creatingVersion ? "Creating..." : "Create version"}</span>
@@ -383,18 +434,63 @@ export default function EssayWorkspacePage() {
                 <div className="flex items-center gap-2">
                   <Badge variant="cyan">Words: {wordCount}</Badge>
                   <Badge>Target: {essay.target_word_count}</Badge>
+                  {selectedVersion ? <Badge>{selectedVersion.status}</Badge> : null}
                 </div>
               </div>
+
+              {selectedVersion ? (
+                <div className="mt-3 grid gap-2 md:grid-cols-2">
+                  <label className="text-xs font-semibold uppercase tracking-wide text-black/60">
+                    Version label
+                    <input
+                      value={selectedVersion.label}
+                      onChange={(event) => {
+                        const value = event.target.value;
+                        setVersions((prev) =>
+                          prev.map((item) => (item.id === selectedVersion.id ? { ...item, label: value } : item)),
+                        );
+                      }}
+                      onBlur={(event) => void updateLatestVersionMeta("label", event.target.value)}
+                      disabled={!selectedIsLatest}
+                      className="mt-1 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm disabled:bg-black/[0.04]"
+                    />
+                  </label>
+                  <label className="text-xs font-semibold uppercase tracking-wide text-black/60">
+                    Version status
+                    <select
+                      value={selectedVersion.status}
+                      onChange={(event) => {
+                        const value = event.target.value as EssayVersion["status"];
+                        setVersions((prev) =>
+                          prev.map((item) => (item.id === selectedVersion.id ? { ...item, status: value } : item)),
+                        );
+                        void updateLatestVersionMeta("status", value);
+                      }}
+                      disabled={!selectedIsLatest}
+                      className="mt-1 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm disabled:bg-black/[0.04]"
+                    >
+                      <option value="draft">draft</option>
+                      <option value="revised">revised</option>
+                      <option value="ai_improved">ai_improved</option>
+                      <option value="final">final</option>
+                    </select>
+                  </label>
+                </div>
+              ) : null}
 
               <div className="mt-4">
                 <EssayRichEditor
                   content={editorContent}
+                  editable={selectedIsLatest}
                   onChange={(html, text) => {
                     setEditorContent(html);
                     setEditorPlainText(text);
                   }}
                 />
               </div>
+              {!selectedIsLatest ? (
+                <p className="mt-2 text-xs text-amber-700">Read-only version. Create a new version to continue editing.</p>
+              ) : null}
 
               <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-sm">
                 <div className="text-black/65">

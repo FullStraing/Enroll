@@ -2,7 +2,7 @@ from django.db import models
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 from rest_framework import generics, permissions
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import PermissionDenied, ValidationError
 
 from apps.essays.models import Essay, EssayVersion
 from apps.essays.serializers import EssaySerializer, EssayVersionSerializer
@@ -43,6 +43,7 @@ class EssayListCreateView(generics.ListCreateAPIView):
             label="Initial draft",
             content="",
             source="user",
+            status="draft",
         )
         Essay.objects.filter(pk=essay.pk).update(updated_at=timezone.now())
 
@@ -80,11 +81,18 @@ class EssayVersionListCreateView(generics.ListCreateAPIView):
         essay = self._get_essay()
         latest = EssayVersion.objects.filter(essay=essay).order_by("-version_number").first()
         next_version = (latest.version_number if latest else 0) + 1
+        source = serializer.validated_data.get("source", "user")
+        explicit_status = serializer.validated_data.get("status")
+        default_status = "ai_improved" if source == "ai" else "revised"
         serializer.save(
             essay=essay,
             version_number=next_version,
-            source="user",
+            source=source,
+            status=explicit_status or default_status,
         )
+        created = serializer.instance
+        if created and created.status == "final":
+            EssayVersion.objects.filter(essay_id=essay.id, status="final").exclude(id=created.id).update(status="revised")
         Essay.objects.filter(pk=essay.pk).update(updated_at=timezone.now())
 
 
@@ -96,6 +104,18 @@ class EssayVersionDetailView(generics.RetrieveUpdateAPIView):
         return EssayVersion.objects.filter(essay__student=self.request.user).select_related("essay")
 
     def perform_update(self, serializer):
+        version: EssayVersion = self.get_object()
+        latest = (
+            EssayVersion.objects.filter(essay_id=version.essay_id)
+            .order_by("-version_number")
+            .first()
+        )
+        if not latest or latest.id != version.id:
+            raise ValidationError({"detail": "Only latest version can be edited. Create a new version to continue."})
+
+        next_status = serializer.validated_data.get("status")
+        if next_status == "final":
+            EssayVersion.objects.filter(essay_id=version.essay_id, status="final").exclude(id=version.id).update(status="revised")
+
         version = serializer.save()
         Essay.objects.filter(pk=version.essay_id).update(updated_at=timezone.now())
-

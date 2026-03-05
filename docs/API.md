@@ -130,6 +130,17 @@ Internal endpoints (already protected):
 Validation rules:
 - `supplemental_essay` requires `university` and non-empty `prompt_title`.
 
+## Essays versions status (Phase 6 update, 2026-03-05)
+
+- `EssayVersion` now includes:
+  - `status`: `draft | revised | ai_improved | final`
+  - `is_latest`: read-only helper flag
+- Update rule:
+  - only latest version can be edited via `PUT /api/essay-versions/{id}/`
+  - older versions are read-only snapshots
+- Final status rule:
+  - when one version becomes `final`, previous `final` versions in same essay are auto-demoted to `revised`.
+
 ## Essays onboarding preference (2026-03-05)
 
 - `GET /api/auth/profile/` now includes:

@@ -44,6 +44,12 @@ class EssayVersion(models.Model):
         ("user", "User"),
         ("ai", "AI"),
     ]
+    STATUS_CHOICES = [
+        ("draft", "Draft"),
+        ("revised", "Revised"),
+        ("ai_improved", "AI Improved"),
+        ("final", "Final"),
+    ]
 
     essay = models.ForeignKey(
         Essay,
@@ -54,6 +60,7 @@ class EssayVersion(models.Model):
     label = models.CharField(max_length=120, blank=True, default="")
     content = models.TextField(blank=True, default="")
     source = models.CharField(max_length=10, choices=SOURCE_CHOICES, default="user")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="draft")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -63,4 +70,3 @@ class EssayVersion(models.Model):
 
     def __str__(self):
         return f"{self.essay.title} v{self.version_number}"
-

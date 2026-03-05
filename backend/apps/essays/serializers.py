@@ -5,6 +5,8 @@ from apps.universities.serializers import UniversitySerializer
 
 
 class EssayVersionSerializer(serializers.ModelSerializer):
+    is_latest = serializers.SerializerMethodField()
+
     class Meta:
         model = EssayVersion
         fields = [
@@ -14,10 +16,21 @@ class EssayVersionSerializer(serializers.ModelSerializer):
             "label",
             "content",
             "source",
+            "status",
+            "is_latest",
             "created_at",
             "updated_at",
         ]
         read_only_fields = ["id", "essay", "version_number", "created_at", "updated_at"]
+
+    def get_is_latest(self, obj: EssayVersion) -> bool:
+        latest = (
+            EssayVersion.objects.filter(essay_id=obj.essay_id)
+            .order_by("-version_number")
+            .values_list("id", flat=True)
+            .first()
+        )
+        return latest == obj.id
 
 
 class EssaySerializer(serializers.ModelSerializer):
@@ -54,4 +67,3 @@ class EssaySerializer(serializers.ModelSerializer):
             if not prompt_title.strip():
                 raise serializers.ValidationError({"prompt_title": "Prompt title is required for supplemental essay."})
         return attrs
-

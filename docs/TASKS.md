@@ -106,3 +106,12 @@
   - Autosave now persists editor HTML content.
   - Word count is computed from plain text extracted from editor content.
   - Diff view now renders text-normalized compare output (not raw HTML tags).
+
+## Essays versions progress (2026-03-05)
+
+- Phase 6 improved:
+  - Added version status model (`draft`, `revised`, `ai_improved`, `final`).
+  - Implemented `is_latest` helper in version API payload.
+  - Enforced read/write rule: only latest version can be edited.
+  - Added final-version uniqueness behavior (single `final` per essay).
+  - Updated workspace UI to show status and read-only state for old versions.

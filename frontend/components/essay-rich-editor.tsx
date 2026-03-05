@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 type EssayRichEditorProps = {
   content: string;
   placeholder?: string;
+  editable?: boolean;
   onChange: (html: string, text: string) => void;
 };
 
@@ -20,6 +21,7 @@ function toolbarButtonClass(active: boolean) {
 export function EssayRichEditor({
   content,
   placeholder = "Write your essay here...",
+  editable = true,
   onChange,
 }: EssayRichEditorProps) {
   const editor = useEditor({
@@ -44,6 +46,11 @@ export function EssayRichEditor({
 
   useEffect(() => {
     if (!editor) return;
+    editor.setEditable(editable);
+  }, [editor, editable]);
+
+  useEffect(() => {
+    if (!editor) return;
     if (content === editor.getHTML()) return;
     editor.commands.setContent(content || "<p></p>", false);
   }, [content, editor]);
@@ -59,6 +66,7 @@ export function EssayRichEditor({
           type="button"
           size="sm"
           variant="outline"
+          disabled={!editable}
           className={toolbarButtonClass(editor.isActive("paragraph"))}
           onClick={() => editor.chain().focus().setParagraph().run()}
         >
@@ -68,6 +76,7 @@ export function EssayRichEditor({
           type="button"
           size="sm"
           variant="outline"
+          disabled={!editable}
           className={toolbarButtonClass(editor.isActive("bold"))}
           onClick={() => editor.chain().focus().toggleBold().run()}
         >
@@ -77,6 +86,7 @@ export function EssayRichEditor({
           type="button"
           size="sm"
           variant="outline"
+          disabled={!editable}
           className={toolbarButtonClass(editor.isActive("italic"))}
           onClick={() => editor.chain().focus().toggleItalic().run()}
         >
@@ -86,6 +96,7 @@ export function EssayRichEditor({
           type="button"
           size="sm"
           variant="outline"
+          disabled={!editable}
           className={toolbarButtonClass(editor.isActive("bulletList"))}
           onClick={() => editor.chain().focus().toggleBulletList().run()}
         >
@@ -95,6 +106,7 @@ export function EssayRichEditor({
           type="button"
           size="sm"
           variant="outline"
+          disabled={!editable}
           className={toolbarButtonClass(editor.isActive("orderedList"))}
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
         >
