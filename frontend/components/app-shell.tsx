@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   PanelLeftClose,
   PanelLeftOpen,
@@ -30,6 +30,7 @@ const nav = [
   { href: "/common-app", label: "Common App", icon: FileText },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
+const sidebarStorageKey = "enroll_sidebar_collapsed";
 
 export function AppShell({
   title,
@@ -43,15 +44,12 @@ export function AppShell({
   const pathname = usePathname();
   const router = useRouter();
   const { profile, logout } = useAuth();
-  const [collapsed, setCollapsed] = useState(false);
-  const sidebarStorageKey = "enroll_sidebar_collapsed";
+  const [collapsed, setCollapsed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem(sidebarStorageKey) === "1";
+  });
 
   const name = profile?.full_name || profile?.username || profile?.email || "User";
-
-  useEffect(() => {
-    const saved = window.localStorage.getItem(sidebarStorageKey);
-    setCollapsed(saved === "1");
-  }, []);
 
   function toggleSidebar() {
     setCollapsed((prev) => {
