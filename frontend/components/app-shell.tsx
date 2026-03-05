@@ -1,22 +1,34 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Menu, X } from "lucide-react";
+import {
+  PanelLeftClose,
+  PanelLeftOpen,
+  LayoutDashboard,
+  UserRoundCheck,
+  GraduationCap,
+  FlaskConical,
+  CalendarDays,
+  FolderKanban,
+  FileText,
+  Settings,
+  Home,
+} from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
 import { Button } from "@/components/ui/button";
 
 const nav = [
-  { href: "/dashboard", label: "Dashboard" },
-  { href: "/onboarding", label: "Onboarding" },
-  { href: "/applications", label: "Universities" },
-  { href: "/ui-lab", label: "UI Lab" },
-  { href: "/calendar", label: "Calendar" },
-  { href: "/documents", label: "Documents" },
-  { href: "/essays", label: "Essays" },
-  { href: "/common-app", label: "Common App" },
-  { href: "/settings", label: "Settings" },
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/onboarding", label: "Onboarding", icon: UserRoundCheck },
+  { href: "/applications", label: "Universities", icon: GraduationCap },
+  { href: "/ui-lab", label: "UI Lab", icon: FlaskConical },
+  { href: "/calendar", label: "Calendar", icon: CalendarDays },
+  { href: "/documents", label: "Documents", icon: FolderKanban },
+  { href: "/essays", label: "Essays", icon: FileText },
+  { href: "/common-app", label: "Common App", icon: FileText },
+  { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 export function AppShell({
@@ -53,64 +65,74 @@ export function AppShell({
     <div
       className={`theme-home mx-auto grid min-h-screen max-w-[1500px] grid-cols-1 items-start gap-6 p-6 ${
         collapsed ? "lg:grid-cols-[92px_1fr]" : "lg:grid-cols-[260px_1fr]"
-      }`}
+      } lg:transition-[grid-template-columns] lg:duration-300 lg:ease-in-out`}
     >
-      <aside className="glass sticky top-6 h-fit rounded-3xl p-4">
-        <div className="mb-4 flex items-center justify-between gap-2">
-          <Link href="/" className="block">
-            <img
-              src="/icons/logo.svg"
-              alt="ENROLL"
-              className={`h-auto rounded-lg border-2 border-black bg-white p-1 ${
-                collapsed ? "w-12" : "w-36"
-              }`}
-            />
-          </Link>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={toggleSidebar}
-            className="relative h-8 w-8 overflow-hidden px-0"
-            aria-label={collapsed ? "Expand menu" : "Collapse menu"}
-            title={collapsed ? "Expand menu" : "Collapse menu"}
-          >
-            <Menu
-              className={`absolute h-4 w-4 transition-all duration-200 ${
-                collapsed ? "rotate-90 scale-0 opacity-0" : "rotate-0 scale-100 opacity-100"
-              }`}
-            />
-            <X
-              className={`absolute h-4 w-4 transition-all duration-200 ${
-                collapsed ? "rotate-0 scale-100 opacity-100" : "-rotate-90 scale-0 opacity-0"
-              }`}
-            />
-          </Button>
-        </div>
+      <aside className="glass sticky top-6 h-fit rounded-3xl p-4 transition-all duration-300 ease-in-out">
+          <div className="mb-4 flex items-center justify-between gap-2">
+            {collapsed ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={toggleSidebar}
+                className="h-12 w-12 px-0"
+                aria-label="Expand menu"
+                title="Expand menu"
+              >
+                <PanelLeftOpen className="h-5 w-5" />
+              </Button>
+            ) : (
+              <>
+                <Link href="/" className="block">
+                  <div className="flex h-12 w-36 items-center gap-2 rounded-lg border-2 border-black bg-white px-3 transition-all duration-300 ease-in-out">
+                    <GraduationCap className="h-5 w-5 shrink-0" />
+                    <span className="text-sm font-bold">Enroll AI</span>
+                  </div>
+                </Link>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={toggleSidebar}
+                className="relative h-8 w-8 overflow-hidden px-0"
+                aria-label="Collapse menu"
+                title="Collapse menu"
+              >
+                <PanelLeftClose className="h-4 w-4" />
+              </Button>
+              </>
+            )}
+          </div>
 
-        <nav className="grid gap-2">
-          {nav.map((item) => (
+          <nav className="grid gap-2">
+            {nav.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                title={item.label}
+                className={`rounded-xl px-3 py-2 text-sm font-semibold transition ${
+                  pathname === item.href
+                    ? "bg-[#FFDB58] text-black border-2 border-black"
+                    : "text-black/75 hover:bg-black/5 hover:text-black"
+                } ${collapsed ? "flex items-center justify-center px-0" : "flex items-center gap-2"}`}
+              >
+                <item.icon className="h-4 w-4 shrink-0" />
+                {!collapsed ? (
+                  <span className="inline-block transition-all duration-200 ease-out">{item.label}</span>
+                ) : null}
+              </Link>
+            ))}
             <Link
-              key={item.href}
-              href={item.href}
-              title={item.label}
-              className={`rounded-xl px-3 py-2 text-sm font-semibold transition ${
-                pathname === item.href
-                  ? "bg-[#FFDB58] text-black border-2 border-black"
-                  : "text-black/75 hover:bg-black/5 hover:text-black"
+              href="/"
+              title="Landing"
+              className={`mt-3 rounded-xl border-2 border-black px-3 py-2 text-sm font-semibold text-black/75 hover:bg-black/5 hover:text-black ${
+                collapsed ? "flex items-center justify-center px-0" : "flex items-center gap-2"
               }`}
             >
-              {collapsed ? item.label.slice(0, 1) : item.label}
+              <Home className="h-4 w-4 shrink-0" />
+              {!collapsed ? "Landing" : null}
             </Link>
-          ))}
-          <Link
-            href="/"
-            title="Landing"
-            className="mt-3 rounded-xl border-2 border-black px-3 py-2 text-sm font-semibold text-black/75 hover:bg-black/5 hover:text-black"
-          >
-            {collapsed ? "L" : "Landing"}
-          </Link>
-        </nav>
+          </nav>
       </aside>
 
       <section className="glass min-h-[calc(100vh-48px)] rounded-3xl p-6">
