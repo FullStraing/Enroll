@@ -115,3 +115,11 @@
   - Enforced read/write rule: only latest version can be edited.
   - Added final-version uniqueness behavior (single `final` per essay).
   - Updated workspace UI to show status and read-only state for old versions.
+
+## Essays autosave hardening progress (2026-03-05)
+
+- Started Phase 7.2:
+  - Added retry/backoff logic for autosave persistence (3 attempts).
+  - Added anti-race guard so stale autosave responses do not overwrite latest state.
+  - Added explicit `retrying` save state in UI.
+  - Manual `Save now` now uses the same hardened persistence path.

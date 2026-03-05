@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Bot, GitCompare, PanelRightClose, PanelRightOpen, Sparkles } from "lucide-react";
@@ -73,6 +73,10 @@ function htmlToText(value: string): string {
     .trim();
 }
 
+function wait(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export default function EssayWorkspacePage() {
   const params = useParams<{ id: string }>();
   const essayId = Number(params.id);
@@ -89,12 +93,13 @@ export default function EssayWorkspacePage() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [creatingVersion, setCreatingVersion] = useState(false);
-  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "retrying" | "saved" | "error">("idle");
   const [statusText, setStatusText] = useState("");
   const [aiPanelVisible, setAiPanelVisible] = useState(() => {
     if (typeof window === "undefined") return true;
     return window.localStorage.getItem("essay_ai_panel_visible") !== "0";
   });
+  const autosaveSeqRef = useRef(0);
 
   const loadWorkspace = useCallback(async () => {
     const token = getToken();
@@ -141,30 +146,61 @@ export default function EssayWorkspacePage() {
     setSaveState("idle");
   }, [selectedVersion, loadedVersionId]);
 
+  const persistVersion = useCallback(async (payload: { label: string; content: string; source: "user" | "ai"; status?: EssayVersion["status"] }, retries = 3) => {
+    if (!selectedVersion) throw new Error("No selected version.");
+    const token = getToken();
+    if (!token) throw new Error("Missing auth token.");
+
+    for (let attempt = 0; attempt < retries; attempt += 1) {
+      try {
+        if (attempt > 0) {
+          setSaveState("retrying");
+          await wait(500 * 2 ** (attempt - 1));
+        }
+        const updated = await apiFetch<EssayVersion>(
+          `/api/essay-versions/${selectedVersion.id}/`,
+          { method: "PUT", body: JSON.stringify(payload) },
+          token,
+        );
+        return updated;
+      } catch (error) {
+        if (attempt === retries - 1) throw error;
+      }
+    }
+    throw new Error("Failed to save version.");
+  }, [selectedVersion]);
+
   useEffect(() => {
     if (!selectedVersion) return;
     if (!selectedIsLatest) return;
     if (editorContent === selectedVersion.content) return;
-    const token = getToken();
-    if (!token) return;
+    const currentSeq = ++autosaveSeqRef.current;
+    let cancelled = false;
 
     const timer = setTimeout(async () => {
       setSaveState("saving");
       try {
-        const updated = await apiFetch<EssayVersion>(
-          `/api/essay-versions/${selectedVersion.id}/`,
-          { method: "PUT", body: JSON.stringify({ label: selectedVersion.label, content: editorContent, source: selectedVersion.source }) },
-          token,
-        );
+        const updated = await persistVersion({
+          label: selectedVersion.label,
+          content: editorContent,
+          source: selectedVersion.source,
+          status: selectedVersion.status,
+        });
+        if (cancelled || currentSeq !== autosaveSeqRef.current) return;
         setVersions((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
         setSaveState("saved");
       } catch {
+        if (cancelled || currentSeq !== autosaveSeqRef.current) return;
         setSaveState("error");
+        setStatusText("Autosave failed after retries. Click Save now.");
       }
     }, 700);
 
-    return () => clearTimeout(timer);
-  }, [editorContent, selectedVersion, selectedIsLatest]);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [editorContent, selectedVersion, selectedIsLatest, persistVersion]);
 
   async function createVersion(event: FormEvent) {
     event.preventDefault();
@@ -208,13 +244,15 @@ export default function EssayWorkspacePage() {
     if (!token) return;
     setSaving(true);
     try {
-      const updated = await apiFetch<EssayVersion>(
-        `/api/essay-versions/${selectedVersion.id}/`,
-        { method: "PUT", body: JSON.stringify({ label: selectedVersion.label, content: editorContent, source: selectedVersion.source }) },
-        token,
-      );
+      const updated = await persistVersion({
+        label: selectedVersion.label,
+        content: editorContent,
+        source: selectedVersion.source,
+        status: selectedVersion.status,
+      });
       setVersions((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
       setSaveState("saved");
+      setStatusText("Saved.");
     } catch (error) {
       setStatusText(error instanceof Error ? error.message : "Failed to save version.");
       setSaveState("error");
@@ -225,20 +263,14 @@ export default function EssayWorkspacePage() {
 
   async function updateLatestVersionMeta(field: "status" | "label", value: string) {
     if (!selectedVersion || !selectedIsLatest) return;
-    const token = getToken();
-    if (!token) return;
     try {
       const payload = {
         label: field === "label" ? value : selectedVersion.label,
         content: editorContent,
         source: selectedVersion.source,
-        status: field === "status" ? value : selectedVersion.status,
+        status: (field === "status" ? value : selectedVersion.status) as EssayVersion["status"],
       };
-      const updated = await apiFetch<EssayVersion>(
-        `/api/essay-versions/${selectedVersion.id}/`,
-        { method: "PUT", body: JSON.stringify(payload) },
-        token,
-      );
+      const updated = await persistVersion(payload);
       setVersions((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
       setStatusText("Version metadata updated.");
     } catch (error) {
@@ -500,6 +532,8 @@ export default function EssayWorkspacePage() {
                   <span className="text-xs text-black/60">
                     {saveState === "saving"
                       ? "Autosaving..."
+                      : saveState === "retrying"
+                        ? "Retrying save..."
                       : saveState === "saved"
                         ? "Saved"
                         : saveState === "error"
