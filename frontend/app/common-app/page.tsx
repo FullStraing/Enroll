@@ -11,7 +11,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
-type FieldType = "text" | "number" | "boolean" | "list";
+type FieldType = "text" | "number" | "boolean" | "list" | "choice" | "date";
 
 type ProgressField = {
   id: string;
@@ -24,6 +24,7 @@ type ProgressField = {
   path: string;
   value: string | number | boolean | string[] | null;
   filled: boolean;
+  options?: string[];
 };
 
 type Subsection = {
@@ -86,6 +87,36 @@ function FieldInput({
         onChange={(event) => onChange(event.target.value === "" ? "" : Number(event.target.value))}
         className="mt-1 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm disabled:bg-black/[0.04]"
       />
+    );
+  }
+
+  if (field.type === "date") {
+    return (
+      <input
+        type="date"
+        value={typeof value === "string" ? value : ""}
+        disabled={field.readonly}
+        onChange={(event) => onChange(event.target.value)}
+        className="mt-1 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm disabled:bg-black/[0.04]"
+      />
+    );
+  }
+
+  if (field.type === "choice") {
+    return (
+      <select
+        value={typeof value === "string" ? value : ""}
+        disabled={field.readonly}
+        onChange={(event) => onChange(event.target.value)}
+        className="mt-1 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm disabled:bg-black/[0.04]"
+      >
+        <option value="">Выбери</option>
+        {(field.options || []).map((option) => (
+          <option key={option} value={option}>
+            {option}
+          </option>
+        ))}
+      </select>
     );
   }
 
