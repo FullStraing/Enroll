@@ -168,6 +168,68 @@ COMMON_APP_SCHEMA = [
             },
         ],
     },
+    {
+        "key": "testing",
+        "title": "Testing",
+        "subsections": [
+            {
+                "key": "tests_taken",
+                "title": "Tests Taken",
+                "fields": [
+                    {"id": "sat_total", "label": "SAT total score", "bind": "model", "path": "sat_total", "type": "number", "required": False, "help": "Highest SAT score you plan to report."},
+                    {"id": "sat_date", "label": "SAT test date", "bind": "model", "path": "sat_date", "type": "text", "required": False, "help": "Format: YYYY-MM-DD."},
+                    {"id": "toefl_total", "label": "TOEFL total", "bind": "model", "path": "toefl_total", "type": "number", "required": False, "help": "If applicable for international applicant."},
+                    {"id": "ielts_overall", "label": "IELTS overall", "bind": "model", "path": "ielts_overall", "type": "number", "required": False, "help": "If you submit IELTS score."},
+                    {"id": "det_score", "label": "DET score", "bind": "model", "path": "det_score", "type": "number", "required": False, "help": "Duolingo English Test (if used)."},
+                    {"id": "testing_notes", "label": "Testing notes", "bind": "json", "path": "testing_notes", "type": "text", "required": False, "help": "Superscore, future test dates, or score context."},
+                ],
+            },
+        ],
+    },
+    {
+        "key": "activities",
+        "title": "Activities",
+        "subsections": [
+            {
+                "key": "activities",
+                "title": "Activities",
+                "fields": [
+                    {"id": "activities", "label": "Activities list", "bind": "model", "path": "activities", "type": "list", "required": False, "help": "Comma-separated list of your key extracurricular activities."},
+                    {"id": "activities_level", "label": "Activities level", "bind": "model", "path": "activities_level", "type": "text", "required": False, "help": "Self-estimated impact level (low/medium/high)."},
+                ],
+            },
+            {
+                "key": "responsibilities_circumstances",
+                "title": "Responsibilities and Circumstances",
+                "fields": [
+                    {"id": "family_responsibilities", "label": "Family responsibilities", "bind": "json", "path": "family_responsibilities", "type": "text", "required": False, "help": "If you regularly support family or work while studying."},
+                    {"id": "context_circumstances", "label": "Additional circumstances", "bind": "json", "path": "context_circumstances", "type": "text", "required": False, "help": "Anything important that impacted your academics or activities."},
+                ],
+            },
+        ],
+    },
+    {
+        "key": "writing",
+        "title": "Writing",
+        "subsections": [
+            {
+                "key": "personal_essay",
+                "title": "Personal Essay",
+                "fields": [
+                    {"id": "personal_essay_status", "label": "Personal essay status", "bind": "json", "path": "personal_essay_status", "type": "text", "required": False, "help": "Drafting / revising / final."},
+                    {"id": "personal_essay_word_count", "label": "Word count", "bind": "json", "path": "personal_essay_word_count", "type": "number", "required": False, "help": "Current word count (target around 650)."},
+                    {"id": "personal_essay_focus", "label": "Main story focus", "bind": "json", "path": "personal_essay_focus", "type": "text", "required": False, "help": "Short sentence about your main narrative."},
+                ],
+            },
+            {
+                "key": "additional_information",
+                "title": "Additional Information",
+                "fields": [
+                    {"id": "additional_information", "label": "Additional information text", "bind": "json", "path": "additional_information", "type": "text", "required": False, "help": "Context not covered elsewhere in your application."},
+                ],
+            },
+        ],
+    },
 ]
 
 
