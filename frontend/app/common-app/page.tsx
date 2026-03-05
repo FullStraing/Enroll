@@ -429,7 +429,13 @@ export default function CommonAppPage() {
                           <span className="text-base">{active ? "⌄" : "›"}</span>
                           <span>{section.title}</span>
                         </span>
-                        <span className="h-4 w-4 rounded-full border border-dashed border-black/35" />
+                        {section.percent === 100 ? (
+                          <span className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-black bg-[#DAF5F0] text-[11px] font-bold text-black">
+                            ✓
+                          </span>
+                        ) : (
+                          <span className="h-4 w-4 rounded-full border border-dashed border-black/35" />
+                        )}
                       </button>
 
                       {active ? (
@@ -449,7 +455,13 @@ export default function CommonAppPage() {
                                 }`}
                               >
                                 <span className="inline-flex items-center gap-2">
-                                  <span className="h-3 w-3 rounded-full border border-dashed border-black/35" />
+                                  {subsection.percent === 100 ? (
+                                    <span className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-black bg-[#DAF5F0] text-[10px] font-bold text-black">
+                                      ✓
+                                    </span>
+                                  ) : (
+                                    <span className="h-3 w-3 rounded-full border border-dashed border-black/35" />
+                                  )}
                                   <span>{subsection.title}</span>
                                 </span>
                                 <span className="text-xs text-black/60">{subsection.percent}%</span>
