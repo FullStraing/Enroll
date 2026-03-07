@@ -118,3 +118,20 @@ Automation commands:
 - `frontend/components/common-app/step-form.tsx` now groups repeated entities into visual blocks:
   - course / college / sibling / secondary school / honors / advisor blocks.
 - Page refresh continuity is handled in `frontend/app/common-app/page.tsx` using local persistence of step id and scroll position.
+
+## Common App backend modularization (2026-03-07)
+
+Refactor started to reduce monolithic `users/views.py`:
+- Schema moved to `apps/users/common_app/schema.py` as section imports.
+- Section definitions split into `apps/users/common_app/sections/*`.
+- Field builders moved to `apps/users/common_app/builders.py`.
+- Progress computation moved to `apps/users/common_app/progress.py`.
+- `CommonAppProgressView` now delegates payload generation to `build_common_app_progress(profile)`.
+
+Goal: keep endpoint contracts unchanged while improving maintainability and reducing regression risk.
+- Completed modular split:
+  - `common_app/builders.py` for dynamic field builders,
+  - `common_app/sections/*` for per-section schema,
+  - `common_app/schema.py` as composition layer,
+  - `common_app/progress.py` as progress engine.
+- `users/views.py` now only hosts API view classes and delegates Common App progress generation.

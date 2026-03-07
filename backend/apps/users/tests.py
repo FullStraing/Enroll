@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 from django.urls import reverse
 from rest_framework.test import APITestCase, APIClient
+from .models import StudentProfile
 
 
 class StudentProfileTests(APITestCase):
@@ -13,6 +14,7 @@ class StudentProfileTests(APITestCase):
         self.client = APIClient()
         self.client.force_authenticate(user=self.user)
         self.profile_url = reverse("profile")
+        self.common_app_progress_url = reverse("common_app_progress")
 
     def test_profile_get_returns_defaults(self):
         response = self.client.get(self.profile_url)
@@ -51,3 +53,54 @@ class StudentProfileTests(APITestCase):
         self.assertEqual(response.data["graduation_year"], 2026)
         self.assertEqual(response.data["intended_major"], "Computer Science")
         self.assertEqual(response.data["activities"], ["Robotics club", "Volunteer"])
+
+    def test_common_app_progress_contract_shape(self):
+        response = self.client.get(self.common_app_progress_url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("overall", response.data)
+        self.assertIn("sections", response.data)
+        self.assertIn("percent", response.data["overall"])
+        self.assertIsInstance(response.data["sections"], list)
+        self.assertGreater(len(response.data["sections"]), 0)
+
+        first_section = response.data["sections"][0]
+        self.assertIn("key", first_section)
+        self.assertIn("title", first_section)
+        self.assertIn("subsections", first_section)
+        self.assertIsInstance(first_section["subsections"], list)
+        self.assertGreater(len(first_section["subsections"]), 0)
+
+        first_subsection = first_section["subsections"][0]
+        self.assertIn("fields", first_subsection)
+        self.assertIsInstance(first_subsection["fields"], list)
+        self.assertGreater(len(first_subsection["fields"]), 0)
+
+        first_field = first_subsection["fields"][0]
+        for required_key in ("id", "label", "type", "required", "visible", "bind", "path", "value"):
+            self.assertIn(required_key, first_field)
+
+    def test_common_app_progress_nested_conditions_for_course_schedule(self):
+        profile, _ = StudentProfile.objects.get_or_create(user=self.user)
+        profile.common_app_profile = {
+            "courses_report_count": "2",
+            "course_scheduling_system": "Semester",
+        }
+        profile.save(update_fields=["common_app_profile"])
+
+        response = self.client.get(self.common_app_progress_url)
+        self.assertEqual(response.status_code, 200)
+
+        education = next(section for section in response.data["sections"] if section["key"] == "education")
+        courses = next(sub for sub in education["subsections"] if sub["key"] == "current_year_courses")
+
+        visible_schedule_ids = {
+            field["id"]
+            for field in courses["fields"]
+            if field["visible"] and field["id"].startswith("course_") and "_schedule_" in field["id"]
+        }
+
+        self.assertIn("course_1_schedule_semester", visible_schedule_ids)
+        self.assertIn("course_2_schedule_semester", visible_schedule_ids)
+        self.assertNotIn("course_3_schedule_semester", visible_schedule_ids)
+        self.assertNotIn("course_1_schedule_quarter", visible_schedule_ids)

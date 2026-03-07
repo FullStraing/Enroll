@@ -174,3 +174,18 @@
   - organization count (0..3)
   - per-organization advisor block (prefix, name, email, phone with code/number/extension)
 - Added grouped visual separators in Common App step renderer for repeating blocks (`Course N`, `College N`, `Sibling N`, `Secondary/High School N`, `Honors N`, `Counselor/Advisor/Mentor N`) to reduce user confusion.
+
+- Common App backend refactor in progress: extracted large schema/progress logic from `backend/apps/users/views.py` into `backend/apps/users/common_app/` package.
+- Added schema modularization by section:
+  - `common_app/sections/profile.py`
+  - `common_app/sections/family.py`
+  - `common_app/sections/education.py`
+  - `common_app/sections/testing.py`
+  - `common_app/sections/activities.py`
+  - `common_app/sections/writing.py`
+- Added shared builders module: `common_app/builders.py`.
+- `views.py` now keeps only API views + import of `build_common_app_progress`.
+- Verified refactor stability with automated checks:
+  - `USE_SQLITE=1 python backend/manage.py check`
+  - `USE_SQLITE=1 python backend/manage.py test apps.users` (all tests green)
+  - `npm run lint` (frontend; only existing `<img>` warnings remain).

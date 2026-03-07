@@ -4,14 +4,18 @@
 
 :root {
   color-scheme: light;
+  --enroll-bg: #f9f5f6;
+  --enroll-cyan: #daf5f0;
+  --enroll-orange: #f8d6b3;
+  --enroll-yellow: #ffdb58;
 }
 
 body {
   @apply antialiased;
   color: #111111;
-  background-color: #f9f5f6;
-  background-image: radial-gradient(rgba(0, 0, 0, 0.05) 1px, transparent 1px);
-  background-size: 6px 6px;
+  background-color: var(--enroll-bg);
+  background-image: radial-gradient(rgba(0, 0, 0, 0.08) 1.2px, transparent 1.2px);
+  background-size: 10px 10px;
   min-height: 100vh;
 }
 
