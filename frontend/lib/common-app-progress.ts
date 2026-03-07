@@ -4,6 +4,8 @@ export type FieldCondition = {
   field_id: string;
   equals?: string | number | boolean | null;
   in?: Array<string | number | boolean>;
+  all?: FieldCondition[];
+  any?: FieldCondition[];
 };
 
 export type ProgressField = {
@@ -112,6 +114,12 @@ export function matchesCondition(
   condition?: FieldCondition | null,
 ): boolean {
   if (!condition) return true;
+  if (condition.all && condition.all.length) {
+    return condition.all.every((item) => matchesCondition(draftValues, step, item));
+  }
+  if (condition.any && condition.any.length) {
+    return condition.any.some((item) => matchesCondition(draftValues, step, item));
+  }
   const key = getDraftKey(step, condition.field_id);
   const current = draftValues[key];
   if (condition.in && condition.in.length) return condition.in.includes(current as never);
@@ -212,4 +220,3 @@ export function computeLiveProgress(
     subsections: subsectionsMap,
   };
 }
-

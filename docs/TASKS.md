@@ -150,3 +150,27 @@
   - progress by section (Profile, Family, Education)
   - subsection forms with inline help text and save actions.
 - Dashboard saves subsection data through `PATCH /api/auth/profile/` (model + json merge).
+
+## Common App update (2026-03-07)
+
+- Added persistent step restore for Common App (`/common-app`): current subsection + scroll position are restored after page reload.
+- Replaced `Education -> Other Secondary/High Schools` with structured manual-entry flow (count 0..3, school name/date blocks, reason field), explicitly without any school finder button.
+- Replaced `Education -> Colleges & Universities` with structured manual-entry flow (count 0..3, per-college details, dates, degree earned), explicitly without any college finder button.
+- Expanded `Education -> Grades` to Common App-like structure:
+  - class size
+  - class rank reporting (Exact/Decile/Quintile/Quartile/None)
+  - conditional rank fields and rank weighting
+  - GPA scale reporting, cumulative GPA, GPA weighting
+- Expanded `Education -> Current or Most Recent Year Courses`:
+  - dynamic course count (1..15)
+  - per-course subject/name/level
+  - per-course schedule with schedule-system-specific options
+  - fixed visibility bug by introducing compound condition support (`all`/`any`) in backend and frontend condition evaluators.
+- Expanded `Education -> Honors`:
+  - Yes/No gate
+  - honors count (1..5)
+  - per-honor title, grade levels, recognition levels
+- Expanded `Education -> Community-Based Organizations`:
+  - organization count (0..3)
+  - per-organization advisor block (prefix, name, email, phone with code/number/extension)
+- Added grouped visual separators in Common App step renderer for repeating blocks (`Course N`, `College N`, `Sibling N`, `Secondary/High School N`, `Honors N`, `Counselor/Advisor/Mentor N`) to reduce user confusion.

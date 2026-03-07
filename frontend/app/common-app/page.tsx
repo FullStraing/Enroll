@@ -24,6 +24,8 @@ import { SectionNav } from "@/components/common-app/section-nav";
 import { StepForm } from "@/components/common-app/step-form";
 
 export default function CommonAppPage() {
+  const STEP_STORAGE_KEY = "common_app.current_step_id";
+  const SCROLL_STORAGE_KEY = "common_app.scroll_y";
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [statusText, setStatusText] = useState("");
@@ -32,6 +34,10 @@ export default function CommonAppPage() {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const autosaveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const lastAutosavedPayloadRef = useRef<string>("");
+  const restoredStepIdRef = useRef<string | null>(null);
+  const restoredScrollYRef = useRef<number | null>(null);
+  const hasRestoredStepRef = useRef(false);
+  const hasRestoredScrollRef = useRef(false);
 
   const steps = useMemo(() => buildSteps(progressData), [progressData]);
   const sectionStartIndexes = useMemo(() => buildSectionStartIndexes(progressData), [progressData]);
@@ -84,9 +90,58 @@ export default function CommonAppPage() {
   }, [loadData]);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    restoredStepIdRef.current = window.localStorage.getItem(STEP_STORAGE_KEY);
+    const storedScroll = window.localStorage.getItem(SCROLL_STORAGE_KEY);
+    if (storedScroll) {
+      const parsed = Number(storedScroll);
+      if (Number.isFinite(parsed)) restoredScrollYRef.current = parsed;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!steps.length || hasRestoredStepRef.current) return;
+    const restoredStepId = restoredStepIdRef.current;
+    if (restoredStepId) {
+      const restoredIndex = steps.findIndex((step) => step.id === restoredStepId);
+      if (restoredIndex >= 0) setCurrentStepIndex(restoredIndex);
+    }
+    hasRestoredStepRef.current = true;
+  }, [steps]);
+
+  useEffect(() => {
     if (!steps.length) return;
     if (currentStepIndex > steps.length - 1) setCurrentStepIndex(steps.length - 1);
   }, [steps, currentStepIndex]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!currentStep) return;
+    window.localStorage.setItem(STEP_STORAGE_KEY, currentStep.id);
+  }, [currentStep]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const onScroll = () => {
+      window.localStorage.setItem(SCROLL_STORAGE_KEY, String(window.scrollY));
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
+    if (loading || hasRestoredScrollRef.current) return;
+    const y = restoredScrollYRef.current;
+    if (y === null) {
+      hasRestoredScrollRef.current = true;
+      return;
+    }
+    const timer = window.setTimeout(() => {
+      window.scrollTo({ top: y, behavior: "auto" });
+      hasRestoredScrollRef.current = true;
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [loading, currentStep]);
 
   const saveStep = useCallback(
     async (silent = false) => {
@@ -229,4 +284,3 @@ export default function CommonAppPage() {
     </ProtectedPage>
   );
 }
-

@@ -169,3 +169,19 @@ Validation rules:
 - `PATCH /api/auth/profile/`
   - supports partial updates for both direct profile fields and `common_app_profile` json draft payload
   - `common_app_profile` is merged on update (not fully overwritten by partial patch).
+
+## Common App schema updates (2026-03-07)
+
+`GET /api/auth/common-app-progress/` now returns extended metadata/fields for:
+- `education.other_schools` (count + dynamic school blocks + reason)
+- `education.colleges_universities` (count + dynamic college blocks + degree/schedule details)
+- `education.grades` (class-rank variants + GPA scale/weighting)
+- `education.current_year_courses` (count 1..15 with dynamic per-course blocks)
+- `education.honors` (Yes/No + count 1..5 + per-honor details)
+- `education.community_based_orgs` (count 0..3 + advisor contact blocks)
+
+Condition payload now supports nested logic in `show_if` and `required_if`:
+- `all: [...]`
+- `any: [...]`
+
+This is used by dynamic fields that require multiple dependencies (e.g., course count + schedule system).

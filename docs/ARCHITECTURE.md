@@ -106,3 +106,15 @@ Automation commands:
   - required completion at overall/section/subsection levels,
   - field metadata with descriptions/help text for guided data entry.
 - Dashboard writes via existing `PATCH /api/auth/profile/`, and serializer merges `common_app_profile` patches.
+
+## Common App schema architecture update (2026-03-07)
+
+- `COMMON_APP_SCHEMA` was expanded substantially for `education` subsection parity with Common App flows.
+- Dynamic sections rely on declarative conditions in schema (`show_if`, `required_if`).
+- Condition engine in backend now supports nested boolean composition:
+  - `all` (AND)
+  - `any` (OR)
+- Frontend condition resolver (`frontend/lib/common-app-progress.ts`) mirrors the same nested logic so visibility and required rules are consistent on both sides.
+- `frontend/components/common-app/step-form.tsx` now groups repeated entities into visual blocks:
+  - course / college / sibling / secondary school / honors / advisor blocks.
+- Page refresh continuity is handled in `frontend/app/common-app/page.tsx` using local persistence of step id and scroll position.

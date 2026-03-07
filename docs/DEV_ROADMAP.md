@@ -201,3 +201,21 @@ MVP считается готовым, когда:
 - Есть базовая наблюдаемость (ошибки/логи) и безопасный деплой.
 
 ---
+
+## Update 2026-03-07 (Common App parity sprint)
+
+Completed:
+- Persisted Common App navigation context across reload (step + scroll restore).
+- Implemented major Education subsections to Common App-like dynamic flows:
+  - Other schools
+  - Colleges & universities
+  - Grades
+  - Current year courses
+  - Honors
+  - Community-based organizations
+- Added compound condition support (`all`/`any`) to fix multi-trigger visibility bugs.
+- Improved usability with repeated-block grouping in step renderer.
+
+Next:
+- Continue parity for remaining sections (Future Plans, Testing/Activities/Writing details where needed).
+- Refactor oversized backend schema file into modular schema packages while preserving API contract.

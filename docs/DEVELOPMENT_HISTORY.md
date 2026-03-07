@@ -219,3 +219,23 @@ npm run dev
 Проект прошел путь от backend-заготовки до почти полного MVP с рабочими пользовательскими сценариями, UI-слоем, безопасностью и подготовленным переходом на современный frontend.
 
 На текущий момент система уже демонстрируема как продукт, а следующий фокус — довести `Applications workflow` до финальной версии и закрыть MVP полностью.
+
+## Update — 2026-03-07
+
+This iteration focused on Common App flow fidelity and UX clarity.
+
+Implemented:
+- Common App page now restores last step and scroll position after refresh.
+- Education subsections were rebuilt from simple placeholders into dynamic, condition-driven forms:
+  - Other Secondary/High Schools (manual, no finder)
+  - Colleges & Universities (manual, no finder)
+  - Grades (rank systems + conditional fields)
+  - Current or Most Recent Year Courses (1..15 course blocks)
+  - Honors (Yes/No gate + up to 5 honors)
+  - Community-Based Organizations (up to 3 advisor blocks)
+- Added nested condition logic (`all` / `any`) in backend and frontend to prevent over-rendering of dependent fields.
+- Added visual grouped containers for repeated blocks to reduce cognitive load in long forms.
+
+Quality notes:
+- Backend schema compiles successfully.
+- Frontend lint passes (existing non-blocking warnings for `<img>` remain in unrelated files).
