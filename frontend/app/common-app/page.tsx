@@ -336,6 +336,81 @@ export default function CommonAppPage() {
     return Math.max(1, Math.ceil(requiredCount / 2));
   }, [currentStep, isFieldRequired, visibleFields]);
 
+  const liveProgress = useMemo(() => {
+    if (!progressData) return null;
+
+    const isFilledValue = (value: unknown) => {
+      if (value === null || value === undefined) return false;
+      if (typeof value === "boolean") return true;
+      if (typeof value === "string") return value.trim().length > 0;
+      if (Array.isArray(value)) return value.length > 0;
+      if (typeof value === "object") return Object.keys(value as Record<string, unknown>).length > 0;
+      return true;
+    };
+
+    const sectionsMap: Record<string, { percent: number; completed: number; total: number }> = {};
+    const subsectionsMap: Record<string, { percent: number; completed: number; total: number }> = {};
+    let totalRequired = 0;
+    let totalCompleted = 0;
+
+    for (const section of progressData.sections) {
+      let sectionRequired = 0;
+      let sectionCompleted = 0;
+
+      for (const subsection of section.subsections) {
+        const stepRef: Step = {
+          id: `${section.key}.${subsection.key}`,
+          sectionTitle: section.title,
+          subsectionTitle: subsection.title,
+          section,
+          subsection,
+        };
+        let subRequired = 0;
+        let subCompleted = 0;
+
+        for (const field of subsection.fields) {
+          if (!isFieldVisible(stepRef, field)) continue;
+          if (!isFieldRequired(stepRef, field)) continue;
+          subRequired += 1;
+          sectionRequired += 1;
+          totalRequired += 1;
+
+          const key = getDraftKey(stepRef, field.id);
+          if (isFilledValue(draftValues[key])) {
+            subCompleted += 1;
+            sectionCompleted += 1;
+            totalCompleted += 1;
+          }
+        }
+
+        const subPercent = subRequired ? Math.floor((subCompleted / subRequired) * 100) : 100;
+        subsectionsMap[`${section.key}.${subsection.key}`] = {
+          percent: subPercent,
+          completed: subCompleted,
+          total: subRequired,
+        };
+      }
+
+      const sectionPercent = sectionRequired ? Math.floor((sectionCompleted / sectionRequired) * 100) : 100;
+      sectionsMap[section.key] = {
+        percent: sectionPercent,
+        completed: sectionCompleted,
+        total: sectionRequired,
+      };
+    }
+
+    const overallPercent = totalRequired ? Math.floor((totalCompleted / totalRequired) * 100) : 100;
+    return {
+      overall: {
+        percent: overallPercent,
+        completed: totalCompleted,
+        total: totalRequired,
+      },
+      sections: sectionsMap,
+      subsections: subsectionsMap,
+    };
+  }, [draftValues, getDraftKey, isFieldRequired, isFieldVisible, progressData]);
+
   async function loadData() {
     const token = getToken();
     if (!token) return;
@@ -459,11 +534,15 @@ export default function CommonAppPage() {
             <Badge variant="primary">
               {loading || !progressData
                 ? "0%"
-                : `${progressData.overall.percent}% (${progressData.overall.completed_required}/${progressData.overall.required_total})`}
+                : `${liveProgress?.overall.percent ?? progressData.overall.percent}% (${liveProgress?.overall.completed ?? progressData.overall.completed_required}/${liveProgress?.overall.total ?? progressData.overall.required_total})`}
             </Badge>
           </div>
           <div className="mt-4">
-            <Progress value={loading || !progressData ? 0 : progressData.overall.percent} variant="primary" className="h-3" />
+            <Progress
+              value={loading || !progressData ? 0 : (liveProgress?.overall.percent ?? progressData.overall.percent)}
+              variant="primary"
+              className="h-3"
+            />
           </div>
         </Card>
 
@@ -480,6 +559,7 @@ export default function CommonAppPage() {
                 {(progressData?.sections || []).map((section) => {
                   const startIndex = sectionStartIndexes[section.key] ?? 0;
                   const active = currentStep.section.key === section.key;
+                  const sectionPercent = liveProgress?.sections[section.key]?.percent ?? section.percent;
                   return (
                     <div key={section.key} className="rounded-xl border border-black/10 bg-white/70">
                       <button
@@ -493,7 +573,7 @@ export default function CommonAppPage() {
                           <span className="text-base">{active ? "⌄" : "›"}</span>
                           <span>{section.title}</span>
                         </span>
-                        {section.percent === 100 ? (
+                        {sectionPercent === 100 ? (
                           <span className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-black bg-[#DAF5F0] text-[11px] font-bold text-black">
                             ✓
                           </span>
@@ -519,7 +599,7 @@ export default function CommonAppPage() {
                                 }`}
                               >
                                 <span className="inline-flex items-center gap-2">
-                                  {subsection.percent === 100 ? (
+                                  {(liveProgress?.subsections[`${section.key}.${subsection.key}`]?.percent ?? subsection.percent) === 100 ? (
                                     <span className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-black bg-[#DAF5F0] text-[10px] font-bold text-black">
                                       ✓
                                     </span>
@@ -528,7 +608,9 @@ export default function CommonAppPage() {
                                   )}
                                   <span>{subsection.title}</span>
                                 </span>
-                                <span className="text-xs text-black/60">{subsection.percent}%</span>
+                                <span className="text-xs text-black/60">
+                                  {liveProgress?.subsections[`${section.key}.${subsection.key}`]?.percent ?? subsection.percent}%
+                                </span>
                               </button>
                             );
                           })}
@@ -546,8 +628,17 @@ export default function CommonAppPage() {
                   <CardDescription>{currentStep.sectionTitle}</CardDescription>
                   <CardTitle className="mt-1">{currentStep.subsectionTitle}</CardTitle>
                 </div>
-                <Badge variant={currentStep.subsection.percent === 100 ? "cyan" : "orange"}>
-                  {currentStep.subsection.percent}%
+                <Badge
+                  variant={
+                    (liveProgress?.subsections[`${currentStep.section.key}.${currentStep.subsection.key}`]?.percent ??
+                      currentStep.subsection.percent) === 100
+                      ? "cyan"
+                      : "orange"
+                  }
+                >
+                  {liveProgress?.subsections[`${currentStep.section.key}.${currentStep.subsection.key}`]?.percent ??
+                    currentStep.subsection.percent}
+                  %
                 </Badge>
               </div>
 
