@@ -77,6 +77,7 @@ function FieldInput({
   field,
   value,
   onChange,
+  onClear,
 }: {
   field: ProgressField;
   value: unknown;
