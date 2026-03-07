@@ -34,6 +34,7 @@ type ProgressField = {
   visible?: boolean;
   ui?: string | null;
   clearable?: boolean;
+  searchable?: boolean;
   show_if?: FieldCondition | null;
   required_if?: FieldCondition | null;
 };
@@ -143,6 +144,35 @@ function FieldInput({
               <span>{isYesNo ? (option === "Yes" ? "Да" : "Нет") : option}</span>
             </label>
           ))}
+          {field.clearable && onClear ? (
+            <button
+              type="button"
+              onClick={onClear}
+              className="rounded-full border-2 border-black/35 px-4 py-1.5 text-sm font-semibold text-black/60 transition hover:bg-black/[0.03]"
+            >
+              Clear answer
+            </button>
+          ) : null}
+        </div>
+      );
+    }
+    if (field.searchable) {
+      const datalistId = `list-${field.path}-${field.id}`;
+      return (
+        <div className="space-y-2">
+          <input
+            list={datalistId}
+            value={typeof value === "string" ? value : ""}
+            disabled={field.readonly}
+            onChange={(event) => onChange(event.target.value)}
+            className="mt-1 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm disabled:bg-black/[0.04]"
+            placeholder="- Choose an option -"
+          />
+          <datalist id={datalistId}>
+            {options.map((option) => (
+              <option key={option} value={option} />
+            ))}
+          </datalist>
           {field.clearable && onClear ? (
             <button
               type="button"
