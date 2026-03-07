@@ -140,7 +140,7 @@ function FieldInput({
                 onChange={() => onChange(option)}
                 className="h-4 w-4 border-black/30"
               />
-              <span>{option === "Yes" ? "Да" : "Нет"}</span>
+              <span>{isYesNo ? (option === "Yes" ? "Да" : "Нет") : option}</span>
             </label>
           ))}
           {field.clearable && onClear ? (
