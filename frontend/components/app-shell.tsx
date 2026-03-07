@@ -65,7 +65,7 @@ export function AppShell({
         collapsed ? "lg:grid-cols-[92px_1fr]" : "lg:grid-cols-[260px_1fr]"
       } lg:transition-[grid-template-columns] lg:duration-300 lg:ease-in-out`}
     >
-      <aside className="glass sticky top-6 h-fit rounded-3xl p-4 transition-all duration-300 ease-in-out">
+      <aside className="glass glass-soft sticky top-6 h-fit rounded-3xl p-4 transition-all duration-300 ease-in-out">
           <div className="mb-4 flex items-center justify-between gap-2">
             {collapsed ? (
               <Button
@@ -133,7 +133,7 @@ export function AppShell({
           </nav>
       </aside>
 
-      <section className="glass min-h-[calc(100vh-48px)] rounded-3xl p-6">
+      <section className="glass glass-soft min-h-[calc(100vh-48px)] rounded-3xl p-6">
         <header className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b-2 border-black/80 pb-4">
           <div>
             <h1 className="text-2xl font-black">{title}</h1>

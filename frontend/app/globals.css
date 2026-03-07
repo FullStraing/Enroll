@@ -25,6 +25,10 @@ body {
   box-shadow: 0 8px 0 #000;
 }
 
+.glass-soft {
+  box-shadow: 0 5px 0 #000;
+}
+
 .theme-home [class*="text-white"] {
   color: rgba(0, 0, 0, 0.82) !important;
 }
