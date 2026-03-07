@@ -4,8 +4,6 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import {
-  PanelLeftClose,
-  PanelLeftOpen,
   LayoutDashboard,
   UserRoundCheck,
   GraduationCap,
@@ -15,6 +13,8 @@ import {
   FileText,
   Settings,
   Home,
+  Menu,
+  X,
 } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
 import { Button } from "@/components/ui/button";
@@ -66,18 +66,27 @@ export function AppShell({
       } lg:transition-[grid-template-columns] lg:duration-300 lg:ease-in-out`}
     >
       <aside className="glass glass-soft sticky top-6 h-fit rounded-3xl p-4 transition-all duration-300 ease-in-out">
-          <div className="mb-4 flex items-center justify-between gap-2">
+          <div className={`mb-4 flex items-center gap-2 ${collapsed ? "justify-center" : "justify-between"}`}>
             {collapsed ? (
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={toggleSidebar}
-                className="h-12 w-12 px-0"
+                className="relative h-9 w-9 overflow-hidden px-0"
                 aria-label="Expand menu"
                 title="Expand menu"
               >
-                <PanelLeftOpen className="h-5 w-5" />
+                <Menu
+                  className={`absolute h-4 w-4 transition-all duration-200 ${
+                    collapsed ? "rotate-0 scale-100 opacity-100" : "rotate-90 scale-0 opacity-0"
+                  }`}
+                />
+                <X
+                  className={`absolute h-4 w-4 transition-all duration-200 ${
+                    collapsed ? "-rotate-90 scale-0 opacity-0" : "rotate-0 scale-100 opacity-100"
+                  }`}
+                />
               </Button>
             ) : (
               <>
@@ -92,11 +101,20 @@ export function AppShell({
                 variant="outline"
                 size="sm"
                 onClick={toggleSidebar}
-                className="relative h-8 w-8 overflow-hidden px-0"
+                className="relative h-9 w-9 overflow-hidden px-0"
                 aria-label="Collapse menu"
                 title="Collapse menu"
               >
-                <PanelLeftClose className="h-4 w-4" />
+                <Menu
+                  className={`absolute h-4 w-4 transition-all duration-200 ${
+                    collapsed ? "rotate-0 scale-100 opacity-100" : "rotate-90 scale-0 opacity-0"
+                  }`}
+                />
+                <X
+                  className={`absolute h-4 w-4 transition-all duration-200 ${
+                    collapsed ? "-rotate-90 scale-0 opacity-0" : "rotate-0 scale-100 opacity-100"
+                  }`}
+                />
               </Button>
               </>
             )}

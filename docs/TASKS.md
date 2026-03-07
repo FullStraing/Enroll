@@ -189,3 +189,26 @@
   - `USE_SQLITE=1 python backend/manage.py check`
   - `USE_SQLITE=1 python backend/manage.py test apps.users` (all tests green)
   - `npm run lint` (frontend; only existing `<img>` warnings remain).
+
+## Landing intro quiz flow (2026-03-07)
+
+- Added new route: `frontend/app/intro-quiz/page.tsx`.
+- Implemented a Duolingo-like multi-step onboarding quiz (7 steps) before auth:
+  1. Country
+  2. Current school level/class
+  3. Planned US start year
+  4. Intended major (with `Еще не определился`)
+  5. GPA format + conditional value input (4.0 / 5.0 / percent / unknown)
+  6. Standardized tests (multi-select)
+  7. Shortlist size target
+- Added lightweight mascot placeholder block with greeting text (reserved place for future character asset).
+- Added local persistence for progress + answers (`localStorage`) so user can refresh and continue.
+- Added completion screen with auth-aware CTA:
+  - authenticated -> Dashboard
+  - unauthenticated -> Register / Login
+- Updated landing CTA path for unauthenticated users:
+  - `frontend/app/page.tsx`: `Начать` now routes to `/intro-quiz` (instead of direct `/register`).
+- Added legal/privacy page and links:
+  - new route: `frontend/app/privacy-policy/page.tsx`
+  - linked from landing footer
+  - linked from Settings -> Legal block

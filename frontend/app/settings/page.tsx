@@ -196,6 +196,17 @@ export default function SettingsPage() {
                 Выйти из аккаунта
               </button>
             </div>
+
+            <div className="mt-8 border-t border-white/10 pt-5">
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-white/65">Legal</h3>
+              <p className="mt-2 text-sm text-white/70">Privacy terms and data handling details.</p>
+              <a
+                href="/privacy-policy"
+                className="mt-3 inline-flex rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-sm hover:bg-white/10"
+              >
+                Privacy Policy
+              </a>
+            </div>
           </section>
 
           {statusText ? <p className="xl:col-span-2 text-sm text-white/70">{statusText}</p> : null}
