@@ -1,4 +1,4 @@
-﻿import { cookies } from "next/headers";
+import { cookies } from "next/headers";
 import Link from "next/link";
 
 const palette = {
@@ -12,23 +12,23 @@ const palette = {
 };
 
 const pains = [
-  "10+ РґРµРґР»Р°Р№РЅРѕРІ РЅР° СЂР°Р·РЅС‹Рµ С‚РёРїС‹ РїРѕРґР°С‡Рё",
-  "СЂР°Р·РЅС‹Рµ С‚СЂРµР±РѕРІР°РЅРёСЏ Сѓ РєР°Р¶РґРѕРіРѕ СѓРЅРёРІРµСЂСЃРёС‚РµС‚Р°",
-  "СЌСЃСЃРµ, С„РѕСЂРјС‹ aid, РѕС†РµРЅРєРё, СЂРµРєРѕРјРµРЅРґР°С†РёРё",
-  "РІРЅРµС€РЅРёРµ СЃРµСЂРІРёСЃС‹, РїРёСЃСЊРјР° Рё РґРѕРєСѓРјРµРЅС‚С‹ РІСЂР°Р·РЅРѕР±РѕР№",
+  "10+ дедлайнов на разные типы подачи",
+  "Разные требования у каждого университета",
+  "Эссе, формы aid, оценки, рекомендации",
+  "Внешние сервисы, письма и документы вразнобой",
 ];
 
 const proof = [
-  "100+ СѓРЅРёРІРµСЂСЃРёС‚РµС‚РѕРІ СѓР¶Рµ РёРЅС‚РµРіСЂРёСЂРѕРІР°РЅС‹",
-  "СЃС‚СЂСѓРєС‚СѓСЂРёСЂРѕРІР°РЅРЅС‹Рµ РґРµРґР»Р°Р№РЅС‹ Рё С‚СЂРµР±РѕРІР°РЅРёСЏ",
-  "РїСЂРѕРґСѓРєС‚ СЃРґРµР»Р°РЅ РґР»СЏ РјРµР¶РґСѓРЅР°СЂРѕРґРЅС‹С… СЃС‚СѓРґРµРЅС‚РѕРІ",
+  "100+ университетов уже интегрированы",
+  "Структурированные дедлайны и требования",
+  "Продукт сделан для международных студентов",
 ];
 
 const objections = [
-  "Р­С‚Рѕ РЅРµ Р°РіРµРЅС‚СЃС‚РІРѕ",
-  "Р­С‚Рѕ РЅРµ РіР°СЂР°РЅС‚РёСЏ РїРѕСЃС‚СѓРїР»РµРЅРёСЏ",
-  "Р­С‚Рѕ РЅРµ СЃР»СѓС‡Р°Р№РЅС‹Р№ С‡РµРєР»РёСЃС‚",
-  "Р­С‚Рѕ С‡РµС‚РєР°СЏ СЃРёСЃС‚РµРјР° РґРµР№СЃС‚РІРёР№",
+  "Это не агентство",
+  "Это не гарантия поступления",
+  "Это не случайный чеклист",
+  "Это четкая система действий",
 ];
 
 export default function LandingPage() {
@@ -57,14 +57,14 @@ export default function LandingPage() {
           </Link>
           <div className="flex items-center gap-2">
             <Link href="/login" className="rounded-xl border-2 border-black bg-white px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5">
-              Р’РѕР№С‚Рё
+              Войти
             </Link>
             <Link
               href={primaryHref}
               className="rounded-xl border-2 border-black px-5 py-2 text-sm font-black transition hover:-translate-y-0.5 hover:shadow-[0_4px_0_#000]"
               style={{ backgroundColor: palette.primary }}
             >
-              РќР°С‡Р°С‚СЊ
+              Начать
             </Link>
           </div>
         </header>
@@ -75,11 +75,11 @@ export default function LandingPage() {
               className="inline-flex rounded-md border-2 border-black px-4 py-1 text-xs font-black uppercase tracking-wide"
               style={{ backgroundColor: palette.orange }}
             >
-              РЎРёСЃС‚РµРјР° РїРѕСЃС‚СѓРїР»РµРЅРёСЏ РІ РѕРґРЅРѕРј РјРµСЃС‚Рµ
+              Система поступления в одном месте
             </span>
-            <h1 className="mt-5 text-4xl font-black leading-[0.95] md:text-7xl">РџРѕСЃС‚СѓРїР»РµРЅРёРµ РІ РЎРЁРђ РЅРµ РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ С…Р°РѕСЃРѕРј.</h1>
+            <h1 className="mt-5 text-4xl font-black leading-[0.95] md:text-7xl">Поступление в США не должно быть хаосом.</h1>
             <p className="mt-5 max-w-xl text-base text-black/70 md:text-xl">
-              Р”РµРґР»Р°Р№РЅС‹, РґРѕРєСѓРјРµРЅС‚С‹ Рё С‚СЂРµР±РѕРІР°РЅРёСЏ вЂ” РІ РѕРґРЅРѕР№ РїРѕРЅСЏС‚РЅРѕР№ СЃРёСЃС‚РµРјРµ. РўС‹ РІСЃРµРіРґР° Р·РЅР°РµС€СЊ, С‡С‚Рѕ РґРµР»Р°С‚СЊ РґР°Р»СЊС€Рµ.
+              Дедлайны, документы и требования — в одной понятной системе. Ты всегда знаешь, что делать дальше.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
@@ -87,32 +87,32 @@ export default function LandingPage() {
                 className="rounded-xl border-2 border-black px-8 py-3 text-lg font-black transition hover:-translate-y-0.5 hover:shadow-[0_5px_0_#000]"
                 style={{ backgroundColor: palette.primary }}
               >
-                РќР°С‡Р°С‚СЊ
+                Начать
               </Link>
               <Link
                 href="/pilot"
                 className="rounded-xl border-2 border-black px-8 py-3 text-lg font-bold transition hover:-translate-y-0.5"
                 style={{ backgroundColor: palette.cyan }}
               >
-                РџРёР»РѕС‚
+                Пилот
               </Link>
             </div>
           </div>
 
           <div className="fade-up delay-2 rounded-2xl border-2 border-black bg-white p-4 shadow-[0_8px_0_#000]">
-            <p className="text-sm font-black uppercase">РџСЂРёРјРµСЂ СЂР°Р±РѕС‡РµРіРѕ СЌРєСЂР°РЅР°</p>
+            <p className="text-sm font-black uppercase">Пример рабочего экрана</p>
             <div className="mt-3 grid gap-2">
               <div className="rounded-lg border-2 border-black p-3" style={{ backgroundColor: palette.cyan }}>
-                <p className="text-xs font-black">Р”РµРґР»Р°Р№РЅС‹</p>
-                <p className="mt-1 text-sm">RD: Jan 5 В· EA: Nov 1 В· ED: Nov 15</p>
+                <p className="text-xs font-black">Дедлайны</p>
+                <p className="mt-1 text-sm">RD: Jan 5 · EA: Nov 1 · ED: Nov 15</p>
               </div>
               <div className="rounded-lg border-2 border-black p-3" style={{ backgroundColor: palette.orange }}>
-                <p className="text-xs font-black">Р—Р°РґР°С‡Рё РЅР° РЅРµРґРµР»СЋ</p>
-                <p className="mt-1 text-sm">Р­СЃСЃРµ В· СЂРµРєРѕРјРµРЅРґР°С†РёРё В· financial forms</p>
+                <p className="text-xs font-black">Задачи на неделю</p>
+                <p className="mt-1 text-sm">Эссе · рекомендации · financial forms</p>
               </div>
               <div className="rounded-lg border-2 border-black p-3" style={{ backgroundColor: palette.yellowSoft }}>
-                <p className="text-xs font-black">Р”РѕРєСѓРјРµРЅС‚С‹</p>
-                <p className="mt-1 text-sm">Р’РµСЂСЃРёРё СЌСЃСЃРµ Рё С‡РµРєР»РёСЃС‚ С‚СЂРµР±РѕРІР°РЅРёР№</p>
+                <p className="text-xs font-black">Документы</p>
+                <p className="mt-1 text-sm">Версии эссе и чеклист требований</p>
               </div>
             </div>
           </div>
@@ -120,7 +120,7 @@ export default function LandingPage() {
 
         <section className="fade-up border-t-2 border-black px-5 py-8 md:px-8">
           <div className="rounded-2xl border-2 border-black p-6 shadow-[0_6px_0_#000]" style={{ backgroundColor: palette.orange }}>
-            <h2 className="text-2xl font-black uppercase">Р“РґРµ СЃС‚СѓРґРµРЅС‚С‹ С‚РµСЂСЏСЋС‚СЃСЏ</h2>
+            <h2 className="text-2xl font-black uppercase">Где студенты теряются</h2>
             <ul className="mt-4 grid gap-2 md:grid-cols-2">
               {pains.map((item) => (
                 <li key={item} className="rounded-xl border-2 border-black bg-white px-3 py-2 text-sm font-semibold">
@@ -128,20 +128,20 @@ export default function LandingPage() {
                 </li>
               ))}
             </ul>
-            <p className="mt-5 text-lg font-bold">Р‘РѕР»СЊС€РёРЅСЃС‚РІРѕ РЅРµ РїСЂРѕРІР°Р»РёРІР°СЋС‚СЃСЏ РёР·-Р·Р° Р·РЅР°РЅРёР№. РџСЂРѕРІР°Р»РёРІР°СЋС‚СЃСЏ, РїРѕС‚РѕРјСѓ С‡С‚Рѕ С‡С‚Рѕ-С‚Рѕ СѓРїСѓСЃРєР°СЋС‚.</p>
+            <p className="mt-5 text-lg font-bold">Большинство не проваливаются из-за знаний. Проваливаются, потому что что-то упускают.</p>
           </div>
         </section>
 
         <section className="fade-up delay-2 border-t-2 border-black px-5 py-8 md:px-8">
-          <h2 className="text-3xl font-black uppercase">Р§С‚Рѕ РµСЃР»Рё СЃРёСЃС‚РµРјР° СЃР°РјР° РІРµРґРµС‚ С‚РµР±СЏ РїРѕ С€Р°РіР°Рј?</h2>
-          <p className="mt-2 text-black/70">Dashboard РїРѕРєР°Р·С‹РІР°РµС‚, С‡С‚Рѕ РґРµР»Р°С‚СЊ РґР°Р»СЊС€Рµ РїСЂСЏРјРѕ СЃРµР№С‡Р°СЃ: РґРµРґР»Р°Р№РЅС‹, Р·Р°РґР°С‡Рё, РґРѕРєСѓРјРµРЅС‚С‹, СЃС‚Р°С‚СѓСЃ.</p>
+          <h2 className="text-3xl font-black uppercase">Что если система сама ведет тебя по шагам?</h2>
+          <p className="mt-2 text-black/70">Dashboard показывает, что делать дальше прямо сейчас: дедлайны, задачи, документы, статус.</p>
           <div className="mt-4 rounded-2xl border-2 border-black p-4 shadow-[0_5px_0_#000]" style={{ backgroundColor: palette.cyan }}>
-            <p className="text-sm font-bold">Enroll AI вЂ” СЌС‚Рѕ С†РёС„СЂРѕРІРѕР№ РјРµРЅС‚РѕСЂ РїРѕ РїРѕСЃС‚СѓРїР»РµРЅРёСЋ, Р° РЅРµ РїСЂРѕСЃС‚Рѕ Р±Р°Р·Р° РІСѓР·РѕРІ.</p>
+            <p className="text-sm font-bold">Enroll AI — это цифровой ментор по поступлению, а не просто база вузов.</p>
           </div>
         </section>
 
         <section className="fade-up border-t-2 border-black px-5 py-8 md:px-8">
-          <h2 className="text-2xl font-black uppercase">РџРѕС‡РµРјСѓ РЅР°Рј РґРѕРІРµСЂСЏСЋС‚ СѓР¶Рµ РЅР° СЃС‚Р°СЂС‚Рµ</h2>
+          <h2 className="text-2xl font-black uppercase">Почему нам доверяют уже на старте</h2>
           <div className="mt-4 grid gap-3 md:grid-cols-3">
             {proof.map((item) => (
               <div key={item} className="rounded-xl border-2 border-black bg-white p-4 text-sm font-semibold transition hover:-translate-y-0.5">
@@ -152,7 +152,7 @@ export default function LandingPage() {
         </section>
 
         <section className="fade-up delay-2 border-t-2 border-black px-5 py-8 md:px-8">
-          <h2 className="text-2xl font-black uppercase">Р§С‚Рѕ СЌС‚Рѕ Рё С‡С‚Рѕ СЌС‚Рѕ РЅРµ С‚Р°Рє</h2>
+          <h2 className="text-2xl font-black uppercase">Что это и что это не так</h2>
           <div className="mt-4 grid gap-3 md:grid-cols-2">
             {objections.map((item, idx) => (
               <div
@@ -167,20 +167,20 @@ export default function LandingPage() {
         </section>
 
         <section className="fade-up border-t-2 border-black px-5 py-10 text-center md:px-8">
-          <h2 className="text-3xl font-black uppercase">Р’С‹Р±РµСЂРё СѓРЅРёРІРµСЂСЃРёС‚РµС‚С‹ Рё РЅР°С‡РЅРё РїСЂСЏРјРѕ СЃРµР№С‡Р°СЃ</h2>
+          <h2 className="text-3xl font-black uppercase">Выбери университеты и начни прямо сейчас</h2>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
             <Link
               href={primaryHref}
               className="rounded-xl border-2 border-black px-8 py-3 text-lg font-black transition hover:-translate-y-0.5 hover:shadow-[0_5px_0_#000]"
               style={{ backgroundColor: palette.primary }}
             >
-              РќР°С‡Р°С‚СЊ
+              Начать
             </Link>
             <Link href="/pilot" className="rounded-xl border-2 border-black bg-white px-8 py-3 text-lg font-bold transition hover:-translate-y-0.5">
-              Р—Р°РїРёСЃР°С‚СЊСЃСЏ РІ РїРёР»РѕС‚
+              Записаться в пилот
             </Link>
           </div>
-          <p className="mt-4 text-sm text-black/60">РќРµ РіР°СЂР°РЅС‚РёСЏ РїРѕСЃС‚СѓРїР»РµРЅРёСЏ. Р РµС€РµРЅРёРµ РїСЂРёРЅРёРјР°РµС‚ СѓРЅРёРІРµСЂСЃРёС‚РµС‚.</p>
+          <p className="mt-4 text-sm text-black/60">Не гарантия поступления. Решение принимает университет.</p>
           <div className="mt-3">
             <Link href="/privacy-policy" className="text-sm font-semibold underline underline-offset-2">
               Privacy Policy
@@ -243,5 +243,4 @@ export default function LandingPage() {
     </main>
   );
 }
-
 
