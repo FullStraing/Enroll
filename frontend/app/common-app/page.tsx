@@ -9,245 +9,19 @@ import { Spinner } from "@/components/ui/spinner";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-
-type FieldType = "text" | "number" | "boolean" | "list" | "choice" | "date";
-
-type FieldCondition = {
-  field_id: string;
-  equals?: string | number | boolean | null;
-  in?: Array<string | number | boolean>;
-};
-
-type ProgressField = {
-  id: string;
-  label: string;
-  type: FieldType;
-  required: boolean;
-  readonly: boolean;
-  help: string;
-  bind: "model" | "json" | "user";
-  path: string;
-  value: string | number | boolean | string[] | null;
-  filled: boolean;
-  options?: string[];
-  visible?: boolean;
-  ui?: string | null;
-  clearable?: boolean;
-  searchable?: boolean;
-  show_if?: FieldCondition | null;
-  required_if?: FieldCondition | null;
-};
-
-type Subsection = {
-  key: string;
-  title: string;
-  completed_required: number;
-  required_total: number;
-  percent: number;
-  fields: ProgressField[];
-};
-
-type Section = {
-  key: string;
-  title: string;
-  completed_required: number;
-  required_total: number;
-  percent: number;
-  subsections: Subsection[];
-};
-
-type CommonAppProgress = {
-  overall: {
-    completed_required: number;
-    required_total: number;
-    percent: number;
-  };
-  sections: Section[];
-};
-
-type Step = {
-  id: string;
-  sectionTitle: string;
-  subsectionTitle: string;
-  section: Section;
-  subsection: Subsection;
-};
-
-function FieldInput({
-  field,
-  value,
-  onChange,
-  onClear,
-}: {
-  field: ProgressField;
-  value: unknown;
-  onChange: (next: unknown) => void;
-  onClear?: () => void;
-}) {
-  if (field.type === "boolean") {
-    return (
-      <select
-        value={typeof value === "boolean" ? String(value) : ""}
-        disabled={field.readonly}
-        onChange={(event) => onChange(event.target.value === "true")}
-        className="mt-1 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm disabled:bg-black/[0.04]"
-      >
-        <option value="">Выбери</option>
-        <option value="true">Да</option>
-        <option value="false">Нет</option>
-      </select>
-    );
-  }
-
-  if (field.type === "number") {
-    return (
-      <input
-        type="number"
-        value={typeof value === "number" ? value : value || ""}
-        disabled={field.readonly}
-        onChange={(event) => onChange(event.target.value === "" ? "" : Number(event.target.value))}
-        className="mt-1 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm disabled:bg-black/[0.04]"
-      />
-    );
-  }
-
-  if (field.type === "date") {
-    return (
-      <input
-        type="date"
-        value={typeof value === "string" ? value : ""}
-        disabled={field.readonly}
-        onChange={(event) => onChange(event.target.value)}
-        className="mt-1 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm disabled:bg-black/[0.04]"
-      />
-    );
-  }
-
-  if (field.type === "choice") {
-    const options = field.options || [];
-    const isYesNo = options.length === 2 && options.includes("Yes") && options.includes("No");
-    const useRadio = isYesNo || field.ui === "radio";
-    if (useRadio) {
-      return (
-        <div className="mt-2 space-y-3">
-          {options.map((option) => (
-            <label key={option} className="flex items-center gap-3 text-sm text-black/80">
-              <input
-                type="radio"
-                name={`${field.path}-${field.id}`}
-                checked={value === option}
-                disabled={field.readonly}
-                onChange={() => onChange(option)}
-                className="h-4 w-4 border-black/30"
-              />
-              <span>{isYesNo ? (option === "Yes" ? "Да" : "Нет") : option}</span>
-            </label>
-          ))}
-          {field.clearable && onClear ? (
-            <button
-              type="button"
-              onClick={onClear}
-              className="rounded-full border-2 border-black/35 px-4 py-1.5 text-sm font-semibold text-black/60 transition hover:bg-black/[0.03]"
-            >
-              Clear answer
-            </button>
-          ) : null}
-        </div>
-      );
-    }
-    return (
-      <div className="space-y-2">
-        <select
-          value={typeof value === "string" ? value : ""}
-          disabled={field.readonly}
-          onChange={(event) => onChange(event.target.value)}
-          className="mt-1 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm disabled:bg-black/[0.04]"
-        >
-          <option value="">- Choose an option -</option>
-          {(field.options || []).map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
-        {field.clearable && onClear ? (
-          <button
-            type="button"
-            onClick={onClear}
-            className="rounded-full border-2 border-black/35 px-4 py-1.5 text-sm font-semibold text-black/60 transition hover:bg-black/[0.03]"
-          >
-            Clear answer
-          </button>
-        ) : null}
-      </div>
-    );
-  }
-
-  if (field.type === "list") {
-    if (field.ui === "checkbox" && (field.options || []).length) {
-      const selected = Array.isArray(value) ? value : [];
-      const toggle = (option: string) => {
-        if (selected.includes(option)) {
-          onChange(selected.filter((item) => item !== option));
-        } else {
-          onChange([...selected, option]);
-        }
-      };
-      return (
-        <div className="mt-2 space-y-2">
-          {(field.options || []).map((option) => (
-            <label key={option} className="flex items-center gap-3 text-sm text-black/80">
-              <input
-                type="checkbox"
-                checked={selected.includes(option)}
-                disabled={field.readonly}
-                onChange={() => toggle(option)}
-                className="h-5 w-5 rounded border border-black/30"
-              />
-              <span>{option}</span>
-            </label>
-          ))}
-          {field.clearable && onClear ? (
-            <button
-              type="button"
-              onClick={onClear}
-              className="rounded-full border-2 border-black/35 px-4 py-1.5 text-sm font-semibold text-black/60 transition hover:bg-black/[0.03]"
-            >
-              Clear answer
-            </button>
-          ) : null}
-        </div>
-      );
-    }
-    const current = Array.isArray(value) ? value.join(", ") : "";
-    return (
-      <input
-        value={current}
-        disabled={field.readonly}
-        onChange={(event) =>
-          onChange(
-            event.target.value
-              .split(",")
-              .map((item) => item.trim())
-              .filter(Boolean),
-          )
-        }
-        className="mt-1 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm disabled:bg-black/[0.04]"
-        placeholder="Значения через запятую"
-      />
-    );
-  }
-
-  return (
-    <input
-      value={typeof value === "string" ? value : value ?? ""}
-      disabled={field.readonly}
-      onChange={(event) => onChange(event.target.value)}
-      className="mt-1 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm disabled:bg-black/[0.04]"
-    />
-  );
-}
+import {
+  buildSectionStartIndexes,
+  buildSteps,
+  buildSubsectionStepIndexes,
+  CommonAppProgress,
+  computeLiveProgress,
+  getDraftKey,
+  isFieldRequired,
+  isFieldVisible,
+  ProgressField,
+} from "@/lib/common-app-progress";
+import { SectionNav } from "@/components/common-app/section-nav";
+import { StepForm } from "@/components/common-app/step-form";
 
 export default function CommonAppPage() {
   const [loading, setLoading] = useState(true);
@@ -259,159 +33,28 @@ export default function CommonAppPage() {
   const autosaveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const lastAutosavedPayloadRef = useRef<string>("");
 
-  const steps = useMemo<Step[]>(() => {
-    if (!progressData) return [];
-    return progressData.sections.flatMap((section) =>
-      section.subsections.map((subsection) => ({
-        id: `${section.key}.${subsection.key}`,
-        sectionTitle: section.title,
-        subsectionTitle: subsection.title,
-        section,
-        subsection,
-      })),
-    );
-  }, [progressData]);
-
-  const sectionStartIndexes = useMemo(() => {
-    const map: Record<string, number> = {};
-    let cursor = 0;
-    for (const section of progressData?.sections || []) {
-      map[section.key] = cursor;
-      cursor += section.subsections.length;
-    }
-    return map;
-  }, [progressData]);
-
-  const subsectionStepIndexes = useMemo(() => {
-    const map: Record<string, number> = {};
-    let cursor = 0;
-    for (const section of progressData?.sections || []) {
-      for (const subsection of section.subsections) {
-        map[`${section.key}.${subsection.key}`] = cursor;
-        cursor += 1;
-      }
-    }
-    return map;
-  }, [progressData]);
-
+  const steps = useMemo(() => buildSteps(progressData), [progressData]);
+  const sectionStartIndexes = useMemo(() => buildSectionStartIndexes(progressData), [progressData]);
+  const subsectionStepIndexes = useMemo(() => buildSubsectionStepIndexes(progressData), [progressData]);
   const currentStep = steps[currentStepIndex] || null;
-  const getDraftKey = useCallback((step: Step, fieldId: string) => {
-    return `${step.section.key}.${step.subsection.key}.${fieldId}`;
-  }, []);
-
-  const matchesCondition = useCallback(
-    (step: Step, condition?: FieldCondition | null) => {
-      if (!condition) return true;
-      const key = getDraftKey(step, condition.field_id);
-      const current = draftValues[key];
-      if (condition.in && condition.in.length) return condition.in.includes(current as never);
-      return current === condition.equals;
-    },
-    [draftValues, getDraftKey],
-  );
-
-  const isFieldVisible = useCallback(
-    (step: Step, field: ProgressField) => {
-      return matchesCondition(step, field.show_if);
-    },
-    [matchesCondition],
-  );
-
-  const isFieldRequired = useCallback(
-    (step: Step, field: ProgressField) => {
-      if (field.required_if) return matchesCondition(step, field.required_if);
-      return field.required;
-    },
-    [matchesCondition],
-  );
 
   const visibleFields = useMemo(() => {
     if (!currentStep) return [];
-    return currentStep.subsection.fields.filter((field) => isFieldVisible(currentStep, field));
-  }, [currentStep, isFieldVisible]);
+    return currentStep.subsection.fields.filter((field) => isFieldVisible(draftValues, currentStep, field));
+  }, [currentStep, draftValues]);
 
   const stepEstimatedMinutes = useMemo(() => {
     if (!currentStep) return 1;
-    const requiredCount = visibleFields.filter((field) => isFieldRequired(currentStep, field)).length;
+    const requiredCount = visibleFields.filter((field) => isFieldRequired(draftValues, currentStep, field)).length;
     return Math.max(1, Math.ceil(requiredCount / 2));
-  }, [currentStep, isFieldRequired, visibleFields]);
+  }, [currentStep, draftValues, visibleFields]);
 
-  const liveProgress = useMemo(() => {
-    if (!progressData) return null;
+  const liveProgress = useMemo(
+    () => computeLiveProgress(progressData, draftValues),
+    [progressData, draftValues],
+  );
 
-    const isFilledValue = (value: unknown) => {
-      if (value === null || value === undefined) return false;
-      if (typeof value === "boolean") return true;
-      if (typeof value === "string") return value.trim().length > 0;
-      if (Array.isArray(value)) return value.length > 0;
-      if (typeof value === "object") return Object.keys(value as Record<string, unknown>).length > 0;
-      return true;
-    };
-
-    const sectionsMap: Record<string, { percent: number; completed: number; total: number }> = {};
-    const subsectionsMap: Record<string, { percent: number; completed: number; total: number }> = {};
-    let totalRequired = 0;
-    let totalCompleted = 0;
-
-    for (const section of progressData.sections) {
-      let sectionRequired = 0;
-      let sectionCompleted = 0;
-
-      for (const subsection of section.subsections) {
-        const stepRef: Step = {
-          id: `${section.key}.${subsection.key}`,
-          sectionTitle: section.title,
-          subsectionTitle: subsection.title,
-          section,
-          subsection,
-        };
-        let subRequired = 0;
-        let subCompleted = 0;
-
-        for (const field of subsection.fields) {
-          if (!isFieldVisible(stepRef, field)) continue;
-          if (!isFieldRequired(stepRef, field)) continue;
-          subRequired += 1;
-          sectionRequired += 1;
-          totalRequired += 1;
-
-          const key = getDraftKey(stepRef, field.id);
-          if (isFilledValue(draftValues[key])) {
-            subCompleted += 1;
-            sectionCompleted += 1;
-            totalCompleted += 1;
-          }
-        }
-
-        const subPercent = subRequired ? Math.floor((subCompleted / subRequired) * 100) : 100;
-        subsectionsMap[`${section.key}.${subsection.key}`] = {
-          percent: subPercent,
-          completed: subCompleted,
-          total: subRequired,
-        };
-      }
-
-      const sectionPercent = sectionRequired ? Math.floor((sectionCompleted / sectionRequired) * 100) : 100;
-      sectionsMap[section.key] = {
-        percent: sectionPercent,
-        completed: sectionCompleted,
-        total: sectionRequired,
-      };
-    }
-
-    const overallPercent = totalRequired ? Math.floor((totalCompleted / totalRequired) * 100) : 100;
-    return {
-      overall: {
-        percent: overallPercent,
-        completed: totalCompleted,
-        total: totalRequired,
-      },
-      sections: sectionsMap,
-      subsections: subsectionsMap,
-    };
-  }, [draftValues, getDraftKey, isFieldRequired, isFieldVisible, progressData]);
-
-  async function loadData() {
+  const loadData = useCallback(async () => {
     const token = getToken();
     if (!token) return;
     setLoading(true);
@@ -434,54 +77,58 @@ export default function CommonAppPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
 
   useEffect(() => {
     void loadData();
-  }, []);
+  }, [loadData]);
 
   useEffect(() => {
     if (!steps.length) return;
     if (currentStepIndex > steps.length - 1) setCurrentStepIndex(steps.length - 1);
   }, [steps, currentStepIndex]);
 
-  const saveStep = useCallback(async (step: Step, silent = false) => {
-    const token = getToken();
-    if (!token) return false;
-    const payloadModel: Record<string, unknown> = {};
-    const payloadJson: Record<string, unknown> = {};
+  const saveStep = useCallback(
+    async (silent = false) => {
+      if (!currentStep) return false;
+      const token = getToken();
+      if (!token) return false;
+      const payloadModel: Record<string, unknown> = {};
+      const payloadJson: Record<string, unknown> = {};
 
-    for (const field of step.subsection.fields) {
-      if (!isFieldVisible(step, field)) continue;
-      if (field.readonly || field.bind === "user") continue;
-      const key = `${step.section.key}.${step.subsection.key}.${field.id}`;
-      const value = draftValues[key];
-      if (field.bind === "model") payloadModel[field.path] = value;
-      else payloadJson[field.path] = value;
-    }
+      for (const field of currentStep.subsection.fields) {
+        if (!isFieldVisible(draftValues, currentStep, field)) continue;
+        if (field.readonly || field.bind === "user") continue;
+        const key = getDraftKey(currentStep, field.id);
+        const value = draftValues[key];
+        if (field.bind === "model") payloadModel[field.path] = value;
+        else payloadJson[field.path] = value;
+      }
 
-    setSaving(true);
-    try {
-      await apiFetch(
-        "/api/auth/profile/",
-        {
-          method: "PATCH",
-          body: JSON.stringify({
-            ...payloadModel,
-            common_app_profile: payloadJson,
-          }),
-        },
-        token,
-      );
-      if (!silent) setStatusText(`Сохранено: ${step.sectionTitle} / ${step.subsectionTitle}`);
-      return true;
-    } catch (error) {
-      setStatusText(error instanceof Error ? error.message : "Не удалось сохранить шаг.");
-      return false;
-    } finally {
-      setSaving(false);
-    }
-  }, [draftValues, isFieldVisible]);
+      setSaving(true);
+      try {
+        await apiFetch(
+          "/api/auth/profile/",
+          {
+            method: "PATCH",
+            body: JSON.stringify({
+              ...payloadModel,
+              common_app_profile: payloadJson,
+            }),
+          },
+          token,
+        );
+        if (!silent) setStatusText(`Сохранено: ${currentStep.sectionTitle} / ${currentStep.subsectionTitle}`);
+        return true;
+      } catch (error) {
+        setStatusText(error instanceof Error ? error.message : "Не удалось сохранить шаг.");
+        return false;
+      } finally {
+        setSaving(false);
+      }
+    },
+    [currentStep, draftValues],
+  );
 
   useEffect(() => {
     if (!currentStep || loading) return;
@@ -489,13 +136,12 @@ export default function CommonAppPage() {
     autosaveTimerRef.current = setTimeout(async () => {
       const subset: Record<string, unknown> = {};
       for (const field of currentStep.subsection.fields) {
-        if (!isFieldVisible(currentStep, field) || field.readonly || field.bind === "user") continue;
-        const key = `${currentStep.section.key}.${currentStep.subsection.key}.${field.id}`;
-        subset[key] = draftValues[key];
+        if (!isFieldVisible(draftValues, currentStep, field) || field.readonly || field.bind === "user") continue;
+        subset[getDraftKey(currentStep, field.id)] = draftValues[getDraftKey(currentStep, field.id)];
       }
       const signature = JSON.stringify({ step: currentStep.id, subset });
       if (signature === lastAutosavedPayloadRef.current) return;
-      const ok = await saveStep(currentStep, true);
+      const ok = await saveStep(true);
       if (ok) {
         lastAutosavedPayloadRef.current = signature;
         setStatusText("Черновик сохранен автоматически");
@@ -504,19 +150,18 @@ export default function CommonAppPage() {
     return () => {
       if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
     };
-  }, [draftValues, currentStep, isFieldVisible, loading, saveStep]);
+  }, [currentStep, draftValues, loading, saveStep]);
 
-  async function handleContinue() {
-    if (!currentStep) return;
-    const ok = await saveStep(currentStep);
+  const handleContinue = async () => {
+    const ok = await saveStep();
     if (!ok) return;
     await loadData();
     if (currentStepIndex < steps.length - 1) setCurrentStepIndex((prev) => prev + 1);
-  }
+  };
 
-  async function handleBack() {
+  const handleBack = () => {
     if (currentStepIndex > 0) setCurrentStepIndex((prev) => prev - 1);
-  }
+  };
 
   return (
     <ProtectedPage>
@@ -555,235 +200,33 @@ export default function CommonAppPage() {
         {!loading && currentStep ? (
           <div className="mt-5 grid gap-4 lg:grid-cols-[260px_1fr]">
             <Card className="h-fit shadow-none">
-              <div className="mt-1 space-y-1">
-                {(progressData?.sections || []).map((section) => {
-                  const startIndex = sectionStartIndexes[section.key] ?? 0;
-                  const active = currentStep.section.key === section.key;
-                  const sectionPercent = liveProgress?.sections[section.key]?.percent ?? section.percent;
-                  return (
-                    <div key={section.key} className="rounded-xl border border-black/10 bg-white/70">
-                      <button
-                        type="button"
-                        onClick={() => setCurrentStepIndex(startIndex)}
-                        className={`flex w-full items-center justify-between px-3 py-3 text-left text-base transition ${
-                          active ? "font-semibold" : "hover:bg-black/[0.03]"
-                        }`}
-                      >
-                        <span className="inline-flex items-center gap-2">
-                          <span className="text-base">{active ? "⌄" : "›"}</span>
-                          <span>{section.title}</span>
-                        </span>
-                        {sectionPercent === 100 ? (
-                          <span className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-black bg-[#DAF5F0] text-[11px] font-bold text-black">
-                            ✓
-                          </span>
-                        ) : (
-                          <span className="h-4 w-4 rounded-full border border-dashed border-black/35" />
-                        )}
-                      </button>
-
-                      {active ? (
-                        <div className="space-y-1 border-t border-black/10 px-2 pb-2 pt-2">
-                          {section.subsections.map((subsection) => {
-                            const stepIndex = subsectionStepIndexes[`${section.key}.${subsection.key}`] ?? startIndex;
-                            const isCurrent = currentStep.subsection.key === subsection.key;
-                            return (
-                              <button
-                                key={subsection.key}
-                                type="button"
-                                onClick={() => setCurrentStepIndex(stepIndex)}
-                                className={`flex w-full items-center justify-between rounded-lg px-2 py-2 text-left text-sm transition ${
-                                  isCurrent
-                                    ? "bg-black/10 font-semibold"
-                                    : "hover:bg-black/[0.05]"
-                                }`}
-                              >
-                                <span className="inline-flex items-center gap-2">
-                                  {(liveProgress?.subsections[`${section.key}.${subsection.key}`]?.percent ?? subsection.percent) === 100 ? (
-                                    <span className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-black bg-[#DAF5F0] text-[10px] font-bold text-black">
-                                      ✓
-                                    </span>
-                                  ) : (
-                                    <span className="h-3 w-3 rounded-full border border-dashed border-black/35" />
-                                  )}
-                                  <span>{subsection.title}</span>
-                                </span>
-                                <span className="text-xs text-black/60">
-                                  {liveProgress?.subsections[`${section.key}.${subsection.key}`]?.percent ?? subsection.percent}%
-                                </span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      ) : null}
-                    </div>
-                  );
-                })}
-              </div>
+              <SectionNav
+                progressData={progressData}
+                currentStep={currentStep}
+                sectionStartIndexes={sectionStartIndexes}
+                subsectionStepIndexes={subsectionStepIndexes}
+                liveProgress={liveProgress}
+                onSelectStep={setCurrentStepIndex}
+              />
             </Card>
-
-            <Card className="shadow-none">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <CardDescription>{currentStep.sectionTitle}</CardDescription>
-                  <CardTitle className="mt-1">{currentStep.subsectionTitle}</CardTitle>
-                </div>
-                <Badge
-                  variant={
-                    (liveProgress?.subsections[`${currentStep.section.key}.${currentStep.subsection.key}`]?.percent ??
-                      currentStep.subsection.percent) === 100
-                      ? "cyan"
-                      : "orange"
-                  }
-                >
-                  {liveProgress?.subsections[`${currentStep.section.key}.${currentStep.subsection.key}`]?.percent ??
-                    currentStep.subsection.percent}
-                  %
-                </Badge>
-              </div>
-
-              <div className="mt-6 space-y-5">
-                {visibleFields.map((field) => {
-                  if (
-                    currentStep.subsection.key === "contact_details" &&
-                    field.id === "preferred_phone_country_code"
-                  ) {
-                    const numberField = visibleFields.find((item) => item.id === "preferred_phone_number");
-                    if (!numberField) return null;
-                    const codeKey = `${currentStep.section.key}.${currentStep.subsection.key}.${field.id}`;
-                    const numberKey = `${currentStep.section.key}.${currentStep.subsection.key}.${numberField.id}`;
-                    const required = isFieldRequired(currentStep, numberField);
-                    return (
-                      <label key={field.id} className="block text-sm text-black/80">
-                        <span className="inline-flex items-center gap-2 pb-2 text-[1.02rem] font-semibold">
-                          <span>
-                            {numberField.label}
-                            {required ? <span className="ml-1 text-red-600">*</span> : null}
-                          </span>
-                          <span
-                            title={numberField.help}
-                            className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-black/30 text-xs text-black/60"
-                          >
-                            ?
-                          </span>
-                        </span>
-                        <div className="grid grid-cols-[140px_1fr] gap-2">
-                          <FieldInput
-                            field={field}
-                            value={draftValues[codeKey]}
-                            onChange={(next) => setDraftValues((prev) => ({ ...prev, [codeKey]: next }))}
-                          />
-                          <FieldInput
-                            field={numberField}
-                            value={draftValues[numberKey]}
-                            onChange={(next) => setDraftValues((prev) => ({ ...prev, [numberKey]: next }))}
-                          />
-                        </div>
-                        <span className="mt-1 block text-xs text-black/55">{numberField.help}</span>
-                      </label>
-                    );
-                  }
-                  if (
-                    currentStep.subsection.key === "contact_details" &&
-                    field.id === "preferred_phone_number"
-                  ) {
-                    return null;
-                  }
-                  if (
-                    currentStep.subsection.key === "contact_details" &&
-                    field.id === "alternate_phone_country_code"
-                  ) {
-                    const numberField = visibleFields.find((item) => item.id === "alternate_phone_number");
-                    if (!numberField) return null;
-                    const codeKey = `${currentStep.section.key}.${currentStep.subsection.key}.${field.id}`;
-                    const numberKey = `${currentStep.section.key}.${currentStep.subsection.key}.${numberField.id}`;
-                    const required = isFieldRequired(currentStep, numberField);
-                    return (
-                      <label key={field.id} className="block text-sm text-black/80">
-                        <span className="inline-flex items-center gap-2 pb-2 text-[1.02rem] font-semibold">
-                          <span>
-                            {numberField.label}
-                            {required ? <span className="ml-1 text-red-600">*</span> : null}
-                          </span>
-                          <span
-                            title={numberField.help}
-                            className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-black/30 text-xs text-black/60"
-                          >
-                            ?
-                          </span>
-                        </span>
-                        <div className="grid grid-cols-[90px_1fr] gap-2">
-                          <FieldInput
-                            field={field}
-                            value={draftValues[codeKey]}
-                            onChange={(next) => setDraftValues((prev) => ({ ...prev, [codeKey]: next }))}
-                          />
-                          <FieldInput
-                            field={numberField}
-                            value={draftValues[numberKey]}
-                            onChange={(next) => setDraftValues((prev) => ({ ...prev, [numberKey]: next }))}
-                          />
-                        </div>
-                        <span className="mt-1 block text-xs text-black/55">{numberField.help}</span>
-                      </label>
-                    );
-                  }
-                  if (
-                    currentStep.subsection.key === "contact_details" &&
-                    field.id === "alternate_phone_number"
-                  ) {
-                    return null;
-                  }
-
-                  const fieldKey = `${currentStep.section.key}.${currentStep.subsection.key}.${field.id}`;
-                  const required = isFieldRequired(currentStep, field);
-                  return (
-                    <label key={field.id} className="block text-sm text-black/80">
-                      <span className="inline-flex items-center gap-2 pb-2 text-[1.02rem] font-semibold">
-                        <span>
-                          {field.label}
-                          {required ? <span className="ml-1 text-red-600">*</span> : null}
-                          {field.readonly ? <span className="ml-1 text-xs text-black/45">(только чтение)</span> : null}
-                        </span>
-                        <span
-                          title={field.help}
-                          className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-black/30 text-xs text-black/60"
-                        >
-                          ?
-                        </span>
-                      </span>
-                      <FieldInput
-                        field={field}
-                        value={draftValues[fieldKey]}
-                        onChange={(next) => setDraftValues((prev) => ({ ...prev, [fieldKey]: next }))}
-                        onClear={() =>
-                          setDraftValues((prev) => ({
-                            ...prev,
-                            [fieldKey]: field.type === "list" ? [] : "",
-                          }))
-                        }
-                      />
-                    </label>
-                  );
-                })}
-              </div>
-
-              <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-black/10 pt-4">
-                <p className="text-xs text-black/55">{saving ? "Сохраняем..." : statusText || "Изменения сохраняются автоматически"}</p>
-                <div className="flex items-center gap-2">
-                  <Button type="button" variant="outline" onClick={() => void handleBack()} disabled={currentStepIndex === 0 || saving}>
-                    Назад
-                  </Button>
-                  <Button type="button" onClick={() => void handleContinue()} disabled={saving}>
-                    {saving ? <Spinner size="sm" /> : null}
-                    <span>{currentStepIndex === steps.length - 1 ? "Завершить шаги" : "Continue"}</span>
-                  </Button>
-                </div>
-              </div>
-            </Card>
+            <StepForm
+              currentStep={currentStep}
+              visibleFields={visibleFields as ProgressField[]}
+              draftValues={draftValues}
+              isFieldRequired={(step, field) => isFieldRequired(draftValues, step, field)}
+              setDraftValues={setDraftValues}
+              saving={saving}
+              statusText={statusText}
+              onBack={handleBack}
+              onContinue={handleContinue}
+              currentStepIndex={currentStepIndex}
+              totalSteps={steps.length}
+              liveProgress={liveProgress}
+            />
           </div>
         ) : null}
       </AppShell>
     </ProtectedPage>
   );
 }
+
