@@ -173,6 +173,41 @@ function FieldInput({
   }
 
   if (field.type === "list") {
+    if (field.ui === "checkbox" && (field.options || []).length) {
+      const selected = Array.isArray(value) ? value : [];
+      const toggle = (option: string) => {
+        if (selected.includes(option)) {
+          onChange(selected.filter((item) => item !== option));
+        } else {
+          onChange([...selected, option]);
+        }
+      };
+      return (
+        <div className="mt-2 space-y-2">
+          {(field.options || []).map((option) => (
+            <label key={option} className="flex items-center gap-3 text-sm text-black/80">
+              <input
+                type="checkbox"
+                checked={selected.includes(option)}
+                disabled={field.readonly}
+                onChange={() => toggle(option)}
+                className="h-5 w-5 rounded border border-black/30"
+              />
+              <span>{option}</span>
+            </label>
+          ))}
+          {field.clearable && onClear ? (
+            <button
+              type="button"
+              onClick={onClear}
+              className="rounded-full border-2 border-black/35 px-4 py-1.5 text-sm font-semibold text-black/60 transition hover:bg-black/[0.03]"
+            >
+              Clear answer
+            </button>
+          ) : null}
+        </div>
+      );
+    }
     const current = Array.isArray(value) ? value.join(", ") : "";
     return (
       <input
@@ -573,7 +608,12 @@ export default function CommonAppPage() {
                         field={field}
                         value={draftValues[fieldKey]}
                         onChange={(next) => setDraftValues((prev) => ({ ...prev, [fieldKey]: next }))}
-                        onClear={() => setDraftValues((prev) => ({ ...prev, [fieldKey]: "" }))}
+                        onClear={() =>
+                          setDraftValues((prev) => ({
+                            ...prev,
+                            [fieldKey]: field.type === "list" ? [] : "",
+                          }))
+                        }
                       />
                     </label>
                   );
