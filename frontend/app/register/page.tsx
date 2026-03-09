@@ -1,7 +1,6 @@
 ﻿"use client";
 
 import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { apiFetch } from "@/lib/api";
 import { Loader } from "@/components/loader";
@@ -9,7 +8,6 @@ import { useAuth } from "@/components/auth-provider";
 import { Button } from "@/components/ui/button";
 
 export default function RegisterPage() {
-  const router = useRouter();
   const { setSession } = useAuth();
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -31,7 +29,7 @@ export default function RegisterPage() {
         body: JSON.stringify({ username, password }),
       });
       await setSession(data.access, data.refresh);
-      router.push("/dashboard");
+      window.location.assign("/dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Register failed");
     } finally {
