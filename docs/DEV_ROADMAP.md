@@ -1,221 +1,116 @@
-# Enroll — Development Roadmap (focus: Application Tracker)
+﻿# Development Roadmap
 
-**Цель:** как можно быстрее довести MVP до продакшена: **удобный трекер поступления** (университеты + дедлайны + чеклисты + документы), в единой стилистике (dark / glass / subtle neon) с **удобством уровня Notion**.  
-**В разработке (не входит в релиз MVP):**  
-- **Предсказание шансов поступления (%)**  
-- **Автоматическое/полуавтоматическое заполнение базы университетов (и данных CDS)**
+## Product goal
 
----
+Ship Enroll as a usable admissions operating system for students applying to U.S. universities.
 
-## 0) Принципы (не нарушать)
-1) **Сначала UX и завершённый пользовательский путь**, потом “умные” фичи.  
-2) **Одна стилистика везде**: компоненты, отступы, цвета, анимации, иконки.  
-3) **Никакой магии без контроля**: всё прозрачно, всё редактируемо, всё понятно.  
-4) **Notion-удобство**: быстрые действия, минимум кликов, автофокус на “что делать дальше”.
+Core promise:
+- no chaos
+- clear next steps
+- deadlines, documents, essays, and profile data in one workflow
 
----
+## Phase 1: Funnel and activation
 
-## 1) Что является MVP (входит в прод-релиз)
-### 1.1 Университеты (My Universities)
-- Добавить университет вручную (название, страна/штат, ссылка на admissions, портал, дедлайн, заметки)
-- Статус: `planned` → `in_progress` → `submitted` → `accepted/rejected/waitlisted`
-- Страница университета: дедлайн, чеклист, связанные документы, заметки, быстрые действия
+Status: mostly done
 
-**Acceptance:**
-- Пользователь может вести 5–20 вузов, без хаоса.
-- Ясно, что “следующее действие” для каждого вуза.
+Delivered:
+- public landing page
+- intro quiz before signup
+- login / register flow
+- dashboard entry after auth
+- privacy policy baseline
 
-### 1.2 Чеклист по каждому вузу (главная ценность)
-Стандартные пункты (настраиваемые):
-- Personal statement
-- Supplements (может быть несколько)
-- Recommendations (1–3)
-- Transcript / Credential evaluation (если нужно)
-- Test scores (SAT/ACT/IELTS/TOEFL/DET) — как “есть/нет/дата”
-- Application fee / fee waiver
-- Финальная проверка перед submit
+Remaining improvements:
+- add privacy links to login/register
+- improve intro quiz polish and character system
+- optionally push quiz answers into the user profile after auth
 
-**Acceptance:**
-- Можно отмечать пункты, добавлять свои пункты.
-- Прогресс отображается на карточке вуза (например, 7/12).
+## Phase 2: Common App profile system
 
-### 1.3 Дедлайны + To-Do (в виде календаря)
-**Требование:** To-do не просто список. Мы делаем “необычное использование календаря”.
+Status: in progress
 
-**MVP-формат календаря:**
-- Календарь (Month/Week) как основной вид
-- События: `deadline` и `task`
-- Быстрый ввод задачи: “/task” + дата/время + вуз (опционально)
-- Фильтры: по вузу, по статусу, по типу (deadline/task)
-- “Today panel”: 3–7 задач на сегодня/завтра
+Delivered:
+- backend Common App progress engine
+- section / subsection completion
+- conditional visibility and required-state logic
+- persistent restore after refresh
+- substantial coverage for Profile, Family, and Education
 
-**Unusual / interactive идеи (выбрать 1–2):**
-- **Heatmap прогресса** (как GitHub): дни, когда ты закрывал задачи
-- **Drag & drop** задач по дням (перетаскивание)
-- **Timeline view** (вертикальная лента ближайших 14 дней)
+Remaining:
+- finish Testing details
+- finish Activities details
+- finish Writing details
+- complete Future Plans polish
+- unify all step UX and validation patterns
 
-**Acceptance:**
-- Пользователь видит “что горит” и может переставить задачи.
-- Дедлайны вузов видны сразу на календаре.
+This is the highest-priority product block right now.
 
-### 1.4 Документы + версии
-- Документы: Personal Statement, Why Us, Resume, и т.д.
-- Версии: V1/V2/Final, дата, заметка “что изменено”
-- Привязка документа к вузу/нескольким вузам (supplements)
+## Phase 3: Dashboard as operating center
 
-**Acceptance:**
-- Понятно, какая версия отправлена в какой вуз.
-- Никакой потери файлов/версий.
+Status: partially done
 
-### 1.5 Базовые страницы приложения
-- Dashboard: прогресс по вузам, ближайшие дедлайны, задачи сегодня
-- Universities: список + поиск/фильтр
-- Calendar/Tasks
-- Documents
-- Settings (минимально)
+Delivered:
+- dashboard shell
+- early readiness visibility
+- shared workspace shell
 
----
+Remaining:
+- real readiness score
+- next-action logic
+- connection to deadlines, essays, tasks, and universities
+- stronger summary widgets users can act on immediately
 
-## 2) UI/UX стандарты (как Notion по удобству, но наш дизайн)
-### 2.1 Навигация и структура
-- Лёгкая навигация (sidebar или top nav — но единообразно)
-- На каждой странице: заголовок + 1 основной CTA + 1–2 вторичных действия
-- Везде “Command-подход”: быстрые действия и минимум кликов
+## Phase 4: Universities and deadlines
 
-### 2.2 Компоненты (единый набор)
-- Cards (glass): прозрачные, тонкая граница, мягкая тень
-- Buttons: primary (neon accent), secondary (neutral)
-- Inputs: чистые, focus ring accent
-- Badges: статусные (planned/in_progress/submitted/decision)
-- Tables/List: чистые, с hover и быстрыми действиями
+Status: usable baseline done
 
-### 2.3 Иконки/картинки
-**Иконки:**
-- Одна библиотека (например, lucide-react)
-- Использовать как “якоря смысла”, не для украшения
-- В списках: маленькие иконки типа статуса (deadline/task/document)
+Delivered:
+- universities list and detail pages
+- richer data cards
+- deadlines ingestion and display
+- enrichment structure behind the UI
 
-**Картинки:**
-- На landing — можно 1–2 простых абстрактных фона/градиента
-- В приложении — минимум картинок (только если повышают понимание)
+Remaining:
+- more product-quality filtering and sorting
+- tighter shortlist/application linkage
+- final detail-page polish
 
-### 2.4 Анимации (современные, но не шумные)
-- Section reveal (мягко)
-- Hover lift для карточек
-- Button micro-scale + glow
-- Skeleton shimmer для загрузок
-- Respect `prefers-reduced-motion`
+## Phase 5: Essays
 
----
+Status: MVP baseline done, advanced features still open
 
-## 3) “Ещё в разработке” (видно в UI, но недоступно)
-### 3.1 Предсказание шансов поступления (%)
-**Статус:** Coming soon / В разработке  
-**UI:** показывать блок “Оценка шансов: скоро” + короткое объяснение.  
-**Причина:** нужен набор данных + валидация + осторожная коммуникация (без обещаний).
+Delivered:
+- essay manager
+- essay workspace
+- version system
+- rich text editor
+- autosave
+- compare API baseline
 
-**Что будет потом:**
-- Диапазон + центральная оценка
-- Пояснение факторов
-- “Как улучшить шанс”
+Remaining:
+- AI mentor actions
+- score system
+- deeper compare UX
+- university/prompt/deadline integration
 
-### 3.2 Автозаполнение / база университетов (CDS + requirements)
-**Статус:** В разработке  
-**MVP:** пользователь добавляет университеты вручную.  
-**Потом:** полуавтоматическое заполнение:
-- ссылки на CDS
-- SAT/ACT перцентили (25/50/75)
-- требования TOEFL/IELTS/DET (минимумы)
-- deadlines (если есть)
+## Phase 6: Production hardening
 
----
+Status: not done
 
-## 4) Финальный этап разработки (полный удобный “заполнятор”)
-**Цель:** когда базовый трекер стабилен и люди им пользуются, добавляем “удобное заполнение всей информации”.
+Must include:
+- backend and frontend critical-path tests
+- error tracking
+- deployment checklist
+- backup and recovery plan
+- cookie/privacy/legal consistency
+- performance review of heavy screens
 
-### 4.1 Form Center (внутри Enroll)
-- Единая форма-помощник: профиль, активити, награды, тесты
-- Автоподсказки и проверка несостыковок
+## Current recommendation
 
-### 4.2 Common App Draft Center (высокий уровень удобства)
-- Поля по секциям, готовые черновики, проверка конфликтов
-- Кнопка Copy для каждого поля
-- Статус “готово” по секциям
+Do not branch into large new product modules now.
 
-*(Автозаполнение в браузере — не MVP, только при соблюдении правил и с подтверждением пользователя.)*
-
----
-
-## 5) План работ по этапам (в порядке выполнения)
-### Этап A — UI consistency + landing (1)
-- Привести все страницы к одному дизайн-гайду
-- Landing в русском стиле “premium minimal”
-- Auth gate + корректные редиректы
-
-**Готово, если:** визуально и UX выглядит как “один продукт”, без разнобоя.
-
-### Этап B — Universities + checklist (2)
-- Список вузов, страница вуза, статусы
-- Чеклист + прогресс + быстрые действия
-- Привязка документов к вузу
-
-**Готово, если:** пользователь может вести весь процесс по каждому вузу.
-
-### Этап C — Calendar Tasks (3)
-- Календарь Month/Week
-- Drag & drop задач
-- Панель Today/Next 7 days
-- Deadline events на календаре
-
-**Готово, если:** планирование становится проще, чем таблица.
-
-**Текущий статус (февраль 2026):**
-- Реализован рабочий экран `/calendar` в Next.js.
-- Month/Week, drag&drop задач, deadline events, quick add `/task`, фильтры, Today/Next7 и Timeline14 уже работают.
-- Оставшийся объём: визуальный полиш (легенда, консистентные бейджи/цвета, UX-мелочи).
-
-### Этап D — Documents + versions polish (4)
-- Версии, пометки, финальная версия
-- Лёгкий экспорт/копирование
-
-**Готово, если:** нет “хаоса файлов”.
-
-### Этап E — Prod readiness (5)
-- Loader/skeleton стандартизированы
-- Empty/error states везде
-- Логи/ошибки (Sentry)
-- Конфиги окружений
-- Бэкапы БД
-- Минимальные тесты критичного пути
-
-**Готово, если:** можно выпускать публично без стыда.
-
----
-
-## 6) Definition of Done (релиз MVP)
-MVP считается готовым, когда:
-- Новый пользователь может добавить 5 вузов, увидеть дедлайны, создать задачи, вести чеклист, хранить версии документов.
-- Календарь реально помогает планировать (а не “просто календарь”).
-- Интерфейс выглядит единообразно и быстро.
-- Нет критичных багов в auth и данных.
-- Есть базовая наблюдаемость (ошибки/логи) и безопасный деплой.
-
----
-
-## Update 2026-03-07 (Common App parity sprint)
-
-Completed:
-- Persisted Common App navigation context across reload (step + scroll restore).
-- Implemented major Education subsections to Common App-like dynamic flows:
-  - Other schools
-  - Colleges & universities
-  - Grades
-  - Current year courses
-  - Honors
-  - Community-based organizations
-- Added compound condition support (`all`/`any`) to fix multi-trigger visibility bugs.
-- Improved usability with repeated-block grouping in step renderer.
-
-Next:
-- Continue parity for remaining sections (Future Plans, Testing/Activities/Writing details where needed).
-- Refactor oversized backend schema file into modular schema packages while preserving API contract.
+The correct execution order is:
+1. finish Common App
+2. strengthen Dashboard
+3. complete Essays loop
+4. harden for production

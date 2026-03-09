@@ -1,187 +1,132 @@
-# API (MVP)
+﻿# API
 
-Базовый префикс API: `/api/`.【F:backend/config/urls.py†L1-L7】
+Base prefix: `/api/`
 
-## Реализовано сейчас
+## Authentication and session
+
+### Health and identity
+- `GET /api/ping/`
+- `GET /api/me/`
 
 ### Auth
-- `POST /api/auth/register/` — регистрация пользователя.【F:backend/apps/users/urls.py†L1-L7】
-- `POST /api/auth/token/` — получение JWT.
-- `POST /api/auth/token/refresh/` — refresh токена.【F:backend/apps/core/urls.py†L22-L28】
-- `GET /api/me/` — текущий пользователь (JWT required).【F:backend/apps/core/urls.py†L16-L25】
+- `POST /api/auth/register/`
+- `POST /api/auth/token/`
+- `POST /api/auth/token/refresh/`
+- `GET /api/auth/profile/`
+- `PATCH /api/auth/profile/`
+- `PUT /api/auth/profile/`
+- `POST /api/auth/change-password/`
+- `GET /api/auth/common-app-progress/`
 
-### Student Profile
-- `GET /api/auth/profile/` — получить профиль студента.【F:backend/apps/users/urls.py†L1-L7】
-- `PUT /api/auth/profile/` — обновить профиль студента.【F:backend/apps/users/urls.py†L1-L7】
+Notes:
+- `register` is public.
+- `token` / `token/refresh` are JWT endpoints.
+- `profile`, `change-password`, and `common-app-progress` require auth.
 
-Поля профиля хранятся в модели `StudentProfile` (включая тесты, активности и бюджет).【F:backend/apps/users/models.py†L5-L80】
+## Universities
 
-### Universities
-- `GET /api/universities/` — список вузов.
-- `GET /api/universities/<id>/` — детали вуза.
-- `GET /api/my-universities/` — личный список.
-- `POST /api/my-universities/` — добавить вуз в личный список.
-- `GET /api/my-universities/<id>/` / `PUT` / `DELETE` — управление записью.
-【F:backend/apps/universities/urls.py†L1-L14】
+### University catalog
+- `GET /api/universities/`
+- `GET /api/universities/{id}/`
+- `GET /api/universities/{id}/deadlines/`
+- `GET /api/universities/{id}/metrics/`
+- `GET /api/universities/{id}/source-snapshot/`
+
+Typical frontend usage:
+- list with pagination and search
+- detail page with admissions/cost/housing sections
+- deadline rendering
+- debugging or inspection of enriched source data
+
+### Student shortlist
+- `GET /api/my-universities/`
+- `POST /api/my-universities/`
+- `GET /api/my-universities/{id}/`
+- `PUT /api/my-universities/{id}/`
+- `DELETE /api/my-universities/{id}/`
 
 ### Applications
-- `GET /api/applications/` — список заявок пользователя.
-- `POST /api/applications/` — создать заявку (только university_id из “My Universities”).
-- `GET /api/applications/<id>/` — детали заявки.
-- `PUT /api/applications/<id>/` — обновить статус/дедлайн.
-【F:backend/apps/universities/urls.py†L1-L14】
+- `GET /api/applications/`
+- `POST /api/applications/`
+- `GET /api/applications/{id}/`
+- `PUT /api/applications/{id}/`
 
-### Tasks
-- `GET /api/tasks?status=&application_id=` — список задач пользователя.
-- `POST /api/tasks` — создать задачу вручную.
-- `POST /api/tasks/generate` — генерация задач из шаблонов.
-- `PUT /api/tasks/:id` — обновить задачу.
-【F:backend/apps/tasks/urls.py†L1-L7】
+## Tasks and planning
 
-### Documents + Versions
-- `GET /api/documents`
-- `POST /api/documents`
-- `GET /api/documents/:id`
-- `POST /api/documents/:id/versions`
-- `GET /api/documents/:id/versions`
-【F:backend/apps/documents/urls.py†L1-L9】
+- `GET /api/roadmap-stages/`
+- `GET /api/tasks/`
+- `POST /api/tasks/`
+- `PUT /api/tasks/{id}/`
+- `DELETE /api/tasks/{id}/`
+- `POST /api/tasks/generate/`
 
-### AI (stub)
+Notes:
+- `/calendar` in the frontend consumes task and deadline data.
+- task generation exists as a baseline workflow endpoint.
+
+## Documents
+
+- `GET /api/documents/`
+- `POST /api/documents/`
+- `GET /api/documents/{id}/`
+- `PATCH /api/documents/{id}/`
+- `PUT /api/documents/{id}/`
+- `DELETE /api/documents/{id}/`
+- `GET /api/documents/{document_id}/versions/`
+- `POST /api/documents/{document_id}/versions/`
+
+## Essays
+
+- `GET /api/essays/`
+- `POST /api/essays/`
+- `GET /api/essays/{id}/`
+- `PATCH /api/essays/{id}/`
+- `PUT /api/essays/{id}/`
+- `DELETE /api/essays/{id}/`
+- `GET /api/essays/{essay_id}/versions/`
+- `POST /api/essays/{essay_id}/versions/`
+- `GET /api/essay-versions/{id}/`
+- `PATCH /api/essay-versions/{id}/`
+- `PUT /api/essay-versions/{id}/`
+- `GET /api/essays/{essay_id}/compare/?from_version={id}&to_version={id}`
+
+Current behavior:
+- essays own many versions
+- latest version is the active editable surface
+- previous versions are preserved as snapshots
+- compare is owner-scoped
+
+## AI
+
+Current baseline endpoints:
 - `POST /api/ai/next-step/`
 - `POST /api/ai/document-draft/`
 - `POST /api/ai/document-feedback/`
 - `POST /api/ai/commonapp-draft/`
-【F:backend/apps/ai/urls.py†L1-L9】
 
-### UI страницы
-- `GET /` — публичный лендинг Enroll AI.
-- `GET /register` — регистрация.
-- `GET /login` — вход.
-- `GET /dashboard/` — основная точка входа.
-- `GET /onboarding/` — заполнение профиля.
-- `GET /applications/` — управление списком университетов (applications flow финализируем позже).
-- `GET /tasks/` — задачи и генерация чеклиста.
-- `GET /documents/` — документы и версии.
-- `GET /common-app/` — Common App Draft (AI stub).
-- `GET /app/` — API консоль.
-- `GET /applications-ui/` — минимальная форма для Applications API.
-【F:backend/config/urls.py†L1-L18】
+These exist as API surface, but product-grade AI flows are still incomplete.
 
-## Запланировано в MVP (ещё не реализовано)
+## Common App progress payload
 
-- Финализация Applications workflow (последний этап).
+`GET /api/auth/common-app-progress/` returns:
+- overall completion summary
+- section-level progress
+- subsection-level progress
+- field metadata for rendering
+- field visibility and conditional-required state
+- current saved values
 
+This endpoint is the backend-driven contract behind `/common-app` and dashboard readiness widgets.
 
-## Niche scraper additions (2026-02-28)
+## Auth expectations
 
-- `GET /api/universities/<id>/source-snapshot/` -> latest snapshot payload for internal/admin usage.
-- `GET /api/universities/<id>/metrics/` -> normalized key/value metrics for filtering and analytics.
+Most endpoints require JWT auth.
 
-Extended fields on `GET /api/universities/`:
-- `last_scraped_at`
-- `data_freshness_days`
-- `net_price`
-- `room_and_board`
-- `housing_cost`
+The frontend is the primary consumer of this API and handles:
+- token bootstrap
+- protected routing
+- session cookie/localStorage synchronization
 
+## Current API stability note
 
-## Automated ingestion endpoints/fields (licensed pipeline)
-
-University object now includes read-only metadata for ingestion:
-- `source_provider`
-- `external_id`
-- `is_active`
-- `last_ingested_at`
-- `last_scraped_at`
-- `data_freshness_days`
-
-Internal endpoints (already protected):
-- `GET /api/universities/<id>/source-snapshot/`
-- `GET /api/universities/<id>/metrics/`
-
-- University payload now includes ingestion fields: `source_provider`, `external_id`, `is_active`, `last_ingested_at`.
-
-## Deadlines API (2026-03-03)
-
-- `GET /api/universities/{id}/deadlines/`
-  - returns typed deadlines (`EA`, `ED1`, `ED2`, `REA`, `RD`, `TRANSFER_*`, `PRIORITY`, `ROLLING`, `OTHER`)
-  - includes `deadline_date`, `deadline_text`, `notification_date`, `notification_text`, `is_rolling`, `source_url`, `source_label`, `confidence`
-
-## Peterson enrichment metrics (2026-03-03)
-
-- Existing `GET /api/universities/{id}/metrics/` now may include additional keys:
-  - `location_contact`, `majors_degrees`, `admission_requirements_matrix`,
-  - `female_admissions`, `male_admissions`, `test_policy_details`,
-  - `financial_aid_extended`, `campus_life`, `athletics`,
-  - `majors_count`, `avg_gpa`.
-
-## Essays API (Phase 1 + 3 + 4 baseline, 2026-03-04)
-
-- `GET /api/essays/` - list current user's essays (manager view).
-- `POST /api/essays/` - create essay and auto-create `v1 Initial draft`.
-- `GET /api/essays/{id}/` - essay detail.
-- `PUT /api/essays/{id}/` - update essay metadata.
-- `DELETE /api/essays/{id}/` - delete essay with all versions.
-- `GET /api/essays/{id}/versions/` - list versions for essay.
-- `POST /api/essays/{id}/versions/` - create next version (`vN+1`).
-- `GET /api/essay-versions/{id}/` - version detail.
-- `PUT /api/essay-versions/{id}/` - update content/label for one version.
-
-Validation rules:
-- `supplemental_essay` requires `university` and non-empty `prompt_title`.
-
-## Essays versions status (Phase 6 update, 2026-03-05)
-
-- `EssayVersion` now includes:
-  - `status`: `draft | revised | ai_improved | final`
-  - `is_latest`: read-only helper flag
-- Update rule:
-  - only latest version can be edited via `PUT /api/essay-versions/{id}/`
-  - older versions are read-only snapshots
-- Final status rule:
-  - when one version becomes `final`, previous `final` versions in same essay are auto-demoted to `revised`.
-
-## Essays compare endpoint (Phase 9 start, 2026-03-05)
-
-- `GET /api/essays/{essay_id}/compare/?from_version={id}&to_version={id}`
-  - owner-only access
-  - returns:
-    - `from_version` metadata
-    - `to_version` metadata
-    - `rows[]` with line-level diff kind: `same | added | removed | changed`
-
-## Essays onboarding preference (2026-03-05)
-
-- `GET /api/auth/profile/` now includes:
-  - `essays_onboarding_seen: boolean`
-- `PATCH /api/auth/profile/` accepts:
-  - `{ "essays_onboarding_seen": true }`
-  - used to skip/show first-time Essays onboarding modal.
-
-## Common App progress API (Dashboard, 2026-03-05)
-
-- `GET /api/auth/common-app-progress/`
-  - returns:
-    - `overall` required completion summary
-    - `sections[]` with subsection progress and field metadata
-  - each field includes:
-    - `label`, `type`, `required`, `readonly`, `help`, `bind`, `path`, `value`, `filled`
-- `PATCH /api/auth/profile/`
-  - supports partial updates for both direct profile fields and `common_app_profile` json draft payload
-  - `common_app_profile` is merged on update (not fully overwritten by partial patch).
-
-## Common App schema updates (2026-03-07)
-
-`GET /api/auth/common-app-progress/` now returns extended metadata/fields for:
-- `education.other_schools` (count + dynamic school blocks + reason)
-- `education.colleges_universities` (count + dynamic college blocks + degree/schedule details)
-- `education.grades` (class-rank variants + GPA scale/weighting)
-- `education.current_year_courses` (count 1..15 with dynamic per-course blocks)
-- `education.honors` (Yes/No + count 1..5 + per-honor details)
-- `education.community_based_orgs` (count 0..3 + advisor contact blocks)
-
-Condition payload now supports nested logic in `show_if` and `required_if`:
-- `all: [...]`
-- `any: [...]`
-
-This is used by dynamic fields that require multiple dependencies (e.g., course count + schedule system).
+The current API is stable enough for the existing frontend, but it is not yet treated as a frozen public third-party API. Internal contracts can still be refined while Common App, Dashboard, and Essays are being completed.

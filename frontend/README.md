@@ -1,53 +1,61 @@
 ﻿# Enroll Next.js Frontend
 
-Frontend is now fully implemented in Next.js and talks to the existing Django API.
+This frontend is the main user-facing application for Enroll. Django serves the API and admin, while Next.js owns the product UI.
 
-## Run
+## Run locally
 
 ```bash
 npm install
-cp .env.example .env.local
+copy .env.example .env.local
 npm run dev
 ```
 
 Default API target:
 
-- `NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000`
+```bash
+NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000
+```
 
-## Current routes
+## Current route map
 
 Public:
-
-- `/` landing
-- `/pilot` trial request page
+- `/`
+- `/intro-quiz`
 - `/login`
 - `/register`
+- `/privacy-policy`
+- `/pilot`
+- `/ui-lab`
 
 Protected:
-
 - `/dashboard`
 - `/onboarding`
 - `/applications`
+- `/universities/[id]`
 - `/calendar`
-- `/tasks`
+- `/tasks` -> redirects to `/calendar`
 - `/documents`
+- `/essays`
+- `/essays/[id]`
 - `/common-app`
 - `/settings`
 
+## Current frontend responsibilities
+
+- public landing and acquisition flow
+- intro quiz before auth
+- session-gated workspace shell
+- Common App UI and progress rendering
+- universities and university detail UI
+- calendar/tasks UI
+- documents UI
+- essays manager and essay workspace UI
+- settings and legal surfaces
+
 ## Notes
 
-- Auth uses the same JWT flow as backend (`/api/auth/token/`) with `enroll_token` cookie and localStorage.
-- Middleware protects workspace routes and redirects unauthenticated users to `/login`.
-- Main planning flow is on `/calendar`; `/tasks` is kept as a compatibility redirect to `/calendar`.
-- Backend now runs as API/admin only (`/api/*`, `/admin/*`), and product UI is fully handled by Next.js.
-- Sales execution assets are in `docs/sales/`.
-
-
-## Data freshness in UI
-
-`/applications` renders ingestion freshness and cost/housing projections when backend metrics are available:
-- `data_freshness_days`
-- `net_price`
-- `room_and_board`
-- `housing_cost`
-- `source_provider`
+- Auth uses the backend JWT flow (`/api/auth/token/`).
+- Protected routes are handled in the frontend app layer.
+- The landing CTA can route users either into `/intro-quiz` or directly into `/dashboard` depending on known state.
+- Common App relies on backend-driven schema/progress rather than a static hardcoded form.
+- Reusable UI components should follow `docs/UI_SYSTEM_RULES.md`.

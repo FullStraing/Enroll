@@ -1,241 +1,113 @@
-﻿# История разработки Enroll: от старта до текущего состояния
+﻿# Development History
 
-## 1. Исходная цель проекта
+## Initial direction
 
-Проект строится как MVP-платформа для поступления в университеты США (CIS -> USA), где пользователь проходит управляемый процесс:
+Enroll started as an admissions workflow product for students applying to U.S. universities. The initial goal was not automated submission. The goal was structured preparation:
+- build a shortlist
+- track deadlines
+- manage documents
+- organize essay drafts
+- reduce process chaos
 
-- заполняет профиль;
-- формирует список университетов и заявок;
-- получает roadmap/задачи/дедлайны;
-- ведет документы с версиями;
-- использует AI-помощник для черновиков и проверок.
+## Backend foundation
 
-Ключевой принцип MVP: **не автоподача**, а структурирование процесса и подготовка данных.
+The first stable technical layer was Django + DRF with domain-separated apps:
+- users
+- universities
+- tasks
+- documents
+- essays
+- ai
+- core
 
-## 2. Этапы развития (что и зачем делалось)
+That established the main API and data model before the modern frontend was fully in place.
 
-### Этап A. Базовая backend-архитектура
+## Early UI phase
 
-Собран Django backend с модульной структурой `apps/*`:
+The project initially used Django-rendered pages and template-based screens to validate the flows quickly.
 
-- `users`
-- `universities`
-- `tasks`
-- `documents`
-- `ai`
-- `core`
+That phase proved:
+- auth worked
+- profile editing worked
+- application / task / document flows were feasible
 
-Это обеспечило разделение доменов и возможность параллельно развивать API и UI.
+But it was not the long-term frontend direction.
 
-### Этап B. Auth и профиль
+## Frontend migration
 
-Реализованы:
+The product then moved to a dedicated Next.js frontend.
 
-- регистрация;
-- JWT вход/refresh;
-- endpoint текущего пользователя (`/api/me/`);
-- профиль студента (`/api/auth/profile/`).
+That was the correct move because:
+- UI iteration became faster
+- interactive surfaces like calendar, Common App, and essays became much more realistic
+- the frontend could evolve without rewriting backend logic
 
-Отдельно добавлены настройки безопасности:
+The migration was gradual. Django stayed as the backend API and admin layer. Next.js became the user-facing product UI.
 
-- смена пароля (`/api/auth/change-password/`);
-- длительные JWT lifetime (access/refresh);
-- серверный middleware-гейт для защищенных страниц UI.
+## Universities and data expansion
 
-### Этап C. Admissions-ядро
+The university module became one of the main product pillars:
+- list views
+- detail pages
+- deadlines
+- enrichment metrics
+- source/snapshot logic for ingestion history
 
-Собрано ядро процесса:
+At that point, the product moved beyond a simple tracker and started behaving more like an admissions data platform.
 
-- Universities (общий список);
-- My Universities (персональный список);
-- Applications (CRUD в связке с My Universities);
-- Tasks + генерация из шаблонов;
-- Documents + Document Versions;
-- AI endpoints (stub-реализация для следующего шага).
+## Essays expansion
 
-Результат: пользователь может пройти путь от профиля до задач/документов в одном рабочем контуре.
+Essays evolved from an idea into a working subsystem:
+- essay manager
+- versioned drafts
+- rich text editing
+- autosave
+- compare support
 
-### Этап D. UI на Django Templates
+The design goal became clear: essays should feel closer to a versioned workspace than a plain text field.
 
-Собраны рабочие страницы:
+## Common App expansion
 
-- landing;
-- login/register;
-- dashboard;
-- onboarding;
-- applications;
-- tasks;
-- documents;
-- common-app;
-- settings.
+Common App then became the largest structured-data track in the product.
 
-Визуально интерфейс унифицирован под темную glass-тему с синими акцентами, добавлены иконки и разделы навигации.
+Major work done:
+- progress endpoint
+- dynamic field schema
+- conditional visibility / requirements
+- repeated grouped blocks
+- persistence and resume behavior
+- backend modularization of schema and progress logic
 
-### Этап E. UX и операционные улучшения
+This is still the most important unfinished product area because it directly drives onboarding, readiness, and future application automation support.
 
-Добавлены:
+## Intro quiz and activation
 
-- лоадер (SVG) и стандарты отображения загрузок;
-- скелетоны в списках/таблицах;
-- loading-state для action-кнопок;
-- связка landing <-> dashboard;
-- logout и отображение имени/инициала пользователя.
+The project later added a pre-signup intro quiz inspired by Duolingo-style onboarding:
+- the user answers a few short questions first
+- the product shows value before forcing account creation
+- repeat visitors can bypass the quiz and go directly into the workspace
 
-### Этап F. Инкрементальная миграция на Next.js
+This was a business decision as much as a UI decision. It improved the top-of-funnel structure.
 
-Принято архитектурное решение: не ломать работающий Django UI, а поднимать Next.js как отдельный frontend-слой.
+## Current state
 
-Сделано:
+Today Enroll is no longer a prototype shell. It is a structured product with:
+- working auth
+- real Next.js frontend
+- universities module
+- calendar/tasks surface
+- essays module
+- Common App draft system
+- dashboard/settings/legal surfaces
 
-- создан `frontend/` на Next.js (App Router, TS, Tailwind);
-- реализованы страницы `landing/login/register/dashboard`;
-- подключен существующий Django API и JWT;
-- добавлен auth-protect через middleware и client gate;
-- остальные разделы заведены как scaffold-страницы с fallback-ссылкой на текущие Django-экраны.
+What remains is not invention from zero. It is completion, integration, and hardening.
 
-Таким образом, проект перешел от "только шаблоны" к **двухслойной модели**:
+## Current unfinished work
 
-- стабильный production-like слой (Django templates);
-- новый фронтенд-слой для постепенного переноса без регрессий.
+The major unfinished blocks are:
+- Common App parity
+- Dashboard intelligence
+- advanced Essays features
+- production readiness
 
-## 3. Текущее состояние по факту
-
-### Backend (стабильно работает)
-
-Маршруты UI:
-
-- `/`
-- `/register`
-- `/login`
-- `/dashboard/`
-- `/onboarding/`
-- `/applications/`
-- `/tasks/`
-- `/documents/`
-- `/common-app/`
-- `/settings/`
-- `/app/`
-- `/applications-ui/`
-
-API:
-
-- auth/token/refresh;
-- profile;
-- me;
-- universities/my-universities/applications;
-- tasks/generate;
-- documents/versions;
-- ai/* (stub).
-
-### Frontend Next.js (восстановлен и готов к развитию)
-
-В `frontend/` восстановлены:
-
-- конфиги (`package.json`, `tsconfig`, `next.config`, Tailwind/PostCSS, env example);
-- app-router страницы (`/`, `/login`, `/register`, `/dashboard`, placeholders для остальных);
-- компоненты (`loader`, `protected-page`, `app-shell`, `workspace-placeholder`);
-- утилиты API/auth;
-- middleware маршрутов.
-
-## 4. Что уже закрывает MVP
-
-Практически закрыты требования:
-
-- auth/профиль;
-- university/application базовый контур;
-- tasks/documents;
-- AI-стабы;
-- связный UI;
-- безопасность по пользовательским данным;
-- хранение и повторное открытие данных после входа.
-
-## 5. Что остается до полного MVP
-
-Главный открытый блок (из `MVP_SPEC.md` и `docs/TASKS.md`):
-
-- **финализация Applications workflow** как последнего этапа end-to-end.
-
-Что это означает на практике:
-
-- довести UX заявок до полностью линейного сценария;
-- донастроить переходы заявки -> задачи -> документы;
-- убедиться, что сценарий пользователя за 10-15 минут реально выполняется без ручных обходов.
-
-## 6. Архитектурное направление (к чему идем)
-
-Целевое направление:
-
-- backend остается на Django + DRF + PostgreSQL;
-- frontend последовательно переходит в Next.js;
-- Django templates остаются как fallback до полного parity.
-
-Почему это правильно:
-
-- не ломаем рабочее приложение;
-- миграция идет частями с контролем рисков;
-- можно выпускать улучшения без "big bang rewrite".
-
-## 7. Технические решения, которые уже снижают риски
-
-- server-side auth gate для защищенных backend UI роутов;
-- единая JWT-модель для Django и Next;
-- `.gitignore` для frontend build/artifacts;
-- разделение legacy UI и нового frontend слоя.
-
-## 8. Как запускать проект сейчас
-
-### Вариант 1 (текущий рабочий Django UI)
-
-1. Запустить backend:
-
-```bash
-python backend/manage.py runserver
-```
-
-2. Открыть `http://127.0.0.1:8000`.
-
-### Вариант 2 (параллельно проверять новый Next.js)
-
-1. Запустить backend (`:8000`).
-2. Запустить frontend:
-
-```bash
-cd frontend
-npm install
-copy .env.example .env.local
-npm run dev
-```
-
-3. Открыть `http://localhost:3000`.
-
-## 9. Важные замечания по репозиторию
-
-- `node_modules` и `.next` не должны попадать в git.
-- Основной рабочий контур для демонстрации MVP сейчас гарантированно есть в Django UI.
-- Next.js слой используется для управляемой миграции и дальнейшего ускорения разработки интерфейса.
-
-## 10. Итог
-
-Проект прошел путь от backend-заготовки до почти полного MVP с рабочими пользовательскими сценариями, UI-слоем, безопасностью и подготовленным переходом на современный frontend.
-
-На текущий момент система уже демонстрируема как продукт, а следующий фокус — довести `Applications workflow` до финальной версии и закрыть MVP полностью.
-
-## Update — 2026-03-07
-
-This iteration focused on Common App flow fidelity and UX clarity.
-
-Implemented:
-- Common App page now restores last step and scroll position after refresh.
-- Education subsections were rebuilt from simple placeholders into dynamic, condition-driven forms:
-  - Other Secondary/High Schools (manual, no finder)
-  - Colleges & Universities (manual, no finder)
-  - Grades (rank systems + conditional fields)
-  - Current or Most Recent Year Courses (1..15 course blocks)
-  - Honors (Yes/No gate + up to 5 honors)
-  - Community-Based Organizations (up to 3 advisor blocks)
-- Added nested condition logic (`all` / `any`) in backend and frontend to prevent over-rendering of dependent fields.
-- Added visual grouped containers for repeated blocks to reduce cognitive load in long forms.
-
-Quality notes:
-- Backend schema compiles successfully.
-- Frontend lint passes (existing non-blocking warnings for `<img>` remain in unrelated files).
+That is the correct focus area for the current development cycle.

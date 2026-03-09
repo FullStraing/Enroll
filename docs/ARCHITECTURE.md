@@ -1,137 +1,156 @@
-# Архитектура (MVP)
+﻿# Architecture
 
-## Обзор
+## Overview
 
-Backend построен на Django + DRF. Конфигурация в `config`, приложения расположены в `apps/` и подключены в `INSTALLED_APPS`: `core`, `users`, `universities`, `tasks`, `documents`, `ai`.【F:backend/config/settings.py†L31-L46】
+Enroll uses a split product architecture:
+- Backend: Django + DRF for auth, data models, business rules, ingestion commands, and admin
+- Frontend: Next.js App Router for the full user-facing application
+- Database: PostgreSQL as the main system of record
 
-Корневой роутинг включает `/admin/` и `/api/`, а дальше маршруты распределяются по приложениям.【F:backend/config/urls.py†L1-L7】
+Django owns persistence and business logic. Next.js owns the product interface.
 
-База данных по умолчанию — PostgreSQL (можно временно включить SQLite через `USE_SQLITE=1`).【F:backend/config/settings.py†L44-L73】
+## High-level flow
 
-UI страницы находятся в `templates/ui/` и подключены через `config.urls`; публичный лендинг — `templates/landing.html`, auth‑страницы — `templates/auth/`.【F:backend/config/urls.py†L1-L18】
-## Приложения
+1. Public user lands on `/`
+2. Unauthenticated CTA can route into `/intro-quiz`
+3. User registers or logs in
+4. Protected workspace opens in Next.js
+5. Frontend reads and writes product state through Django API endpoints
 
-### `apps.core`
+## Backend structure
 
-Содержит системные эндпоинты:
-- `/api/ping/` для healthcheck,
-- `/api/me/` для получения текущего пользователя,
-- JWT-эндпоинты `/api/auth/token/` и `/api/auth/token/refresh/`.
-【F:backend/apps/core/urls.py†L12-L28】
+Location: `backend/apps/`
 
-### `apps.users`
+Main apps:
+- `core` - health, identity, and API aggregation
+- `users` - auth, profile, password change, Common App progress
+- `universities` - catalog, deadlines, metrics, source snapshots, ingestion
+- `tasks` - roadmap stages, task generation, planning support
+- `documents` - document objects and versions
+- `essays` - essays, versions, compare logic
+- `ai` - baseline AI endpoints
 
-- Регистрация пользователя (`RegisterView`) и профиль (`StudentProfileView`).【F:backend/apps/users/views.py†L7-L19】
-- `StudentProfile` хранит ключевые поля профиля: оценки, тесты, активности, награды, бюджет и др.【F:backend/apps/users/models.py†L5-L80】
+## Frontend structure
 
-### `apps.universities`
+Location: `frontend/app/`
 
-- `University` хранит базовые сведения о вузе; `StudentUniversity` — связь студента с университетом и прогресс по заявке; `Application` — MVP‑заявка студента с дедлайном и статусом.【F:backend/apps/universities/models.py†L5-L158】
-- Вьюхи предоставляют чтение/обновление списков университетов и Applications API.【F:backend/apps/universities/views.py†L6-L58】
+Main route groups:
+- public marketing and acquisition: landing, intro quiz, legal pages
+- auth: login, register
+- workspace: dashboard, applications, calendar, documents, essays, common app, settings
+- support / design surfaces: pilot, UI Lab
 
-### `apps.tasks`
+Shared UI entry points:
+- `frontend/components/app-shell.tsx`
+- `frontend/components/protected-page.tsx`
+- `frontend/components/ui/*`
+- `frontend/components/common-app/*`
 
-- `RoadmapStage` описывает этапы MVP‑роадмапа, `Task` — задачи пользователя, привязанные к этапу/заявке.【F:backend/apps/tasks/models.py†L1-L71】
-- Эндпоинты: список/создание задач, генерация задач из шаблонов, список этапов роадмапа.【F:backend/apps/tasks/urls.py†L1-L7】
+## Auth model
 
-### `apps.documents`
+Backend:
+- JWT endpoints are exposed by DRF SimpleJWT
+- protected API endpoints use standard auth permissions
 
-- `Document` хранит документ пользователя, `DocumentVersion` — версии с контентом и автором (user/ai).【F:backend/apps/documents/models.py†L1-L72】
-- Эндпоинты: документы и версии документов.【F:backend/apps/documents/urls.py†L1-L9】
+Frontend:
+- token is managed in cookie/local storage flow
+- protected pages are guarded at the app layer
+- bootstrap logic determines whether to show workspace or redirect to auth
 
-### `apps.ai`
+## Common App architecture
 
-- `AIInteraction` логирует запрос/ответ AI для MVP‑стабов.【F:backend/apps/ai/models.py†L1-L28】
-- Эндпоинты: `/api/ai/*` (stub‑ответы).【F:backend/apps/ai/urls.py†L1-L9】
+The Common App system is backend-driven.
 
-## Аутентификация и доступ
+### Data shape
+- typed fields live on `StudentProfile`
+- flexible draft data lives in `StudentProfile.common_app_profile`
 
-По умолчанию используется JWT-аутентификация, а доступ ограничен `IsAuthenticated` на уровне DRF, кроме регистрационных эндпоинтов.【F:backend/config/settings.py†L113-L119】【F:backend/apps/users/views.py†L7-L10】
+### Schema and progress engine
+The implementation is intentionally modular:
+- `backend/apps/users/common_app/schema.py`
+- `backend/apps/users/common_app/progress.py`
+- `backend/apps/users/common_app/builders.py`
+- `backend/apps/users/common_app/sections/profile.py`
+- `backend/apps/users/common_app/sections/family.py`
+- `backend/apps/users/common_app/sections/education.py`
+- `backend/apps/users/common_app/sections/testing.py`
+- `backend/apps/users/common_app/sections/activities.py`
+- `backend/apps/users/common_app/sections/writing.py`
 
-## Текущий статус MVP
+This split exists to avoid keeping all Common App logic inside a monolithic `users/views.py`.
 
-На данный момент реализованы: регистрация, профиль студента, справочник университетов, Applications API, Tasks, Documents, AI stub‑эндпоинты, MVP‑консоль `/app/` и минимальная браузерная форма `/applications-ui/`. Дальнейшие шаги — UI страницы по флоу (Onboarding → Dashboard → Applications → Tasks → Documents → Common App Draft).【F:backend/apps/users/urls.py†L1-L7】【F:backend/apps/universities/urls.py†L1-L14】【F:backend/apps/tasks/urls.py†L1-L7】【F:backend/apps/documents/urls.py†L1-L9】【F:backend/apps/ai/urls.py†L1-L9】【F:backend/config/urls.py†L1-L9】
+### Frontend behavior
+`/common-app` consumes the backend progress payload and renders:
+- section navigation
+- subsection forms
+- conditional visibility
+- per-section completion
+- persisted position / resume behavior
 
+## Essays architecture
 
-## Niche full-data scraping pipeline
+Core model:
+- `Essay`
+- `EssayVersion`
 
-The universities module now includes a multi-layer scraping storage model:
+Current implemented behavior:
+- one essay has many versions
+- latest version acts as the working draft
+- older versions are immutable snapshots
+- compare endpoint exposes diff-ready data
+- frontend workspace handles autosave and editing
 
-- `UniversitySourceSnapshot`: full aggregated raw payload by scrape run.
-- `UniversitySourceSection`: per-page/per-section parsed blocks and status.
-- `UniversityMetric`: normalized metrics used by product UI and filters.
-- `UniversityMediaRef`: media metadata references (URL only, no binary copy).
-- `ScrapeRun` and `ScrapeRunItem`: operational logs for each scraping execution.
+Product intent:
+- make essays feel closer to a versioned workspace than a plain text field
 
-Management commands:
-- `niche_session_bootstrap`
-- `scrape_niche_universities`
-- `reparse_snapshots`
+## University data architecture
 
+University data is layered rather than flat.
 
-## Licensed ingestion pipeline
+Primary fast-read model:
+- `University`
 
-Primary ingestion is `LicensedFeedConnector` (mock/api modes), with Niche scraping reserved for fallback/enrichment.
+Supporting ingestion/history layer:
+- deadlines
+- metrics
+- source snapshots
+- media/source references
+- scrape/ingestion run logs
 
-Pipeline stages:
-1. connector fetch (full or delta)
-2. normalize + quality gate
-3. snapshot + metrics/media persistence
-4. read-model projection to `University`
-5. run logging in `ScrapeRun`/`ScrapeRunItem`
+This allows the product to show clean cards in the UI while still retaining source and enrichment history.
 
-Automation commands:
-- `ingest_universities_full`
-- `ingest_universities_delta`
-- `ingest_backfill`
-- `ingest_quality_report`
-- `run_ingestion_scheduler` (APScheduler fallback)
+## Planning architecture
 
-- Added Niche automation runtime: Celery workers + persistent Playwright profiles + proxy pool rotation for anti-bot resilience.
+Tasks and calendar are connected product surfaces:
+- tasks are API-backed
+- calendar aggregates actionable planning state
+- dashboard is intended to become the main orchestration surface tying profile readiness, deadlines, essays, and tasks together
 
-## Essays onboarding architecture (Phase 2)
+## Legal and top-of-funnel surfaces
 
-- Preference storage lives in backend profile model: `StudentProfile.essays_onboarding_seen`.
-- Auth bootstrap returns this flag via `/api/auth/profile/` so client can decide first-visit flow.
-- Essays page shows onboarding modal only when the flag is `false`.
-- Modal outcome persists via `PATCH /api/auth/profile/` with `{ "essays_onboarding_seen": true }`.
-- This keeps onboarding state cross-device and independent from browser localStorage.
+Current public/legal surfaces include:
+- landing page
+- intro quiz
+- privacy policy
 
-## Dashboard Common App completion architecture
+The intro quiz is intentionally outside auth to reduce initial friction and improve activation.
 
-- Profile data is split into:
-  - typed model fields (`StudentProfile` columns),
-  - flexible JSON draft (`StudentProfile.common_app_profile`) for Common App fields not yet formalized.
-- Progress endpoint `GET /api/auth/common-app-progress/` computes:
-  - required completion at overall/section/subsection levels,
-  - field metadata with descriptions/help text for guided data entry.
-- Dashboard writes via existing `PATCH /api/auth/profile/`, and serializer merges `common_app_profile` patches.
+## Current architectural debt
 
-## Common App schema architecture update (2026-03-07)
+The main architectural risk is not stack choice. The stack is already correct for the product.
 
-- `COMMON_APP_SCHEMA` was expanded substantially for `education` subsection parity with Common App flows.
-- Dynamic sections rely on declarative conditions in schema (`show_if`, `required_if`).
-- Condition engine in backend now supports nested boolean composition:
-  - `all` (AND)
-  - `any` (OR)
-- Frontend condition resolver (`frontend/lib/common-app-progress.ts`) mirrors the same nested logic so visibility and required rules are consistent on both sides.
-- `frontend/components/common-app/step-form.tsx` now groups repeated entities into visual blocks:
-  - course / college / sibling / secondary school / honors / advisor blocks.
-- Page refresh continuity is handled in `frontend/app/common-app/page.tsx` using local persistence of step id and scroll position.
+The remaining debt is in completion and refinement:
+- finish Common App parity
+- further reduce oversized files in both backend and frontend domains where needed
+- harden session, validation, and error handling
+- add stronger production observability and test coverage
 
-## Common App backend modularization (2026-03-07)
+## Current direction
 
-Refactor started to reduce monolithic `users/views.py`:
-- Schema moved to `apps/users/common_app/schema.py` as section imports.
-- Section definitions split into `apps/users/common_app/sections/*`.
-- Field builders moved to `apps/users/common_app/builders.py`.
-- Progress computation moved to `apps/users/common_app/progress.py`.
-- `CommonAppProgressView` now delegates payload generation to `build_common_app_progress(profile)`.
+The correct next architectural moves are incremental:
+1. finish modular Common App implementation
+2. strengthen dashboard orchestration logic
+3. complete essays advanced workflow
+4. harden the existing platform for production
 
-Goal: keep endpoint contracts unchanged while improving maintainability and reducing regression risk.
-- Completed modular split:
-  - `common_app/builders.py` for dynamic field builders,
-  - `common_app/sections/*` for per-section schema,
-  - `common_app/schema.py` as composition layer,
-  - `common_app/progress.py` as progress engine.
-- `users/views.py` now only hosts API view classes and delegates Common App progress generation.
+No stack rewrite is needed.
