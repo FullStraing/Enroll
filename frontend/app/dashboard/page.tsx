@@ -326,10 +326,13 @@ export default function DashboardPage() {
 
   const latestEssay = essays[0] || null;
   const completedSections = progressData?.sections.filter((section) => section.percent === 100).length || 0;
+  const targetUniversities = myUniversities.slice(0, 4).map((item) => item.university.name);
 
   async function handleShareProfile() {
     const title = "My Enroll Admissions Profile";
-    const text = `Major: ${profileMajor}\nGPA: ${gpaLabel}\nTests: ${testsLabel}\nTarget intake: ${intake}\nAdmissions score: ${admissions}/100`;
+    const text = `Major: ${profileMajor}\nGPA: ${gpaLabel}\nTests: ${testsLabel}\nTarget intake: ${intake}\nAdmissions score: ${admissions}/100\nUniversities: ${
+      targetUniversities.length ? targetUniversities.join(", ") : "Not selected yet"
+    }`;
 
     if (navigator.share) {
       try {
@@ -387,6 +390,17 @@ export default function DashboardPage() {
                   <p className="text-xs uppercase tracking-wide text-black/50">Current level</p>
                   <p className="mt-1 text-base font-bold">{profileClass}</p>
                 </div>
+              </div>
+
+              <div className="mt-4 rounded-xl border border-black/15 bg-white p-3">
+                <p className="text-xs uppercase tracking-wide text-black/50">Target universities</p>
+                {loading ? (
+                  <Skeleton className="mt-2 h-5 w-2/3" />
+                ) : targetUniversities.length ? (
+                  <p className="mt-1 text-sm font-semibold">{targetUniversities.join(" • ")}</p>
+                ) : (
+                  <p className="mt-1 text-sm text-black/65">No universities selected yet.</p>
+                )}
               </div>
 
               <div className="mt-5 flex items-center gap-2">

@@ -39,6 +39,7 @@ The project is past the skeleton phase. The current state is:
 - deadlines ingestion and display
 - applications flow baseline
 - calendar page and task-oriented planning surface
+- direct add/remove university actions from cards into user profile (`my-universities`) with immediate dashboard reflection
 
 ### Essays baseline
 - essay manager

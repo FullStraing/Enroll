@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { ProtectedPage } from "@/components/protected-page";
 import { Badge } from "@/components/ui/badge";
@@ -33,6 +34,14 @@ type PaginatedResponse<T> = {
   results: T[];
 };
 
+type StudentUniversity = {
+  id: number;
+  university: {
+    id: number;
+    name: string;
+  };
+};
+
 const PAGE_SIZE_OPTIONS = [5, 10, 20, 40];
 const PAGE_SIZE_STORAGE_KEY = "enroll_universities_page_size";
 
@@ -43,6 +52,7 @@ const selectivityLabel: Record<string, string> = {
 };
 
 export default function ApplicationsPage() {
+  const router = useRouter();
   const [universities, setUniversities] = useState<University[]>([]);
   const [universitiesCount, setUniversitiesCount] = useState(0);
   const [universitiesPage, setUniversitiesPage] = useState(1);
@@ -52,6 +62,46 @@ export default function ApplicationsPage() {
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
+  const [savedUniversityIds, setSavedUniversityIds] = useState<number[]>([]);
+  const [savedMapping, setSavedMapping] = useState<Record<number, number>>({});
+  const [savingUniversityId, setSavingUniversityId] = useState<number | null>(null);
+
+  async function loadMyUniversities() {
+    const token = getToken();
+    if (!token) return;
+    const items = await apiFetch<StudentUniversity[]>("/api/my-universities/", { method: "GET" }, token);
+    const idMap: Record<number, number> = {};
+    for (const item of items) {
+      idMap[item.university.id] = item.id;
+    }
+    setSavedMapping(idMap);
+    setSavedUniversityIds(items.map((item) => item.university.id));
+  }
+
+  async function toggleUniversityInProfile(universityId: number) {
+    const token = getToken();
+    if (!token) return;
+    const alreadySaved = savedUniversityIds.includes(universityId);
+    setSavingUniversityId(universityId);
+    try {
+      if (alreadySaved) {
+        const studentUniversityId = savedMapping[universityId];
+        if (!studentUniversityId) return;
+        await apiFetch(`/api/my-universities/${studentUniversityId}/`, { method: "DELETE" }, token);
+      } else {
+        await apiFetch("/api/my-universities/", {
+          method: "POST",
+          body: JSON.stringify({ university_id: universityId }),
+        }, token);
+      }
+      await loadMyUniversities();
+      setStatus(alreadySaved ? "Университет убран из профиля." : "Университет добавлен в профиль.");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Не удалось обновить профиль.");
+    } finally {
+      setSavingUniversityId(null);
+    }
+  }
 
   async function loadUniversities(page = universitiesPage, pageSize = universitiesPageSize, q = search) {
     const token = getToken();
@@ -88,6 +138,7 @@ export default function ApplicationsPage() {
     }
     setUniversitiesPageSize(initialPageSize);
     void loadUniversities(1, initialPageSize, "");
+    void loadMyUniversities();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -184,8 +235,19 @@ export default function ApplicationsPage() {
                   </Card>
                 ))
               : universities.map((u) => (
-              <Link key={u.id} href={`/universities/${u.id}`} className="block">
-                <Card className="card-shadow-hover shadow-none">
+              <Card
+                key={u.id}
+                className="card-shadow-hover cursor-pointer shadow-none"
+                onClick={() => router.push(`/universities/${u.id}`)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    router.push(`/universities/${u.id}`);
+                  }
+                }}
+              >
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <CardTitle>{u.name}</CardTitle>
@@ -199,8 +261,25 @@ export default function ApplicationsPage() {
                         <Badge variant="cyan">
                           Freshness: {u.data_freshness_days != null ? `${u.data_freshness_days}d` : "-"}
                         </Badge>
+                        {savedUniversityIds.includes(u.id) ? <Badge variant="primary">In profile</Badge> : null}
                       </div>
                     </div>
+                    <Button
+                      size="sm"
+                      variant={savedUniversityIds.includes(u.id) ? "outline" : "secondary"}
+                      disabled={savingUniversityId === u.id}
+                      onClick={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        void toggleUniversityInProfile(u.id);
+                      }}
+                    >
+                      {savingUniversityId === u.id
+                        ? "..."
+                        : savedUniversityIds.includes(u.id)
+                          ? "Убрать из профиля"
+                          : "Добавить в профиль"}
+                    </Button>
                   </div>
 
                   <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
@@ -218,7 +297,6 @@ export default function ApplicationsPage() {
                     </p>
                   </div>
                 </Card>
-              </Link>
             ))}
           </div>
 
