@@ -23,6 +23,7 @@ The project is past the skeleton phase. The current state is:
 - shared app shell and protected page pattern
 - UI Lab for reusable component decisions
 - unified visual system governed by `docs/UI_SYSTEM_RULES.md`
+- dashboard visual redesign baseline with admissions profile, score, readiness, next step, universities, essays, and deadline blocks
 
 ### Funnel and activation
 - public landing page
@@ -77,10 +78,10 @@ Still needs final parity and polish for:
 
 ### 2. Dashboard as command center
 Needs stronger product logic:
-- clearer readiness summary
-- next actions tied to profile + deadlines + essays
-- stronger "what should I do now?" guidance
-- tighter linkage to Common App completion
+- completed: clearer readiness summary and next-step card tied to profile/deadlines/essays
+- completed: admissions profile snapshot with share action
+- remaining: stronger ranking logic and recommendation quality
+- remaining: tighter linkage to Common App completion edge cases
 
 ### 3. Essays phase continuation
 Still open:
