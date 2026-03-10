@@ -38,6 +38,7 @@ declare global {
 
 export function GoogleAuthButton({ onTokens, onError, disabled = false }: GoogleAuthButtonProps) {
   const [loading, setLoading] = useState(false);
+  const [scriptFailed, setScriptFailed] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
@@ -98,7 +99,10 @@ export function GoogleAuthButton({ onTokens, onError, disabled = false }: Google
     script.async = true;
     script.defer = true;
     script.onload = initGoogle;
-    script.onerror = () => onError("Failed to load Google Sign-In.");
+    script.onerror = () => {
+      setScriptFailed(true);
+      onError("Failed to load Google Sign-In.");
+    };
     document.head.appendChild(script);
 
     return () => {
@@ -106,13 +110,18 @@ export function GoogleAuthButton({ onTokens, onError, disabled = false }: Google
     };
   }, [clientId, onError, onTokens]);
 
-  if (!clientId) {
-    return null;
-  }
-
   return (
     <div className="mt-4">
-      <div className={disabled || loading ? "pointer-events-none opacity-70" : ""} ref={containerRef} />
+      {clientId ? (
+        <div className={disabled || loading ? "pointer-events-none opacity-70" : ""} ref={containerRef} />
+      ) : (
+        <div className="rounded-xl border border-black/20 bg-white px-4 py-3 text-sm text-black/70">
+          Google Sign-In не настроен: добавьте `NEXT_PUBLIC_GOOGLE_CLIENT_ID` в `frontend/.env.local`
+        </div>
+      )}
+      {scriptFailed ? (
+        <p className="mt-2 text-sm text-red-600">Не удалось загрузить Google Sign-In скрипт.</p>
+      ) : null}
       {loading ? (
         <div className="mt-2 flex items-center gap-2 text-sm text-black/70">
           <Loader size="sm" />
