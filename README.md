@@ -79,6 +79,7 @@ Important ones:
 - `GRADGPT_INDEX_URL`
 - `CELERY_BROKER_URL`
 - `CELERY_RESULT_BACKEND`
+- `GOOGLE_OAUTH_CLIENT_ID` (Google Sign-In backend verification)
 
 ### Frontend
 
@@ -86,6 +87,7 @@ Important ones:
 
 ```bash
 NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=your_google_web_client_id
 ```
 
 ## Main frontend routes

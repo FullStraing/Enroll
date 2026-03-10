@@ -1,5 +1,6 @@
 from django.contrib.auth.models import User
 from django.urls import reverse
+from django.test import override_settings
 from rest_framework.test import APITestCase, APIClient
 from .models import StudentProfile
 
@@ -104,3 +105,44 @@ class StudentProfileTests(APITestCase):
         self.assertIn("course_2_schedule_semester", visible_schedule_ids)
         self.assertNotIn("course_3_schedule_semester", visible_schedule_ids)
         self.assertNotIn("course_1_schedule_quarter", visible_schedule_ids)
+
+
+class GoogleAuthTests(APITestCase):
+    @override_settings(GOOGLE_OAUTH_CLIENT_ID="test-client-id")
+    def test_google_auth_creates_user_and_returns_tokens(self):
+        from unittest.mock import patch
+        from apps.users.google_auth import GoogleIdentity
+
+        url = reverse("google_auth")
+        mock_identity = GoogleIdentity(
+            email="google.user@example.com",
+            email_verified=True,
+            given_name="Google",
+            family_name="User",
+            full_name="Google User",
+            sub="google-sub-1",
+        )
+
+        with patch("apps.users.views.verify_google_id_token", return_value=mock_identity):
+            response = self.client.post(url, {"id_token": "fake-token"}, format="json")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("access", response.data)
+        self.assertIn("refresh", response.data)
+        self.assertTrue(response.data["is_new_user"])
+        self.assertTrue(User.objects.filter(email="google.user@example.com").exists())
+
+    @override_settings(GOOGLE_OAUTH_CLIENT_ID="test-client-id")
+    def test_google_auth_returns_error_when_token_is_invalid(self):
+        from unittest.mock import patch
+        from apps.users.google_auth import GoogleTokenVerificationError
+
+        url = reverse("google_auth")
+        with patch(
+            "apps.users.views.verify_google_id_token",
+            side_effect=GoogleTokenVerificationError("Invalid Google token audience."),
+        ):
+            response = self.client.post(url, {"id_token": "bad-token"}, format="json")
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data["detail"], "Invalid Google token audience.")

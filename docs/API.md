@@ -10,6 +10,7 @@ Base prefix: `/api/`
 
 ### Auth
 - `POST /api/auth/register/`
+- `POST /api/auth/google/`
 - `POST /api/auth/token/`
 - `POST /api/auth/token/refresh/`
 - `GET /api/auth/profile/`
@@ -20,6 +21,7 @@ Base prefix: `/api/`
 
 Notes:
 - `register` is public.
+- `google` is public and exchanges Google `id_token` -> local JWT (`access`, `refresh`).
 - `token` / `token/refresh` are JWT endpoints.
 - `profile`, `change-password`, and `common-app-progress` require auth.
 

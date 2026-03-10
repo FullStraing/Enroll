@@ -1,11 +1,12 @@
 ﻿"use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useCallback, useState } from "react";
 import Link from "next/link";
 import { apiFetch } from "@/lib/api";
 import { Loader } from "@/components/loader";
 import { useAuth } from "@/components/auth-provider";
 import { Button } from "@/components/ui/button";
+import { GoogleAuthButton } from "@/components/google-auth-button";
 
 export default function RegisterPage() {
   const { setSession } = useAuth();
@@ -37,6 +38,15 @@ export default function RegisterPage() {
     }
   }
 
+  const handleGoogleTokens = useCallback(async (access: string, refresh: string) => {
+    await setSession(access, refresh);
+    window.location.assign("/dashboard");
+  }, [setSession]);
+
+  const handleGoogleError = useCallback((message: string) => {
+    setError(message);
+  }, []);
+
   return (
     <main className="theme-home mx-auto flex min-h-screen max-w-md items-center px-6 py-16">
       <form onSubmit={onSubmit} className="glass w-full rounded-3xl p-6">
@@ -67,6 +77,11 @@ export default function RegisterPage() {
         <Button disabled={pending} className="mt-6 w-full">
           {pending ? <Loader size="sm" /> : "Создать аккаунт"}
         </Button>
+        <GoogleAuthButton
+          disabled={pending}
+          onTokens={handleGoogleTokens}
+          onError={handleGoogleError}
+        />
         {error ? <p className="mt-3 text-sm text-red-600">{error}</p> : null}
         <p className="mt-4 text-sm text-black/70">
           Уже есть аккаунт?{" "}
