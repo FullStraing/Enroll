@@ -25,6 +25,22 @@ class UniversityListView(generics.ListAPIView):
 
     def get_queryset(self):
         query = (self.request.query_params.get("q") or "").strip()
+        selectivity = (self.request.query_params.get("selectivity") or "").strip().lower()
+        acceptance_min = self.request.query_params.get("acceptance_min")
+        acceptance_max = self.request.query_params.get("acceptance_max")
+        avg_sat_min = self.request.query_params.get("avg_sat_min")
+        avg_sat_max = self.request.query_params.get("avg_sat_max")
+        avg_act_min = self.request.query_params.get("avg_act_min")
+        avg_act_max = self.request.query_params.get("avg_act_max")
+        avg_gpa_min = self.request.query_params.get("avg_gpa_min")
+        avg_gpa_max = self.request.query_params.get("avg_gpa_max")
+        net_price_min = self.request.query_params.get("net_price_min")
+        net_price_max = self.request.query_params.get("net_price_max")
+        tuition_min = self.request.query_params.get("tuition_min")
+        tuition_max = self.request.query_params.get("tuition_max")
+        housing_min = self.request.query_params.get("housing_min")
+        housing_max = self.request.query_params.get("housing_max")
+
         core_keys = [
             "acceptance_rate",
             "avg_sat",
@@ -37,6 +53,10 @@ class UniversityListView(generics.ListAPIView):
             "housing_cost",
         ]
         qs = University.objects.filter(is_active=True)
+
+        if selectivity in {"high", "medium", "low"}:
+            qs = qs.filter(selectivity=selectivity)
+
         if query:
             qs = qs.filter(
                 models.Q(name__icontains=query)
@@ -44,6 +64,101 @@ class UniversityListView(generics.ListAPIView):
                 | models.Q(state__icontains=query)
                 | models.Q(country__icontains=query)
             )
+
+        metric_keys_to_annotate = set()
+        if avg_sat_min or avg_sat_max:
+            metric_keys_to_annotate.add("avg_sat")
+        if avg_act_min or avg_act_max:
+            metric_keys_to_annotate.add("avg_act")
+        if avg_gpa_min or avg_gpa_max:
+            metric_keys_to_annotate.add("avg_gpa")
+        if net_price_min or net_price_max:
+            metric_keys_to_annotate.update(["net_price", "net_price_in_state", "net_price_out_state"])
+        if housing_min or housing_max:
+            metric_keys_to_annotate.add("housing_cost")
+        if tuition_min or tuition_max:
+            metric_keys_to_annotate.update(["tuition_in_state", "tuition_out_state"])
+
+        metric_annotations = {}
+        for key in metric_keys_to_annotate:
+            metric_annotations[f"{key}_value"] = models.Subquery(
+                UniversityMetric.objects.filter(university=models.OuterRef("pk"), key=key)
+                .order_by("-updated_at")
+                .values("value_number")[:1],
+                output_field=models.FloatField(),
+            )
+        if metric_annotations:
+            qs = qs.annotate(**metric_annotations)
+
+        def _to_float(raw):
+            if raw in (None, ""):
+                return None
+            try:
+                return float(raw)
+            except (TypeError, ValueError):
+                return None
+
+        acceptance_min_value = _to_float(acceptance_min)
+        acceptance_max_value = _to_float(acceptance_max)
+        avg_sat_min_value = _to_float(avg_sat_min)
+        avg_sat_max_value = _to_float(avg_sat_max)
+        avg_act_min_value = _to_float(avg_act_min)
+        avg_act_max_value = _to_float(avg_act_max)
+        avg_gpa_min_value = _to_float(avg_gpa_min)
+        avg_gpa_max_value = _to_float(avg_gpa_max)
+        net_price_min_value = _to_float(net_price_min)
+        net_price_max_value = _to_float(net_price_max)
+        tuition_min_value = _to_float(tuition_min)
+        tuition_max_value = _to_float(tuition_max)
+        housing_min_value = _to_float(housing_min)
+        housing_max_value = _to_float(housing_max)
+
+        if acceptance_min_value is not None:
+            qs = qs.filter(acceptance_rate__gte=acceptance_min_value)
+        if acceptance_max_value is not None:
+            qs = qs.filter(acceptance_rate__lte=acceptance_max_value)
+
+        if avg_sat_min_value is not None:
+            qs = qs.filter(avg_sat_value__gte=avg_sat_min_value)
+        if avg_sat_max_value is not None:
+            qs = qs.filter(avg_sat_value__lte=avg_sat_max_value)
+
+        if avg_act_min_value is not None:
+            qs = qs.filter(avg_act_value__gte=avg_act_min_value)
+        if avg_act_max_value is not None:
+            qs = qs.filter(avg_act_value__lte=avg_act_max_value)
+
+        if avg_gpa_min_value is not None:
+            qs = qs.filter(avg_gpa_value__gte=avg_gpa_min_value)
+        if avg_gpa_max_value is not None:
+            qs = qs.filter(avg_gpa_value__lte=avg_gpa_max_value)
+
+        if net_price_min_value is not None or net_price_max_value is not None:
+            qs = qs.annotate(
+                net_price_filter=models.functions.Coalesce(
+                    "net_price_value",
+                    "net_price_out_state_value",
+                    "net_price_in_state_value",
+                )
+            )
+            if net_price_min_value is not None:
+                qs = qs.filter(net_price_filter__gte=net_price_min_value)
+            if net_price_max_value is not None:
+                qs = qs.filter(net_price_filter__lte=net_price_max_value)
+
+        if tuition_min_value is not None or tuition_max_value is not None:
+            qs = qs.annotate(
+                tuition_filter=models.functions.Coalesce("tuition_out_state_value", "tuition_in_state_value")
+            )
+            if tuition_min_value is not None:
+                qs = qs.filter(tuition_filter__gte=tuition_min_value)
+            if tuition_max_value is not None:
+                qs = qs.filter(tuition_filter__lte=tuition_max_value)
+
+        if housing_min_value is not None:
+            qs = qs.filter(housing_cost_value__gte=housing_min_value)
+        if housing_max_value is not None:
+            qs = qs.filter(housing_cost_value__lte=housing_max_value)
 
         return (
             qs

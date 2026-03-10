@@ -1,7 +1,6 @@
 ﻿"use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { ProtectedPage } from "@/components/protected-page";
@@ -42,8 +41,60 @@ type StudentUniversity = {
   };
 };
 
+type UniversityFilters = {
+  selectivity: "" | "high" | "medium" | "low";
+  acceptanceMin: string;
+  acceptanceMax: string;
+  avgSatMin: string;
+  avgSatMax: string;
+  avgActMin: string;
+  avgActMax: string;
+  avgGpaMin: string;
+  avgGpaMax: string;
+  netPriceMin: string;
+  netPriceMax: string;
+  tuitionMin: string;
+  tuitionMax: string;
+  housingMin: string;
+  housingMax: string;
+};
+type NumericFilterKey = Exclude<keyof UniversityFilters, "selectivity">;
+
 const PAGE_SIZE_OPTIONS = [5, 10, 20, 40];
 const PAGE_SIZE_STORAGE_KEY = "enroll_universities_page_size";
+const EMPTY_FILTERS: UniversityFilters = {
+  selectivity: "",
+  acceptanceMin: "",
+  acceptanceMax: "",
+  avgSatMin: "",
+  avgSatMax: "",
+  avgActMin: "",
+  avgActMax: "",
+  avgGpaMin: "",
+  avgGpaMax: "",
+  netPriceMin: "",
+  netPriceMax: "",
+  tuitionMin: "",
+  tuitionMax: "",
+  housingMin: "",
+  housingMax: "",
+};
+const NUMERIC_FILTER_FIELDS: Array<{ label: string; key: NumericFilterKey; step?: string }> = [
+  { label: "Acceptance % (min)", key: "acceptanceMin" },
+  { label: "Acceptance % (max)", key: "acceptanceMax" },
+  { label: "Avg SAT (min)", key: "avgSatMin" },
+  { label: "Avg SAT (max)", key: "avgSatMax" },
+  { label: "Avg ACT (min)", key: "avgActMin" },
+  { label: "Avg ACT (max)", key: "avgActMax" },
+  { label: "Avg GPA (min)", key: "avgGpaMin", step: "0.01" },
+  { label: "Avg GPA (max)", key: "avgGpaMax", step: "0.01" },
+  { label: "Net Price (min, $)", key: "netPriceMin" },
+  { label: "Net Price (max, $)", key: "netPriceMax" },
+  { label: "Tuition (min, $)", key: "tuitionMin" },
+  { label: "Tuition (max, $)", key: "tuitionMax" },
+  { label: "Housing (min, $)", key: "housingMin" },
+  { label: "Housing (max, $)", key: "housingMax" },
+];
 
 const selectivityLabel: Record<string, string> = {
   high: "Высокая",
@@ -65,6 +116,9 @@ export default function ApplicationsPage() {
   const [savedUniversityIds, setSavedUniversityIds] = useState<number[]>([]);
   const [savedMapping, setSavedMapping] = useState<Record<number, number>>({});
   const [savingUniversityId, setSavingUniversityId] = useState<number | null>(null);
+  const [showFilters, setShowFilters] = useState(false);
+  const [filtersDraft, setFiltersDraft] = useState<UniversityFilters>(EMPTY_FILTERS);
+  const [filters, setFilters] = useState<UniversityFilters>(EMPTY_FILTERS);
 
   async function loadMyUniversities() {
     const token = getToken();
@@ -103,15 +157,54 @@ export default function ApplicationsPage() {
     }
   }
 
-  async function loadUniversities(page = universitiesPage, pageSize = universitiesPageSize, q = search) {
+  function buildFilterQuery(nextFilters: UniversityFilters) {
+    const params = new URLSearchParams();
+    const map: Array<[keyof UniversityFilters, string]> = [
+      ["selectivity", "selectivity"],
+      ["acceptanceMin", "acceptance_min"],
+      ["acceptanceMax", "acceptance_max"],
+      ["avgSatMin", "avg_sat_min"],
+      ["avgSatMax", "avg_sat_max"],
+      ["avgActMin", "avg_act_min"],
+      ["avgActMax", "avg_act_max"],
+      ["avgGpaMin", "avg_gpa_min"],
+      ["avgGpaMax", "avg_gpa_max"],
+      ["netPriceMin", "net_price_min"],
+      ["netPriceMax", "net_price_max"],
+      ["tuitionMin", "tuition_min"],
+      ["tuitionMax", "tuition_max"],
+      ["housingMin", "housing_min"],
+      ["housingMax", "housing_max"],
+    ];
+    for (const [frontendKey, backendKey] of map) {
+      const value = nextFilters[frontendKey];
+      if (typeof value === "string" && value.trim()) {
+        params.set(backendKey, value.trim());
+      }
+    }
+    const queryString = params.toString();
+    return queryString ? `&${queryString}` : "";
+  }
+
+  function setNumericFilterDraft(key: NumericFilterKey, value: string) {
+    setFiltersDraft((prev) => ({ ...prev, [key]: value }));
+  }
+
+  async function loadUniversities(
+    page = universitiesPage,
+    pageSize = universitiesPageSize,
+    q = search,
+    nextFilters = filters,
+  ) {
     const token = getToken();
     if (!token) return;
 
     setLoading(true);
     try {
       const searchParam = q.trim() ? `&q=${encodeURIComponent(q.trim())}` : "";
+      const filterParam = buildFilterQuery(nextFilters);
       const uniPage = await apiFetch<PaginatedResponse<University>>(
-        `/api/universities/?page=${page}&page_size=${pageSize}${searchParam}`,
+        `/api/universities/?page=${page}&page_size=${pageSize}${searchParam}${filterParam}`,
         { method: "GET" },
         token,
       );
@@ -160,7 +253,66 @@ export default function ApplicationsPage() {
               <h2 className="text-lg font-semibold">University Cards</h2>
               <p className="mt-1 text-sm text-black/65">Поиск работает по всей базе, а не только по текущей странице.</p>
             </div>
+            <Button variant="outline" size="sm" onClick={() => setShowFilters((prev) => !prev)}>
+              {showFilters ? "Скрыть фильтры" : "Показать фильтры"}
+            </Button>
           </div>
+
+          {showFilters ? (
+            <div className="mt-4 grid gap-3 rounded-xl border border-black/10 bg-black/[0.02] p-3 md:grid-cols-2 xl:grid-cols-4">
+              <label className="text-xs text-black/70">
+                Селективность
+                <select
+                  value={filtersDraft.selectivity}
+                  onChange={(e) =>
+                    setFiltersDraft((prev) => ({ ...prev, selectivity: e.target.value as UniversityFilters["selectivity"] }))
+                  }
+                  className="mt-1 w-full rounded-lg border border-black/15 bg-white px-2 py-2 text-sm"
+                >
+                  <option value="">Любая</option>
+                  <option value="high">Высокая</option>
+                  <option value="medium">Средняя</option>
+                  <option value="low">Низкая</option>
+                </select>
+              </label>
+
+              {NUMERIC_FILTER_FIELDS.map((item) => (
+                <label key={item.key} className="text-xs text-black/70">
+                  {item.label}
+                  <input
+                    type="number"
+                    step={item.step || "1"}
+                    value={filtersDraft[item.key]}
+                    onChange={(e) => setNumericFilterDraft(item.key, e.target.value)}
+                    className="mt-1 w-full rounded-lg border border-black/15 bg-white px-2 py-2 text-sm"
+                  />
+                </label>
+              ))}
+
+              <div className="col-span-full flex flex-wrap items-center justify-end gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setFiltersDraft(EMPTY_FILTERS);
+                    setFilters(EMPTY_FILTERS);
+                    void loadUniversities(1, universitiesPageSize, search, EMPTY_FILTERS);
+                  }}
+                >
+                  Сбросить
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    setFilters(filtersDraft);
+                    void loadUniversities(1, universitiesPageSize, search, filtersDraft);
+                  }}
+                >
+                  Применить фильтры
+                </Button>
+              </div>
+            </div>
+          ) : null}
 
           <div className="mt-4 flex flex-wrap items-center gap-3">
             <input
@@ -181,7 +333,7 @@ export default function ApplicationsPage() {
                   if (typeof window !== "undefined") {
                     window.localStorage.setItem(PAGE_SIZE_STORAGE_KEY, String(nextSize));
                   }
-                  void loadUniversities(1, nextSize, search);
+                  void loadUniversities(1, nextSize, search, filters);
                 }}
                 className="rounded-lg border border-black/20 bg-white px-2 py-1 text-sm"
               >
@@ -198,7 +350,7 @@ export default function ApplicationsPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => void loadUniversities(Math.max(1, universitiesPage - 1), universitiesPageSize, search)}
+              onClick={() => void loadUniversities(Math.max(1, universitiesPage - 1), universitiesPageSize, search, filters)}
               disabled={universitiesPage <= 1}
             >
               Назад
@@ -209,7 +361,9 @@ export default function ApplicationsPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => void loadUniversities(Math.min(universitiesTotalPages, universitiesPage + 1), universitiesPageSize, search)}
+              onClick={() =>
+                void loadUniversities(Math.min(universitiesTotalPages, universitiesPage + 1), universitiesPageSize, search, filters)
+              }
               disabled={universitiesPage >= universitiesTotalPages}
             >
               Далее

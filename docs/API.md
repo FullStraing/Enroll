@@ -38,6 +38,17 @@ Typical frontend usage:
 - deadline rendering
 - debugging or inspection of enriched source data
 
+`GET /api/universities/` query params:
+- `page`, `page_size`, `q`
+- `selectivity` (`high|medium|low`)
+- `acceptance_min`, `acceptance_max`
+- `avg_sat_min`, `avg_sat_max`
+- `avg_act_min`, `avg_act_max`
+- `avg_gpa_min`, `avg_gpa_max`
+- `net_price_min`, `net_price_max`
+- `tuition_min`, `tuition_max`
+- `housing_min`, `housing_max`
+
 ### Student shortlist
 - `GET /api/my-universities/`
 - `POST /api/my-universities/`

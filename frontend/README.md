@@ -59,3 +59,4 @@ Protected:
 - The landing CTA can route users either into `/intro-quiz` or directly into `/dashboard` depending on known state.
 - Common App relies on backend-driven schema/progress rather than a static hardcoded form.
 - Reusable UI components should follow `docs/UI_SYSTEM_RULES.md`.
+- `npm run dev` now clears `frontend/.next` cache on start to prevent stale chunk/css 404 issues in dev mode.

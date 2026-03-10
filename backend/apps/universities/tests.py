@@ -124,6 +124,26 @@ class UniversityDataTests(APITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data[0]["deadline_type"], "RD")
 
+    def test_university_list_supports_numeric_filters(self):
+        UniversityMetric.objects.create(
+            university=self.university,
+            key="avg_sat",
+            value_number=1450,
+            unit="count",
+        )
+        UniversityMetric.objects.create(
+            university=self.university,
+            key="net_price",
+            value_number=22000,
+            unit="usd",
+        )
+        response = self.client.get(
+            reverse("universities_list"),
+            {"avg_sat_min": 1400, "avg_sat_max": 1500, "net_price_max": 25000},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["count"], 1)
+
 
 class DeadlineParserTests(APITestCase):
     def test_parse_deadlines_from_html(self):
