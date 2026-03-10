@@ -118,6 +118,17 @@ const TEST_OPTIONS = ["SAT", "ACT", "TOEFL", "IELTS", "DET"];
 const SCHOOL_LEVEL_OPTIONS = ["9", "10", "11", "12", "Gap Year", "College"];
 const INTAKE_OPTIONS = ["2026", "2027", "2028", "2029+"];
 const GPA_SCALE_OPTIONS = ["4.0", "5.0", "Percent"];
+const COUNTRY_OPTIONS = [
+  "United States",
+  "Canada",
+  "Kyrgyzstan",
+  "Kazakhstan",
+  "Uzbekistan",
+  "Russia",
+  "Ukraine",
+  "Turkey",
+  "India",
+];
 
 const sectionEstimateMinutes: Record<string, number> = {
   profile: 4,
@@ -448,6 +459,9 @@ export default function DashboardPage() {
     }
   }
 
+  const gpaMax = editForm.gpaScale === "5.0" ? 5 : editForm.gpaScale === "Percent" ? 100 : 4;
+  const gpaStep = editForm.gpaScale === "Percent" ? "1" : "0.01";
+
   return (
     <ProtectedPage>
       <AppShell title="Dashboard" subtitle="Your admissions status, profile strength, and next action.">
@@ -725,9 +739,6 @@ export default function DashboardPage() {
                     Duolingo-style fast update. Change values and keep your dashboard share-ready.
                   </p>
                 </div>
-                <Button variant="outline" size="sm" onClick={() => setEditOpen(false)}>
-                  Close
-                </Button>
               </div>
 
               <div className="grid gap-3 md:grid-cols-2">
@@ -743,12 +754,18 @@ export default function DashboardPage() {
 
                 <label className="rounded-xl border border-black/15 bg-black/[0.02] p-3 text-sm">
                   <span className="text-xs uppercase tracking-wide text-black/50">Country</span>
-                  <input
+                  <select
                     value={editForm.country}
                     onChange={(event) => setEditForm((prev) => ({ ...prev, country: event.target.value }))}
-                    placeholder="Kyrgyzstan"
                     className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2"
-                  />
+                  >
+                    <option value="">Select country</option>
+                    {COUNTRY_OPTIONS.map((country) => (
+                      <option key={country} value={country}>
+                        {country}
+                      </option>
+                    ))}
+                  </select>
                 </label>
 
                 <label className="rounded-xl border border-black/15 bg-black/[0.02] p-3 text-sm">
@@ -787,7 +804,16 @@ export default function DashboardPage() {
                   <span className="text-xs uppercase tracking-wide text-black/50">GPA scale</span>
                   <select
                     value={editForm.gpaScale}
-                    onChange={(event) => setEditForm((prev) => ({ ...prev, gpaScale: event.target.value }))}
+                    onChange={(event) =>
+                      setEditForm((prev) => {
+                        const nextScale = event.target.value;
+                        const nextMax = nextScale === "5.0" ? 5 : nextScale === "Percent" ? 100 : 4;
+                        const current = Number(prev.gpaValue);
+                        const nextValue =
+                          prev.gpaValue && !Number.isNaN(current) ? String(Math.max(0, Math.min(nextMax, current))) : prev.gpaValue;
+                        return { ...prev, gpaScale: nextScale, gpaValue: nextValue };
+                      })
+                    }
                     className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2"
                   >
                     {GPA_SCALE_OPTIONS.map((option) => (
@@ -802,12 +828,27 @@ export default function DashboardPage() {
                   <span className="text-xs uppercase tracking-wide text-black/50">GPA value</span>
                   <input
                     type="number"
-                    step="0.01"
+                    step={gpaStep}
+                    min={0}
+                    max={gpaMax}
                     value={editForm.gpaValue}
-                    onChange={(event) => setEditForm((prev) => ({ ...prev, gpaValue: event.target.value }))}
-                    placeholder={editForm.gpaScale === "Percent" ? "90" : "3.8"}
+                    onChange={(event) => {
+                      const raw = event.target.value;
+                      if (raw === "") {
+                        setEditForm((prev) => ({ ...prev, gpaValue: "" }));
+                        return;
+                      }
+                      const numeric = Number(raw);
+                      if (Number.isNaN(numeric)) return;
+                      const clamped = Math.max(0, Math.min(gpaMax, numeric));
+                      setEditForm((prev) => ({ ...prev, gpaValue: String(clamped) }));
+                    }}
+                    placeholder={editForm.gpaScale === "Percent" ? "0-100%" : `0-${gpaMax}`}
                     className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2"
                   />
+                  <p className="mt-1 text-xs text-black/60">
+                    {editForm.gpaScale === "Percent" ? "Expected range: 0-100%" : `Expected range: 0-${gpaMax}`}
+                  </p>
                 </label>
               </div>
 
