@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { ProtectedPage } from "@/components/protected-page";
@@ -61,6 +61,8 @@ type DiscoverFilters = {
 
 const PAGE_SIZE_OPTIONS = [5, 10, 20, 40];
 const PAGE_SIZE_STORAGE_KEY = "enroll_universities_page_size";
+const PAGE_UI_STATE_KEY = "enroll_universities_ui_state";
+const PAGE_SCROLL_Y_KEY = "enroll_universities_scroll_y";
 const EMPTY_FILTERS: DiscoverFilters = {
   search: "",
   major: "",
@@ -156,6 +158,7 @@ export default function UniversitiesPage() {
   const [pendingAdd, setPendingAdd] = useState<{ universityId: number; name: string; category: StudentUniversity["category"] } | null>(null);
   const [status, setStatus] = useState("");
   const [statusAction, setStatusAction] = useState<null | { label: string; onClick: () => void }>(null);
+  const restoredScrollRef = useRef(false);
 
   const myUniversityIds = useMemo(() => new Set(myItems.map((item) => item.university.id)), [myItems]);
 
@@ -256,18 +259,97 @@ export default function UniversitiesPage() {
 
   useEffect(() => {
     let initialPageSize = 10;
+    let initialTab: "my" | "discover" = "my";
+    let initialFilters: DiscoverFilters = EMPTY_FILTERS;
+    let initialFiltersDraft: DiscoverFilters = EMPTY_FILTERS;
+    let initialDiscoverPage = 1;
+
     if (typeof window !== "undefined") {
       const saved = Number(window.localStorage.getItem(PAGE_SIZE_STORAGE_KEY));
       if (PAGE_SIZE_OPTIONS.includes(saved)) {
         initialPageSize = saved;
       }
+
+      const rawUiState = window.sessionStorage.getItem(PAGE_UI_STATE_KEY);
+      if (rawUiState) {
+        try {
+          const parsed = JSON.parse(rawUiState) as {
+            activeTab?: "my" | "discover";
+            filters?: DiscoverFilters;
+            filtersDraft?: DiscoverFilters;
+            discoverPage?: number;
+          };
+          if (parsed.activeTab === "my" || parsed.activeTab === "discover") {
+            initialTab = parsed.activeTab;
+          }
+          if (parsed.filters) {
+            initialFilters = { ...EMPTY_FILTERS, ...parsed.filters };
+          }
+          if (parsed.filtersDraft) {
+            initialFiltersDraft = { ...EMPTY_FILTERS, ...parsed.filtersDraft };
+          } else {
+            initialFiltersDraft = initialFilters;
+          }
+          if (typeof parsed.discoverPage === "number" && parsed.discoverPage > 0) {
+            initialDiscoverPage = parsed.discoverPage;
+          }
+        } catch {
+          // Ignore invalid session payload and use defaults.
+        }
+      }
     }
 
     setPageSize(initialPageSize);
+    setActiveTab(initialTab);
+    setFilters(initialFilters);
+    setFiltersDraft(initialFiltersDraft);
     void loadMyUniversities();
-    void loadDiscover(1, EMPTY_FILTERS, initialPageSize);
+    void loadDiscover(initialDiscoverPage, initialFilters, initialPageSize);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.sessionStorage.setItem(
+      PAGE_UI_STATE_KEY,
+      JSON.stringify({
+        activeTab,
+        filters,
+        filtersDraft,
+        discoverPage,
+      }),
+    );
+  }, [activeTab, filters, filtersDraft, discoverPage]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const saveScroll = () => {
+      window.sessionStorage.setItem(PAGE_SCROLL_Y_KEY, String(window.scrollY));
+    };
+
+    window.addEventListener("beforeunload", saveScroll);
+    window.addEventListener("scroll", saveScroll, { passive: true });
+    return () => {
+      window.removeEventListener("beforeunload", saveScroll);
+      window.removeEventListener("scroll", saveScroll);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (restoredScrollRef.current) return;
+    if (loadingMy || loadingDiscover) return;
+
+    const rawScrollY = window.sessionStorage.getItem(PAGE_SCROLL_Y_KEY);
+    const scrollY = rawScrollY ? Number(rawScrollY) : 0;
+    if (Number.isFinite(scrollY) && scrollY > 0) {
+      window.requestAnimationFrame(() => {
+        window.scrollTo({ top: scrollY, left: 0, behavior: "auto" });
+      });
+    }
+    restoredScrollRef.current = true;
+  }, [loadingMy, loadingDiscover]);
 
   return (
     <ProtectedPage>
