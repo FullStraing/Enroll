@@ -236,6 +236,101 @@ def _extract_requirements(section: dict[str, Any]) -> list[dict[str, str]]:
     return rows_out[:200]
 
 
+def _extract_labeled_rows(section: dict[str, Any]) -> list[dict[str, str]]:
+    rows_out: list[dict[str, str]] = []
+    for table in section.get("tables", []):
+        headers = [str(h).strip() for h in table.get("headers", [])]
+        for row in table.get("rows", []):
+            if not row:
+                continue
+            first = _clean_text(row[0] if len(row) > 0 else "")
+            second = _clean_text(row[1] if len(row) > 1 else "")
+            third = _clean_text(row[2] if len(row) > 2 else "")
+            fourth = _clean_text(row[3] if len(row) > 3 else "")
+            item: dict[str, str] = {
+                "label": first,
+                "value": second,
+            }
+            if third:
+                item["value_2"] = third
+            if fourth:
+                item["value_3"] = fourth
+            if headers:
+                item["headers"] = " | ".join(headers[:4])
+            item["raw"] = " | ".join([value for value in [first, second, third, fourth] if value])
+            if item["raw"]:
+                rows_out.append(item)
+    if not rows_out and section.get("text"):
+        rows_out.append({"label": "raw_text", "value": section["text"], "raw": section["text"]})
+    return rows_out
+
+
+def _extract_application_fee(
+    applying_rows: list[dict[str, str]], applying_section: dict[str, Any], source_url: str
+) -> list[dict[str, Any]]:
+    metrics: list[dict[str, Any]] = []
+    best_fee_text = ""
+    best_fee_number: float | None = None
+
+    for row in applying_rows:
+        blob = " ".join([row.get("label", ""), row.get("value", ""), row.get("value_2", ""), row.get("value_3", "")]).strip()
+        if not blob:
+            continue
+        normalized = _normalize_key(blob)
+        if "application fee" not in normalized:
+            continue
+        number = _to_number(blob)
+        if number is not None and best_fee_number is None:
+            best_fee_number = number
+            best_fee_text = _clean_text(blob)
+        elif not best_fee_text:
+            best_fee_text = _clean_text(blob)
+
+    if best_fee_number is None:
+        section_text = _clean_text(applying_section.get("text", ""))
+        # Examples:
+        # "Application fee $75"
+        # "Application Fee: 90 USD"
+        # "App fee: $50"
+        text_match = re.search(
+            r"(application\s*fee|app\s*fee)[^0-9$]{0,20}(\$?\s*[0-9]{1,4}(?:\.[0-9]{1,2})?)",
+            section_text,
+            re.IGNORECASE,
+        )
+        if text_match:
+            best_fee_text = _clean_text(text_match.group(0))
+            best_fee_number = _to_number(text_match.group(2))
+
+    if best_fee_number is not None:
+        metrics.append(
+            {
+                "key": "application_fee_usd",
+                "unit": "usd",
+                "value_text": f"${int(round(best_fee_number))}",
+                "value_number": best_fee_number,
+                "value_json": None,
+                "confidence": 0.95,
+                "section_key": "peterson_profile",
+                "source_url": source_url,
+            }
+        )
+    if best_fee_text:
+        metrics.append(
+            {
+                "key": "application_fee_text",
+                "unit": "text",
+                "value_text": best_fee_text,
+                "value_number": None,
+                "value_json": None,
+                "confidence": 0.95,
+                "section_key": "peterson_profile",
+                "source_url": source_url,
+            }
+        )
+
+    return metrics
+
+
 def _extract_athletics_summaries(section: dict[str, Any], mens: dict[str, Any], womens: dict[str, Any]) -> dict[str, Any]:
     def _sports_count(block: dict[str, Any]) -> int:
         count = 0
@@ -463,6 +558,8 @@ def scrape_peterson_profile(university_name: str, timeout: int = 30) -> dict[str
 
     majors = _extract_majors(majors_degrees)
     applying_matrix = _extract_requirements(applying)
+    applying_rows = _extract_labeled_rows(applying)
+    financial_aid_rows = _extract_labeled_rows(financial_aid)
     female_stats = _extract_admissions_by_gender(female_admissions, "female")
     male_stats = _extract_admissions_by_gender(male_admissions, "male")
     athletics_summary = _extract_athletics_summaries(athletics, mens_sports, womens_sports)
@@ -492,13 +589,16 @@ def scrape_peterson_profile(university_name: str, timeout: int = 30) -> dict[str
     add_json_metric("location_contact", location_contact)
     add_json_metric("majors_degrees", {"majors": majors, "raw": majors_degrees})
     add_json_metric("admission_requirements_matrix", applying_matrix)
+    add_json_metric("applying_extended", applying_rows)
     add_json_metric("female_admissions", female_stats)
     add_json_metric("male_admissions", male_stats)
     add_json_metric("test_policy_details", test_scores)
     add_json_metric("financial_aid_extended", financial_aid)
+    add_json_metric("financial_aid_items", financial_aid_rows)
     add_json_metric("campus_life", campus_life)
     add_json_metric("athletics", athletics_summary)
     metrics.extend(_extract_test_metrics(test_scores, source_url=source_url))
+    metrics.extend(_extract_application_fee(applying_rows=applying_rows, applying_section=applying, source_url=source_url))
 
     if majors:
         metrics.append(
@@ -552,10 +652,12 @@ def scrape_peterson_profile(university_name: str, timeout: int = 30) -> dict[str
         "location_contact": location_contact,
         "majors_degrees": {"majors": majors, "raw": majors_degrees},
         "applying_requirements": applying_matrix,
+        "applying_extended": applying_rows,
         "female_admissions": female_stats,
         "male_admissions": male_stats,
         "test_policy_details": test_scores,
         "financial_aid_extended": financial_aid,
+        "financial_aid_items": financial_aid_rows,
         "campus_life": campus_life,
         "athletics": athletics_summary,
         "gpa_value": gpa_value,

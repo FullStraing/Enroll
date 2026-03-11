@@ -63,6 +63,14 @@ type LocationContactInfo = {
   phone: string | null;
 };
 
+type LabeledRow = {
+  label: string;
+  value: string;
+  value_2?: string;
+  value_3?: string;
+  raw?: string;
+};
+
 function asNumber(v: UniversityMetric | undefined): number | null {
   if (!v) return null;
   if (typeof v.value_number === "number") return v.value_number;
@@ -285,6 +293,23 @@ function parseLocationContact(metric: UniversityMetric | undefined, university: 
   };
 }
 
+function parseLabeledRows(metric: UniversityMetric | undefined): LabeledRow[] {
+  if (!metric || !metric.value_json) return [];
+  if (Array.isArray(metric.value_json)) {
+    return metric.value_json
+      .filter((item): item is Record<string, unknown> => typeof item === "object" && item !== null)
+      .map((item) => ({
+        label: String(item.label || "").trim(),
+        value: String(item.value || "").trim(),
+        value_2: String(item.value_2 || "").trim() || undefined,
+        value_3: String(item.value_3 || "").trim() || undefined,
+        raw: String(item.raw || "").trim() || undefined,
+      }))
+      .filter((item) => item.label || item.value || item.raw);
+  }
+  return [];
+}
+
 export default function UniversityProfilePage() {
   const params = useParams<{ id: string }>();
   const id = Number(params?.id);
@@ -339,6 +364,10 @@ export default function UniversityProfilePage() {
   const locationContact = parseLocationContact(m.get("location_contact"), university);
   const mapQuery = encodeURIComponent(locationContact.addressLines.join(", ") || `${university?.name || ""}, ${university?.state || ""}`);
   const officialWebsiteHref = toExternalUrl(university?.website_url);
+  const applicationFeeNumber = asNumber(m.get("application_fee_usd"));
+  const applicationFeeText = m.get("application_fee_text")?.value_text || "";
+  const applyingRows = parseLabeledRows(m.get("applying_extended"));
+  const financialAidRows = parseLabeledRows(m.get("financial_aid_items"));
 
   return (
     <ProtectedPage>
@@ -553,6 +582,49 @@ export default function UniversityProfilePage() {
                   <p className="text-sm text-white/70">No deadlines yet.</p>
                 )}
               </div>
+            </section>
+
+            <section className="grid gap-4 lg:grid-cols-2">
+              <Card className="shadow-none">
+                <h2 className="text-xl font-semibold">Applying</h2>
+                <div className="mt-4 rounded-xl border border-white/10 bg-black/20 p-4">
+                  <p className="text-sm text-white/60">Application fee</p>
+                  <p className="mt-1 text-3xl font-black">{applicationFeeNumber != null ? prettyMoney(applicationFeeNumber) : "N/A"}</p>
+                  {applicationFeeText ? <p className="mt-2 text-xs text-white/65">{applicationFeeText}</p> : null}
+                </div>
+                <div className="mt-4 max-h-[420px] space-y-2 overflow-auto pr-1">
+                  {applyingRows.length ? (
+                    applyingRows.map((row, idx) => (
+                      <div key={`${row.label || "app"}-${idx}`} className="rounded-lg border border-white/10 bg-black/20 p-3">
+                        <p className="text-sm font-semibold text-white">{row.label || "Field"}</p>
+                        <p className="text-sm text-white/80">{row.value || "-"}</p>
+                        {row.value_2 ? <p className="text-xs text-white/65">{row.value_2}</p> : null}
+                        {row.value_3 ? <p className="text-xs text-white/65">{row.value_3}</p> : null}
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-white/70">No applying values found.</p>
+                  )}
+                </div>
+              </Card>
+
+              <Card className="shadow-none">
+                <h2 className="text-xl font-semibold">Financial Aid</h2>
+                <div className="mt-4 max-h-[520px] space-y-2 overflow-auto pr-1">
+                  {financialAidRows.length ? (
+                    financialAidRows.map((row, idx) => (
+                      <div key={`${row.label || "aid"}-${idx}`} className="rounded-lg border border-white/10 bg-black/20 p-3">
+                        <p className="text-sm font-semibold text-white">{row.label || "Field"}</p>
+                        <p className="text-sm text-white/80">{row.value || "-"}</p>
+                        {row.value_2 ? <p className="text-xs text-white/65">{row.value_2}</p> : null}
+                        {row.value_3 ? <p className="text-xs text-white/65">{row.value_3}</p> : null}
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-white/70">No financial aid values found.</p>
+                  )}
+                </div>
+              </Card>
             </section>
           </div>
         ) : null}

@@ -36,6 +36,7 @@ The project is past the skeleton phase. The current state is:
 - universities list and detail views
 - pagination and search structure
 - richer admissions/cost/housing cards
+- Peterson enrichment now includes `application_fee` extraction and full `Financial Aid` rows as normalized metric payloads
 - deadlines ingestion and display
 - applications flow baseline
 - calendar page and task-oriented planning surface

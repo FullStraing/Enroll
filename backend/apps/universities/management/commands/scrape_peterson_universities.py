@@ -3,6 +3,7 @@ from __future__ import annotations
 import time
 
 from django.core.management.base import BaseCommand
+from django.db.models import Q
 from django.utils import timezone
 
 from apps.universities.models import ScrapeRun, ScrapeRunItem, University, UniversityMetric

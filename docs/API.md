@@ -40,6 +40,12 @@ Typical frontend usage:
 - deadline rendering
 - debugging or inspection of enriched source data
 
+Common enriched metric keys in `/api/universities/{id}/metrics/` now include:
+- `application_fee_usd`
+- `application_fee_text`
+- `applying_extended` (JSON rows from Applying block)
+- `financial_aid_items` (JSON rows from Financial Aid block)
+
 `GET /api/universities/` query params:
 - `page`, `page_size`, `q`
 - `selectivity` (`high|medium|low`)
