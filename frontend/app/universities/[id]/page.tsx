@@ -398,7 +398,7 @@ export default function UniversityProfilePage() {
                     )}
                   </div>
                 </div>
-                <Link href="/applications" className="rounded-xl border border-white/20 px-3 py-2 text-sm hover:bg-white/10">
+                <Link href="/universities" className="rounded-xl border border-white/20 px-3 py-2 text-sm hover:bg-white/10">
                   Назад к списку
                 </Link>
               </div>

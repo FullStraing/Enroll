@@ -22,7 +22,7 @@ import { Button } from "@/components/ui/button";
 const nav = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/onboarding", label: "Onboarding", icon: UserRoundCheck },
-  { href: "/applications", label: "Universities", icon: GraduationCap },
+  { href: "/universities", label: "Universities", icon: GraduationCap },
   { href: "/ui-lab", label: "UI Lab", icon: FlaskConical },
   { href: "/calendar", label: "Calendar", icon: CalendarDays },
   { href: "/documents", label: "Documents", icon: FolderKanban },

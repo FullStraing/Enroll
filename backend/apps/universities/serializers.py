@@ -13,6 +13,8 @@ class UniversitySerializer(serializers.ModelSerializer):
     last_scraped_at = serializers.DateTimeField(read_only=True)
     data_freshness_days = serializers.IntegerField(read_only=True)
     net_price = serializers.SerializerMethodField()
+    tuition_out_state = serializers.SerializerMethodField()
+    tuition_in_state = serializers.SerializerMethodField()
     room_and_board = serializers.SerializerMethodField()
     housing_cost = serializers.SerializerMethodField()
     deadlines_count = serializers.IntegerField(read_only=True)
@@ -44,6 +46,8 @@ class UniversitySerializer(serializers.ModelSerializer):
             "last_scraped_at",
             "data_freshness_days",
             "net_price",
+            "tuition_out_state",
+            "tuition_in_state",
             "room_and_board",
             "housing_cost",
             "deadlines_count",
@@ -70,6 +74,12 @@ class UniversitySerializer(serializers.ModelSerializer):
 
     def get_room_and_board(self, obj):
         return self._metric_value(obj, "room_and_board")
+
+    def get_tuition_out_state(self, obj):
+        return self._metric_value(obj, "tuition_out_state")
+
+    def get_tuition_in_state(self, obj):
+        return self._metric_value(obj, "tuition_in_state")
 
     def get_housing_cost(self, obj):
         return self._metric_value(obj, "housing_cost")
