@@ -63,6 +63,8 @@ const PAGE_SIZE_OPTIONS = [5, 10, 20, 40];
 const PAGE_SIZE_STORAGE_KEY = "enroll_universities_page_size";
 const PAGE_UI_STATE_KEY = "enroll_universities_ui_state";
 const PAGE_SCROLL_Y_KEY = "enroll_universities_scroll_y";
+const MY_UNIVERSITIES_CACHE_KEY = "enroll_universities_my_cache";
+const DISCOVER_CACHE_KEY = "enroll_universities_discover_cache";
 const EMPTY_FILTERS: DiscoverFilters = {
   search: "",
   major: "",
@@ -137,6 +139,10 @@ function buildQuery(paramsSource: DiscoverFilters, page: number, pageSize: numbe
   return params.toString();
 }
 
+function filtersHash(filters: DiscoverFilters): string {
+  return JSON.stringify(filters);
+}
+
 export default function UniversitiesPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"my" | "discover">("my");
@@ -159,29 +165,46 @@ export default function UniversitiesPage() {
   const [status, setStatus] = useState("");
   const [statusAction, setStatusAction] = useState<null | { label: string; onClick: () => void }>(null);
   const restoredScrollRef = useRef(false);
+  const [uiStateReady, setUiStateReady] = useState(false);
 
   const myUniversityIds = useMemo(() => new Set(myItems.map((item) => item.university.id)), [myItems]);
 
-  async function loadMyUniversities() {
+  async function loadMyUniversities(options?: { silent?: boolean }) {
     const token = getToken();
     if (!token) return;
 
-    setLoadingMy(true);
+    const silent = options?.silent ?? false;
+    if (!silent) {
+      setLoadingMy(true);
+    }
     try {
       const items = await apiFetch<StudentUniversity[]>("/api/my-universities/", { method: "GET" }, token);
       setMyItems(items);
+      if (typeof window !== "undefined") {
+        window.sessionStorage.setItem(MY_UNIVERSITIES_CACHE_KEY, JSON.stringify({ items }));
+      }
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Failed to load your universities.");
     } finally {
-      setLoadingMy(false);
+      if (!silent) {
+        setLoadingMy(false);
+      }
     }
   }
 
-  async function loadDiscover(page = discoverPage, nextFilters = filters, nextPageSize = pageSize) {
+  async function loadDiscover(
+    page = discoverPage,
+    nextFilters = filters,
+    nextPageSize = pageSize,
+    options?: { silent?: boolean },
+  ) {
     const token = getToken();
     if (!token) return;
 
-    setLoadingDiscover(true);
+    const silent = options?.silent ?? false;
+    if (!silent) {
+      setLoadingDiscover(true);
+    }
     try {
       const query = buildQuery(nextFilters, page, nextPageSize);
       const payload = await apiFetch<PaginatedResponse<University>>(`/api/universities/?${query}`, { method: "GET" }, token);
@@ -190,10 +213,24 @@ export default function UniversitiesPage() {
       setDiscoverCount(payload.count);
       setDiscoverPage(page);
       setDiscoverTotalPages(Math.max(1, Math.ceil(payload.count / nextPageSize)));
+      if (typeof window !== "undefined") {
+        window.sessionStorage.setItem(
+          DISCOVER_CACHE_KEY,
+          JSON.stringify({
+            page,
+            pageSize: nextPageSize,
+            filtersHash: filtersHash(nextFilters),
+            count: payload.count,
+            results: payload.results,
+          }),
+        );
+      }
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Failed to load universities.");
     } finally {
-      setLoadingDiscover(false);
+      if (!silent) {
+        setLoadingDiscover(false);
+      }
     }
   }
 
@@ -299,17 +336,64 @@ export default function UniversitiesPage() {
       }
     }
 
+    let hasMyCache = false;
+    let hasDiscoverCache = false;
+    if (typeof window !== "undefined") {
+      const rawMyCache = window.sessionStorage.getItem(MY_UNIVERSITIES_CACHE_KEY);
+      if (rawMyCache) {
+        try {
+          const parsed = JSON.parse(rawMyCache) as { items?: StudentUniversity[] };
+          if (Array.isArray(parsed.items)) {
+            setMyItems(parsed.items);
+            hasMyCache = true;
+          }
+        } catch {
+          // Ignore invalid cache data.
+        }
+      }
+
+      const rawDiscoverCache = window.sessionStorage.getItem(DISCOVER_CACHE_KEY);
+      if (rawDiscoverCache) {
+        try {
+          const parsed = JSON.parse(rawDiscoverCache) as {
+            page?: number;
+            pageSize?: number;
+            filtersHash?: string;
+            count?: number;
+            results?: University[];
+          };
+          const isSameScope =
+            parsed.page === initialDiscoverPage &&
+            parsed.pageSize === initialPageSize &&
+            parsed.filtersHash === filtersHash(initialFilters) &&
+            Array.isArray(parsed.results) &&
+            typeof parsed.count === "number";
+          if (isSameScope) {
+            setDiscover(parsed.results ?? []);
+            setDiscoverCount(parsed.count ?? 0);
+            setDiscoverPage(initialDiscoverPage);
+            setDiscoverTotalPages(Math.max(1, Math.ceil((parsed.count ?? 0) / initialPageSize)));
+            hasDiscoverCache = true;
+          }
+        } catch {
+          // Ignore invalid cache data.
+        }
+      }
+    }
+
     setPageSize(initialPageSize);
     setActiveTab(initialTab);
     setFilters(initialFilters);
     setFiltersDraft(initialFiltersDraft);
-    void loadMyUniversities();
-    void loadDiscover(initialDiscoverPage, initialFilters, initialPageSize);
+    void loadMyUniversities({ silent: hasMyCache });
+    void loadDiscover(initialDiscoverPage, initialFilters, initialPageSize, { silent: hasDiscoverCache });
+    setUiStateReady(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+    if (!uiStateReady) return;
     window.sessionStorage.setItem(
       PAGE_UI_STATE_KEY,
       JSON.stringify({
@@ -319,7 +403,7 @@ export default function UniversitiesPage() {
         discoverPage,
       }),
     );
-  }, [activeTab, filters, filtersDraft, discoverPage]);
+  }, [activeTab, filters, filtersDraft, discoverPage, uiStateReady]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
