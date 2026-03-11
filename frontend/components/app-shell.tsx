@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   LayoutDashboard,
   UserRoundCheck,
@@ -48,6 +48,7 @@ export function AppShell({
     if (typeof window === "undefined") return false;
     return window.localStorage.getItem(sidebarStorageKey) === "1";
   });
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const name = profile?.full_name || profile?.username || profile?.email || "User";
 
@@ -59,13 +60,39 @@ export function AppShell({
     });
   }
 
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [pathname]);
+
   return (
     <div
-      className={`theme-home mx-auto grid min-h-screen max-w-[1500px] grid-cols-1 items-start gap-6 p-6 ${
+      className={`theme-home mx-auto grid min-h-screen max-w-[1500px] grid-cols-1 items-start gap-4 p-3 sm:gap-6 sm:p-6 ${
         collapsed ? "lg:grid-cols-[92px_1fr]" : "lg:grid-cols-[260px_1fr]"
       } lg:transition-[grid-template-columns] lg:duration-300 lg:ease-in-out`}
     >
-      <aside className="glass glass-soft sticky top-6 h-fit rounded-3xl p-4 transition-all duration-300 ease-in-out">
+      <button
+        type="button"
+        onClick={() => setMobileMenuOpen((prev) => !prev)}
+        className="fixed left-3 top-3 z-50 rounded-xl border-2 border-black bg-white p-2 lg:hidden"
+        aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+      >
+        {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+      </button>
+
+      {mobileMenuOpen ? (
+        <button
+          type="button"
+          aria-label="Close menu overlay"
+          className="fixed inset-0 z-40 bg-black/30 lg:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      ) : null}
+
+      <aside
+        className={`glass glass-soft z-50 h-fit rounded-3xl p-4 transition-all duration-300 ease-in-out ${
+          mobileMenuOpen ? "fixed inset-y-3 left-3 w-[280px] overflow-auto" : "hidden"
+        } lg:sticky lg:top-6 lg:block lg:w-auto`}
+      >
           <div className={`mb-4 flex items-center gap-2 ${collapsed ? "justify-center" : "justify-between"}`}>
             {collapsed ? (
               <Button
@@ -151,7 +178,7 @@ export function AppShell({
           </nav>
       </aside>
 
-      <section className="glass glass-soft min-h-[calc(100vh-48px)] rounded-3xl p-6">
+      <section className="glass glass-soft min-h-[calc(100vh-24px)] rounded-3xl p-4 sm:min-h-[calc(100vh-48px)] sm:p-6">
         <header className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b-2 border-black/80 pb-4">
           <div>
             <h1 className="text-2xl font-black">{title}</h1>

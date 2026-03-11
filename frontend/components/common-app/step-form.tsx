@@ -87,7 +87,7 @@ export function StepForm({
               ?
             </span>
           </span>
-          <div className="grid grid-cols-[140px_1fr] gap-2">
+          <div className="grid gap-2 sm:grid-cols-[140px_1fr]">
             <FieldInput
               field={field}
               value={draftValues[codeKey]}
@@ -126,7 +126,7 @@ export function StepForm({
               ?
             </span>
           </span>
-          <div className="grid grid-cols-[90px_1fr] gap-2">
+          <div className="grid gap-2 sm:grid-cols-[90px_1fr]">
             <FieldInput
               field={field}
               value={draftValues[codeKey]}
@@ -168,7 +168,7 @@ export function StepForm({
               ?
             </span>
           </span>
-          <div className="grid grid-cols-[110px_1fr_120px] gap-2">
+          <div className="grid gap-2 sm:grid-cols-[110px_1fr_120px]">
             <FieldInput
               field={field}
               value={draftValues[codeKey]}
