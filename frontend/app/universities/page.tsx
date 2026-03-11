@@ -677,7 +677,19 @@ export default function UniversitiesPage() {
                       </Card>
                     ))
                   : discover.map((university) => (
-                      <Card key={university.id} className="shadow-none">
+                      <Card
+                        key={university.id}
+                        role="button"
+                        tabIndex={0}
+                        className="cursor-pointer shadow-none transition hover:-translate-y-0.5"
+                        onClick={() => router.push(`/universities/${university.id}`)}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            router.push(`/universities/${university.id}`);
+                          }
+                        }}
+                      >
                         <div className="flex items-start justify-between gap-3">
                           <div>
                             <CardTitle>{university.name}</CardTitle>
@@ -691,15 +703,15 @@ export default function UniversitiesPage() {
                           </div>
 
                           <div className="flex flex-col gap-2">
-                            <Button size="sm" variant="outline" onClick={() => router.push(`/universities/${university.id}`)}>
-                              Open
-                            </Button>
                             {myUniversityIds.has(university.id) ? (
                               <Badge variant="primary">Added</Badge>
                             ) : (
                               <Button
                                 size="sm"
-                                onClick={() => setPendingAdd({ universityId: university.id, name: university.name, category: "target" })}
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  setPendingAdd({ universityId: university.id, name: university.name, category: "target" });
+                                }}
                                 disabled={updatingItemId === university.id}
                               >
                                 Add to my list
