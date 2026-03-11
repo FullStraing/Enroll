@@ -379,6 +379,123 @@ def _extract_application_fee(
     return metrics
 
 
+def _extract_core_fallback_from_rows(rows: list[dict[str, str]], source_url: str) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    metrics: list[dict[str, Any]] = []
+    core: dict[str, Any] = {}
+
+    def _first_number(blob: str) -> float | None:
+        m = re.search(r"\$?\s*([0-9][0-9,]{0,})(?:\.[0-9]+)?", blob)
+        if not m:
+            return None
+        return _to_number(m.group(1))
+
+    def _first_decimal(blob: str) -> float | None:
+        m = re.search(r"\b([0-4](?:\.[0-9]{1,2})?)\b", blob)
+        if not m:
+            return None
+        return _to_number(m.group(1))
+
+    for row in rows:
+        label = _normalize_key(row.get("label", ""))
+        value_blob = " ".join(
+            [row.get("value", ""), row.get("value_2", ""), row.get("value_3", ""), row.get("raw", "")]
+        ).strip()
+        if not label or not value_blob:
+            continue
+
+        if "acceptance rate" in label and "acceptance_rate" not in core:
+            percent = re.search(r"([0-9]{1,3})\s*%", value_blob)
+            n = _to_number(percent.group(1)) if percent else _first_number(value_blob)
+            if n is not None and 0 <= n <= 100:
+                core["acceptance_rate"] = int(round(n))
+                metrics.append(
+                    {
+                        "key": "acceptance_rate",
+                        "unit": "percent",
+                        "value_text": str(int(round(n))),
+                        "value_number": n,
+                        "value_json": None,
+                        "confidence": 0.9,
+                        "section_key": "peterson_profile",
+                        "source_url": source_url,
+                    }
+                )
+
+        if (
+            ("out of state" in label and "tuition" in label)
+            or ("out-of-state" in label and "tuition" in label)
+            or ("nonresident" in label and "tuition" in label)
+            or "out of state tuition before financial aid" in label
+            or "private tuition" in label
+        ):
+            n = _first_number(value_blob)
+            if n is not None and n >= 100:
+                metrics.append(
+                    {
+                        "key": "tuition_out_state",
+                        "unit": "usd",
+                        "value_text": str(int(round(n))),
+                        "value_number": n,
+                        "value_json": None,
+                        "confidence": 0.9,
+                        "section_key": "peterson_profile",
+                        "source_url": source_url,
+                    }
+                )
+
+        if ("total undergraduates" in label or "undergraduate enrollment" in label or label == "students") and "total_undergraduates" not in core:
+            n = _first_number(value_blob)
+            if n is not None and n >= 100:
+                core["total_undergraduates"] = int(round(n))
+                metrics.append(
+                    {
+                        "key": "total_undergraduates",
+                        "unit": "count",
+                        "value_text": str(int(round(n))),
+                        "value_number": n,
+                        "value_json": None,
+                        "confidence": 0.9,
+                        "section_key": "peterson_profile",
+                        "source_url": source_url,
+                    }
+                )
+
+        if (
+            ("avg high school gpa" in label and "freshman" in label)
+            or "average high school gpa" in label
+            or label == "avg gpa"
+        ) and "avg_gpa" not in core:
+            g = _first_decimal(value_blob)
+            if g is not None and 0 <= g <= 4.5:
+                core["avg_gpa"] = g
+                metrics.append(
+                    {
+                        "key": "avg_high_school_gpa_freshman",
+                        "unit": "count",
+                        "value_text": f"{g:.2f}",
+                        "value_number": g,
+                        "value_json": None,
+                        "confidence": 0.9,
+                        "section_key": "peterson_profile",
+                        "source_url": source_url,
+                    }
+                )
+                metrics.append(
+                    {
+                        "key": "avg_gpa",
+                        "unit": "count",
+                        "value_text": f"{g:.2f}",
+                        "value_number": g,
+                        "value_json": None,
+                        "confidence": 0.9,
+                        "section_key": "peterson_profile",
+                        "source_url": source_url,
+                    }
+                )
+
+    return metrics, core
+
+
 def _extract_athletics_summaries(section: dict[str, Any], mens: dict[str, Any], womens: dict[str, Any]) -> dict[str, Any]:
     def _sports_count(block: dict[str, Any]) -> int:
         count = 0
@@ -582,6 +699,129 @@ def _extract_test_metrics(section: dict[str, Any], source_url: str) -> list[dict
     return metrics
 
 
+def _extract_overview_metrics(page_text: str, source_url: str) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    metrics: list[dict[str, Any]] = []
+    core: dict[str, Any] = {}
+
+    text = _clean_text(page_text)
+
+    tuition_patterns = [
+        r"\$?\s*([0-9][0-9,]{2,})\s*/?\s*year\s+Out-of-state tuition before financial aid",
+        r"Out-of-state tuition before financial aid[^0-9$]{0,20}\$?\s*([0-9][0-9,]{2,})",
+        r"Out-of-state tuition(?: and fees)?[^0-9$]{0,20}\$?\s*([0-9][0-9,]{2,})",
+    ]
+    tuition_match = None
+    for pattern in tuition_patterns:
+        tuition_match = re.search(pattern, text, re.IGNORECASE)
+        if tuition_match:
+            break
+    if tuition_match:
+        tuition = _to_number(tuition_match.group(1))
+        if tuition is not None:
+            metrics.append(
+                {
+                    "key": "tuition_out_state",
+                    "unit": "usd",
+                    "value_text": str(int(round(tuition))),
+                    "value_number": tuition,
+                    "value_json": None,
+                    "confidence": 0.96,
+                    "section_key": "peterson_profile",
+                    "source_url": source_url,
+                }
+            )
+
+    acceptance_match = re.search(
+        r"(?:([0-9]{1,3})\s*%\s+Acceptance Rate|Acceptance Rate[^0-9]{0,20}([0-9]{1,3})\s*%|Admission Rate[^0-9]{0,20}([0-9]{1,3})\s*%)",
+        text,
+        re.IGNORECASE,
+    )
+    if acceptance_match:
+        acceptance = _to_number(acceptance_match.group(1) or acceptance_match.group(2) or acceptance_match.group(3) or "")
+        if acceptance is not None:
+            metrics.append(
+                {
+                    "key": "acceptance_rate",
+                    "unit": "percent",
+                    "value_text": str(int(round(acceptance))),
+                    "value_number": acceptance,
+                    "value_json": None,
+                    "confidence": 0.96,
+                    "section_key": "peterson_profile",
+                    "source_url": source_url,
+                }
+            )
+            core["acceptance_rate"] = int(round(acceptance))
+
+    students_patterns = [
+        r"([0-9][0-9,]{2,})\s+(?:Students|Enrolled)",
+        r"Total undergraduates?[^0-9]{0,20}([0-9][0-9,]{2,})",
+        r"Undergraduate enrollment[^0-9]{0,20}([0-9][0-9,]{2,})",
+    ]
+    students_match = None
+    for pattern in students_patterns:
+        students_match = re.search(pattern, text, re.IGNORECASE)
+        if students_match:
+            break
+    if students_match:
+        students = _to_number(students_match.group(1))
+        if students is not None:
+            metrics.append(
+                {
+                    "key": "total_undergraduates",
+                    "unit": "count",
+                    "value_text": str(int(round(students))),
+                    "value_number": students,
+                    "value_json": None,
+                    "confidence": 0.95,
+                    "section_key": "peterson_profile",
+                    "source_url": source_url,
+                }
+            )
+            core["total_undergraduates"] = int(round(students))
+
+    gpa_patterns = [
+        r"([0-9](?:\.[0-9]+)?)\s+Avg\.?\s*high school GPA for freshman",
+        r"Avg\.?\s*high school GPA for freshman[^0-9]{0,20}([0-9](?:\.[0-9]+)?)",
+        r"(?:Average|Avg\.?)\s*high school GPA[^0-9]{0,20}([0-9](?:\.[0-9]+)?)",
+    ]
+    gpa_match = None
+    for pattern in gpa_patterns:
+        gpa_match = re.search(pattern, text, re.IGNORECASE)
+        if gpa_match:
+            break
+    if gpa_match:
+        gpa = _to_number(gpa_match.group(1))
+        if gpa is not None:
+            metrics.append(
+                {
+                    "key": "avg_high_school_gpa_freshman",
+                    "unit": "count",
+                    "value_text": f"{gpa:.2f}",
+                    "value_number": gpa,
+                    "value_json": None,
+                    "confidence": 0.95,
+                    "section_key": "peterson_profile",
+                    "source_url": source_url,
+                }
+            )
+            metrics.append(
+                {
+                    "key": "avg_gpa",
+                    "unit": "count",
+                    "value_text": f"{gpa:.2f}",
+                    "value_number": gpa,
+                    "value_json": None,
+                    "confidence": 0.95,
+                    "section_key": "peterson_profile",
+                    "source_url": source_url,
+                }
+            )
+            core["avg_gpa"] = gpa
+
+    return metrics, core
+
+
 def scrape_peterson_profile(university_name: str, timeout: int = 30) -> dict[str, Any]:
     source_url = resolve_peterson_url(university_name)
     if not source_url:
@@ -595,6 +835,8 @@ def scrape_peterson_profile(university_name: str, timeout: int = 30) -> dict[str
     location_contact = _get_section_by_heading(soup, "Location & Contact")
     majors_degrees = _get_section_by_heading(soup, "Majors & Degrees")
     applying = _get_section_by_heading(soup, "Applying")
+    admissions_overview = _get_section_by_heading(soup, "Admissions")
+    tuition_fees = _get_section_by_heading(soup, "Tuition & Fees")
     female_admissions = _get_section_by_heading(soup, "Female Admissions")
     male_admissions = _get_section_by_heading(soup, "Male Admissions")
     test_scores = _get_section_by_heading(soup, "Test Scores Accepted")
@@ -605,8 +847,14 @@ def scrape_peterson_profile(university_name: str, timeout: int = 30) -> dict[str
     womens_sports = _get_section_by_heading(soup, "Women's Sports")
 
     majors = _extract_majors(majors_degrees)
+    overview_metrics, core = _extract_overview_metrics(
+        page_text=_clean_text(soup.get_text(" ", strip=True)),
+        source_url=source_url,
+    )
     applying_matrix = _extract_requirements(applying)
     applying_rows = _extract_labeled_rows(applying)
+    admissions_rows = _extract_labeled_rows(admissions_overview)
+    tuition_rows = _extract_labeled_rows(tuition_fees)
     financial_aid_rows = _extract_labeled_rows(financial_aid)
     female_stats = _extract_admissions_by_gender(female_admissions, "female")
     male_stats = _extract_admissions_by_gender(male_admissions, "male")
@@ -618,7 +866,7 @@ def scrape_peterson_profile(university_name: str, timeout: int = 30) -> dict[str
         fallback_text=_clean_text(soup.get_text(" ", strip=True)),
     )
 
-    metrics: list[dict[str, Any]] = []
+    metrics: list[dict[str, Any]] = list(overview_metrics)
 
     def add_json_metric(key: str, payload: Any, confidence: float = 0.95):
         metrics.append(
@@ -638,6 +886,8 @@ def scrape_peterson_profile(university_name: str, timeout: int = 30) -> dict[str
     add_json_metric("majors_degrees", {"majors": majors, "raw": majors_degrees})
     add_json_metric("admission_requirements_matrix", applying_matrix)
     add_json_metric("applying_extended", applying_rows)
+    add_json_metric("admissions_rows", admissions_rows)
+    add_json_metric("tuition_fees_rows", tuition_rows)
     add_json_metric("female_admissions", female_stats)
     add_json_metric("male_admissions", male_stats)
     add_json_metric("test_policy_details", test_scores)
@@ -647,6 +897,13 @@ def scrape_peterson_profile(university_name: str, timeout: int = 30) -> dict[str
     add_json_metric("athletics", athletics_summary)
     metrics.extend(_extract_test_metrics(test_scores, source_url=source_url))
     metrics.extend(_extract_application_fee(applying_rows=applying_rows, applying_section=applying, source_url=source_url))
+    fallback_metrics, fallback_core = _extract_core_fallback_from_rows(
+        rows=admissions_rows + tuition_rows + applying_rows,
+        source_url=source_url,
+    )
+    metrics.extend(fallback_metrics)
+    for key, value in fallback_core.items():
+        core.setdefault(key, value)
 
     if majors:
         metrics.append(
@@ -690,6 +947,8 @@ def scrape_peterson_profile(university_name: str, timeout: int = 30) -> dict[str
     status = "success" if all(blocks.values()) else ("partial" if any(blocks.values()) else "failed")
     missing = [key for key, ok in blocks.items() if not ok]
 
+    gpa_profile_value = gpa_value if gpa_value is not None else core.get("avg_gpa")
+
     standard_profile = {
         "source_provider": "petersons",
         "source_url": source_url,
@@ -701,6 +960,8 @@ def scrape_peterson_profile(university_name: str, timeout: int = 30) -> dict[str
         "majors_degrees": {"majors": majors, "raw": majors_degrees},
         "applying_requirements": applying_matrix,
         "applying_extended": applying_rows,
+        "admissions_rows": admissions_rows,
+        "tuition_fees_rows": tuition_rows,
         "female_admissions": female_stats,
         "male_admissions": male_stats,
         "test_policy_details": test_scores,
@@ -708,7 +969,7 @@ def scrape_peterson_profile(university_name: str, timeout: int = 30) -> dict[str
         "financial_aid_items": financial_aid_rows,
         "campus_life": campus_life,
         "athletics": athletics_summary,
-        "gpa_value": gpa_value,
+        "gpa_value": gpa_profile_value,
         "data_completeness_score": completeness,
     }
 
@@ -765,5 +1026,5 @@ def scrape_peterson_profile(university_name: str, timeout: int = 30) -> dict[str
         "media": [],
         "raw_payload": raw_payload,
         "raw_text_index": _clean_text(soup.get_text(" ", strip=True))[:50000],
-        "core": {},
+        "core": core,
     }
