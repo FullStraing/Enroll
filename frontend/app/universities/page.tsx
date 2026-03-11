@@ -160,6 +160,7 @@ export default function UniversitiesPage() {
 
   const [filtersDraft, setFiltersDraft] = useState<DiscoverFilters>(EMPTY_FILTERS);
   const [filters, setFilters] = useState<DiscoverFilters>(EMPTY_FILTERS);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const [pendingAdd, setPendingAdd] = useState<{ universityId: number; name: string; category: StudentUniversity["category"] } | null>(null);
   const [status, setStatus] = useState("");
@@ -168,6 +169,14 @@ export default function UniversitiesPage() {
   const [uiStateReady, setUiStateReady] = useState(false);
 
   const myUniversityIds = useMemo(() => new Set(myItems.map((item) => item.university.id)), [myItems]);
+  const activeFiltersCount = useMemo(
+    () =>
+      Object.values(filters).reduce((count, value) => {
+        if (typeof value === "string" && value.trim()) return count + 1;
+        return count;
+      }, 0),
+    [filters],
+  );
 
   async function loadMyUniversities(options?: { silent?: boolean }) {
     const token = getToken();
@@ -300,6 +309,7 @@ export default function UniversitiesPage() {
     let initialFilters: DiscoverFilters = EMPTY_FILTERS;
     let initialFiltersDraft: DiscoverFilters = EMPTY_FILTERS;
     let initialDiscoverPage = 1;
+    let initialFiltersOpen = false;
 
     if (typeof window !== "undefined") {
       const saved = Number(window.localStorage.getItem(PAGE_SIZE_STORAGE_KEY));
@@ -315,6 +325,7 @@ export default function UniversitiesPage() {
             filters?: DiscoverFilters;
             filtersDraft?: DiscoverFilters;
             discoverPage?: number;
+            filtersOpen?: boolean;
           };
           if (parsed.activeTab === "my" || parsed.activeTab === "discover") {
             initialTab = parsed.activeTab;
@@ -329,6 +340,9 @@ export default function UniversitiesPage() {
           }
           if (typeof parsed.discoverPage === "number" && parsed.discoverPage > 0) {
             initialDiscoverPage = parsed.discoverPage;
+          }
+          if (typeof parsed.filtersOpen === "boolean") {
+            initialFiltersOpen = parsed.filtersOpen;
           }
         } catch {
           // Ignore invalid session payload and use defaults.
@@ -385,6 +399,7 @@ export default function UniversitiesPage() {
     setActiveTab(initialTab);
     setFilters(initialFilters);
     setFiltersDraft(initialFiltersDraft);
+    setFiltersOpen(initialFiltersOpen);
     void loadMyUniversities({ silent: hasMyCache });
     void loadDiscover(initialDiscoverPage, initialFilters, initialPageSize, { silent: hasDiscoverCache });
     setUiStateReady(true);
@@ -401,9 +416,10 @@ export default function UniversitiesPage() {
         filters,
         filtersDraft,
         discoverPage,
+        filtersOpen,
       }),
     );
-  }, [activeTab, filters, filtersDraft, discoverPage, uiStateReady]);
+  }, [activeTab, filters, filtersDraft, discoverPage, filtersOpen, uiStateReady]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -612,6 +628,21 @@ export default function UniversitiesPage() {
             </div>
           ) : (
             <div className="mt-4">
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setFiltersOpen((prev) => !prev)}
+                  className={filtersOpen ? "bg-[#DAF5F0]" : ""}
+                >
+                  {filtersOpen ? "Hide filters" : "Show filters"}
+                </Button>
+                <div className="text-sm text-black/65">
+                  Active filters: <span className="font-semibold text-black">{activeFiltersCount}</span>
+                </div>
+              </div>
+
+              {filtersOpen ? (
               <div className="grid gap-3 rounded-xl border border-black/10 bg-black/[0.02] p-3 md:grid-cols-2 xl:grid-cols-4">
                 <label className="text-xs text-black/70">
                   Search
@@ -807,6 +838,7 @@ export default function UniversitiesPage() {
                   </Button>
                 </div>
               </div>
+              ) : null}
 
               <div className="mt-3 flex items-center justify-between text-sm text-black/70">
                 <span>Total: {discoverCount}</span>
