@@ -261,8 +261,41 @@ def _extract_labeled_rows(section: dict[str, Any]) -> list[dict[str, str]]:
             if item["raw"]:
                 rows_out.append(item)
     if not rows_out and section.get("text"):
-        rows_out.append({"label": "raw_text", "value": section["text"], "raw": section["text"]})
-    return rows_out
+        text = _clean_text(section["text"])
+        # Fallback for non-tabular sections like:
+        # "62,183 Avg. Financial Aid Package 68,339 Avg. Freshman Financial Aid Package ..."
+        pair_pattern = re.compile(
+            r"([0-9][0-9,]*(?:\.[0-9]+)?%?)\s+([A-Za-z][A-Za-z/&(),.\-\s]{3,90}?)(?=\s+[0-9][0-9,]*(?:\.[0-9]+)?%?|$)"
+        )
+        for value, label in pair_pattern.findall(text):
+            label_clean = _clean_text(label).strip(":")
+            if not label_clean:
+                continue
+            rows_out.append(
+                {
+                    "label": label_clean,
+                    "value": _clean_text(value),
+                    "raw": f"{label_clean}: {value}",
+                }
+            )
+        if not rows_out and text:
+            rows_out.append({"label": "summary", "value": text[:500], "raw": text[:500]})
+
+    # Deduplicate repeated rows from noisy source HTML blocks.
+    deduped: list[dict[str, str]] = []
+    seen = set()
+    for row in rows_out:
+        key = (
+            row.get("label", "").strip().lower(),
+            row.get("value", "").strip().lower(),
+            row.get("value_2", "").strip().lower(),
+            row.get("value_3", "").strip().lower(),
+        )
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(row)
+    return deduped[:200]
 
 
 def _extract_application_fee(
@@ -279,27 +312,42 @@ def _extract_application_fee(
         normalized = _normalize_key(blob)
         if "application fee" not in normalized:
             continue
+        money = re.search(r"\$\s*([0-9]{1,4}(?:\.[0-9]{1,2})?)", blob)
+        if money:
+            best_fee_number = _to_number(money.group(1))
+            best_fee_text = _clean_text(blob)
+            break
         number = _to_number(blob)
-        if number is not None and best_fee_number is None:
+        # Avoid GPA-like decimals; fee should be an amount (typically >= 10) unless explicitly no-fee.
+        if number is not None and number >= 10 and best_fee_number is None:
             best_fee_number = number
             best_fee_text = _clean_text(blob)
-        elif not best_fee_text:
+        elif not best_fee_text and number is not None:
             best_fee_text = _clean_text(blob)
 
     if best_fee_number is None:
         section_text = _clean_text(applying_section.get("text", ""))
-        # Examples:
-        # "Application fee $75"
-        # "Application Fee: 90 USD"
-        # "App fee: $50"
-        text_match = re.search(
-            r"(application\s*fee|app\s*fee)[^0-9$]{0,20}(\$?\s*[0-9]{1,4}(?:\.[0-9]{1,2})?)",
-            section_text,
-            re.IGNORECASE,
-        )
-        if text_match:
-            best_fee_text = _clean_text(text_match.group(0))
-            best_fee_number = _to_number(text_match.group(2))
+        if re.search(r"\b(no application fee|application fee waived|fee waived)\b", section_text, re.IGNORECASE):
+            best_fee_number = 0
+            best_fee_text = "No application fee"
+        else:
+            # Pattern where amount appears before label: "50 Application Fee"
+            before_label = re.search(r"\b([0-9]{1,4})\s+Application Fee\b", section_text, re.IGNORECASE)
+            if before_label:
+                best_fee_number = _to_number(before_label.group(1))
+                best_fee_text = f"Application Fee {before_label.group(1)}"
+            else:
+                # Pattern where amount appears after label: "Application Fee $75"
+                after_label = re.search(
+                    r"\b(Application Fee|App Fee)\b[^0-9$]{0,20}\$?\s*([0-9]{1,4}(?:\.[0-9]{1,2})?)",
+                    section_text,
+                    re.IGNORECASE,
+                )
+                if after_label:
+                    candidate = _to_number(after_label.group(2))
+                    if candidate is not None and candidate >= 10:
+                        best_fee_number = candidate
+                    best_fee_text = _clean_text(after_label.group(0))
 
     if best_fee_number is not None:
         metrics.append(
