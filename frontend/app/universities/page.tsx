@@ -22,6 +22,7 @@ type University = {
   acceptance_rate?: number | null;
   tuition_out_state?: number | null;
   net_price?: number | null;
+  aid_package?: number | null;
 };
 
 type StudentUniversity = {
@@ -139,6 +140,16 @@ function buildQuery(paramsSource: DiscoverFilters, page: number, pageSize: numbe
   return params.toString();
 }
 
+function getNetCostValue(university: University): number | null {
+  const tuition = typeof university.tuition_out_state === "number" ? university.tuition_out_state : null;
+  const aid = typeof university.aid_package === "number" ? university.aid_package : null;
+  if (tuition != null && aid != null) {
+    return Math.max(0, tuition - aid);
+  }
+  if (typeof university.net_price === "number") return university.net_price;
+  return tuition;
+}
+
 function filtersHash(filters: DiscoverFilters): string {
   return JSON.stringify(filters);
 }
@@ -162,7 +173,6 @@ export default function UniversitiesPage() {
   const [filters, setFilters] = useState<DiscoverFilters>(EMPTY_FILTERS);
   const [filtersOpen, setFiltersOpen] = useState(false);
 
-  const [pendingAdd, setPendingAdd] = useState<{ universityId: number; name: string; category: StudentUniversity["category"] } | null>(null);
   const [status, setStatus] = useState("");
   const [statusAction, setStatusAction] = useState<null | { label: string; onClick: () => void }>(null);
   const restoredScrollRef = useRef(false);
@@ -278,24 +288,23 @@ export default function UniversitiesPage() {
     }
   }
 
-  async function confirmAddToMyList() {
+  async function addToMyList(university: University) {
     const token = getToken();
-    if (!token || !pendingAdd) return;
+    if (!token) return;
 
-    setUpdatingItemId(pendingAdd.universityId);
+    setUpdatingItemId(university.id);
     try {
       await apiFetch("/api/my-universities/", {
         method: "POST",
         body: JSON.stringify({
-          university_id: pendingAdd.universityId,
-          category: pendingAdd.category,
+          university_id: university.id,
+          category: "safety",
         }),
       }, token);
 
       await loadMyUniversities();
-      setStatus(`Added to your university list: ${pendingAdd.name}`);
+      setStatus(`Added to your university list: ${university.name}`);
       setStatusAction({ label: "View my list", onClick: () => setActiveTab("my") });
-      setPendingAdd(null);
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Failed to add university.");
     } finally {
@@ -513,35 +522,6 @@ export default function UniversitiesPage() {
             </div>
           ) : null}
 
-          {pendingAdd ? (
-            <Card className="mt-4 shadow-none">
-              <CardTitle className="text-base">How do you classify this university?</CardTitle>
-              <CardDescription className="mt-1">{pendingAdd.name}</CardDescription>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {(["reach", "target", "safety"] as const).map((category) => (
-                  <button
-                    key={category}
-                    type="button"
-                    onClick={() => setPendingAdd((prev) => (prev ? { ...prev, category } : prev))}
-                    className={`rounded-lg border px-3 py-1.5 text-sm font-semibold ${
-                      pendingAdd.category === category ? "border-black bg-[#FFDB58]" : "border-black/20 bg-white"
-                    }`}
-                  >
-                    {categoryLabel(category)}
-                  </button>
-                ))}
-              </div>
-              <div className="mt-4 flex gap-2">
-                <Button size="sm" onClick={() => void confirmAddToMyList()} disabled={updatingItemId === pendingAdd.universityId}>
-                  Add to my list
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => setPendingAdd(null)}>
-                  Cancel
-                </Button>
-              </div>
-            </Card>
-          ) : null}
-
           {activeTab === "my" ? (
             <div className="mt-4 overflow-x-auto">
               {loadingMy ? (
@@ -607,8 +587,8 @@ export default function UniversitiesPage() {
                         </td>
                         <td className="px-2 py-3">{item.university.acceptance_rate != null ? `${item.university.acceptance_rate}%` : "N/A"}</td>
                         <td className="px-2 py-3">{money(item.university.tuition_out_state)}</td>
-                        <td className="px-2 py-3">N/A</td>
-                        <td className="px-2 py-3">{money(item.university.net_price ?? item.university.tuition_out_state)}</td>
+                        <td className="px-2 py-3">{money(item.university.aid_package)}</td>
+                        <td className="px-2 py-3">{money(getNetCostValue(item.university))}</td>
                         <td className="px-2 py-3">{item.university.main_deadline || "N/A"}</td>
                         <td className="px-2 py-3">
                           <div className="flex flex-wrap gap-2">
@@ -908,7 +888,7 @@ export default function UniversitiesPage() {
                                 size="sm"
                                 onClick={(event) => {
                                   event.stopPropagation();
-                                  setPendingAdd({ universityId: university.id, name: university.name, category: "target" });
+                                  void addToMyList(university);
                                 }}
                                 disabled={updatingItemId === university.id}
                               >

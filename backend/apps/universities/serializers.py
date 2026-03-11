@@ -17,6 +17,7 @@ class UniversitySerializer(serializers.ModelSerializer):
     tuition_in_state = serializers.SerializerMethodField()
     room_and_board = serializers.SerializerMethodField()
     housing_cost = serializers.SerializerMethodField()
+    aid_package = serializers.SerializerMethodField()
     deadlines_count = serializers.IntegerField(read_only=True)
     has_deadlines = serializers.BooleanField(read_only=True)
     deadline_freshness_days = serializers.IntegerField(read_only=True)
@@ -50,6 +51,7 @@ class UniversitySerializer(serializers.ModelSerializer):
             "tuition_in_state",
             "room_and_board",
             "housing_cost",
+            "aid_package",
             "deadlines_count",
             "has_deadlines",
             "deadline_freshness_days",
@@ -83,6 +85,43 @@ class UniversitySerializer(serializers.ModelSerializer):
 
     def get_housing_cost(self, obj):
         return self._metric_value(obj, "housing_cost")
+
+    def get_aid_package(self, obj):
+        # Prefer international aid package, then freshman, then generic average package.
+        prefetched = getattr(obj, "_prefetched_objects_cache", {})
+        metrics = prefetched.get("metrics")
+        if metrics is None:
+            metric = obj.metrics.filter(key="financial_aid_items").first()
+            if not metric or not isinstance(metric.value_json, list):
+                return None
+            rows = metric.value_json
+        else:
+            rows = None
+            for metric in metrics:
+                if metric.key == "financial_aid_items" and isinstance(metric.value_json, list):
+                    rows = metric.value_json
+                    break
+            if rows is None:
+                return None
+
+        labels_priority = [
+            "avg. international student financial aid package",
+            "avg. freshman financial aid package",
+            "avg. financial aid package",
+        ]
+
+        for target in labels_priority:
+            for row in rows:
+                label = str(row.get("label", "")).strip().lower()
+                value = str(row.get("value", "")).strip()
+                if target not in label:
+                    continue
+                normalized = value.replace("$", "").replace(",", "").strip()
+                try:
+                    return float(normalized)
+                except (TypeError, ValueError):
+                    continue
+        return None
 
 
 class UniversityMetricSerializer(serializers.ModelSerializer):
