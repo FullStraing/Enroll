@@ -11,6 +11,7 @@ type EssayRichEditorProps = {
   content: string;
   placeholder?: string;
   editable?: boolean;
+  stickyToolbar?: boolean;
   onChange: (html: string, text: string) => void;
 };
 
@@ -22,6 +23,7 @@ export function EssayRichEditor({
   content,
   placeholder = "Write your essay here...",
   editable = true,
+  stickyToolbar = false,
   onChange,
 }: EssayRichEditorProps) {
   const editor = useEditor({
@@ -36,7 +38,7 @@ export function EssayRichEditor({
     editorProps: {
       attributes: {
         class:
-          "min-h-[420px] rounded-b-2xl border-x border-b border-black/20 bg-white px-3 py-3 text-sm leading-6 focus:outline-none",
+          "min-h-[520px] rounded-b-2xl border-x border-b border-black/20 bg-white px-3 py-3 text-sm leading-6 focus:outline-none",
       },
     },
     onUpdate: ({ editor: current }) => {
@@ -61,7 +63,11 @@ export function EssayRichEditor({
 
   return (
     <div>
-      <div className="flex flex-wrap gap-2 rounded-t-2xl border border-black/20 bg-black/[0.03] p-2">
+      <div
+        className={`flex flex-wrap gap-2 rounded-t-2xl border border-black/20 bg-black/[0.03] p-2 ${
+          stickyToolbar ? "sticky top-2 z-10" : ""
+        }`}
+      >
         <Button
           type="button"
           size="sm"

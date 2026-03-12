@@ -3,7 +3,7 @@
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { Bot, GitCompare, PanelRightClose, PanelRightOpen, Sparkles } from "lucide-react";
+import { Bot, Focus, GitCompare, RotateCcw, Sparkles, X } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { ProtectedPage } from "@/components/protected-page";
 import { getToken } from "@/lib/auth";
@@ -123,6 +123,23 @@ function getWordTargetState(wordCount: number, target: number) {
   };
 }
 
+function versionSuffix(version: EssayVersion): string {
+  if (version.status === "final") return "Final";
+  if (version.status === "ai_improved") return "AI edit";
+  if (version.status === "revised") return "Revision";
+  return "Draft";
+}
+
+function getSavedAgoLabel(lastSavedAt: Date | null) {
+  if (!lastSavedAt) return "Not saved yet";
+  const diffMs = Date.now() - lastSavedAt.getTime();
+  const seconds = Math.max(0, Math.floor(diffMs / 1000));
+  if (seconds < 5) return "Auto saved just now";
+  if (seconds < 60) return `Auto saved ${seconds}s ago`;
+  const minutes = Math.floor(seconds / 60);
+  return `Auto saved ${minutes}m ago`;
+}
+
 export default function EssayWorkspacePage() {
   const params = useParams<{ id: string }>();
   const essayId = Number(params.id);
@@ -134,8 +151,10 @@ export default function EssayWorkspacePage() {
   const [loadedVersionId, setLoadedVersionId] = useState<number | null>(null);
   const [newVersionLabel, setNewVersionLabel] = useState("Revision");
   const [newVersionStatus, setNewVersionStatus] = useState<EssayVersion["status"]>("revised");
+  const [createVersionOpen, setCreateVersionOpen] = useState(false);
   const [compareLeftId, setCompareLeftId] = useState<number | null>(null);
   const [compareRightId, setCompareRightId] = useState<number | null>(null);
+  const [compareOpen, setCompareOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [creatingVersion, setCreatingVersion] = useState(false);
@@ -144,9 +163,12 @@ export default function EssayWorkspacePage() {
   const [compareRows, setCompareRows] = useState<DiffRow[]>([]);
   const [compareLoading, setCompareLoading] = useState(false);
   const [aiPanelVisible, setAiPanelVisible] = useState(() => {
-    if (typeof window === "undefined") return true;
+    if (typeof window === "undefined") return false;
     return window.localStorage.getItem("essay_ai_panel_visible") !== "0";
   });
+  const [focusMode, setFocusMode] = useState(false);
+  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
+  const [savedAgoLabel, setSavedAgoLabel] = useState("Not saved yet");
   const autosaveSeqRef = useRef(0);
 
   const loadWorkspace = useCallback(async () => {
@@ -191,6 +213,7 @@ export default function EssayWorkspacePage() {
     setEditorContent(selectedVersion.content || "<p></p>");
     setLoadedVersionId(selectedVersion.id);
     setEditorPlainText(htmlToText(selectedVersion.content || ""));
+    setLastSavedAt(selectedVersion.updated_at ? new Date(selectedVersion.updated_at) : null);
     setSaveState("idle");
   }, [selectedVersion, loadedVersionId]);
 
@@ -237,6 +260,7 @@ export default function EssayWorkspacePage() {
         if (cancelled || currentSeq !== autosaveSeqRef.current) return;
         setVersions((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
         setSaveState("saved");
+        setLastSavedAt(new Date());
       } catch {
         if (cancelled || currentSeq !== autosaveSeqRef.current) return;
         setSaveState("error");
@@ -250,10 +274,10 @@ export default function EssayWorkspacePage() {
     };
   }, [editorContent, selectedVersion, selectedIsLatest, persistVersion]);
 
-  async function createVersion(event: FormEvent) {
+  async function createVersion(event: FormEvent): Promise<boolean> {
     event.preventDefault();
     const token = getToken();
-    if (!token || !essayId) return;
+    if (!token || !essayId) return false;
     setCreatingVersion(true);
     try {
       const created = await apiFetch<EssayVersion>(
@@ -275,8 +299,10 @@ export default function EssayWorkspacePage() {
       setNewVersionStatus("revised");
       setCompareRightId(created.id);
       setStatusText("New version created.");
+      return true;
     } catch (error) {
       setStatusText(error instanceof Error ? error.message : "Failed to create version.");
+      return false;
     } finally {
       setCreatingVersion(false);
     }
@@ -300,6 +326,7 @@ export default function EssayWorkspacePage() {
       });
       setVersions((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
       setSaveState("saved");
+      setLastSavedAt(new Date());
       setStatusText("Saved.");
     } catch (error) {
       setStatusText(error instanceof Error ? error.message : "Failed to save version.");
@@ -309,20 +336,36 @@ export default function EssayWorkspacePage() {
     }
   }
 
-  async function updateLatestVersionMeta(field: "status" | "label", value: string) {
-    if (!selectedVersion || !selectedIsLatest) return;
+  async function restoreVersion(version: EssayVersion) {
+    if (!essayId) return;
+    const token = getToken();
+    if (!token) return;
+    setCreatingVersion(true);
     try {
-      const payload = {
-        label: field === "label" ? value : selectedVersion.label,
-        content: editorContent,
-        source: selectedVersion.source,
-        status: (field === "status" ? value : selectedVersion.status) as EssayVersion["status"],
-      };
-      const updated = await persistVersion(payload);
-      setVersions((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
-      setStatusText("Version metadata updated.");
+      const created = await apiFetch<EssayVersion>(
+        `/api/essays/${essayId}/versions/`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            label: `Restore v${version.version_number}`,
+            content: version.content,
+            status: "revised",
+          }),
+        },
+        token,
+      );
+      setVersions((prev) => [created, ...prev]);
+      setSelectedVersionId(created.id);
+      setLoadedVersionId(created.id);
+      setEditorContent(created.content || "<p></p>");
+      setEditorPlainText(htmlToText(created.content || ""));
+      setSaveState("saved");
+      setLastSavedAt(new Date());
+      setStatusText(`Restored from v${version.version_number}.`);
     } catch (error) {
-      setStatusText(error instanceof Error ? error.message : "Failed to update version metadata.");
+      setStatusText(error instanceof Error ? error.message : "Failed to restore version.");
+    } finally {
+      setCreatingVersion(false);
     }
   }
 
@@ -331,6 +374,14 @@ export default function EssayWorkspacePage() {
     if (!normalized) return 0;
     return normalized.split(/\s+/).length;
   }, [editorPlainText]);
+
+  useEffect(() => {
+    setSavedAgoLabel(getSavedAgoLabel(lastSavedAt));
+    const timer = window.setInterval(() => {
+      setSavedAgoLabel(getSavedAgoLabel(lastSavedAt));
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [lastSavedAt]);
 
   useEffect(() => {
     async function loadCompare() {
@@ -367,106 +418,45 @@ export default function EssayWorkspacePage() {
     });
   }
 
-  const gridClass = aiPanelVisible
-    ? "grid gap-4 lg:grid-cols-[260px_1fr] xl:grid-cols-[260px_1fr_420px]"
-    : "grid gap-4 lg:grid-cols-[260px_1fr]";
-
-  const rightPanel = (
-    <Card className="shadow-none">
-      <div className="flex items-center justify-between gap-2">
-        <CardTitle className="flex items-center gap-2">
-          <Bot className="h-4 w-4" />
-          AI Mentor
-        </CardTitle>
-        <Badge variant="cyan">Phase 5</Badge>
-      </div>
-      <div className="mt-3 rounded-xl border border-black/15 bg-[#DAF5F0]/40 p-3 text-sm text-black/75">
-        AI actions are not enabled yet. In next phase this panel will run:
-        <ul className="mt-2 list-disc pl-5">
-          <li>Create draft (Hook / Conflict / Growth / Impact)</li>
-          <li>Selection-based improvements</li>
-          <li>Admissions-style review</li>
-        </ul>
-      </div>
-
-      <div className="mt-4 border-t border-black/10 pt-4">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <GitCompare className="h-4 w-4" />
-          Compare versions
-        </CardTitle>
-        <div className="mt-3 grid grid-cols-2 gap-2">
-          <select
-            value={compareLeftId || ""}
-            onChange={(event) => setCompareLeftId(Number(event.target.value))}
-            className="rounded-xl border border-black/20 bg-white px-2 py-2 text-sm"
-          >
-            {versions.map((item) => (
-              <option key={`left-${item.id}`} value={item.id}>
-                v{item.version_number} {item.label || "Draft"}
-              </option>
-            ))}
-          </select>
-          <select
-            value={compareRightId || ""}
-            onChange={(event) => setCompareRightId(Number(event.target.value))}
-            className="rounded-xl border border-black/20 bg-white px-2 py-2 text-sm"
-          >
-            {versions.map((item) => (
-              <option key={`right-${item.id}`} value={item.id}>
-                v{item.version_number} {item.label || "Draft"}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="mt-3 max-h-[420px] space-y-2 overflow-auto rounded-xl border border-black/10 bg-white p-3 text-xs">
-          {compareLoading ? <p className="text-black/60">Loading diff...</p> : null}
-          {compareRows.map((row, index) => (
-            <div
-              key={`diff-${index}`}
-              className={`rounded-lg border px-2 py-1 ${
-                row.kind === "added"
-                  ? "border-emerald-200 bg-emerald-50"
-                  : row.kind === "removed"
-                    ? "border-rose-200 bg-rose-50"
-                    : row.kind === "changed"
-                      ? "border-amber-200 bg-amber-50"
-                      : "border-black/10 bg-white"
-              }`}
-            >
-              <p className="font-semibold uppercase text-[10px] text-black/50">
-                {row.kind === "same" ? "=" : row.kind === "added" ? "+" : row.kind === "removed" ? "-" : "~"}
-              </p>
-              {row.kind !== "added" ? <p className="text-black/70">{row.left || "(empty)"}</p> : null}
-              {row.kind !== "removed" ? <p className="text-black">{row.right || "(empty)"}</p> : null}
-            </div>
-          ))}
-        </div>
-      </div>
-    </Card>
-  );
+  const workspaceGridClass = focusMode ? "grid grid-cols-1" : "grid gap-4 lg:grid-cols-[240px_minmax(0,1fr)]";
 
   return (
     <ProtectedPage>
       <AppShell
         title={essay ? `Essay Workspace - ${essay.title}` : "Essay Workspace"}
-        subtitle="Versions (left) + Editor (center) + Compare mode (no AI yet)"
+        subtitle="Versions + Editor"
       >
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2 text-sm text-black/70">
             <Sparkles className="h-4 w-4" />
-            Right panel is a placeholder for upcoming AI actions.
+            Keep writing focus: tools open on demand.
           </div>
-          <Button variant="outline" size="sm" onClick={toggleAiPanel}>
-            {aiPanelVisible ? <PanelRightClose className="h-4 w-4" /> : <PanelRightOpen className="h-4 w-4" />}
-            <span>{aiPanelVisible ? "Hide AI panel" : "Show AI panel"}</span>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setCompareOpen(true)} disabled={versions.length < 2}>
+              <GitCompare className="h-4 w-4" />
+              <span>Compare versions</span>
+            </Button>
+            <Button variant="outline" size="sm" onClick={toggleAiPanel}>
+              <Bot className="h-4 w-4" />
+              <span>AI Assistant</span>
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setFocusMode((prev) => !prev)}>
+              <Focus className="h-4 w-4" />
+              <span>{focusMode ? "Exit focus" : "Focus mode"}</span>
+            </Button>
+          </div>
         </div>
 
         {loading ? (
-          <div className={gridClass}>
-            <Card className="shadow-none"><Skeleton className="h-72 w-full" /></Card>
-            <Card className="shadow-none"><Skeleton className="h-72 w-full" /></Card>
-            {aiPanelVisible ? <Card className="shadow-none"><Skeleton className="h-72 w-full" /></Card> : null}
+          <div className={workspaceGridClass}>
+            {!focusMode ? (
+              <Card className="shadow-none">
+                <Skeleton className="h-72 w-full" />
+              </Card>
+            ) : null}
+            <Card className="shadow-none">
+              <Skeleton className="h-72 w-full" />
+            </Card>
           </div>
         ) : !essay ? (
           <Card className="shadow-none">
@@ -476,57 +466,56 @@ export default function EssayWorkspacePage() {
             </Link>
           </Card>
         ) : (
-          <div className={gridClass}>
-            <Card className="shadow-none">
-              <div className="flex items-center justify-between gap-2">
-                <CardTitle>Versions</CardTitle>
-                <Badge>{versions.length}</Badge>
-              </div>
-              <div className="mt-3 grid gap-2">
-                {versions.map((item) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => setSelectedVersionId(item.id)}
-                    className={`rounded-xl border px-3 py-2 text-left text-sm ${
-                      selectedVersionId === item.id
-                        ? "border-black bg-[#FFDB58]/40"
-                        : "border-black/15 bg-white hover:bg-black/[0.03]"
-                    }`}
-                  >
-                    <p className="font-semibold">v{item.version_number} {item.label || "Draft"}</p>
-                    <p className="text-xs text-black/60">status: {item.status}</p>
-                    <p className="text-xs text-black/60">{formatDateTimeShort(item.updated_at)}</p>
-                  </button>
-                ))}
-              </div>
+          <div className={workspaceGridClass}>
+            {!focusMode ? (
+              <Card className="shadow-none">
+                <div className="flex items-center justify-between gap-2">
+                  <CardTitle>Versions</CardTitle>
+                  <Badge>{versions.length}</Badge>
+                </div>
+                <div className="mt-3 grid gap-2">
+                  {versions.map((item) => (
+                    <div
+                      key={item.id}
+                      className={`rounded-xl border p-2 ${
+                        selectedVersionId === item.id ? "border-black bg-[#FFDB58]/30" : "border-black/15 bg-white"
+                      }`}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => setSelectedVersionId(item.id)}
+                        className="block w-full text-left text-sm"
+                      >
+                        <p className="font-semibold">
+                          v{item.version_number} {versionSuffix(item)}
+                        </p>
+                        <p className="text-xs text-black/60">{formatDateTimeShort(item.updated_at)}</p>
+                      </button>
+                      {!item.is_latest ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="mt-2"
+                          onClick={() => void restoreVersion(item)}
+                          disabled={creatingVersion}
+                        >
+                          <RotateCcw className="h-4 w-4" />
+                          <span>Restore version</span>
+                        </Button>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-4 border-t border-black/10 pt-3">
+                  <Button size="sm" onClick={() => setCreateVersionOpen(true)} disabled={creatingVersion}>
+                    {creatingVersion ? <Spinner size="sm" /> : null}
+                    <span>{creatingVersion ? "Creating..." : "Create new version"}</span>
+                  </Button>
+                </div>
+              </Card>
+            ) : null}
 
-              <form onSubmit={createVersion} className="mt-4 grid gap-2 border-t border-black/10 pt-3">
-                <label className="text-xs font-semibold uppercase tracking-wide text-black/60">Create new version</label>
-                <input
-                  value={newVersionLabel}
-                  onChange={(event) => setNewVersionLabel(event.target.value)}
-                  className="rounded-xl border border-black/20 bg-white px-3 py-2 text-sm"
-                  placeholder="Revision label"
-                />
-                <select
-                  className="rounded-xl border border-black/20 bg-white px-3 py-2 text-sm"
-                  value={newVersionStatus}
-                  onChange={(event) => setNewVersionStatus(event.target.value as EssayVersion["status"])}
-                >
-                  <option value="draft">Status: draft</option>
-                  <option value="revised">Status: revised</option>
-                  <option value="ai_improved">Status: ai_improved</option>
-                  <option value="final">Status: final</option>
-                </select>
-                <Button type="submit" disabled={creatingVersion}>
-                  {creatingVersion ? <Spinner size="sm" /> : null}
-                  <span>{creatingVersion ? "Creating..." : "Create version"}</span>
-                </Button>
-              </form>
-            </Card>
-
-            <Card className="shadow-none">
+            <Card className="shadow-none lg:max-w-[920px] lg:justify-self-center">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <CardTitle>{essay.title}</CardTitle>
@@ -537,53 +526,13 @@ export default function EssayWorkspacePage() {
                   <Badge variant="cyan">Words: {wordCount}</Badge>
                   <Badge>Target: {essay.target_word_count}</Badge>
                   <Badge variant={wordTargetState.variant}>{wordTargetState.label}</Badge>
-                  {selectedVersion ? <Badge>{selectedVersion.status}</Badge> : null}
                 </div>
               </div>
-
-              {selectedVersion ? (
-                <div className="mt-3 grid gap-2 md:grid-cols-2">
-                  <label className="text-xs font-semibold uppercase tracking-wide text-black/60">
-                    Version label
-                    <input
-                      value={selectedVersion.label}
-                      onChange={(event) => {
-                        const value = event.target.value;
-                        setVersions((prev) =>
-                          prev.map((item) => (item.id === selectedVersion.id ? { ...item, label: value } : item)),
-                        );
-                      }}
-                      onBlur={(event) => void updateLatestVersionMeta("label", event.target.value)}
-                      disabled={!selectedIsLatest}
-                      className="mt-1 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm disabled:bg-black/[0.04]"
-                    />
-                  </label>
-                  <label className="text-xs font-semibold uppercase tracking-wide text-black/60">
-                    Version status
-                    <select
-                      value={selectedVersion.status}
-                      onChange={(event) => {
-                        const value = event.target.value as EssayVersion["status"];
-                        setVersions((prev) =>
-                          prev.map((item) => (item.id === selectedVersion.id ? { ...item, status: value } : item)),
-                        );
-                        void updateLatestVersionMeta("status", value);
-                      }}
-                      disabled={!selectedIsLatest}
-                      className="mt-1 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm disabled:bg-black/[0.04]"
-                    >
-                      <option value="draft">draft</option>
-                      <option value="revised">revised</option>
-                      <option value="ai_improved">ai_improved</option>
-                      <option value="final">final</option>
-                    </select>
-                  </label>
-                </div>
-              ) : null}
 
               <div className="mt-4">
                 <EssayRichEditor
                   content={editorContent}
+                  stickyToolbar
                   editable={selectedIsLatest}
                   onChange={(html, text) => {
                     setEditorContent(html);
@@ -611,17 +560,7 @@ export default function EssayWorkspacePage() {
                   Word count: {wordCount} / {essay.target_word_count} | Essay Score: coming soon
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-black/60">
-                    {saveState === "saving"
-                      ? "Autosaving..."
-                      : saveState === "retrying"
-                        ? "Retrying save..."
-                      : saveState === "saved"
-                        ? "Saved"
-                        : saveState === "error"
-                          ? "Autosave failed"
-                          : "Idle"}
-                  </span>
+                  <span className="text-xs text-black/60">{saveState === "error" ? "Autosave failed" : savedAgoLabel}</span>
                   <Button size="sm" onClick={saveNow} disabled={saving}>
                     {saving ? <Spinner size="sm" /> : null}
                     <span>{saving ? "Saving..." : "Save now"}</span>
@@ -630,15 +569,139 @@ export default function EssayWorkspacePage() {
               </div>
             </Card>
 
-            {aiPanelVisible ? <div className="hidden xl:block">{rightPanel}</div> : null}
           </div>
         )}
 
         {aiPanelVisible && !loading && essay ? (
-          <details className="mt-4 rounded-2xl border border-black/15 bg-white p-3 xl:hidden">
-            <summary className="cursor-pointer text-sm font-semibold">AI Mentor & Compare (mobile)</summary>
-            <div className="mt-3">{rightPanel}</div>
-          </details>
+          <div className="fixed inset-y-20 right-4 z-40 w-[min(380px,92vw)] rounded-2xl border-2 border-black bg-white p-4 shadow-[0_8px_0_#000]">
+            <div className="flex items-center justify-between gap-2">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Bot className="h-4 w-4" />
+                AI Assistant
+              </CardTitle>
+              <Button size="sm" variant="outline" onClick={toggleAiPanel}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="mt-3 rounded-xl border border-black/15 bg-[#DAF5F0]/40 p-3 text-sm text-black/75">
+              AI actions are hidden by default and open only on demand.
+              <ul className="mt-2 list-disc pl-5">
+                <li>Create draft (Hook / Conflict / Growth / Impact)</li>
+                <li>Selection-based improvements</li>
+                <li>Admissions-style review</li>
+              </ul>
+            </div>
+          </div>
+        ) : null}
+
+        {compareOpen && !loading && essay ? (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+            <div className="max-h-[90vh] w-full max-w-5xl overflow-auto rounded-2xl border-2 border-black bg-white p-4 shadow-[0_8px_0_#000]">
+              <div className="flex items-center justify-between gap-2">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <GitCompare className="h-4 w-4" />
+                  Compare versions
+                </CardTitle>
+                <Button size="sm" variant="outline" onClick={() => setCompareOpen(false)}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
+                <select
+                  value={compareLeftId || ""}
+                  onChange={(event) => setCompareLeftId(Number(event.target.value))}
+                  className="rounded-xl border border-black/20 bg-white px-2 py-2 text-sm"
+                >
+                  {versions.map((item) => (
+                    <option key={`left-${item.id}`} value={item.id}>
+                      v{item.version_number} {versionSuffix(item)}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={compareRightId || ""}
+                  onChange={(event) => setCompareRightId(Number(event.target.value))}
+                  className="rounded-xl border border-black/20 bg-white px-2 py-2 text-sm"
+                >
+                  {versions.map((item) => (
+                    <option key={`right-${item.id}`} value={item.id}>
+                      v{item.version_number} {versionSuffix(item)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="mt-3 max-h-[60vh] space-y-2 overflow-auto rounded-xl border border-black/10 bg-white p-3 text-xs">
+                {compareLoading ? <p className="text-black/60">Loading diff...</p> : null}
+                {compareRows.map((row, index) => (
+                  <div
+                    key={`diff-${index}`}
+                    className={`rounded-lg border px-2 py-1 ${
+                      row.kind === "added"
+                        ? "border-emerald-200 bg-emerald-50"
+                        : row.kind === "removed"
+                          ? "border-rose-200 bg-rose-50"
+                          : row.kind === "changed"
+                            ? "border-amber-200 bg-amber-50"
+                            : "border-black/10 bg-white"
+                    }`}
+                  >
+                    <p className="font-semibold uppercase text-[10px] text-black/50">
+                      {row.kind === "same" ? "=" : row.kind === "added" ? "+" : row.kind === "removed" ? "-" : "~"}
+                    </p>
+                    {row.kind !== "added" ? <p className="text-black/70">{row.left || "(empty)"}</p> : null}
+                    {row.kind !== "removed" ? <p className="text-black">{row.right || "(empty)"}</p> : null}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {createVersionOpen ? (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+            <form
+              onSubmit={async (event) => {
+                const ok = await createVersion(event);
+                if (ok) setCreateVersionOpen(false);
+              }}
+              className="w-full max-w-md rounded-2xl border-2 border-black bg-white p-4 shadow-[0_8px_0_#000]"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <CardTitle className="text-lg">Create new version</CardTitle>
+                <Button type="button" size="sm" variant="outline" onClick={() => setCreateVersionOpen(false)}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="mt-3 grid gap-3">
+                <label className="text-xs font-semibold uppercase tracking-wide text-black/60">
+                  Version label
+                  <input
+                    value={newVersionLabel}
+                    onChange={(event) => setNewVersionLabel(event.target.value)}
+                    className="mt-1 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm"
+                    placeholder="Revision label"
+                  />
+                </label>
+                <label className="text-xs font-semibold uppercase tracking-wide text-black/60">
+                  Version status
+                  <select
+                    className="mt-1 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm"
+                    value={newVersionStatus}
+                    onChange={(event) => setNewVersionStatus(event.target.value as EssayVersion["status"])}
+                  >
+                    <option value="draft">draft</option>
+                    <option value="revised">revised</option>
+                    <option value="ai_improved">ai_improved</option>
+                    <option value="final">final</option>
+                  </select>
+                </label>
+                <Button type="submit" disabled={creatingVersion}>
+                  {creatingVersion ? <Spinner size="sm" /> : null}
+                  <span>{creatingVersion ? "Creating..." : "Create version"}</span>
+                </Button>
+              </div>
+            </form>
+          </div>
         ) : null}
 
         {statusText ? <p className="mt-4 text-sm text-black/65">{statusText}</p> : null}
