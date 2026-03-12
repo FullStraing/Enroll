@@ -141,6 +141,18 @@ function buildQuery(paramsSource: DiscoverFilters, page: number, pageSize: numbe
   return params.toString();
 }
 
+function formatFriendlyDate(value?: string | null): string {
+  if (!value) return "N/A";
+  const safe = value.includes("T") ? value : `${value}T00:00:00`;
+  const date = new Date(safe);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(date);
+}
+
 function getNetCostValue(university: University): number | null {
   const tuition = typeof university.tuition_out_state === "number" ? university.tuition_out_state : null;
   const aid = typeof university.aid_package === "number" ? university.aid_package : null;
@@ -608,7 +620,7 @@ export default function UniversitiesPage() {
                         <td className="px-2 py-3">{money(item.university.tuition_out_state)}</td>
                         <td className="px-2 py-3">{money(item.university.aid_package)}</td>
                         <td className="px-2 py-3">{money(getNetCostValue(item.university))}</td>
-                        <td className="px-2 py-3">{item.university.main_deadline || "N/A"}</td>
+                        <td className="px-2 py-3">{formatFriendlyDate(item.university.main_deadline)}</td>
                         <td className="px-2 py-3">
                           <div className="flex flex-wrap gap-2">
                             <Button size="sm" variant="outline" onClick={() => router.push(`/universities/${item.university.id}`)}>
