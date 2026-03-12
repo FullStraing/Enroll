@@ -1,0 +1,497 @@
+"use client";
+
+import { type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, useEffect, useMemo, useRef, useState } from "react";
+import {
+  ACTION_MENU_GAP,
+  ACTION_MENU_HEIGHT,
+  ACTION_MENU_WIDTH,
+  DISCOVER_CACHE_KEY,
+  EMPTY_FILTERS,
+  MY_UNIVERSITIES_CACHE_KEY,
+  PAGE_SCROLL_Y_KEY,
+  PAGE_SIZE_OPTIONS,
+  PAGE_SIZE_STORAGE_KEY,
+  PAGE_UI_STATE_KEY,
+} from "@/app/universities/constants";
+import type { ActionMenuState, DiscoverFilters, PaginatedResponse, StudentUniversity, University } from "@/app/universities/types";
+import { buildQuery, filtersHash } from "@/app/universities/utils";
+import { apiFetch } from "@/lib/api";
+import { getToken } from "@/lib/auth";
+
+type StatusAction = { label: string; onClick: () => void } | null;
+
+export function useUniversitiesPage() {
+  const [activeTab, setActiveTab] = useState<"my" | "discover">("my");
+
+  const [myItems, setMyItems] = useState<StudentUniversity[]>([]);
+  const [loadingMy, setLoadingMy] = useState(false);
+  const [updatingItemId, setUpdatingItemId] = useState<number | null>(null);
+
+  const [discover, setDiscover] = useState<University[]>([]);
+  const [discoverCount, setDiscoverCount] = useState(0);
+  const [discoverPage, setDiscoverPage] = useState(1);
+  const [discoverTotalPages, setDiscoverTotalPages] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [loadingDiscover, setLoadingDiscover] = useState(false);
+
+  const [filtersDraft, setFiltersDraft] = useState<DiscoverFilters>(EMPTY_FILTERS);
+  const [filters, setFilters] = useState<DiscoverFilters>(EMPTY_FILTERS);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+
+  const [status, setStatus] = useState("");
+  const [statusAction, setStatusAction] = useState<StatusAction>(null);
+  const [draggingItemId, setDraggingItemId] = useState<number | null>(null);
+  const [dropTargetItemId, setDropTargetItemId] = useState<number | null>(null);
+  const [actionMenu, setActionMenu] = useState<ActionMenuState | null>(null);
+  const restoredScrollRef = useRef(false);
+  const dragCleanupRef = useRef<(() => void) | null>(null);
+  const dropTargetRef = useRef<number | null>(null);
+  const [uiStateReady, setUiStateReady] = useState(false);
+
+  const myUniversityIds = useMemo(() => new Set(myItems.map((item) => item.university.id)), [myItems]);
+  const activeFiltersCount = useMemo(
+    () =>
+      Object.values(filters).reduce((count, value) => {
+        if (typeof value === "string" && value.trim()) return count + 1;
+        return count;
+      }, 0),
+    [filters],
+  );
+
+  async function loadMyUniversities(options?: { silent?: boolean }) {
+    const token = getToken();
+    if (!token) return;
+
+    const silent = options?.silent ?? false;
+    if (!silent) setLoadingMy(true);
+
+    try {
+      const items = await apiFetch<StudentUniversity[]>("/api/my-universities/", { method: "GET" }, token);
+      setMyItems(items);
+      if (typeof window !== "undefined") {
+        window.sessionStorage.setItem(MY_UNIVERSITIES_CACHE_KEY, JSON.stringify({ items }));
+      }
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Failed to load your universities.");
+    } finally {
+      if (!silent) setLoadingMy(false);
+    }
+  }
+
+  async function loadDiscover(
+    page = discoverPage,
+    nextFilters = filters,
+    nextPageSize = pageSize,
+    options?: { silent?: boolean },
+  ) {
+    const token = getToken();
+    if (!token) return;
+
+    const silent = options?.silent ?? false;
+    if (!silent) setLoadingDiscover(true);
+
+    try {
+      const query = buildQuery(nextFilters, page, nextPageSize);
+      const payload = await apiFetch<PaginatedResponse<University>>(`/api/universities/?${query}`, { method: "GET" }, token);
+
+      setDiscover(payload.results);
+      setDiscoverCount(payload.count);
+      setDiscoverPage(page);
+      setDiscoverTotalPages(Math.max(1, Math.ceil(payload.count / nextPageSize)));
+      if (typeof window !== "undefined") {
+        window.sessionStorage.setItem(
+          DISCOVER_CACHE_KEY,
+          JSON.stringify({
+            page,
+            pageSize: nextPageSize,
+            filtersHash: filtersHash(nextFilters),
+            count: payload.count,
+            results: payload.results,
+          }),
+        );
+      }
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Failed to load universities.");
+    } finally {
+      if (!silent) setLoadingDiscover(false);
+    }
+  }
+
+  async function patchMyUniversity(itemId: number, payload: Partial<Pick<StudentUniversity, "category" | "status" | "sort_order">>) {
+    const token = getToken();
+    if (!token) return;
+
+    setUpdatingItemId(itemId);
+    try {
+      await apiFetch(`/api/my-universities/${itemId}/`, { method: "PATCH", body: JSON.stringify(payload) }, token);
+      setMyItems((prev) => prev.map((item) => (item.id === itemId ? { ...item, ...payload } : item)));
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Failed to update university.");
+    } finally {
+      setUpdatingItemId(null);
+    }
+  }
+
+  async function saveMyOrder(next: StudentUniversity[]) {
+    const token = getToken();
+    if (!token) return;
+    try {
+      await Promise.all(
+        next.map((item, index) =>
+          apiFetch(
+            `/api/my-universities/${item.id}/`,
+            { method: "PATCH", body: JSON.stringify({ sort_order: index + 1 }) },
+            token,
+          ),
+        ),
+      );
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Failed to save list order.");
+      await loadMyUniversities();
+    }
+  }
+
+  async function reorderMyUniversities(fromIndex: number, toIndex: number) {
+    if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0) return;
+    if (fromIndex >= myItems.length || toIndex >= myItems.length) return;
+
+    const next = [...myItems];
+    const [moved] = next.splice(fromIndex, 1);
+    next.splice(toIndex, 0, moved);
+    const normalized = next.map((item, index) => ({ ...item, sort_order: index + 1 }));
+    setMyItems(normalized);
+    await saveMyOrder(normalized);
+  }
+
+  function endPointerDrag() {
+    if (dragCleanupRef.current) {
+      dragCleanupRef.current();
+      dragCleanupRef.current = null;
+    }
+    setDraggingItemId(null);
+    setDropTargetItemId(null);
+    dropTargetRef.current = null;
+  }
+
+  function beginPointerDrag(event: ReactPointerEvent, itemId: number) {
+    event.preventDefault();
+    setDraggingItemId(itemId);
+    setDropTargetItemId(itemId);
+    dropTargetRef.current = itemId;
+
+    const onPointerMove = (moveEvent: PointerEvent) => {
+      const target = document.elementFromPoint(moveEvent.clientX, moveEvent.clientY) as HTMLElement | null;
+      const row = target?.closest("tr[data-row-id]") as HTMLTableRowElement | null;
+      if (!row) return;
+      const nextId = Number(row.dataset.rowId);
+      if (Number.isFinite(nextId)) {
+        setDropTargetItemId(nextId);
+        dropTargetRef.current = nextId;
+      }
+    };
+
+    const onPointerUp = () => {
+      const fromIndex = myItems.findIndex((row) => row.id === itemId);
+      const toIndex = myItems.findIndex((row) => row.id === dropTargetRef.current);
+      endPointerDrag();
+      if (fromIndex >= 0 && toIndex >= 0 && fromIndex !== toIndex) {
+        void reorderMyUniversities(fromIndex, toIndex);
+      }
+    };
+
+    window.addEventListener("pointermove", onPointerMove, { passive: true });
+    window.addEventListener("pointerup", onPointerUp, { once: true });
+    dragCleanupRef.current = () => {
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerUp);
+    };
+  }
+
+  function openActionMenu(event: ReactMouseEvent<HTMLButtonElement>, itemId: number) {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const left = Math.max(
+      ACTION_MENU_GAP,
+      Math.min(rect.right - ACTION_MENU_WIDTH, viewportWidth - ACTION_MENU_WIDTH - ACTION_MENU_GAP),
+    );
+    const prefersTop = rect.bottom + ACTION_MENU_GAP + ACTION_MENU_HEIGHT > viewportHeight;
+    const top = prefersTop
+      ? Math.max(ACTION_MENU_GAP, rect.top - ACTION_MENU_HEIGHT - ACTION_MENU_GAP)
+      : rect.bottom + ACTION_MENU_GAP;
+
+    setActionMenu((prev) => (prev?.itemId === itemId ? null : { itemId, top, left }));
+  }
+
+  async function removeFromMyList(item: StudentUniversity) {
+    const token = getToken();
+    if (!token) return;
+
+    setUpdatingItemId(item.id);
+    try {
+      await apiFetch(`/api/my-universities/${item.id}/`, { method: "DELETE" }, token);
+      await loadMyUniversities();
+      setStatus(`${item.university.name} removed from your list.`);
+      setStatusAction(null);
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Failed to remove university.");
+    } finally {
+      setUpdatingItemId(null);
+    }
+  }
+
+  async function addToMyList(university: University) {
+    const token = getToken();
+    if (!token) return;
+
+    setUpdatingItemId(university.id);
+    try {
+      await apiFetch(
+        "/api/my-universities/",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            university_id: university.id,
+            category: "safety",
+          }),
+        },
+        token,
+      );
+
+      await loadMyUniversities();
+      setStatus(`Added to your university list: ${university.name}`);
+      setStatusAction({ label: "View my list", onClick: () => setActiveTab("my") });
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Failed to add university.");
+    } finally {
+      setUpdatingItemId(null);
+    }
+  }
+
+  function setPageSizeAndPersist(nextSize: number) {
+    setPageSize(nextSize);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(PAGE_SIZE_STORAGE_KEY, String(nextSize));
+    }
+    void loadDiscover(1, filters, nextSize);
+  }
+
+  function resetFilters() {
+    setFiltersDraft(EMPTY_FILTERS);
+    setFilters(EMPTY_FILTERS);
+    void loadDiscover(1, EMPTY_FILTERS, pageSize);
+  }
+
+  function applyFilters() {
+    setFilters(filtersDraft);
+    void loadDiscover(1, filtersDraft, pageSize);
+  }
+
+  useEffect(() => {
+    return () => endPointerDrag();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    const onOutsideClick = (event: MouseEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target?.closest("[data-actions-menu-root]")) return;
+      setActionMenu(null);
+    };
+    window.addEventListener("mousedown", onOutsideClick);
+    return () => window.removeEventListener("mousedown", onOutsideClick);
+  }, []);
+
+  useEffect(() => {
+    const close = () => setActionMenu(null);
+    window.addEventListener("scroll", close, { passive: true });
+    window.addEventListener("resize", close);
+    return () => {
+      window.removeEventListener("scroll", close);
+      window.removeEventListener("resize", close);
+    };
+  }, []);
+
+  useEffect(() => {
+    let initialPageSize = 10;
+    let initialTab: "my" | "discover" = "my";
+    let initialFilters: DiscoverFilters = EMPTY_FILTERS;
+    let initialFiltersDraft: DiscoverFilters = EMPTY_FILTERS;
+    let initialDiscoverPage = 1;
+    let initialFiltersOpen = false;
+
+    if (typeof window !== "undefined") {
+      const saved = Number(window.localStorage.getItem(PAGE_SIZE_STORAGE_KEY));
+      if (PAGE_SIZE_OPTIONS.includes(saved)) {
+        initialPageSize = saved;
+      }
+
+      const rawUiState = window.sessionStorage.getItem(PAGE_UI_STATE_KEY);
+      if (rawUiState) {
+        try {
+          const parsed = JSON.parse(rawUiState) as {
+            activeTab?: "my" | "discover";
+            filters?: DiscoverFilters;
+            filtersDraft?: DiscoverFilters;
+            discoverPage?: number;
+            filtersOpen?: boolean;
+          };
+          if (parsed.activeTab === "my" || parsed.activeTab === "discover") {
+            initialTab = parsed.activeTab;
+          }
+          if (parsed.filters) {
+            initialFilters = { ...EMPTY_FILTERS, ...parsed.filters };
+          }
+          if (parsed.filtersDraft) {
+            initialFiltersDraft = { ...EMPTY_FILTERS, ...parsed.filtersDraft };
+          } else {
+            initialFiltersDraft = initialFilters;
+          }
+          if (typeof parsed.discoverPage === "number" && parsed.discoverPage > 0) {
+            initialDiscoverPage = parsed.discoverPage;
+          }
+          if (typeof parsed.filtersOpen === "boolean") {
+            initialFiltersOpen = parsed.filtersOpen;
+          }
+        } catch {
+          // Ignore invalid session payload and use defaults.
+        }
+      }
+    }
+
+    let hasMyCache = false;
+    let hasDiscoverCache = false;
+    if (typeof window !== "undefined") {
+      const rawMyCache = window.sessionStorage.getItem(MY_UNIVERSITIES_CACHE_KEY);
+      if (rawMyCache) {
+        try {
+          const parsed = JSON.parse(rawMyCache) as { items?: StudentUniversity[] };
+          if (Array.isArray(parsed.items)) {
+            setMyItems(parsed.items);
+            hasMyCache = true;
+          }
+        } catch {
+          // Ignore invalid cache data.
+        }
+      }
+
+      const rawDiscoverCache = window.sessionStorage.getItem(DISCOVER_CACHE_KEY);
+      if (rawDiscoverCache) {
+        try {
+          const parsed = JSON.parse(rawDiscoverCache) as {
+            page?: number;
+            pageSize?: number;
+            filtersHash?: string;
+            count?: number;
+            results?: University[];
+          };
+          const isSameScope =
+            parsed.page === initialDiscoverPage &&
+            parsed.pageSize === initialPageSize &&
+            parsed.filtersHash === filtersHash(initialFilters) &&
+            Array.isArray(parsed.results) &&
+            typeof parsed.count === "number";
+          if (isSameScope) {
+            setDiscover(parsed.results ?? []);
+            setDiscoverCount(parsed.count ?? 0);
+            setDiscoverPage(initialDiscoverPage);
+            setDiscoverTotalPages(Math.max(1, Math.ceil((parsed.count ?? 0) / initialPageSize)));
+            hasDiscoverCache = true;
+          }
+        } catch {
+          // Ignore invalid cache data.
+        }
+      }
+    }
+
+    setPageSize(initialPageSize);
+    setActiveTab(initialTab);
+    setFilters(initialFilters);
+    setFiltersDraft(initialFiltersDraft);
+    setFiltersOpen(initialFiltersOpen);
+    void loadMyUniversities({ silent: hasMyCache });
+    void loadDiscover(initialDiscoverPage, initialFilters, initialPageSize, { silent: hasDiscoverCache });
+    setUiStateReady(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !uiStateReady) return;
+    window.sessionStorage.setItem(
+      PAGE_UI_STATE_KEY,
+      JSON.stringify({
+        activeTab,
+        filters,
+        filtersDraft,
+        discoverPage,
+        filtersOpen,
+      }),
+    );
+  }, [activeTab, filters, filtersDraft, discoverPage, filtersOpen, uiStateReady]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const saveScroll = () => {
+      window.sessionStorage.setItem(PAGE_SCROLL_Y_KEY, String(window.scrollY));
+    };
+
+    window.addEventListener("beforeunload", saveScroll);
+    window.addEventListener("scroll", saveScroll, { passive: true });
+    return () => {
+      window.removeEventListener("beforeunload", saveScroll);
+      window.removeEventListener("scroll", saveScroll);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (restoredScrollRef.current) return;
+    if (loadingMy || loadingDiscover) return;
+
+    const rawScrollY = window.sessionStorage.getItem(PAGE_SCROLL_Y_KEY);
+    const scrollY = rawScrollY ? Number(rawScrollY) : 0;
+    if (Number.isFinite(scrollY) && scrollY > 0) {
+      window.requestAnimationFrame(() => {
+        window.scrollTo({ top: scrollY, left: 0, behavior: "auto" });
+      });
+    }
+    restoredScrollRef.current = true;
+  }, [loadingMy, loadingDiscover]);
+
+  return {
+    activeTab,
+    setActiveTab,
+    myItems,
+    loadingMy,
+    updatingItemId,
+    discover,
+    discoverCount,
+    discoverPage,
+    discoverTotalPages,
+    pageSize,
+    loadingDiscover,
+    filtersDraft,
+    setFiltersDraft,
+    filters,
+    filtersOpen,
+    setFiltersOpen,
+    status,
+    statusAction,
+    draggingItemId,
+    dropTargetItemId,
+    actionMenu,
+    myUniversityIds,
+    activeFiltersCount,
+    setActionMenu,
+    loadDiscover,
+    patchMyUniversity,
+    beginPointerDrag,
+    openActionMenu,
+    removeFromMyList,
+    addToMyList,
+    setPageSizeAndPersist,
+    resetFilters,
+    applyFilters,
+  };
+}

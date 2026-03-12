@@ -15,6 +15,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EssayRichEditor } from "@/components/essay-rich-editor";
 import { Progress } from "@/components/ui/progress";
+import { formatDateTimeShort } from "@/lib/date-format";
 
 type Essay = {
   id: number;
@@ -495,7 +496,7 @@ export default function EssayWorkspacePage() {
                   >
                     <p className="font-semibold">v{item.version_number} {item.label || "Draft"}</p>
                     <p className="text-xs text-black/60">status: {item.status}</p>
-                    <p className="text-xs text-black/60">{new Date(item.updated_at).toLocaleString("ru-RU")}</p>
+                    <p className="text-xs text-black/60">{formatDateTimeShort(item.updated_at)}</p>
                   </button>
                 ))}
               </div>

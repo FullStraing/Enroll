@@ -6,6 +6,7 @@ import { ProtectedPage } from "@/components/protected-page";
 import { getToken } from "@/lib/auth";
 import { apiFetch } from "@/lib/api";
 import { Loader } from "@/components/loader";
+import { formatDateTimeShort } from "@/lib/date-format";
 
 type Application = {
   id: number;
@@ -270,7 +271,7 @@ export default function DocumentsPage() {
                       <tr key={version.id} className="border-t border-white/10 align-top">
                         <td className="px-3 py-2">v{version.version_number}</td>
                         <td className="px-3 py-2">{version.created_by}</td>
-                        <td className="px-3 py-2">{new Date(version.created_at).toLocaleString("ru-RU")}</td>
+                        <td className="px-3 py-2">{formatDateTimeShort(version.created_at)}</td>
                         <td className="max-w-[560px] px-3 py-2 text-white/80">{version.content}</td>
                       </tr>
                     ))}

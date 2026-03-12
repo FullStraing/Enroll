@@ -189,6 +189,7 @@ class StudentUniversitySerializer(serializers.ModelSerializer):
             "id",
             "university",
             "university_id",
+            "sort_order",
             "category",
             "status",
             "tests_done",

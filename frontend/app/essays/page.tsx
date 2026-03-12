@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
 import { Progress } from "@/components/ui/progress";
+import { formatDateTimeShort } from "@/lib/date-format";
 
 type EssayType = "personal_statement" | "motivation_essay" | "supplemental_essay" | "other";
 
@@ -428,7 +429,7 @@ export default function EssaysPage() {
                       <p className="mt-2 text-xs text-black/55">
                         Last edited:{" "}
                         {essay.last_edited_at
-                          ? new Date(essay.last_edited_at).toLocaleString("ru-RU")
+                          ? formatDateTimeShort(essay.last_edited_at)
                           : "-"}
                       </p>
                     </Card>

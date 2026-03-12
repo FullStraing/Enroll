@@ -1,5 +1,6 @@
 from django.http import Http404
 from django.db import models
+from django.db.models import Max
 from rest_framework import generics, permissions
 from rest_framework.pagination import PageNumberPagination
 from .models import Application, StudentUniversity, University, UniversityDeadline, UniversityMetric, UniversitySourceSnapshot
@@ -214,10 +215,17 @@ class StudentUniversityListCreateView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return StudentUniversity.objects.filter(student=self.request.user).select_related("university").order_by("-updated_at")
+        return (
+            StudentUniversity.objects.filter(student=self.request.user)
+            .select_related("university")
+            .order_by("sort_order", "id")
+        )
 
     def perform_create(self, serializer):
-        serializer.save(student=self.request.user)
+        next_order = (
+            StudentUniversity.objects.filter(student=self.request.user).aggregate(max_order=Max("sort_order"))["max_order"] or 0
+        ) + 1
+        serializer.save(student=self.request.user, sort_order=next_order)
 
 
 class StudentUniversityDetailView(generics.RetrieveUpdateDestroyAPIView):

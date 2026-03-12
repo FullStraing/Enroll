@@ -11,6 +11,7 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiFetch } from "@/lib/api";
 import { getToken } from "@/lib/auth";
+import { formatDateShort } from "@/lib/date-format";
 
 type University = {
   id: number;
@@ -574,8 +575,10 @@ export default function UniversityProfilePage() {
                   deadlines.map((d) => (
                     <div key={d.id} className="rounded-xl border border-white/10 bg-black/20 p-3 text-sm">
                       <p className="font-semibold">{d.deadline_type}</p>
-                      <p className="mt-1 text-white/70">{d.is_rolling ? "Rolling" : d.deadline_date || d.deadline_text || "-"}</p>
-                      {d.notification_date ? <p className="mt-1 text-xs text-violet-300">Notify: {d.notification_date}</p> : null}
+                      <p className="mt-1 text-white/70">
+                        {d.is_rolling ? "Rolling" : d.deadline_date ? formatDateShort(d.deadline_date) : d.deadline_text || "-"}
+                      </p>
+                      {d.notification_date ? <p className="mt-1 text-xs text-violet-300">Notify: {formatDateShort(d.notification_date)}</p> : null}
                     </div>
                   ))
                 ) : (

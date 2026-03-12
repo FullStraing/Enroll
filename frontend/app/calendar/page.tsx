@@ -6,6 +6,7 @@ import { ProtectedPage } from "@/components/protected-page";
 import { getToken } from "@/lib/auth";
 import { apiFetch } from "@/lib/api";
 import { Loader } from "@/components/loader";
+import { formatDateShort, formatMonthYear } from "@/lib/date-format";
 
 type TaskItem = {
   id: number;
@@ -452,7 +453,7 @@ export default function CalendarPage() {
                 <button onClick={() => setAnchorDate(new Date())} className="rounded-lg border border-white/10 px-3 py-1.5 text-sm hover:bg-white/10">Сегодня</button>
                 <button onClick={() => navigate(1)} className="rounded-lg border border-white/10 px-3 py-1.5 text-sm hover:bg-white/10">Вперёд</button>
               </div>
-              <p className="text-sm text-white/70">{anchorDate.toLocaleDateString("ru-RU", { month: "long", year: "numeric" })}</p>
+              <p className="text-sm text-white/70">{formatMonthYear(anchorDate)}</p>
             </div>
 
             {loading ? (
@@ -537,7 +538,7 @@ export default function CalendarPage() {
                 <ul className="mt-3 grid gap-2">
                   {todayPanelEvents.slice(0, 7).map((item) => (
                     <li key={item.id} className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm">
-                      <span className="text-white/60">{item.date}</span> - {item.title}
+                      <span className="text-white/60">{formatDateShort(item.date)}</span> - {item.title}
                     </li>
                   ))}
                 </ul>
@@ -552,7 +553,7 @@ export default function CalendarPage() {
                 <ul className="mt-3 grid gap-2">
                   {timelineEvents.map((item) => (
                     <li key={`${item.id}-timeline`} className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm">
-                      <span className="text-white/60">{item.date}</span> - {item.type === "deadline" ? "deadline" : "task"} - {item.title}
+                      <span className="text-white/60">{formatDateShort(item.date)}</span> - {item.type === "deadline" ? "deadline" : "task"} - {item.title}
                     </li>
                   ))}
                 </ul>

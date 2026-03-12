@@ -13,6 +13,7 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiFetch } from "@/lib/api";
 import { getToken } from "@/lib/auth";
+import { formatDateShort, formatDateShortNoYear } from "@/lib/date-format";
 
 type Section = {
   key: string;
@@ -141,13 +142,6 @@ const sectionEstimateMinutes: Record<string, number> = {
 
 function toPercent(value: number) {
   return Math.max(0, Math.min(100, Math.round(value)));
-}
-
-function formatDate(value?: string | null) {
-  if (!value) return "N/A";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "N/A";
-  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
 function normalizeGpaFromQuiz(scale?: string, raw?: string) {
@@ -605,7 +599,7 @@ export default function DashboardPage() {
                   <Skeleton className="mt-2 h-6 w-36" />
                 ) : nearestDeadline ? (
                   <>
-                    <p className="mt-2 text-xl font-black">{formatDate(nearestDeadline.date)}</p>
+                    <p className="mt-2 text-xl font-black">{formatDateShortNoYear(nearestDeadline.date)}</p>
                     <p className="mt-1 text-sm text-black/65">{nearestDeadline.label}</p>
                   </>
                 ) : (
@@ -682,7 +676,7 @@ export default function DashboardPage() {
                 <div className="rounded-xl border border-black/15 bg-white p-3">
                   <p className="text-sm font-semibold">{latestEssay.title}</p>
                   <p className="mt-1 text-xs text-black/60">
-                    Versions: {latestEssay.versions_count} · Last edited: {latestEssay.last_edited_at ? new Date(latestEssay.last_edited_at).toLocaleDateString("en-US") : "N/A"}
+                    Versions: {latestEssay.versions_count} · Last edited: {latestEssay.last_edited_at ? formatDateShort(latestEssay.last_edited_at) : "N/A"}
                   </p>
                 </div>
                 <Link href="/essays" className="inline-flex">
