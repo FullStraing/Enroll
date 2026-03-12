@@ -140,6 +140,33 @@ function getSavedAgoLabel(lastSavedAt: Date | null) {
   return `Auto saved ${minutes}m ago`;
 }
 
+function buildStructureHelper(text: string) {
+  const normalized = text.toLowerCase();
+  const sections = [
+    {
+      key: "hook",
+      label: "Hook",
+      found: /^(.*[!?])|i\s+remember|i\s+still|when\s+i\s+was/.test(normalized),
+    },
+    {
+      key: "conflict",
+      label: "Conflict",
+      found: /challenge|struggle|difficult|problem|failed|obstacle/.test(normalized),
+    },
+    {
+      key: "growth",
+      label: "Growth",
+      found: /learned|improved|grew|realized|developed|changed/.test(normalized),
+    },
+    {
+      key: "impact",
+      label: "Impact",
+      found: /impact|contribute|community|helped|led|result/.test(normalized),
+    },
+  ];
+  return sections;
+}
+
 export default function EssayWorkspacePage() {
   const params = useParams<{ id: string }>();
   const essayId = Number(params.id);
@@ -418,7 +445,8 @@ export default function EssayWorkspacePage() {
     });
   }
 
-  const workspaceGridClass = focusMode ? "grid grid-cols-1" : "grid gap-4 lg:grid-cols-[240px_minmax(0,1fr)]";
+  const workspaceGridClass = focusMode ? "grid grid-cols-1" : "grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)]";
+  const structureHelper = useMemo(() => buildStructureHelper(editorPlainText), [editorPlainText]);
 
   return (
     <ProtectedPage>
@@ -491,22 +519,22 @@ export default function EssayWorkspacePage() {
                         </p>
                         <p className="text-xs text-black/60">{formatDateTimeShort(item.updated_at)}</p>
                       </button>
-                      {!item.is_latest ? (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="mt-2"
-                          onClick={() => void restoreVersion(item)}
-                          disabled={creatingVersion}
-                        >
-                          <RotateCcw className="h-4 w-4" />
-                          <span>Restore version</span>
-                        </Button>
-                      ) : null}
                     </div>
                   ))}
                 </div>
                 <div className="mt-4 border-t border-black/10 pt-3">
+                  {selectedVersion && !selectedVersion.is_latest ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="mb-2"
+                      onClick={() => void restoreVersion(selectedVersion)}
+                      disabled={creatingVersion}
+                    >
+                      <RotateCcw className="h-4 w-4" />
+                      <span>Restore selected</span>
+                    </Button>
+                  ) : null}
                   <Button size="sm" onClick={() => setCreateVersionOpen(true)} disabled={creatingVersion}>
                     {creatingVersion ? <Spinner size="sm" /> : null}
                     <span>{creatingVersion ? "Creating..." : "Create new version"}</span>
@@ -515,24 +543,36 @@ export default function EssayWorkspacePage() {
               </Card>
             ) : null}
 
-            <Card className="shadow-none lg:max-w-[920px] lg:justify-self-center">
+            <div className="min-w-0 lg:max-w-[980px] lg:justify-self-center">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <CardTitle>{essay.title}</CardTitle>
+                  <h2 className="text-2xl font-bold">{essay.title}</h2>
                   <p className="mt-1 text-sm text-black/65">{essay.university_detail?.name || "General essay"}</p>
                   {essay.prompt_title ? <p className="mt-1 text-sm text-black/75">Prompt: {essay.prompt_title}</p> : null}
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col items-end gap-2">
+                  <span className="text-xs text-black/60">{saveState === "error" ? "Autosave failed" : savedAgoLabel}</span>
+                  <div className="flex items-center gap-2">
                   <Badge variant="cyan">Words: {wordCount}</Badge>
                   <Badge>Target: {essay.target_word_count}</Badge>
                   <Badge variant={wordTargetState.variant}>{wordTargetState.label}</Badge>
+                  </div>
                 </div>
               </div>
 
-              <div className="mt-4">
+              <div className="mt-4 flex flex-wrap gap-2 rounded-xl border border-black/10 bg-white px-3 py-2">
+                {structureHelper.map((item) => (
+                  <Badge key={item.key} variant={item.found ? "cyan" : "default"}>
+                    {item.label}: {item.found ? "detected" : "missing"}
+                  </Badge>
+                ))}
+              </div>
+
+              <div className="mt-3">
                 <EssayRichEditor
                   content={editorContent}
                   stickyToolbar
+                  minimalToolbar
                   editable={selectedIsLatest}
                   onChange={(html, text) => {
                     setEditorContent(html);
@@ -560,14 +600,13 @@ export default function EssayWorkspacePage() {
                   Word count: {wordCount} / {essay.target_word_count} | Essay Score: coming soon
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-black/60">{saveState === "error" ? "Autosave failed" : savedAgoLabel}</span>
                   <Button size="sm" onClick={saveNow} disabled={saving}>
                     {saving ? <Spinner size="sm" /> : null}
                     <span>{saving ? "Saving..." : "Save now"}</span>
                   </Button>
                 </div>
               </div>
-            </Card>
+            </div>
 
           </div>
         )}

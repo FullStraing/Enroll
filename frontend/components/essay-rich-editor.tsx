@@ -12,6 +12,7 @@ type EssayRichEditorProps = {
   placeholder?: string;
   editable?: boolean;
   stickyToolbar?: boolean;
+  minimalToolbar?: boolean;
   onChange: (html: string, text: string) => void;
 };
 
@@ -24,6 +25,7 @@ export function EssayRichEditor({
   placeholder = "Write your essay here...",
   editable = true,
   stickyToolbar = false,
+  minimalToolbar = false,
   onChange,
 }: EssayRichEditorProps) {
   const editor = useEditor({
@@ -68,16 +70,18 @@ export function EssayRichEditor({
           stickyToolbar ? "sticky top-2 z-10" : ""
         }`}
       >
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          disabled={!editable}
-          className={toolbarButtonClass(editor.isActive("paragraph"))}
-          onClick={() => editor.chain().focus().setParagraph().run()}
-        >
-          <Pilcrow className="h-4 w-4" />
-        </Button>
+        {!minimalToolbar ? (
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled={!editable}
+            className={toolbarButtonClass(editor.isActive("paragraph"))}
+            onClick={() => editor.chain().focus().setParagraph().run()}
+          >
+            <Pilcrow className="h-4 w-4" />
+          </Button>
+        ) : null}
         <Button
           type="button"
           size="sm"
@@ -108,16 +112,18 @@ export function EssayRichEditor({
         >
           <List className="h-4 w-4" />
         </Button>
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          disabled={!editable}
-          className={toolbarButtonClass(editor.isActive("orderedList"))}
-          onClick={() => editor.chain().focus().toggleOrderedList().run()}
-        >
-          <ListOrdered className="h-4 w-4" />
-        </Button>
+        {!minimalToolbar ? (
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled={!editable}
+            className={toolbarButtonClass(editor.isActive("orderedList"))}
+            onClick={() => editor.chain().focus().toggleOrderedList().run()}
+          >
+            <ListOrdered className="h-4 w-4" />
+          </Button>
+        ) : null}
       </div>
       <EditorContent editor={editor} />
     </div>
