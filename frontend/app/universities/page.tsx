@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { ChevronDown } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { ProtectedPage } from "@/components/protected-page";
 import { Badge } from "@/components/ui/badge";
@@ -148,6 +149,18 @@ function getNetCostValue(university: University): number | null {
   }
   if (typeof university.net_price === "number") return university.net_price;
   return tuition;
+}
+
+function rowStatusTone(status: StudentUniversity["status"]): string {
+  if (status === "admitted") return "bg-emerald-50/70";
+  if (status === "rejected") return "bg-rose-50/70";
+  return "";
+}
+
+function statusSelectTone(status: StudentUniversity["status"]): string {
+  if (status === "admitted") return "bg-emerald-100 border-emerald-500";
+  if (status === "rejected") return "bg-rose-100 border-rose-500";
+  return "bg-white border-black/25";
 }
 
 function filtersHash(filters: DiscoverFilters): string {
@@ -557,33 +570,39 @@ export default function UniversitiesPage() {
                   </thead>
                   <tbody>
                     {myItems.map((item) => (
-                      <tr key={item.id} className="border-b border-black/10">
+                      <tr key={item.id} className={`border-b border-black/10 transition ${rowStatusTone(item.status)}`}>
                         <td className="px-2 py-3 font-semibold">{item.university.name}</td>
                         <td className="px-2 py-3">
-                          <select
-                            value={item.category}
-                            onChange={(event) => void patchMyUniversity(item.id, { category: event.target.value as StudentUniversity["category"] })}
-                            className="rounded-lg border border-black/20 bg-white px-2 py-1"
-                            disabled={updatingItemId === item.id}
-                          >
-                            <option value="reach">Reach</option>
-                            <option value="target">Target</option>
-                            <option value="safety">Safety</option>
-                          </select>
+                          <div className="relative inline-block">
+                            <select
+                              value={item.category}
+                              onChange={(event) => void patchMyUniversity(item.id, { category: event.target.value as StudentUniversity["category"] })}
+                              className="h-10 appearance-none rounded-xl border-2 border-black bg-[#DAF5F0] px-3 pr-9 text-sm font-semibold text-black shadow-[0_2px_0_#000]"
+                              disabled={updatingItemId === item.id}
+                            >
+                              <option value="reach">Reach</option>
+                              <option value="target">Target</option>
+                              <option value="safety">Safety</option>
+                            </select>
+                            <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-black/70" />
+                          </div>
                         </td>
                         <td className="px-2 py-3">
-                          <select
-                            value={item.status}
-                            onChange={(event) => void patchMyUniversity(item.id, { status: event.target.value as StudentUniversity["status"] })}
-                            className="rounded-lg border border-black/20 bg-white px-2 py-1"
-                            disabled={updatingItemId === item.id}
-                          >
-                            {STATUS_OPTIONS.map((statusOption) => (
-                              <option key={statusOption.value} value={statusOption.value}>
-                                {statusOption.label}
-                              </option>
-                            ))}
-                          </select>
+                          <div className="relative inline-block">
+                            <select
+                              value={item.status}
+                              onChange={(event) => void patchMyUniversity(item.id, { status: event.target.value as StudentUniversity["status"] })}
+                              className={`h-10 appearance-none rounded-xl border-2 px-3 pr-9 text-sm font-semibold text-black shadow-[0_2px_0_#000] ${statusSelectTone(item.status)}`}
+                              disabled={updatingItemId === item.id}
+                            >
+                              {STATUS_OPTIONS.map((statusOption) => (
+                                <option key={statusOption.value} value={statusOption.value}>
+                                  {statusOption.label}
+                                </option>
+                              ))}
+                            </select>
+                            <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-black/70" />
+                          </div>
                         </td>
                         <td className="px-2 py-3">{item.university.acceptance_rate != null ? `${item.university.acceptance_rate}%` : "N/A"}</td>
                         <td className="px-2 py-3">{money(item.university.tuition_out_state)}</td>
