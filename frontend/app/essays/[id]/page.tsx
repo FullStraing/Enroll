@@ -56,6 +56,13 @@ type CompareResponse = {
   rows: DiffRow[];
 };
 
+type CompareDisplayRow = {
+  kind: DiffRow["kind"] | "ellipsis";
+  left: string;
+  right: string;
+  unchangedCount?: number;
+};
+
 function buildDiffRows(leftText: string, rightText: string): DiffRow[] {
   const leftLines = leftText.split("\n");
   const rightLines = rightText.split("\n");
@@ -84,6 +91,51 @@ function htmlToText(value: string): string {
 
 function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function compressDiffRows(rows: DiffRow[], contextLines = 1): CompareDisplayRow[] {
+  const output: CompareDisplayRow[] = [];
+  let index = 0;
+
+  while (index < rows.length) {
+    if (rows[index].kind !== "same") {
+      output.push(rows[index]);
+      index += 1;
+      continue;
+    }
+
+    let end = index;
+    while (end < rows.length && rows[end].kind === "same") end += 1;
+    const runLength = end - index;
+    if (runLength <= contextLines * 2 + 1) {
+      for (let i = index; i < end; i += 1) output.push(rows[i]);
+    } else {
+      for (let i = index; i < index + contextLines; i += 1) output.push(rows[i]);
+      output.push({
+        kind: "ellipsis",
+        left: "",
+        right: "",
+        unchangedCount: runLength - contextLines * 2,
+      });
+      for (let i = end - contextLines; i < end; i += 1) output.push(rows[i]);
+    }
+    index = end;
+  }
+
+  return output;
+}
+
+function markChangedWords(base: string, compare: string) {
+  const compareWords = new Set(compare.split(/\s+/).filter(Boolean).map((item) => item.toLowerCase()));
+  return base.split(/(\s+)/).map((token, index) => {
+    const clean = token.trim().toLowerCase();
+    if (!clean || compareWords.has(clean)) return <span key={`wd-${index}`}>{token}</span>;
+    return (
+      <span key={`wd-${index}`} className="rounded bg-black/10 px-0.5">
+        {token}
+      </span>
+    );
+  });
 }
 
 function getWordTargetState(wordCount: number, target: number) {
@@ -447,6 +499,16 @@ export default function EssayWorkspacePage() {
 
   const workspaceGridClass = focusMode ? "grid grid-cols-1" : "grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)]";
   const structureHelper = useMemo(() => buildStructureHelper(editorPlainText), [editorPlainText]);
+  const [compareMode, setCompareMode] = useState<"side" | "inline">("side");
+  const compareDisplayRows = useMemo(() => compressDiffRows(compareRows, 1), [compareRows]);
+  const compareLeftVersion = useMemo(
+    () => versions.find((item) => item.id === compareLeftId) || null,
+    [versions, compareLeftId],
+  );
+  const compareRightVersion = useMemo(
+    () => versions.find((item) => item.id === compareRightId) || null,
+    [versions, compareRightId],
+  );
 
   return (
     <ProtectedPage>
@@ -543,7 +605,7 @@ export default function EssayWorkspacePage() {
               </Card>
             ) : null}
 
-            <div className="min-w-0 lg:max-w-[980px] lg:justify-self-center">
+            <div className="min-w-0 w-full">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <h2 className="text-2xl font-bold">{essay.title}</h2>
@@ -669,28 +731,135 @@ export default function EssayWorkspacePage() {
                   ))}
                 </select>
               </div>
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant={compareMode === "side" ? "primary" : "outline"}
+                    onClick={() => setCompareMode("side")}
+                  >
+                    Side by side
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={compareMode === "inline" ? "primary" : "outline"}
+                    onClick={() => setCompareMode("inline")}
+                  >
+                    Inline
+                  </Button>
+                </div>
+                <p className="text-xs text-black/60">Green = added text, Red = removed text.</p>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {compareLeftVersion && !compareLeftVersion.is_latest ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => void restoreVersion(compareLeftVersion)}
+                    disabled={creatingVersion}
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                    <span>Restore v{compareLeftVersion.version_number}</span>
+                  </Button>
+                ) : null}
+                {compareRightVersion && !compareRightVersion.is_latest ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => void restoreVersion(compareRightVersion)}
+                    disabled={creatingVersion}
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                    <span>Restore v{compareRightVersion.version_number}</span>
+                  </Button>
+                ) : null}
+              </div>
               <div className="mt-3 max-h-[60vh] space-y-2 overflow-auto rounded-xl border border-black/10 bg-white p-3 text-xs">
                 {compareLoading ? <p className="text-black/60">Loading diff...</p> : null}
-                {compareRows.map((row, index) => (
-                  <div
-                    key={`diff-${index}`}
-                    className={`rounded-lg border px-2 py-1 ${
-                      row.kind === "added"
-                        ? "border-emerald-200 bg-emerald-50"
-                        : row.kind === "removed"
-                          ? "border-rose-200 bg-rose-50"
-                          : row.kind === "changed"
-                            ? "border-amber-200 bg-amber-50"
-                            : "border-black/10 bg-white"
-                    }`}
-                  >
-                    <p className="font-semibold uppercase text-[10px] text-black/50">
-                      {row.kind === "same" ? "=" : row.kind === "added" ? "+" : row.kind === "removed" ? "-" : "~"}
-                    </p>
-                    {row.kind !== "added" ? <p className="text-black/70">{row.left || "(empty)"}</p> : null}
-                    {row.kind !== "removed" ? <p className="text-black">{row.right || "(empty)"}</p> : null}
+                {compareMode === "side" ? (
+                  <div className="grid grid-cols-[1fr_1fr] gap-2">
+                    <div className="rounded-lg border border-black/10 bg-black/[0.02] px-2 py-1 font-semibold">OLD VERSION</div>
+                    <div className="rounded-lg border border-black/10 bg-black/[0.02] px-2 py-1 font-semibold">NEW VERSION</div>
+                    {compareDisplayRows.map((row, index) => {
+                      if (row.kind === "ellipsis") {
+                        return (
+                          <div key={`diff-${index}`} className="col-span-2 rounded-lg border border-black/10 px-2 py-1 text-black/55">
+                            ... {row.unchangedCount} lines unchanged ...
+                          </div>
+                        );
+                      }
+                      return (
+                        <div key={`diff-${index}`} className="contents">
+                          <div
+                            className={`rounded-lg border px-2 py-1 ${
+                              row.kind === "removed" || row.kind === "changed"
+                                ? "border-rose-300 bg-rose-50"
+                                : "border-black/10 bg-white"
+                            }`}
+                          >
+                            {row.left || <span className="text-black/35">(empty)</span>}
+                          </div>
+                          <div
+                            className={`rounded-lg border px-2 py-1 ${
+                              row.kind === "added" || row.kind === "changed"
+                                ? "border-emerald-300 bg-emerald-50"
+                                : "border-black/10 bg-white"
+                            }`}
+                          >
+                            {row.right || <span className="text-black/35">(empty)</span>}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                ))}
+                ) : (
+                  <div className="space-y-2">
+                    {compareDisplayRows.map((row, index) => {
+                      if (row.kind === "ellipsis") {
+                        return (
+                          <div key={`diff-inline-${index}`} className="rounded-lg border border-black/10 px-2 py-1 text-black/55">
+                            ... {row.unchangedCount} lines unchanged ...
+                          </div>
+                        );
+                      }
+                      if (row.kind === "same") {
+                        return (
+                          <div key={`diff-inline-${index}`} className="rounded-lg border border-black/10 bg-white px-2 py-1 text-black/70">
+                            {row.right || "(empty)"}
+                          </div>
+                        );
+                      }
+                      if (row.kind === "added") {
+                        return (
+                          <div key={`diff-inline-${index}`} className="rounded-lg border border-emerald-300 bg-emerald-50 px-2 py-1">
+                            <span className="mr-1 font-semibold text-emerald-700">+</span>
+                            {row.right || "(empty)"}
+                          </div>
+                        );
+                      }
+                      if (row.kind === "removed") {
+                        return (
+                          <div key={`diff-inline-${index}`} className="rounded-lg border border-rose-300 bg-rose-50 px-2 py-1">
+                            <span className="mr-1 font-semibold text-rose-700">-</span>
+                            {row.left || "(empty)"}
+                          </div>
+                        );
+                      }
+                      return (
+                        <div key={`diff-inline-${index}`} className="space-y-1 rounded-lg border border-black/10 bg-white px-2 py-2">
+                          <div className="rounded border border-rose-300 bg-rose-50 px-2 py-1">
+                            <span className="mr-1 font-semibold text-rose-700">-</span>
+                            {markChangedWords(row.left || "(empty)", row.right || "")}
+                          </div>
+                          <div className="rounded border border-emerald-300 bg-emerald-50 px-2 py-1">
+                            <span className="mr-1 font-semibold text-emerald-700">+</span>
+                            {markChangedWords(row.right || "(empty)", row.left || "")}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
           </div>
