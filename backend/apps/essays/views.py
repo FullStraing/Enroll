@@ -100,7 +100,7 @@ class EssayVersionListCreateView(generics.ListCreateAPIView):
         Essay.objects.filter(pk=essay.pk).update(updated_at=timezone.now())
 
 
-class EssayVersionDetailView(generics.RetrieveUpdateAPIView):
+class EssayVersionDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = EssayVersionSerializer
     permission_classes = [permissions.IsAuthenticated]
 
@@ -109,20 +109,21 @@ class EssayVersionDetailView(generics.RetrieveUpdateAPIView):
 
     def perform_update(self, serializer):
         version: EssayVersion = self.get_object()
-        latest = (
-            EssayVersion.objects.filter(essay_id=version.essay_id)
-            .order_by("-version_number")
-            .first()
-        )
-        if not latest or latest.id != version.id:
-            raise ValidationError({"detail": "Only latest version can be edited. Create a new version to continue."})
-
         next_status = serializer.validated_data.get("status")
         if next_status == "final":
             EssayVersion.objects.filter(essay_id=version.essay_id, status="final").exclude(id=version.id).update(status="revised")
 
         version = serializer.save()
         Essay.objects.filter(pk=version.essay_id).update(updated_at=timezone.now())
+
+    def perform_destroy(self, instance):
+        versions_count = EssayVersion.objects.filter(essay_id=instance.essay_id).count()
+        if versions_count <= 1:
+            raise ValidationError({"detail": "At least one version must remain."})
+
+        essay_id = instance.essay_id
+        instance.delete()
+        Essay.objects.filter(pk=essay_id).update(updated_at=timezone.now())
 
 
 def _html_to_text(value: str) -> str:

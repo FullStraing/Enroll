@@ -3,7 +3,7 @@
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { Bot, Focus, GitCompare, RotateCcw, Sparkles, X } from "lucide-react";
+import { Bot, Focus, GitCompare, RotateCcw, Sparkles, Trash2, X } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { ProtectedPage } from "@/components/protected-page";
 import { getToken } from "@/lib/auth";
@@ -15,6 +15,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EssayRichEditor } from "@/components/essay-rich-editor";
 import { Progress } from "@/components/ui/progress";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { formatDateTimeShort } from "@/lib/date-format";
 
 type Essay = {
@@ -231,6 +232,7 @@ export default function EssayWorkspacePage() {
   const [newVersionLabel, setNewVersionLabel] = useState("Revision");
   const [newVersionStatus, setNewVersionStatus] = useState<EssayVersion["status"]>("revised");
   const [createVersionOpen, setCreateVersionOpen] = useState(false);
+  const [deleteConfirmVersionId, setDeleteConfirmVersionId] = useState<number | null>(null);
   const [compareLeftId, setCompareLeftId] = useState<number | null>(null);
   const [compareRightId, setCompareRightId] = useState<number | null>(null);
   const [compareOpen, setCompareOpen] = useState(false);
@@ -284,8 +286,6 @@ export default function EssayWorkspacePage() {
     () => versions.find((item) => item.id === selectedVersionId) || null,
     [versions, selectedVersionId],
   );
-  const selectedIsLatest = Boolean(selectedVersion?.is_latest);
-
   useEffect(() => {
     if (!selectedVersion) return;
     if (loadedVersionId === selectedVersion.id) return;
@@ -322,7 +322,6 @@ export default function EssayWorkspacePage() {
 
   useEffect(() => {
     if (!selectedVersion) return;
-    if (!selectedIsLatest) return;
     if (editorContent === selectedVersion.content) return;
     const currentSeq = ++autosaveSeqRef.current;
     let cancelled = false;
@@ -351,7 +350,7 @@ export default function EssayWorkspacePage() {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [editorContent, selectedVersion, selectedIsLatest, persistVersion]);
+  }, [editorContent, selectedVersion, persistVersion]);
 
   async function createVersion(event: FormEvent): Promise<boolean> {
     event.preventDefault();
@@ -389,10 +388,6 @@ export default function EssayWorkspacePage() {
 
   async function saveNow() {
     if (!selectedVersion) return;
-    if (!selectedIsLatest) {
-      setStatusText("This version is read-only. Create a new version to edit.");
-      return;
-    }
     const token = getToken();
     if (!token) return;
     setSaving(true);
@@ -416,35 +411,38 @@ export default function EssayWorkspacePage() {
   }
 
   async function restoreVersion(version: EssayVersion) {
-    if (!essayId) return;
+    setSelectedVersionId(version.id);
+    setLoadedVersionId(null);
+    setStatusText(`Loaded v${version.version_number}.`);
+  }
+
+  async function deleteVersion(version: EssayVersion) {
     const token = getToken();
     if (!token) return;
-    setCreatingVersion(true);
+
     try {
-      const created = await apiFetch<EssayVersion>(
-        `/api/essays/${essayId}/versions/`,
-        {
-          method: "POST",
-          body: JSON.stringify({
-            label: `Restore v${version.version_number}`,
-            content: version.content,
-            status: "revised",
-          }),
-        },
-        token,
-      );
-      setVersions((prev) => [created, ...prev]);
-      setSelectedVersionId(created.id);
-      setLoadedVersionId(created.id);
-      setEditorContent(created.content || "<p></p>");
-      setEditorPlainText(htmlToText(created.content || ""));
-      setSaveState("saved");
-      setLastSavedAt(new Date());
-      setStatusText(`Restored from v${version.version_number}.`);
+      await apiFetch(`/api/essay-versions/${version.id}/`, { method: "DELETE" }, token);
+      const remaining = versions.filter((item) => item.id !== version.id);
+      setVersions(remaining);
+
+      if (selectedVersionId === version.id) {
+        const fallback = remaining[0] || null;
+        setSelectedVersionId(fallback?.id || null);
+        setLoadedVersionId(null);
+      }
+
+      if (compareLeftId === version.id) {
+        setCompareLeftId(remaining[1]?.id || remaining[0]?.id || null);
+      }
+      if (compareRightId === version.id) {
+        setCompareRightId(remaining[0]?.id || null);
+      }
+
+      setStatusText(`Deleted v${version.version_number}.`);
     } catch (error) {
-      setStatusText(error instanceof Error ? error.message : "Failed to restore version.");
+      setStatusText(error instanceof Error ? error.message : "Failed to delete version.");
     } finally {
-      setCreatingVersion(false);
+      setDeleteConfirmVersionId(null);
     }
   }
 
@@ -508,6 +506,10 @@ export default function EssayWorkspacePage() {
   const compareRightVersion = useMemo(
     () => versions.find((item) => item.id === compareRightId) || null,
     [versions, compareRightId],
+  );
+  const deleteConfirmVersion = useMemo(
+    () => versions.find((item) => item.id === deleteConfirmVersionId) || null,
+    [versions, deleteConfirmVersionId],
   );
 
   return (
@@ -585,18 +587,30 @@ export default function EssayWorkspacePage() {
                   ))}
                 </div>
                 <div className="mt-4 border-t border-black/10 pt-3">
-                  {selectedVersion && !selectedVersion.is_latest ? (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="mb-2"
-                      onClick={() => void restoreVersion(selectedVersion)}
-                      disabled={creatingVersion}
-                    >
-                      <RotateCcw className="h-4 w-4" />
-                      <span>Restore selected</span>
-                    </Button>
-                  ) : null}
+                  <div className="mb-2 flex flex-wrap gap-2">
+                    {selectedVersion && !selectedVersion.is_latest ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => void restoreVersion(selectedVersion)}
+                        disabled={creatingVersion}
+                      >
+                        <RotateCcw className="h-4 w-4" />
+                        <span>Restore selected</span>
+                      </Button>
+                    ) : null}
+                    {selectedVersion ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setDeleteConfirmVersionId(selectedVersion.id)}
+                        disabled={creatingVersion || versions.length <= 1}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        <span>Delete selected</span>
+                      </Button>
+                    ) : null}
+                  </div>
                   <Button size="sm" onClick={() => setCreateVersionOpen(true)} disabled={creatingVersion}>
                     {creatingVersion ? <Spinner size="sm" /> : null}
                     <span>{creatingVersion ? "Creating..." : "Create new version"}</span>
@@ -635,16 +649,13 @@ export default function EssayWorkspacePage() {
                   content={editorContent}
                   stickyToolbar
                   minimalToolbar
-                  editable={selectedIsLatest}
+                  editable={Boolean(selectedVersion)}
                   onChange={(html, text) => {
                     setEditorContent(html);
                     setEditorPlainText(text);
                   }}
                 />
               </div>
-              {!selectedIsLatest ? (
-                <p className="mt-2 text-xs text-amber-700">Read-only version. Create a new version to continue editing.</p>
-              ) : null}
 
               <div className="mt-3 rounded-xl border border-black/10 bg-white p-3">
                 <div className="flex items-center justify-between gap-2 text-sm">
@@ -911,6 +922,27 @@ export default function EssayWorkspacePage() {
             </form>
           </div>
         ) : null}
+
+        <ConfirmDialog
+          open={Boolean(deleteConfirmVersion)}
+          title="Delete version"
+          description={
+            deleteConfirmVersion
+              ? `Remove v${deleteConfirmVersion.version_number} ${versionSuffix(deleteConfirmVersion)} from this essay history.`
+              : ""
+          }
+          note="This deletes only the selected version. Other versions stay unchanged."
+          confirmLabel="Delete version"
+          cancelLabel="Cancel"
+          tone="warning"
+          confirmIcon={<Trash2 className="h-4 w-4" />}
+          confirmDisabled={creatingVersion || versions.length <= 1}
+          onCancel={() => setDeleteConfirmVersionId(null)}
+          onConfirm={() => {
+            if (!deleteConfirmVersion) return;
+            void deleteVersion(deleteConfirmVersion);
+          }}
+        />
 
         {statusText ? <p className="mt-4 text-sm text-black/65">{statusText}</p> : null}
       </AppShell>
