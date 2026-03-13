@@ -10,6 +10,9 @@ type Props = {
 };
 
 export function FieldInput({ field, value, onChange, onClear }: Props) {
+  const stringValue = typeof value === "string" ? value : "";
+  const numberValue = typeof value === "number" ? value : "";
+
   if (field.type === "boolean") {
     return (
       <select
@@ -29,7 +32,7 @@ export function FieldInput({ field, value, onChange, onClear }: Props) {
     return (
       <input
         type="number"
-        value={typeof value === "number" ? value : value || ""}
+        value={numberValue}
         disabled={field.readonly}
         onChange={(event) => onChange(event.target.value === "" ? "" : Number(event.target.value))}
         className="mt-1 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm disabled:bg-black/[0.04]"
@@ -41,7 +44,7 @@ export function FieldInput({ field, value, onChange, onClear }: Props) {
     return (
       <input
         type="date"
-        value={typeof value === "string" ? value : ""}
+        value={stringValue}
         disabled={field.readonly}
         onChange={(event) => onChange(event.target.value)}
         className="mt-1 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm disabled:bg-black/[0.04]"
@@ -84,7 +87,7 @@ export function FieldInput({ field, value, onChange, onClear }: Props) {
     return (
       <div className="space-y-2">
         <select
-          value={typeof value === "string" ? value : ""}
+          value={stringValue}
           disabled={field.readonly}
           onChange={(event) => onChange(event.target.value)}
           className="mt-1 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm disabled:bg-black/[0.04]"
@@ -164,7 +167,7 @@ export function FieldInput({ field, value, onChange, onClear }: Props) {
   if (field.ui === "textarea") {
     return (
       <textarea
-        value={typeof value === "string" ? value : value ?? ""}
+        value={typeof value === "string" || typeof value === "number" ? String(value) : ""}
         disabled={field.readonly}
         onChange={(event) => onChange(event.target.value)}
         rows={4}
@@ -175,7 +178,7 @@ export function FieldInput({ field, value, onChange, onClear }: Props) {
 
   return (
     <input
-      value={typeof value === "string" ? value : value ?? ""}
+      value={typeof value === "string" || typeof value === "number" ? String(value) : ""}
       disabled={field.readonly}
       onChange={(event) => onChange(event.target.value)}
       className="mt-1 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm disabled:bg-black/[0.04]"

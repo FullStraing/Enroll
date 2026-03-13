@@ -56,7 +56,7 @@ export function EssayRichEditor({
   useEffect(() => {
     if (!editor) return;
     if (content === editor.getHTML()) return;
-    editor.commands.setContent(content || "<p></p>", false);
+    editor.commands.setContent(content || "<p></p>");
   }, [content, editor]);
 
   if (!editor) {
