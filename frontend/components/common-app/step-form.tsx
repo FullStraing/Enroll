@@ -60,6 +60,9 @@ export function StepForm({
     const honorMatch = field.id.match(/^honor_(\d+)_/);
     if (honorMatch) return { key: `honor_${honorMatch[1]}`, title: `Honors ${honorMatch[1]}` };
 
+    const activityMatch = field.id.match(/^activity_(\d+)_/);
+    if (activityMatch) return { key: `activity_${activityMatch[1]}`, title: `Activity ${activityMatch[1]}` };
+
     const cboMatch = field.id.match(/^cbo_(\d+)_/);
     if (cboMatch) return { key: `cbo_${cboMatch[1]}`, title: `Counselor/Advisor/Mentor ${cboMatch[1]}` };
 
@@ -225,7 +228,15 @@ export function StepForm({
     );
   };
 
-  const groupedSubsections = new Set(["current_year_courses", "colleges_universities", "other_schools", "sibling", "honors", "community_based_orgs"]);
+  const groupedSubsections = new Set([
+    "current_year_courses",
+    "colleges_universities",
+    "other_schools",
+    "sibling",
+    "honors",
+    "community_based_orgs",
+    "activities",
+  ]);
   const blocks: FieldBlock[] = [];
 
   if (!groupedSubsections.has(currentStep.subsection.key)) {

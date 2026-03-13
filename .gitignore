@@ -14,9 +14,14 @@ backend/venv/
 
 # Env files
 .env
+.env.local
+.env.*.local
 backend/.env
+backend/.env.local
 frontend/.env.local
 frontend/.env.*.local
+**/.env.local
+**/.env.*.local
 backend/.secrets/
 tmp/
 *.log

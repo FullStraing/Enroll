@@ -161,6 +161,18 @@ export function FieldInput({ field, value, onChange, onClear }: Props) {
     );
   }
 
+  if (field.ui === "textarea") {
+    return (
+      <textarea
+        value={typeof value === "string" ? value : value ?? ""}
+        disabled={field.readonly}
+        onChange={(event) => onChange(event.target.value)}
+        rows={4}
+        className="mt-1 w-full resize-y rounded-xl border border-black/20 bg-white px-3 py-2 text-sm disabled:bg-black/[0.04]"
+      />
+    );
+  }
+
   return (
     <input
       value={typeof value === "string" ? value : value ?? ""}
@@ -170,4 +182,3 @@ export function FieldInput({ field, value, onChange, onClear }: Props) {
     />
   );
 }
-

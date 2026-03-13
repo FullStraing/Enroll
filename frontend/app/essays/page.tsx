@@ -54,6 +54,46 @@ const essayTypeOptions: Array<{ value: EssayType; label: string }> = [
 ];
 const DEMO_DURATION_SECONDS = 24;
 
+const essayDraftTemplates: Record<
+  EssayType,
+  {
+    title: string;
+    promptTitle: string;
+    promptText: string;
+    targetWordCount: string;
+  }
+> = {
+  personal_statement: {
+    title: "Personal Statement - My growth through challenge",
+    promptTitle: "",
+    promptText: "",
+    targetWordCount: "650",
+  },
+  motivation_essay: {
+    title: "Motivation Essay - Why this path matters to me",
+    promptTitle: "",
+    promptText: "",
+    targetWordCount: "650",
+  },
+  supplemental_essay: {
+    title: "Why this university essay",
+    promptTitle: "Why us?",
+    promptText:
+      "Describe why this university matches your academic goals, personal values, and the type of community where you want to grow.",
+    targetWordCount: "250",
+  },
+  other: {
+    title: "Essay draft - Working title",
+    promptTitle: "",
+    promptText: "",
+    targetWordCount: "500",
+  },
+};
+
+function getEssayDraftTemplate(type: EssayType) {
+  return essayDraftTemplates[type];
+}
+
 function formatEssayType(value: EssayType) {
   const match = essayTypeOptions.find((item) => item.value === value);
   return match ? match.label : value;
@@ -75,13 +115,16 @@ export default function EssaysPage() {
   const [demoPlaying, setDemoPlaying] = useState(false);
   const [demoSeconds, setDemoSeconds] = useState(0);
   const [showCreate, setShowCreate] = useState(false);
-  const [form, setForm] = useState({
-    title: "",
-    essay_type: "personal_statement" as EssayType,
-    university: "",
-    prompt_title: "",
-    prompt_text: "",
-    target_word_count: "650",
+  const [form, setForm] = useState(() => {
+    const template = getEssayDraftTemplate("personal_statement");
+    return {
+      title: template.title,
+      essay_type: "personal_statement" as EssayType,
+      university: "",
+      prompt_title: template.promptTitle,
+      prompt_text: template.promptText,
+      target_word_count: template.targetWordCount,
+    };
   });
 
   const requireSupplementalFields = form.essay_type === "supplemental_essay";
@@ -169,6 +212,27 @@ export default function EssaysPage() {
     [universities],
   );
 
+  function applyEssayTypeTemplate(nextType: EssayType) {
+    const template = getEssayDraftTemplate(nextType);
+    setForm((prev) => {
+      const previousTemplate = getEssayDraftTemplate(prev.essay_type);
+      const shouldReplaceTitle = !prev.title.trim() || prev.title === previousTemplate.title;
+      const shouldReplacePromptTitle = !prev.prompt_title.trim() || prev.prompt_title === previousTemplate.promptTitle;
+      const shouldReplacePromptText = !prev.prompt_text.trim() || prev.prompt_text === previousTemplate.promptText;
+      const shouldReplaceTarget = !prev.target_word_count.trim() || prev.target_word_count === previousTemplate.targetWordCount;
+
+      return {
+        ...prev,
+        essay_type: nextType,
+        university: nextType === "supplemental_essay" ? prev.university : "",
+        title: shouldReplaceTitle ? template.title : prev.title,
+        prompt_title: shouldReplacePromptTitle ? template.promptTitle : prev.prompt_title,
+        prompt_text: shouldReplacePromptText ? template.promptText : prev.prompt_text,
+        target_word_count: shouldReplaceTarget ? template.targetWordCount : prev.target_word_count,
+      };
+    });
+  }
+
   async function createEssay(event: FormEvent) {
     event.preventDefault();
     const token = getToken();
@@ -195,13 +259,14 @@ export default function EssaysPage() {
       if (form.university) payload.university = Number(form.university);
       const created = await apiFetch<Essay>("/api/essays/", { method: "POST", body: JSON.stringify(payload) }, token);
       setShowCreate(false);
+      const template = getEssayDraftTemplate("personal_statement");
       setForm({
-        title: "",
+        title: template.title,
         essay_type: "personal_statement",
         university: "",
-        prompt_title: "",
-        prompt_text: "",
-        target_word_count: "650",
+        prompt_title: template.promptTitle,
+        prompt_text: template.promptText,
+        target_word_count: template.targetWordCount,
       });
       router.push(`/essays/${created.id}`);
     } catch (error) {
@@ -307,7 +372,7 @@ export default function EssaysPage() {
                   Essay type
                   <select
                     value={form.essay_type}
-                    onChange={(event) => setForm((prev) => ({ ...prev, essay_type: event.target.value as EssayType }))}
+                    onChange={(event) => applyEssayTypeTemplate(event.target.value as EssayType)}
                     className="mt-1 w-full rounded-xl border border-black/20 bg-white px-3 py-2"
                   >
                     {essayTypeOptions.map((option) => (
@@ -323,7 +388,6 @@ export default function EssaysPage() {
                   <input
                     value={form.title}
                     onChange={(event) => setForm((prev) => ({ ...prev, title: event.target.value }))}
-                    placeholder="Optional (auto from type if empty)"
                     className="mt-1 w-full rounded-xl border border-black/20 bg-white px-3 py-2"
                   />
                 </label>
@@ -335,7 +399,7 @@ export default function EssaysPage() {
                       <input
                         value={universitySearch}
                         onChange={(event) => setUniversitySearch(event.target.value)}
-                        placeholder="Type to search..."
+                        placeholder="Start typing: Boston, Purdue, NYU..."
                         className="mt-1 w-full rounded-xl border border-black/20 bg-white px-3 py-2"
                       />
                     </label>
@@ -363,6 +427,7 @@ export default function EssaysPage() {
                       <input
                         value={form.prompt_title}
                         onChange={(event) => setForm((prev) => ({ ...prev, prompt_title: event.target.value }))}
+                        placeholder="Example: Why this university?"
                         className="mt-1 w-full rounded-xl border border-black/20 bg-white px-3 py-2"
                       />
                     </label>
@@ -373,6 +438,7 @@ export default function EssaysPage() {
                         rows={3}
                         value={form.prompt_text}
                         onChange={(event) => setForm((prev) => ({ ...prev, prompt_text: event.target.value }))}
+                        placeholder="Example: Explain why this university is a strong academic, personal, and community fit for you."
                         className="mt-1 w-full rounded-xl border border-black/20 bg-white px-3 py-2"
                       />
                     </label>

@@ -305,3 +305,187 @@ def _build_community_based_org_fields():
             ]
         )
     return fields
+
+
+def _build_activities_fields():
+    activity_type_options = [
+        "Arts",
+        "Athletics: Club",
+        "Athletics: JV/Varsity",
+        "Career oriented",
+        "Community service (volunteer)",
+        "Computer/Technology",
+        "Cultural",
+        "Dance",
+        "Debate/Speech",
+        "Environmental",
+        "Family responsibilities",
+        "Foreign exchange",
+        "Journalism/Publication",
+        "JROTC",
+        "LGBTQ",
+        "Music: Instrumental",
+        "Music: Vocal",
+        "Religious",
+        "Research",
+        "Robotics",
+        "School spirit",
+        "Science/Math",
+        "Social justice",
+        "Student gov.",
+        "Theater/Drama",
+        "Work (paid)",
+        "Other club/activity",
+    ]
+    participation_grade_levels = ["9", "10", "11", "12", "Post-graduate"]
+    timing_options = ["During school year", "During school break", "All year"]
+    count_options = [str(index) for index in range(1, 11)]
+
+    fields = [
+        {
+            "id": "has_activities",
+            "label": "Do you have any activities that you wish to report?",
+            "bind": "json",
+            "path": "has_activities",
+            "type": "choice",
+            "required": True,
+            "ui": "radio",
+            "clearable": True,
+            "options": _choice_yes_no_field_options(),
+            "help": "Choose Yes if you want to report extracurricular activities.",
+        },
+        {
+            "id": "activities_count",
+            "label": "How many activities would you like to report?",
+            "bind": "json",
+            "path": "activities_count",
+            "type": "choice",
+            "required": False,
+            "required_if": {"field_id": "has_activities", "equals": "Yes"},
+            "show_if": {"field_id": "has_activities", "equals": "Yes"},
+            "options": count_options,
+            "help": "List activities in order of importance to you, up to 10.",
+        },
+    ]
+
+    for index in range(1, 11):
+        show_values = [str(value) for value in range(index, 11)]
+        shared_show = {
+            "all": [
+                {"field_id": "has_activities", "equals": "Yes"},
+                {"field_id": "activities_count", "in": show_values},
+            ]
+        }
+        fields.extend(
+            [
+                {
+                    "id": f"activity_{index}_type",
+                    "label": "Activity type",
+                    "bind": "json",
+                    "path": f"activity_{index}_type",
+                    "type": "choice",
+                    "required": False,
+                    "required_if": shared_show,
+                    "show_if": shared_show,
+                    "options": activity_type_options,
+                    "help": "Choose the category that best matches this activity.",
+                },
+                {
+                    "id": f"activity_{index}_position",
+                    "label": "Position/Leadership description (Max characters: 50)",
+                    "bind": "json",
+                    "path": f"activity_{index}_position",
+                    "type": "text",
+                    "required": False,
+                    "required_if": shared_show,
+                    "show_if": shared_show,
+                    "help": "Example: Founder, Captain, Volunteer Tutor.",
+                },
+                {
+                    "id": f"activity_{index}_organization",
+                    "label": "Organization name (Max characters: 100)",
+                    "bind": "json",
+                    "path": f"activity_{index}_organization",
+                    "type": "text",
+                    "required": False,
+                    "show_if": shared_show,
+                    "help": "Name of the club, employer, team, or family responsibility context.",
+                },
+                {
+                    "id": f"activity_{index}_description",
+                    "label": "Please describe this activity, including what you accomplished and any recognition you received, etc. (Max characters: 150)",
+                    "bind": "json",
+                    "path": f"activity_{index}_description",
+                    "type": "text",
+                    "required": False,
+                    "required_if": shared_show,
+                    "show_if": shared_show,
+                    "ui": "textarea",
+                    "help": "Focus on impact, leadership, and measurable outcomes.",
+                },
+                {
+                    "id": f"activity_{index}_grade_levels",
+                    "label": "Participation grade levels",
+                    "bind": "json",
+                    "path": f"activity_{index}_grade_levels",
+                    "type": "list",
+                    "required": False,
+                    "required_if": shared_show,
+                    "show_if": shared_show,
+                    "ui": "checkbox",
+                    "options": participation_grade_levels,
+                    "help": "Select all grade levels in which you participated.",
+                },
+                {
+                    "id": f"activity_{index}_timing",
+                    "label": "Timing of participation",
+                    "bind": "json",
+                    "path": f"activity_{index}_timing",
+                    "type": "list",
+                    "required": False,
+                    "required_if": shared_show,
+                    "show_if": shared_show,
+                    "ui": "checkbox",
+                    "options": timing_options,
+                    "help": "Select all options that apply.",
+                },
+                {
+                    "id": f"activity_{index}_hours_per_week",
+                    "label": "Hours spent per week",
+                    "bind": "json",
+                    "path": f"activity_{index}_hours_per_week",
+                    "type": "number",
+                    "required": False,
+                    "required_if": shared_show,
+                    "show_if": shared_show,
+                    "help": "Average weekly commitment for this activity.",
+                },
+                {
+                    "id": f"activity_{index}_weeks_per_year",
+                    "label": "Weeks spent per year",
+                    "bind": "json",
+                    "path": f"activity_{index}_weeks_per_year",
+                    "type": "number",
+                    "required": False,
+                    "required_if": shared_show,
+                    "show_if": shared_show,
+                    "help": "Approximate number of weeks per year.",
+                },
+                {
+                    "id": f"activity_{index}_continue_in_college",
+                    "label": "I intend to participate in a similar activity in college.",
+                    "bind": "json",
+                    "path": f"activity_{index}_continue_in_college",
+                    "type": "choice",
+                    "required": False,
+                    "required_if": shared_show,
+                    "show_if": shared_show,
+                    "ui": "radio",
+                    "clearable": True,
+                    "options": _choice_yes_no_field_options(),
+                    "help": "Choose Yes if you plan to continue this type of activity in college.",
+                },
+            ]
+        )
+
+    return fields

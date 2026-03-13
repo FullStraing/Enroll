@@ -1,4 +1,4 @@
-from ..builders import _choice_yes_no_field_options, _build_current_year_courses_fields, _build_community_based_org_fields
+from ..builders import _build_activities_fields
 
 ACTIVITIES_SECTION =     {
         "key": "activities",
@@ -7,10 +7,7 @@ ACTIVITIES_SECTION =     {
             {
                 "key": "activities",
                 "title": "Activities",
-                "fields": [
-                    {"id": "activities", "label": "Activities list", "bind": "model", "path": "activities", "type": "list", "required": False, "help": "Comma-separated list of your key extracurricular activities."},
-                    {"id": "activities_level", "label": "Activities level", "bind": "model", "path": "activities_level", "type": "text", "required": False, "help": "Self-estimated impact level (low/medium/high)."},
-                ],
+                "fields": _build_activities_fields(),
             },
             {
                 "key": "responsibilities_circumstances",
