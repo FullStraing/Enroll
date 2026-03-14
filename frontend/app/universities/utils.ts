@@ -1,8 +1,20 @@
 import type { DiscoverFilters, StudentUniversity, University } from "./types";
 
-export function money(value?: number | null): string {
-  if (value == null || !Number.isFinite(value)) return "N/A";
-  return `$${Math.round(value).toLocaleString()}`;
+function asMoneyNumber(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
+    const normalized = value.replace(/[^\d.-]/g, "");
+    if (!normalized) return null;
+    const parsed = Number(normalized);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return null;
+}
+
+export function money(value?: number | string | null): string {
+  const numeric = asMoneyNumber(value);
+  if (numeric == null) return "N/A";
+  return `$${Math.round(numeric).toLocaleString()}`;
 }
 
 export function categoryLabel(category: StudentUniversity["category"]): string {
@@ -48,6 +60,24 @@ export function getNetCostValue(university: University): number | null {
   }
   if (typeof university.net_price === "number") return university.net_price;
   return tuition;
+}
+
+export function sumKnown(values: Array<number | string | null | undefined>): { total: number; known: number; missing: number } {
+  let total = 0;
+  let known = 0;
+  let missing = 0;
+
+  for (const value of values) {
+    const numeric = asMoneyNumber(value);
+    if (numeric != null) {
+      total += numeric;
+      known += 1;
+    } else {
+      missing += 1;
+    }
+  }
+
+  return { total, known, missing };
 }
 
 export function rowStatusTone(status: StudentUniversity["status"]): string {

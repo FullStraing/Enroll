@@ -10,6 +10,7 @@ export type University = {
   tuition_out_state?: number | null;
   net_price?: number | null;
   aid_package?: number | null;
+  application_fee?: number | null;
 };
 
 export type StudentUniversity = {
@@ -50,6 +51,10 @@ export type DiscoverFilters = {
 
 export type ActionMenuState = {
   itemId: number;
-  top: number;
-  left: number;
+  anchorRect: {
+    top: number;
+    right: number;
+    bottom: number;
+    left: number;
+  };
 };

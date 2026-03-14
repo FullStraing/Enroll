@@ -143,10 +143,23 @@ export function isFieldRequired(
   return field.required;
 }
 
-function isFilledValue(value: unknown): boolean {
+function normalizeRichText(value: string): string {
+  return value
+    .replace(/<br\s*\/?>/gi, " ")
+    .replace(/<\/p>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function isFilledValue(value: unknown, field?: ProgressField): boolean {
   if (value === null || value === undefined) return false;
   if (typeof value === "boolean") return true;
-  if (typeof value === "string") return value.trim().length > 0;
+  if (typeof value === "string") {
+    if (field?.ui === "richtext") return normalizeRichText(value).length > 0;
+    return value.trim().length > 0;
+  }
   if (Array.isArray(value)) return value.length > 0;
   if (typeof value === "object") return Object.keys(value as Record<string, unknown>).length > 0;
   return true;
@@ -186,7 +199,7 @@ export function computeLiveProgress(
         totalRequired += 1;
 
         const key = getDraftKey(stepRef, field.id);
-        if (isFilledValue(draftValues[key])) {
+        if (isFilledValue(draftValues[key], field)) {
           subCompleted += 1;
           sectionCompleted += 1;
           totalCompleted += 1;

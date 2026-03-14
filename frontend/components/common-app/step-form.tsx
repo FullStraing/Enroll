@@ -6,6 +6,7 @@ import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import { WritingStep } from "@/components/common-app/writing-step";
 
 type Props = {
   currentStep: Step;
@@ -40,6 +41,25 @@ export function StepForm({
   totalSteps,
   liveProgress,
 }: Props) {
+  if (currentStep.section.key === "writing") {
+    return (
+      <WritingStep
+        currentStep={currentStep}
+        visibleFields={visibleFields}
+        draftValues={draftValues}
+        isFieldRequired={isFieldRequired}
+        setDraftValues={setDraftValues}
+        saving={saving}
+        statusText={statusText}
+        onBack={onBack}
+        onContinue={onContinue}
+        currentStepIndex={currentStepIndex}
+        totalSteps={totalSteps}
+        liveProgress={liveProgress}
+      />
+    );
+  }
+
   const currentPercent =
     liveProgress?.subsections[`${currentStep.section.key}.${currentStep.subsection.key}`]?.percent ??
     currentStep.subsection.percent;

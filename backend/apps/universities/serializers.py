@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from .application_fee_fallbacks import get_application_fee_fallback
 from .models import (
     Application,
     StudentUniversity,
@@ -18,6 +19,7 @@ class UniversitySerializer(serializers.ModelSerializer):
     room_and_board = serializers.SerializerMethodField()
     housing_cost = serializers.SerializerMethodField()
     aid_package = serializers.SerializerMethodField()
+    application_fee = serializers.SerializerMethodField()
     deadlines_count = serializers.IntegerField(read_only=True)
     has_deadlines = serializers.BooleanField(read_only=True)
     deadline_freshness_days = serializers.IntegerField(read_only=True)
@@ -52,6 +54,7 @@ class UniversitySerializer(serializers.ModelSerializer):
             "room_and_board",
             "housing_cost",
             "aid_package",
+            "application_fee",
             "deadlines_count",
             "has_deadlines",
             "deadline_freshness_days",
@@ -122,6 +125,12 @@ class UniversitySerializer(serializers.ModelSerializer):
                 except (TypeError, ValueError):
                     continue
         return None
+
+    def get_application_fee(self, obj):
+        value = self._metric_value(obj, "application_fee_usd")
+        if value is not None:
+            return value
+        return get_application_fee_fallback(obj)
 
 
 class UniversityMetricSerializer(serializers.ModelSerializer):

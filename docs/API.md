@@ -5,10 +5,12 @@ Base prefix: `/api/`
 ## Authentication and session
 
 ### Health and identity
+
 - `GET /api/ping/`
 - `GET /api/me/`
 
 ### Auth
+
 - `POST /api/auth/register/`
 - `POST /api/auth/google/`
 - `POST /api/auth/token/`
@@ -20,6 +22,7 @@ Base prefix: `/api/`
 - `GET /api/auth/common-app-progress/`
 
 Notes:
+
 - `register` is public.
 - `google` is public and exchanges Google `id_token` -> local JWT (`access`, `refresh`).
 - `token` / `token/refresh` are JWT endpoints.
@@ -28,6 +31,7 @@ Notes:
 ## Universities
 
 ### University catalog
+
 - `GET /api/universities/`
 - `GET /api/universities/{id}/`
 - `GET /api/universities/{id}/deadlines/`
@@ -35,18 +39,21 @@ Notes:
 - `GET /api/universities/{id}/source-snapshot/`
 
 Typical frontend usage:
+
 - list with pagination and search
 - detail page with admissions/cost/housing sections
 - deadline rendering
 - debugging or inspection of enriched source data
 
 Common enriched metric keys in `/api/universities/{id}/metrics/` now include:
+
 - `application_fee_usd`
 - `application_fee_text`
 - `applying_extended` (JSON rows from Applying block)
 - `financial_aid_items` (JSON rows from Financial Aid block)
 
 `GET /api/universities/` query params:
+
 - `page`, `page_size`, `q`
 - `selectivity` (`high|medium|low`)
 - `acceptance_min`, `acceptance_max`
@@ -58,6 +65,7 @@ Common enriched metric keys in `/api/universities/{id}/metrics/` now include:
 - `housing_min`, `housing_max`
 
 ### Student shortlist
+
 - `GET /api/my-universities/`
 - `POST /api/my-universities/`
 - `GET /api/my-universities/{id}/`
@@ -65,6 +73,7 @@ Common enriched metric keys in `/api/universities/{id}/metrics/` now include:
 - `DELETE /api/my-universities/{id}/`
 
 ### Applications
+
 - `GET /api/applications/`
 - `POST /api/applications/`
 - `GET /api/applications/{id}/`
@@ -80,6 +89,7 @@ Common enriched metric keys in `/api/universities/{id}/metrics/` now include:
 - `POST /api/tasks/generate/`
 
 Notes:
+
 - `/calendar` in the frontend consumes task and deadline data.
 - task generation exists as a baseline workflow endpoint.
 
@@ -110,6 +120,7 @@ Notes:
 - `GET /api/essays/{essay_id}/compare/?from_version={id}&to_version={id}`
 
 Current behavior:
+
 - essays own many versions
 - latest version is the active editable surface
 - previous versions are preserved as snapshots
@@ -118,6 +129,7 @@ Current behavior:
 ## AI
 
 Current baseline endpoints:
+
 - `POST /api/ai/next-step/`
 - `POST /api/ai/document-draft/`
 - `POST /api/ai/document-feedback/`
@@ -128,6 +140,7 @@ These exist as API surface, but product-grade AI flows are still incomplete.
 ## Common App progress payload
 
 `GET /api/auth/common-app-progress/` returns:
+
 - overall completion summary
 - section-level progress
 - subsection-level progress
@@ -142,6 +155,7 @@ This endpoint is the backend-driven contract behind `/common-app` and dashboard 
 Most endpoints require JWT auth.
 
 The frontend is the primary consumer of this API and handles:
+
 - token bootstrap
 - protected routing
 - session cookie/localStorage synchronization

@@ -1,24 +1,89 @@
-from ..builders import _choice_yes_no_field_options, _build_current_year_courses_fields, _build_community_based_org_fields
+COMMON_APP_PERSONAL_ESSAY_PROMPTS = [
+    "Background, identity, interest, or talent",
+    "Lessons from obstacles or failure",
+    "Questioned or challenged a belief or idea",
+    "Unexpected gratitude or kindness",
+    "Accomplishment, event, or realization that sparked growth",
+    "A topic, idea, or concept that fully engages you",
+    "Topic of your choice",
+]
 
-WRITING_SECTION =     {
-        "key": "writing",
-        "title": "Writing",
-        "subsections": [
-            {
-                "key": "personal_essay",
-                "title": "Personal Essay",
-                "fields": [
-                    {"id": "personal_essay_status", "label": "Personal essay status", "bind": "json", "path": "personal_essay_status", "type": "text", "required": False, "help": "Drafting / revising / final."},
-                    {"id": "personal_essay_word_count", "label": "Word count", "bind": "json", "path": "personal_essay_word_count", "type": "number", "required": False, "help": "Current word count (target around 650)."},
-                    {"id": "personal_essay_focus", "label": "Main story focus", "bind": "json", "path": "personal_essay_focus", "type": "text", "required": False, "help": "Short sentence about your main narrative."},
-                ],
-            },
-            {
-                "key": "additional_information",
-                "title": "Additional Information",
-                "fields": [
-                    {"id": "additional_information", "label": "Additional information text", "bind": "json", "path": "additional_information", "type": "text", "required": False, "help": "Context not covered elsewhere in your application."},
-                ],
-            },
-        ],
-    }
+
+WRITING_SECTION = {
+    "key": "writing",
+    "title": "Writing",
+    "subsections": [
+        {
+            "key": "personal_essay",
+            "title": "Personal Essay",
+            "fields": [
+                {
+                    "id": "personal_essay_acknowledged",
+                    "label": "I understand how the Common App personal essay works",
+                    "bind": "json",
+                    "path": "personal_essay_acknowledged",
+                    "type": "boolean",
+                    "required": True,
+                    "ui": "checkbox",
+                    "help": "Confirm that you reviewed the personal essay instructions before continuing.",
+                },
+                {
+                    "id": "personal_essay_prompt",
+                    "label": "Common App prompt",
+                    "bind": "json",
+                    "path": "personal_essay_prompt",
+                    "type": "choice",
+                    "required": False,
+                    "required_if": {"field_id": "personal_essay_acknowledged", "equals": True},
+                    "show_if": {"field_id": "personal_essay_acknowledged", "equals": True},
+                    "ui": "radio",
+                    "clearable": True,
+                    "options": COMMON_APP_PERSONAL_ESSAY_PROMPTS,
+                    "help": "Choose the prompt that best fits the story you want to tell.",
+                },
+                {
+                    "id": "personal_essay_content",
+                    "label": "Personal essay draft",
+                    "bind": "json",
+                    "path": "personal_essay_content",
+                    "type": "text",
+                    "required": False,
+                    "required_if": {"field_id": "personal_essay_acknowledged", "equals": True},
+                    "show_if": {"field_id": "personal_essay_acknowledged", "equals": True},
+                    "ui": "richtext",
+                    "help": "Write or paste your Common App personal essay draft here.",
+                },
+            ],
+        },
+        {
+            "key": "additional_information",
+            "title": "Additional Information",
+            "fields": [
+                {
+                    "id": "has_additional_information",
+                    "label": "Do you want to add context not covered elsewhere in your application?",
+                    "bind": "json",
+                    "path": "has_additional_information",
+                    "type": "choice",
+                    "required": True,
+                    "ui": "radio",
+                    "clearable": True,
+                    "options": ["Yes", "No"],
+                    "help": "Use this only for essential context that does not fit elsewhere.",
+                },
+                {
+                    "id": "additional_information",
+                    "label": "Additional information",
+                    "bind": "json",
+                    "path": "additional_information",
+                    "type": "text",
+                    "required": False,
+                    "required_if": {"field_id": "has_additional_information", "equals": "Yes"},
+                    "show_if": {"field_id": "has_additional_information", "equals": "Yes"},
+                    "ui": "textarea",
+                    "help": "Keep this factual and concise. Avoid repeating your personal essay.",
+                },
+            ],
+        },
+    ],
+}

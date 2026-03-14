@@ -1,6 +1,19 @@
+import re
+
 from .schema import COMMON_APP_SCHEMA
 
-def _is_filled(value):
+TAG_RE = re.compile(r"<[^>]+>")
+
+
+def _normalize_rich_text(value):
+    if not isinstance(value, str):
+        return ""
+    text = value.replace("&nbsp;", " ")
+    text = TAG_RE.sub(" ", text)
+    return " ".join(text.split())
+
+
+def _is_filled(value, field_config=None):
     if value is None:
         return False
     if isinstance(value, bool):
@@ -8,6 +21,8 @@ def _is_filled(value):
     if isinstance(value, (list, tuple, set, dict)):
         return len(value) > 0
     if isinstance(value, str):
+        if (field_config or {}).get("ui") == "richtext":
+            return bool(_normalize_rich_text(value))
         return bool(value.strip())
     return True
 
@@ -62,7 +77,7 @@ def build_common_app_progress(profile):
                 required = bool(field.get("required", False))
                 if field.get("required_if"):
                     required = _condition_matches(field.get("required_if"), field_values)
-                filled = _is_filled(value)
+                filled = _is_filled(value, field)
                 if visible and required:
                     sub_required += 1
                     total_required += 1

@@ -3,8 +3,6 @@
 import { type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
   ACTION_MENU_GAP,
-  ACTION_MENU_HEIGHT,
-  ACTION_MENU_WIDTH,
   DISCOVER_CACHE_KEY,
   EMPTY_FILTERS,
   MY_UNIVERSITIES_CACHE_KEY,
@@ -209,18 +207,19 @@ export function useUniversitiesPage() {
 
   function openActionMenu(event: ReactMouseEvent<HTMLButtonElement>, itemId: number) {
     const rect = event.currentTarget.getBoundingClientRect();
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
-    const left = Math.max(
-      ACTION_MENU_GAP,
-      Math.min(rect.right - ACTION_MENU_WIDTH, viewportWidth - ACTION_MENU_WIDTH - ACTION_MENU_GAP),
+    setActionMenu((prev) =>
+      prev?.itemId === itemId
+        ? null
+        : {
+            itemId,
+            anchorRect: {
+              top: rect.top,
+              right: rect.right,
+              bottom: rect.bottom,
+              left: rect.left,
+            },
+          },
     );
-    const prefersTop = rect.bottom + ACTION_MENU_GAP + ACTION_MENU_HEIGHT > viewportHeight;
-    const top = prefersTop
-      ? Math.max(ACTION_MENU_GAP, rect.top - ACTION_MENU_HEIGHT - ACTION_MENU_GAP)
-      : rect.bottom + ACTION_MENU_GAP;
-
-    setActionMenu((prev) => (prev?.itemId === itemId ? null : { itemId, top, left }));
   }
 
   async function removeFromMyList(item: StudentUniversity) {

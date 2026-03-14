@@ -98,6 +98,37 @@ class UniversityDataTests(APITestCase):
         self.assertEqual(item["data_freshness_days"], 2)
         self.assertEqual(item["net_price"], 12345.0)
 
+    def test_my_universities_includes_application_fee_metric(self):
+        StudentUniversity.objects.create(student=self.user, university=self.university)
+        UniversityMetric.objects.create(
+            university=self.university,
+            key="application_fee_usd",
+            value_number=85,
+            unit="usd",
+            source_url=self.university.source_url,
+            section_key="applying",
+        )
+
+        response = self.client.get(reverse("my_universities_list_create"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data[0]["university"]["application_fee"], 85.0)
+
+    def test_my_universities_application_fee_uses_fallback_when_metric_missing(self):
+        university = University.objects.create(
+            name="Boston College",
+            source="gradgpt",
+            source_provider="gradgpt",
+            external_id="boston-college",
+        )
+        StudentUniversity.objects.create(student=self.user, university=university)
+
+        response = self.client.get(reverse("my_universities_list_create"))
+
+        self.assertEqual(response.status_code, 200)
+        item = next(row for row in response.data if row["university"]["name"] == "Boston College")
+        self.assertEqual(item["university"]["application_fee"], 80.0)
+
     def test_internal_metrics_endpoint(self):
         UniversityMetric.objects.create(
             university=self.university,

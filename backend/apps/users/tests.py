@@ -106,6 +106,30 @@ class StudentProfileTests(APITestCase):
         self.assertNotIn("course_3_schedule_semester", visible_schedule_ids)
         self.assertNotIn("course_1_schedule_quarter", visible_schedule_ids)
 
+    def test_common_app_writing_visibility_and_rich_text_completion(self):
+        profile, _ = StudentProfile.objects.get_or_create(user=self.user)
+        profile.common_app_profile = {
+            "personal_essay_acknowledged": True,
+            "personal_essay_prompt": "Topic of your choice",
+            "personal_essay_content": "<p></p>",
+        }
+        profile.save(update_fields=["common_app_profile"])
+
+        response = self.client.get(self.common_app_progress_url)
+        self.assertEqual(response.status_code, 200)
+
+        writing = next(section for section in response.data["sections"] if section["key"] == "writing")
+        personal_essay = next(sub for sub in writing["subsections"] if sub["key"] == "personal_essay")
+        fields = {field["id"]: field for field in personal_essay["fields"]}
+
+        self.assertTrue(fields["personal_essay_prompt"]["visible"])
+        self.assertTrue(fields["personal_essay_prompt"]["required"])
+        self.assertTrue(fields["personal_essay_content"]["visible"])
+        self.assertTrue(fields["personal_essay_content"]["required"])
+        self.assertFalse(fields["personal_essay_content"]["filled"])
+        self.assertEqual(personal_essay["completed_required"], 2)
+        self.assertEqual(personal_essay["required_total"], 3)
+
 
 class GoogleAuthTests(APITestCase):
     @override_settings(GOOGLE_OAUTH_CLIENT_ID="test-client-id")

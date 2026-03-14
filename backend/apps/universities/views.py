@@ -218,6 +218,7 @@ class StudentUniversityListCreateView(generics.ListCreateAPIView):
         return (
             StudentUniversity.objects.filter(student=self.request.user)
             .select_related("university")
+            .prefetch_related("university__metrics")
             .order_by("sort_order", "id")
         )
 
@@ -233,7 +234,7 @@ class StudentUniversityDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return StudentUniversity.objects.filter(student=self.request.user).select_related("university")
+        return StudentUniversity.objects.filter(student=self.request.user).select_related("university").prefetch_related("university__metrics")
 
 
 class ApplicationListCreateView(generics.ListCreateAPIView):
