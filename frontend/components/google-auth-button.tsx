@@ -116,7 +116,7 @@ export function GoogleAuthButton({ onTokens, onError, disabled = false }: Google
         <div className={disabled || loading ? "pointer-events-none opacity-70" : ""} ref={containerRef} />
       ) : (
         <div className="rounded-xl border border-black/20 bg-white px-4 py-3 text-sm text-black/70">
-          Google Sign-In не настроен: добавьте `NEXT_PUBLIC_GOOGLE_CLIENT_ID` в `frontend/.env.local`
+          Google Sign-In не настроен: добавьте `NEXT_PUBLIC_GOOGLE_CLIENT_ID` в корневой `.env`
         </div>
       )}
       {scriptFailed ? (

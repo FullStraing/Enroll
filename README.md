@@ -44,7 +44,6 @@ Still in progress:
 python -m venv .venv
 .venv\Scripts\activate
 pip install -r backend/requirements.txt
-copy backend\.env.example backend\.env
 python backend/manage.py migrate
 python backend/manage.py runserver
 ```
@@ -57,7 +56,6 @@ Backend is available at:
 ```bash
 cd frontend
 npm install
-copy .env.example .env.local
 npm run dev
 ```
 
@@ -66,11 +64,9 @@ Frontend is available at:
 
 ## Environment
 
-### Backend
+All local environment variables now live in the single root-level `.env`.
 
-Base local variables are documented in `backend/.env.example`.
-
-Important ones:
+Important backend variables:
 - `POSTGRES_DB`
 - `POSTGRES_USER`
 - `POSTGRES_PASSWORD`
@@ -81,14 +77,9 @@ Important ones:
 - `CELERY_RESULT_BACKEND`
 - `GOOGLE_OAUTH_CLIENT_ID` (Google Sign-In backend verification)
 
-### Frontend
-
-`frontend/.env.local`
-
-```bash
-NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000
-NEXT_PUBLIC_GOOGLE_CLIENT_ID=your_google_web_client_id
-```
+Important frontend variables in the same root `.env`:
+- `NEXT_PUBLIC_API_BASE_URL`
+- `NEXT_PUBLIC_GOOGLE_CLIENT_ID`
 
 ## Main frontend routes
 

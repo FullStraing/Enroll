@@ -6,11 +6,12 @@ This frontend is the main user-facing application for Enroll. Django serves the 
 
 ```bash
 npm install
-copy .env.example .env.local
 npm run dev
 ```
 
-Default API target:
+Environment variables come from the single project-level `.env` file in the repository root.
+
+Default frontend variables in that file:
 
 ```bash
 NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000

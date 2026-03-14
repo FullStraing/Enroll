@@ -57,7 +57,7 @@ If blocks are missing, status becomes `partial`/`failed` with reason codes:
 
 ## Env
 
-In `backend/.env`:
+In the root `.env`:
 
 ```env
 GRADGPT_INDEX_URL=https://www.gradgpt.com/common-data-set
