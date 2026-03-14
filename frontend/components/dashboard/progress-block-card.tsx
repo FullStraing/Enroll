@@ -9,7 +9,7 @@ import type { ProgressBlock } from "@/app/dashboard/progress";
 
 export function ProgressBlockCard({ block }: { block: ProgressBlock }) {
   return (
-    <Card className="shadow-none">
+    <Card className="flex h-full flex-col shadow-none">
       <div className="flex items-start justify-between gap-3">
         <div>
           <CardTitle>{block.title}</CardTitle>
@@ -21,8 +21,10 @@ export function ProgressBlockCard({ block }: { block: ProgressBlock }) {
         <Badge variant={block.percent >= 100 ? "primary" : "cyan"}>{block.percent}%</Badge>
       </div>
       <Progress value={block.percent} className="mt-4 h-3" variant="cyan" />
-      <Link href={block.continueHref} className="mt-4 inline-flex">
-        <Button size="sm" variant="outline">Продолжить</Button>
+      <Link href={block.continueHref} className="mt-auto inline-flex pt-4">
+        <Button size="sm" variant="outline" className="hover:-translate-y-0.5 hover:shadow-[0_4px_0_#000]">
+          Продолжить
+        </Button>
       </Link>
     </Card>
   );

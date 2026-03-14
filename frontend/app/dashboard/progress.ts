@@ -136,7 +136,7 @@ export function buildDashboardProgress(input: {
   const universitiesCount = input.universities.length;
   const universitiesConditions: ProgressCondition[] = [
     { label: "At least 1 university", done: universitiesCount >= 1 },
-    { label: "At least 6 universities", done: universitiesCount >= 6 },
+    { label: "At least 10 universities", done: universitiesCount >= 10 },
     { label: "Has a safety school", done: input.universities.some((item) => item.category === "safety") },
     { label: "Has a target school", done: input.universities.some((item) => item.category === "target") },
     { label: "Has a reach school", done: input.universities.some((item) => item.category === "reach") },

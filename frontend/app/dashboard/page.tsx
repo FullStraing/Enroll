@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
-import { CalendarClock, CircleAlert, CircleCheck, FileText, Flag, GraduationCap, Sparkles, Target, Trophy, UserRound } from "lucide-react";
+import { CalendarClock, CircleAlert, CircleCheck, FileText, GraduationCap, Sparkles, Target, Trophy, UserRound } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { ProgressBlockCard } from "@/components/dashboard/progress-block-card";
 import { ProtectedPage } from "@/components/protected-page";
@@ -145,15 +145,6 @@ const COUNTRY_OPTIONS = [
   "Turkey",
   "India",
 ];
-
-const sectionEstimateMinutes: Record<string, number> = {
-  profile: 4,
-  family: 4,
-  education: 7,
-  testing: 3,
-  activities: 6,
-  writing: 5,
-};
 
 function toPercent(value: number) {
   return Math.max(0, Math.min(100, Math.round(value)));
@@ -329,26 +320,6 @@ function DashboardPageContent() {
       }),
     [profile, quizAnswers, myUniversities, essays, documents, progressData?.sections],
   );
-
-  const nextStep = useMemo(() => {
-    if (progressData) {
-      const firstIncomplete = progressData.sections.find((section) => section.percent < 100);
-      if (firstIncomplete) {
-        return {
-          label: `Complete ${firstIncomplete.title}`,
-          eta: sectionEstimateMinutes[firstIncomplete.key] || 4,
-          href: "/common-app",
-        };
-      }
-    }
-    if (myUniversities.length === 0) {
-      return { label: "Build your university list", eta: 5, href: "/applications" };
-    }
-    if (essays.length === 0) {
-      return { label: "Start your personal essay", eta: 12, href: "/essays" };
-    }
-    return { label: "Review upcoming deadlines", eta: 2, href: "/calendar" };
-  }, [progressData, myUniversities.length, essays.length]);
 
   const nearestDeadline = useMemo(() => {
     const candidates: { date: string; label: string }[] = [];
@@ -596,7 +567,7 @@ function DashboardPageContent() {
             </div>
           </Card>
 
-        <div className="mt-5 grid gap-4 lg:grid-cols-3">
+        <div className="mt-5 grid gap-4 lg:grid-cols-2">
           <Card>
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -616,20 +587,6 @@ function DashboardPageContent() {
                 Open form
               </Link>
             </div>
-          </Card>
-
-          <Card>
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <CardDescription>Next step</CardDescription>
-                {loading ? <Skeleton className="mt-2 h-6 w-40" /> : <p className="mt-2 text-xl font-black">{nextStep.label}</p>}
-                <p className="mt-1 text-sm text-black/65">Estimated time: {nextStep.eta} minutes</p>
-              </div>
-              <Flag className="h-6 w-6 text-black/60" />
-            </div>
-            <Link href={nextStep.href} className="mt-4 inline-flex">
-              <Button>Continue application</Button>
-            </Link>
           </Card>
 
           <Card>
