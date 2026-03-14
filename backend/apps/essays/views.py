@@ -32,6 +32,12 @@ class EssayListCreateView(generics.ListCreateAPIView):
             .annotate(
                 versions_count=models.Count("versions", distinct=True),
                 last_edited_at=Coalesce(models.Max("versions__updated_at"), models.F("updated_at")),
+                latest_version_content=models.Subquery(
+                    EssayVersion.objects.filter(essay=models.OuterRef("pk"))
+                    .order_by("-version_number")
+                    .values("content")[:1],
+                    output_field=models.TextField(),
+                ),
             )
             .select_related("university")
             .order_by("-last_edited_at", "-updated_at")
@@ -62,6 +68,12 @@ class EssayDetailView(generics.RetrieveUpdateDestroyAPIView):
             .annotate(
                 versions_count=models.Count("versions", distinct=True),
                 last_edited_at=Coalesce(models.Max("versions__updated_at"), models.F("updated_at")),
+                latest_version_content=models.Subquery(
+                    EssayVersion.objects.filter(essay=models.OuterRef("pk"))
+                    .order_by("-version_number")
+                    .values("content")[:1],
+                    output_field=models.TextField(),
+                ),
             )
             .select_related("university")
         )

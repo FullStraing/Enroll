@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { CalendarClock, CircleAlert, CircleCheck, FileText, Flag, GraduationCap, Sparkles, Target, Trophy, UserRound } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
+import { ProgressBlockCard } from "@/components/dashboard/progress-block-card";
 import { ProtectedPage } from "@/components/protected-page";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,7 @@ import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { CircularProgress } from "@/components/ui/circular-progress";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
+import { buildDashboardProgress, type IntroAnswers as ProgressIntroAnswers } from "@/app/dashboard/progress";
 import { apiFetch } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import { formatDateShort, formatDateShortNoYear } from "@/lib/date-format";
@@ -37,10 +39,13 @@ type Profile = {
   username?: string;
   country?: string;
   intended_major?: string;
+  graduation_year?: number | null;
   gpa?: string | number | null;
   sat_total?: number | null;
   toefl_total?: number | null;
   ielts_overall?: string | number | null;
+  det_score?: number | null;
+  budget_range?: string;
 };
 
 type UniversityBrief = {
@@ -51,8 +56,10 @@ type UniversityBrief = {
 
 type StudentUniversity = {
   id: number;
+  category?: string;
   status: string;
   progress_percent: number;
+  deadline_override?: string | null;
   university: UniversityBrief;
 };
 
@@ -65,6 +72,7 @@ type Task = {
 
 type DocumentItem = {
   id: number;
+  type: string;
 };
 
 type EssayItem = {
@@ -72,6 +80,8 @@ type EssayItem = {
   title: string;
   essay_type: string;
   versions_count: number;
+  latest_has_text?: boolean;
+  latest_word_count?: number;
   last_edited_at?: string;
 };
 
@@ -85,14 +95,10 @@ type ApplicationItem = {
   university_name?: string;
 };
 
-type IntroAnswers = {
-  country?: string;
+type IntroAnswers = ProgressIntroAnswers & {
   schoolLevel?: string;
-  intakeYear?: string;
-  major?: string;
   gpaScale?: string;
   gpaValue?: string;
-  tests?: string[];
   shortlistSize?: string;
 };
 
@@ -298,12 +304,18 @@ export default function DashboardPage() {
     [progressData?.overall.percent, normalizedGpa, profile?.sat_total, quizAnswers.tests, myUniversities.length, profileMajor, intake],
   );
 
-  const applicationReadiness = useMemo(() => {
-    const commonApp = progressData?.overall.percent || 0;
-    const universitiesScore = toPercent((Math.min(myUniversities.length, 8) / 8) * 100);
-    const essaysScore = essays.length > 0 ? toPercent(Math.min(100, essays.length * 30)) : 0;
-    return toPercent(commonApp * 0.7 + universitiesScore * 0.2 + essaysScore * 0.1);
-  }, [progressData?.overall.percent, myUniversities.length, essays.length]);
+  const dashboardProgress = useMemo(
+    () =>
+      buildDashboardProgress({
+        profile,
+        quizAnswers,
+        universities: myUniversities,
+        essays,
+        documents,
+        sections: progressData?.sections || [],
+      }),
+    [profile, quizAnswers, myUniversities, essays, documents, progressData?.sections],
+  );
 
   const nextStep = useMemo(() => {
     if (progressData) {
@@ -360,7 +372,6 @@ export default function DashboardPage() {
   }, [applications, tasks, myUniversities]);
 
   const latestEssay = essays[0] || null;
-  const completedSections = progressData?.sections.filter((section) => section.percent === 100).length || 0;
   const targetUniversities = myUniversities.slice(0, 4).map((item) => item.university.name);
 
   async function handleShareProfile() {
@@ -560,17 +571,18 @@ export default function DashboardPage() {
           <Card>
             <div className="flex items-start justify-between gap-3">
               <div>
-                <CardDescription>Application readiness</CardDescription>
-                {loading ? <Skeleton className="mt-2 h-7 w-20" /> : <p className="mt-2 text-3xl font-black">{applicationReadiness}%</p>}
+                <CardDescription>Overall progress</CardDescription>
+                {loading ? <Skeleton className="mt-2 h-7 w-20" /> : <p className="mt-2 text-3xl font-black">{dashboardProgress.overallPercent}%</p>}
                 <p className="mt-1 text-xs text-black/60">
-                  {progressData?.overall.completed_required || 0}/{progressData?.overall.required_total || 0} required fields complete
+                  {dashboardProgress.blocks.reduce((sum, block) => sum + block.completed, 0)}/
+                  {dashboardProgress.blocks.reduce((sum, block) => sum + block.total, 0)} completed across all blocks
                 </p>
               </div>
               <Target className="h-6 w-6 text-black/60" />
             </div>
-            <Progress value={loading ? 0 : applicationReadiness} className="mt-4 h-3" />
+            <Progress value={loading ? 0 : dashboardProgress.overallPercent} className="mt-4 h-3" />
             <div className="mt-3 flex items-center justify-between text-xs text-black/60">
-              <span>Sections complete: {completedSections}/{progressData?.sections.length || 0}</span>
+              <span>Blocks tracked: {dashboardProgress.blocks.length}/5</span>
               <Link href="/common-app" className="font-semibold text-black underline">
                 Open form
               </Link>
@@ -615,6 +627,12 @@ export default function DashboardPage() {
               <Button variant="secondary">Open calendar</Button>
             </Link>
           </Card>
+        </div>
+
+        <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+          {loading
+            ? Array.from({ length: 5 }).map((_, index) => <Skeleton key={index} className="h-36 w-full rounded-2xl" />)
+            : dashboardProgress.blocks.map((block) => <ProgressBlockCard key={block.key} block={block} />)}
         </div>
 
         <div className="mt-5 grid gap-4 xl:grid-cols-2">

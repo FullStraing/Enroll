@@ -1,3 +1,5 @@
+import re
+
 from rest_framework import serializers
 
 from apps.essays.models import Essay, EssayVersion
@@ -36,6 +38,8 @@ class EssayVersionSerializer(serializers.ModelSerializer):
 class EssaySerializer(serializers.ModelSerializer):
     versions_count = serializers.IntegerField(read_only=True)
     last_edited_at = serializers.DateTimeField(read_only=True)
+    latest_has_text = serializers.SerializerMethodField()
+    latest_word_count = serializers.SerializerMethodField()
     university_detail = UniversitySerializer(source="university", read_only=True)
 
     class Meta:
@@ -51,6 +55,8 @@ class EssaySerializer(serializers.ModelSerializer):
             "target_word_count",
             "versions_count",
             "last_edited_at",
+            "latest_has_text",
+            "latest_word_count",
             "created_at",
             "updated_at",
         ]
@@ -67,3 +73,18 @@ class EssaySerializer(serializers.ModelSerializer):
             if not prompt_title.strip():
                 raise serializers.ValidationError({"prompt_title": "Prompt title is required for supplemental essay."})
         return attrs
+
+    def _latest_content(self, obj: Essay) -> str:
+        annotated = getattr(obj, "latest_version_content", None)
+        if isinstance(annotated, str):
+            return annotated
+        latest = obj.versions.order_by("-version_number").values_list("content", flat=True).first()
+        return latest or ""
+
+    def get_latest_has_text(self, obj: Essay) -> bool:
+        return bool(re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", self._latest_content(obj)).replace("\xa0", " ")).strip())
+
+    def get_latest_word_count(self, obj: Essay) -> int:
+        text = re.sub(r"<[^>]+>", " ", self._latest_content(obj)).replace("\xa0", " ")
+        tokens = [token for token in re.split(r"\s+", text.strip()) if token]
+        return len(tokens)
