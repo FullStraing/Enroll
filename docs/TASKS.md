@@ -18,6 +18,7 @@ The project is past the skeleton phase. The current state is:
 - settings page with account actions
 - privacy policy page and legal links in core UI surfaces
 - documents now work as a simple admissions file vault with upload/delete/download and document grouping
+- documents support drag-and-drop upload, rename, per-file size limits, and an overall user storage cap
 
 ### Frontend foundation
 - Next.js frontend established as the primary UI layer

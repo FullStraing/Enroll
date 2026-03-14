@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from apps.universities.models import Application, StudentUniversity
+from .constants import MAX_DOCUMENTS_PER_USER, MAX_DOCUMENT_FILE_SIZE_BYTES
 from .models import Document
 
 
@@ -119,11 +120,20 @@ class DocumentSerializer(serializers.ModelSerializer):
     def validate_file(self, file):
         if file.size <= 0:
             raise serializers.ValidationError("Upload a non-empty file.")
+        if file.size > MAX_DOCUMENT_FILE_SIZE_BYTES:
+            raise serializers.ValidationError("File must be 5 MB or smaller.")
         return file
 
     def validate(self, attrs):
         if self.instance is None and not attrs.get("file"):
             raise serializers.ValidationError({"file": "Upload a file."})
+        request = self.context.get("request")
+        if self.instance is None and request and request.user and request.user.is_authenticated:
+            existing_count = Document.objects.filter(user=request.user).count()
+            if existing_count >= MAX_DOCUMENTS_PER_USER:
+                raise serializers.ValidationError(
+                    {"detail": f"You can store up to {MAX_DOCUMENTS_PER_USER} documents."}
+                )
         return attrs
 
     def create(self, validated_data):

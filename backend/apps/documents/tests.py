@@ -1,9 +1,11 @@
 from django.contrib.auth.models import User
+from django.core.files.base import ContentFile
 from django.urls import reverse
 from django.core.files.uploadedfile import SimpleUploadedFile
 from rest_framework.test import APITestCase, APIClient
 
 from apps.universities.models import University, StudentUniversity
+from .constants import MAX_DOCUMENTS_PER_USER, MAX_DOCUMENT_FILE_SIZE_BYTES
 from .models import Document
 
 
@@ -87,3 +89,70 @@ class DocumentTests(APITestCase):
 
         self.assertEqual(response.status_code, 204)
         self.assertFalse(Document.objects.filter(pk=document.id).exists())
+
+    def test_rename_document(self):
+        document = Document.objects.create(
+            user=self.user,
+            title="scan_123.pdf",
+            type="transcript",
+            file=SimpleUploadedFile("scan_123.pdf", b"file", content_type="application/pdf"),
+            file_name="scan_123.pdf",
+            mime_type="application/pdf",
+            file_size=4,
+        )
+
+        response = self.client.patch(
+            reverse("documents_detail", kwargs={"pk": document.id}),
+            {"title": "High School Transcript"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        document.refresh_from_db()
+        self.assertEqual(document.title, "High School Transcript")
+
+    def test_create_document_rejects_large_file(self):
+        oversized = SimpleUploadedFile(
+            "large.pdf",
+            b"a" * (MAX_DOCUMENT_FILE_SIZE_BYTES + 1),
+            content_type="application/pdf",
+        )
+
+        response = self.client.post(
+            reverse("documents_list_create"),
+            {
+                "title": "Large File",
+                "type": "other",
+                "file": oversized,
+            },
+            format="multipart",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("file", response.data)
+
+    def test_create_document_rejects_when_limit_reached(self):
+        for index in range(MAX_DOCUMENTS_PER_USER):
+            document = Document(
+                user=self.user,
+                title=f"Document {index + 1}",
+                type="other",
+                file_name=f"document-{index + 1}.pdf",
+                mime_type="application/pdf",
+                file_size=4,
+            )
+            document.file.save(f"document-{index + 1}.pdf", ContentFile(b"file"), save=False)
+            document.save()
+
+        response = self.client.post(
+            reverse("documents_list_create"),
+            {
+                "title": "Overflow",
+                "type": "resume",
+                "file": SimpleUploadedFile("overflow.pdf", b"file", content_type="application/pdf"),
+            },
+            format="multipart",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data["detail"][0], f"You can store up to {MAX_DOCUMENTS_PER_USER} documents.")

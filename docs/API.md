@@ -107,6 +107,10 @@ Current behavior:
 - `POST /api/documents/` accepts multipart upload
 - document requires `title`, `type`, and `file`
 - document can optionally include `student_university_id`
+- `PATCH /api/documents/{id}/` can rename the document title
+- max file size is 5 MB
+- max stored documents per user is 15
+- one upload flow in the frontend can send multiple files, but each file is stored as its own `Document`
 - response includes file metadata and `download_url`
 - this is a simple admissions document vault, not a versioned text editor
 

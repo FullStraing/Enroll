@@ -21,9 +21,10 @@ class DocumentListCreateView(generics.ListCreateAPIView):
         serializer.save(user=self.request.user)
 
 
-class DocumentDetailView(generics.RetrieveDestroyAPIView):
+class DocumentDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = DocumentSerializer
     permission_classes = [permissions.IsAuthenticated]
+    parser_classes = [parsers.MultiPartParser, parsers.FormParser, parsers.JSONParser]
 
     def get_queryset(self):
         return Document.objects.filter(user=self.request.user).select_related(
