@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { FormEvent, Suspense, useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { ProtectedPage } from "@/components/protected-page";
 import { useAuth } from "@/components/auth-provider";
@@ -99,8 +99,9 @@ function formatEssayType(value: EssayType) {
   return match ? match.label : value;
 }
 
-export default function EssaysPage() {
+function EssaysPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { profile, refreshSession } = useAuth();
   const [essays, setEssays] = useState<Essay[]>([]);
   const [universities, setUniversities] = useState<University[]>([]);
@@ -169,6 +170,16 @@ export default function EssaysPage() {
   useEffect(() => {
     void loadData();
   }, []);
+
+  useEffect(() => {
+    const action = searchParams.get("action");
+    const essayType = searchParams.get("essay_type");
+    if (action !== "create") return;
+    setShowCreate(true);
+    if (essayType && essayTypeOptions.some((option) => option.value === essayType)) {
+      applyEssayTypeTemplate(essayType as EssayType);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (profile?.essays_onboarding_seen === false) {
@@ -510,5 +521,13 @@ export default function EssaysPage() {
         </section>
       </AppShell>
     </ProtectedPage>
+  );
+}
+
+export default function EssaysPage() {
+  return (
+    <Suspense fallback={null}>
+      <EssaysPageContent />
+    </Suspense>
   );
 }

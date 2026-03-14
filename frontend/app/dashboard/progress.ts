@@ -25,6 +25,7 @@ export type DashboardUniversity = {
 };
 
 export type DashboardEssay = {
+  id: number;
   essay_type: string;
   versions_count: number;
   latest_has_text?: boolean;
@@ -55,6 +56,7 @@ export type ProgressBlock = {
   completed: number;
   total: number;
   summary: string;
+  continueHref: string;
 };
 
 function hasValue(value: unknown) {
@@ -73,6 +75,7 @@ function finalizeBlock(
   title: string,
   conditions: ProgressCondition[],
   summary: string,
+  continueHref: string,
 ): ProgressBlock {
   const completed = conditions.filter((condition) => condition.done).length;
   return {
@@ -82,6 +85,7 @@ function finalizeBlock(
     completed,
     total: conditions.length,
     summary,
+    continueHref,
   };
 }
 
@@ -119,6 +123,15 @@ export function buildDashboardProgress(input: {
     { label: "Budget", done: hasValue(input.profile?.budget_range) },
     { label: "Tests or no-tests", done: hasAnyTestScore || explicitNoTests },
   ];
+  const profileContinueHref =
+    !profileConditions[0].done ? "/dashboard?edit=gpa" :
+    !profileConditions[1].done ? "/dashboard?edit=major" :
+    !profileConditions[2].done ? "/dashboard?edit=graduationYear" :
+    !profileConditions[3].done ? "/dashboard?edit=intake" :
+    !profileConditions[4].done ? "/dashboard?edit=country" :
+    !profileConditions[5].done ? "/dashboard?edit=budget" :
+    !profileConditions[6].done ? "/dashboard?edit=tests" :
+    "/dashboard";
 
   const universitiesCount = input.universities.length;
   const universitiesConditions: ProgressCondition[] = [
@@ -135,6 +148,8 @@ export function buildDashboardProgress(input: {
         input.universities.every((item) => hasValue(item.deadline_override) || hasValue(item.university?.main_deadline)),
     },
   ];
+  const universitiesContinueHref =
+    !universitiesConditions[0].done || !universitiesConditions[1].done ? "/universities?tab=discover" : "/universities?tab=my";
 
   const personalStatement = input.essays.find((essay) => essay.essay_type === "personal_statement");
   const essayConditions: ProgressCondition[] = [
@@ -143,6 +158,12 @@ export function buildDashboardProgress(input: {
     { label: "Personal statement draft is 500+ words", done: (personalStatement?.latest_word_count || 0) >= 500 },
     { label: "At least one essay has multiple versions", done: input.essays.some((essay) => essay.versions_count > 1) },
   ];
+  const essaysContinueHref =
+    !essayConditions[0].done
+      ? "/essays?action=create&essay_type=personal_statement"
+      : personalStatement
+        ? `/essays/${personalStatement.id}`
+        : "/essays";
 
   const requiredDocumentTypes = ["transcript", "resume", "recommendation_letter", "passport"];
   if (!explicitNoTests) {
@@ -152,6 +173,8 @@ export function buildDashboardProgress(input: {
     label: type,
     done: input.documents.some((document) => document.type === type),
   }));
+  const firstMissingDocumentType = documentsConditions.find((condition) => !condition.done)?.label || "transcript";
+  const documentsContinueHref = `/documents?type=${encodeURIComponent(firstMissingDocumentType)}`;
 
   const sectionByKey = new Map(input.sections.map((section) => [section.key, section]));
   const isSectionComplete = (key: string) => (sectionByKey.get(key)?.percent || 0) >= 100;
@@ -163,13 +186,15 @@ export function buildDashboardProgress(input: {
     { label: "Activities", done: isSectionComplete("activities") },
     { label: "Writing", done: isSectionComplete("writing") },
   ];
+  const firstIncompleteApplicationSection = applicationConditions.find((condition) => !condition.done)?.label.toLowerCase() || "profile";
+  const applicationsContinueHref = `/common-app?section=${encodeURIComponent(firstIncompleteApplicationSection)}`;
 
   const blocks: ProgressBlock[] = [
-    finalizeBlock("profile", "Profile", profileConditions, "Core student profile fields"),
-    finalizeBlock("universities", "Universities", universitiesConditions, "Balanced and deadline-ready shortlist"),
-    finalizeBlock("essays", "Essays", essayConditions, "Personal statement drafting progress"),
-    finalizeBlock("documents", "Documents", documentsConditions, "Required admissions files uploaded"),
-    finalizeBlock("applications", "Applications", applicationConditions, "Common App section completion"),
+    finalizeBlock("profile", "Profile", profileConditions, "Core student profile fields", profileContinueHref),
+    finalizeBlock("universities", "Universities", universitiesConditions, "Balanced and deadline-ready shortlist", universitiesContinueHref),
+    finalizeBlock("essays", "Essays", essayConditions, "Personal statement drafting progress", essaysContinueHref),
+    finalizeBlock("documents", "Documents", documentsConditions, "Required admissions files uploaded", documentsContinueHref),
+    finalizeBlock("applications", "Applications", applicationConditions, "Common App section completion", applicationsContinueHref),
   ];
 
   const overallPercent = Math.round(blocks.reduce((sum, block) => sum + block.percent, 0) / blocks.length);

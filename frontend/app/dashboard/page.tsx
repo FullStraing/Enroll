@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { CalendarClock, CircleAlert, CircleCheck, FileText, Flag, GraduationCap, Sparkles, Target, Trophy, UserRound } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { ProgressBlockCard } from "@/components/dashboard/progress-block-card";
@@ -108,13 +109,15 @@ type IntroStorage = {
 };
 
 const introQuizStorageKey = "enroll_intro_quiz_v1";
-type EditableFieldKey = "major" | "gpa" | "tests" | "intake" | "country" | "level";
+type EditableFieldKey = "major" | "gpa" | "tests" | "intake" | "country" | "level" | "budget" | "graduationYear";
 
 type EditProfileForm = {
   major: string;
   country: string;
   intakeYear: string;
   schoolLevel: string;
+  graduationYear: string;
+  budget: string;
   gpaScale: string;
   gpaValue: string;
   satTotal: string;
@@ -125,6 +128,12 @@ const TEST_OPTIONS = ["SAT", "ACT", "TOEFL", "IELTS", "DET"];
 const SCHOOL_LEVEL_OPTIONS = ["9", "10", "11", "12", "Gap Year", "College"];
 const INTAKE_OPTIONS = ["2026", "2027", "2028", "2029+"];
 const GPA_SCALE_OPTIONS = ["4.0", "5.0", "Percent"];
+const BUDGET_OPTIONS = [
+  { value: "low", label: "Low budget" },
+  { value: "medium", label: "Medium budget" },
+  { value: "high", label: "High budget" },
+  { value: "full_pay", label: "Full pay" },
+];
 const COUNTRY_OPTIONS = [
   "United States",
   "Canada",
@@ -188,7 +197,9 @@ function admissionsScore(input: {
   return toPercent(readiness * 0.45 + gpaScore * 0.25 + testScore * 0.2 + planningScore * 0.1);
 }
 
-export default function DashboardPage() {
+function DashboardPageContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [statusText, setStatusText] = useState("");
   const [progressData, setProgressData] = useState<CommonAppProgress | null>(null);
@@ -207,6 +218,8 @@ export default function DashboardPage() {
     country: "",
     intakeYear: "",
     schoolLevel: "",
+    graduationYear: "",
+    budget: "",
     gpaScale: "4.0",
     gpaValue: "",
     satTotal: "",
@@ -403,12 +416,23 @@ export default function DashboardPage() {
       country: profile?.country || quizAnswers.country || "",
       intakeYear: quizAnswers.intakeYear || "",
       schoolLevel: quizAnswers.schoolLevel || "",
+      graduationYear: profile?.graduation_year ? String(profile.graduation_year) : "",
+      budget: profile?.budget_range || "",
       gpaScale: quizAnswers.gpaScale || "4.0",
       gpaValue: quizAnswers.gpaValue || "",
       satTotal: profile?.sat_total ? String(profile.sat_total) : "",
       tests: Array.isArray(quizAnswers.tests) ? quizAnswers.tests : [],
     });
-  }, [profile?.country, profile?.intended_major, profile?.sat_total, quizAnswers]);
+  }, [profile?.budget_range, profile?.country, profile?.graduation_year, profile?.intended_major, profile?.sat_total, quizAnswers]);
+
+  useEffect(() => {
+    const editParam = searchParams.get("edit");
+    if (!editParam) return;
+    const allowed = new Set<EditableFieldKey>(["major", "gpa", "tests", "intake", "country", "level", "budget", "graduationYear"]);
+    if (!allowed.has(editParam as EditableFieldKey)) return;
+    setEditHint(editParam as EditableFieldKey);
+    setEditOpen(true);
+  }, [searchParams]);
 
   function openEditMenu(field: EditableFieldKey) {
     setEditHint(field);
@@ -436,6 +460,8 @@ export default function DashboardPage() {
       const payload: Partial<Profile> = {
         intended_major: editForm.major || "",
         country: editForm.country || "",
+        graduation_year: editForm.graduationYear ? Number(editForm.graduationYear) : null,
+        budget_range: editForm.budget || "",
         gpa: gpaNumber == null || Number.isNaN(gpaNumber) ? null : gpaNumber,
         sat_total: satNumber == null || Number.isNaN(satNumber) ? null : satNumber,
       };
@@ -457,6 +483,9 @@ export default function DashboardPage() {
       window.localStorage.setItem(introQuizStorageKey, JSON.stringify({ step: 6, answers: nextAnswers }));
       setStatusText("Profile snapshot updated.");
       setEditOpen(false);
+      if (searchParams.get("edit")) {
+        router.replace("/dashboard");
+      }
     } catch (error) {
       setStatusText(error instanceof Error ? error.message : "Unable to save profile changes.");
     } finally {
@@ -813,6 +842,35 @@ export default function DashboardPage() {
                 </label>
 
                 <label className="rounded-xl border border-black/15 bg-black/[0.02] p-3 text-sm">
+                  <span className="text-xs uppercase tracking-wide text-black/50">Graduation year</span>
+                  <input
+                    type="number"
+                    min={new Date().getFullYear() - 1}
+                    max={new Date().getFullYear() + 8}
+                    value={editForm.graduationYear}
+                    onChange={(event) => setEditForm((prev) => ({ ...prev, graduationYear: event.target.value }))}
+                    placeholder={String(new Date().getFullYear())}
+                    className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2"
+                  />
+                </label>
+
+                <label className="rounded-xl border border-black/15 bg-black/[0.02] p-3 text-sm">
+                  <span className="text-xs uppercase tracking-wide text-black/50">Budget</span>
+                  <select
+                    value={editForm.budget}
+                    onChange={(event) => setEditForm((prev) => ({ ...prev, budget: event.target.value }))}
+                    className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2"
+                  >
+                    <option value="">Select budget</option>
+                    {BUDGET_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="rounded-xl border border-black/15 bg-black/[0.02] p-3 text-sm">
                   <span className="text-xs uppercase tracking-wide text-black/50">GPA scale</span>
                   <select
                     value={editForm.gpaScale}
@@ -914,5 +972,13 @@ export default function DashboardPage() {
         ) : null}
       </AppShell>
     </ProtectedPage>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={null}>
+      <DashboardPageContent />
+    </Suspense>
   );
 }

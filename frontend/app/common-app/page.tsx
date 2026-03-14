@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { ProtectedPage } from "@/components/protected-page";
 import { getToken } from "@/lib/auth";
@@ -23,7 +24,8 @@ import {
 import { SectionNav } from "@/components/common-app/section-nav";
 import { StepForm } from "@/components/common-app/step-form";
 
-export default function CommonAppPage() {
+function CommonAppPageContent() {
+  const searchParams = useSearchParams();
   const STEP_STORAGE_KEY = "common_app.current_step_id";
   const SCROLL_STORAGE_KEY = "common_app.scroll_y";
   const [loading, setLoading] = useState(true);
@@ -101,13 +103,19 @@ export default function CommonAppPage() {
 
   useEffect(() => {
     if (!steps.length || hasRestoredStepRef.current) return;
+    const sectionParam = searchParams.get("section");
+    if (sectionParam && sectionStartIndexes[sectionParam] != null) {
+      setCurrentStepIndex(sectionStartIndexes[sectionParam]);
+      hasRestoredStepRef.current = true;
+      return;
+    }
     const restoredStepId = restoredStepIdRef.current;
     if (restoredStepId) {
       const restoredIndex = steps.findIndex((step) => step.id === restoredStepId);
       if (restoredIndex >= 0) setCurrentStepIndex(restoredIndex);
     }
     hasRestoredStepRef.current = true;
-  }, [steps]);
+  }, [searchParams, sectionStartIndexes, steps]);
 
   useEffect(() => {
     if (!steps.length) return;
@@ -282,5 +290,13 @@ export default function CommonAppPage() {
         ) : null}
       </AppShell>
     </ProtectedPage>
+  );
+}
+
+export default function CommonAppPage() {
+  return (
+    <Suspense fallback={null}>
+      <CommonAppPageContent />
+    </Suspense>
   );
 }

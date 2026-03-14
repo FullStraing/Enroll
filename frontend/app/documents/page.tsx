@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { ProtectedPage } from "@/components/protected-page";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
@@ -13,7 +14,8 @@ import { DocumentGroupSection } from "@/components/documents/document-group-sect
 import { RenameDocumentDialog } from "@/components/documents/rename-document-dialog";
 import { UploadPanel } from "@/components/documents/upload-panel";
 
-export default function DocumentsPage() {
+function DocumentsPageContent() {
+  const searchParams = useSearchParams();
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
   const [studentUniversities, setStudentUniversities] = useState<StudentUniversityOption[]>([]);
   const [loading, setLoading] = useState(true);
@@ -22,6 +24,11 @@ export default function DocumentsPage() {
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [renamingDocument, setRenamingDocument] = useState<DocumentItem | null>(null);
   const [statusText, setStatusText] = useState("");
+
+  const requestedDocumentType = useMemo(() => {
+    const value = searchParams.get("type");
+    return DOCUMENT_TYPES.some((item) => item.id === value) ? (value as DocumentType) : "transcript";
+  }, [searchParams]);
 
   const groupedDocuments = useMemo(() => {
     const map = new Map<DocumentType, DocumentItem[]>();
@@ -147,6 +154,7 @@ export default function DocumentsPage() {
               documentTypes={DOCUMENT_TYPES}
               studentUniversities={studentUniversities}
               currentDocumentCount={documents.length}
+              initialType={requestedDocumentType}
               uploading={uploading}
               onUpload={handleUpload}
               onError={setStatusText}
@@ -227,5 +235,13 @@ export default function DocumentsPage() {
         />
       </AppShell>
     </ProtectedPage>
+  );
+}
+
+export default function DocumentsPage() {
+  return (
+    <Suspense fallback={null}>
+      <DocumentsPageContent />
+    </Suspense>
   );
 }

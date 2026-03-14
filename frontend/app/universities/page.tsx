@@ -1,6 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect } from "react";
 import { Search } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { ProtectedPage } from "@/components/protected-page";
@@ -12,9 +13,17 @@ import { UniversitiesTabs } from "@/components/universities/universities-tabs";
 import { PAGE_SIZE_OPTIONS } from "@/app/universities/constants";
 import { useUniversitiesPage } from "@/app/universities/use-universities-page";
 
-export default function UniversitiesPage() {
+function UniversitiesPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const state = useUniversitiesPage();
+
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    if (tab === "my" || tab === "discover") {
+      state.setActiveTab(tab);
+    }
+  }, [searchParams, state]);
 
   return (
     <ProtectedPage>
@@ -131,5 +140,13 @@ export default function UniversitiesPage() {
         </section>
       </AppShell>
     </ProtectedPage>
+  );
+}
+
+export default function UniversitiesPage() {
+  return (
+    <Suspense fallback={null}>
+      <UniversitiesPageContent />
+    </Suspense>
   );
 }

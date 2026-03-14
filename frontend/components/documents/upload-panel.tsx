@@ -1,6 +1,6 @@
 "use client";
 
-import { type DragEvent, type FormEvent, useRef, useState } from "react";
+import { type DragEvent, type FormEvent, useEffect, useRef, useState } from "react";
 import { Upload, X } from "lucide-react";
 import { MAX_DOCUMENTS_PER_USER } from "@/app/documents/constants";
 import type { DocumentType, DocumentTypeMeta, StudentUniversityOption } from "@/app/documents/types";
@@ -13,6 +13,7 @@ type UploadPanelProps = {
   documentTypes: readonly DocumentTypeMeta[];
   studentUniversities: StudentUniversityOption[];
   currentDocumentCount: number;
+  initialType?: DocumentType;
   uploading: boolean;
   onUpload: (payload: { title: string; type: DocumentType; studentUniversityId: string; files: File[] }) => Promise<void>;
   onError: (message: string) => void;
@@ -22,6 +23,7 @@ export function UploadPanel({
   documentTypes,
   studentUniversities,
   currentDocumentCount,
+  initialType = "transcript",
   uploading,
   onUpload,
   onError,
@@ -29,11 +31,15 @@ export function UploadPanel({
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [dragActive, setDragActive] = useState(false);
   const [title, setTitle] = useState("");
-  const [type, setType] = useState<DocumentType>("transcript");
+  const [type, setType] = useState<DocumentType>(initialType);
   const [studentUniversityId, setStudentUniversityId] = useState("");
   const [files, setFiles] = useState<File[]>([]);
 
   const remainingSlots = Math.max(0, MAX_DOCUMENTS_PER_USER - currentDocumentCount);
+
+  useEffect(() => {
+    setType(initialType);
+  }, [initialType]);
 
   function applyFiles(nextFiles: File[]) {
     if (!nextFiles.length) return;
@@ -68,7 +74,7 @@ export function UploadPanel({
 
     await onUpload({ title, type, studentUniversityId, files });
     setTitle("");
-    setType("transcript");
+    setType(initialType);
     setStudentUniversityId("");
     setFiles([]);
     if (inputRef.current) {
