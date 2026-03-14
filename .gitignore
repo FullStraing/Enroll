@@ -25,6 +25,7 @@ frontend/.env.*.local
 backend/.secrets/
 tmp/
 *.log
+media/
 
 # Next.js / Node
 frontend/node_modules/

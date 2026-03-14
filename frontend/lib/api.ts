@@ -6,10 +6,12 @@ export function apiUrl(path: string): string {
 }
 
 export async function apiFetch<T>(path: string, options: RequestInit = {}, token?: string): Promise<T> {
+  const isFormData = typeof FormData !== "undefined" && options.body instanceof FormData;
+
   const response = await fetch(apiUrl(path), {
     ...options,
     headers: {
-      "Content-Type": "application/json",
+      ...(isFormData ? {} : { "Content-Type": "application/json" }),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(options.headers || {}),
     },

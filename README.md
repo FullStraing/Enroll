@@ -25,7 +25,7 @@ Implemented now:
 - dashboard shell
 - universities list, university detail, applications flow
 - calendar page and task generation baseline
-- documents page
+- documents vault with upload, download, delete, document types, and optional university link
 - essays manager + essay workspace + versions + autosave baseline
 - Common App draft flow with backend-driven progress
 - privacy policy page

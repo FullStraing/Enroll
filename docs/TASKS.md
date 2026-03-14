@@ -17,6 +17,7 @@ The project is past the skeleton phase. The current state is:
 - JWT auth, registration, profile, password change
 - settings page with account actions
 - privacy policy page and legal links in core UI surfaces
+- documents now work as a simple admissions file vault with upload/delete/download and document grouping
 
 ### Frontend foundation
 - Next.js frontend established as the primary UI layer

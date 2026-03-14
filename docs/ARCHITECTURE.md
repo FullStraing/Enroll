@@ -26,7 +26,7 @@ Main apps:
 - `users` - auth, profile, password change, Common App progress
 - `universities` - catalog, deadlines, metrics, source snapshots, ingestion
 - `tasks` - roadmap stages, task generation, planning support
-- `documents` - document objects and versions
+- `documents` - admissions document vault with file upload and university linkage
 - `essays` - essays, versions, compare logic
 - `ai` - baseline AI endpoints
 
@@ -102,6 +102,24 @@ Current implemented behavior:
 
 Product intent:
 - make essays feel closer to a versioned workspace than a plain text field
+
+## Documents architecture
+
+Documents are intentionally simpler than essays.
+
+Core model:
+- `Document`
+
+Current implemented behavior:
+- file upload for admissions-related documents
+- document typing (`transcript`, `resume`, `recommendation_letter`, `passport`, `test_score`, `financial`, `essay`, `other`)
+- optional link to a university from `My Universities`
+- file metadata and direct download URL
+- delete support
+
+Product intent:
+- keep documents as a lightweight admissions file locker inside the workflow
+- do not turn documents into a second rich-text editing/versioning product
 
 ## University data architecture
 

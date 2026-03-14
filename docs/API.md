@@ -100,8 +100,15 @@ Notes:
 - `GET /api/documents/`
 - `POST /api/documents/`
 - `GET /api/documents/{id}/`
-- `GET /api/documents/{document_id}/versions/`
-- `POST /api/documents/{document_id}/versions/`
+- `DELETE /api/documents/{id}/`
+
+Current behavior:
+
+- `POST /api/documents/` accepts multipart upload
+- document requires `title`, `type`, and `file`
+- document can optionally include `student_university_id`
+- response includes file metadata and `download_url`
+- this is a simple admissions document vault, not a versioned text editor
 
 ## Essays
 
