@@ -1,3 +1,7 @@
+import re
+import unicodedata
+from difflib import SequenceMatcher
+
 from django.http import Http404
 from django.db import models
 from django.db.models import Max
@@ -12,6 +16,65 @@ from .serializers import (
     UniversityMetricSerializer,
     UniversitySourceSnapshotSerializer,
 )
+
+CYRILLIC_TO_LATIN = {
+    "а": "a", "б": "b", "в": "v", "г": "g", "д": "d", "е": "e", "ё": "e", "ж": "zh", "з": "z",
+    "и": "i", "й": "y", "к": "k", "л": "l", "м": "m", "н": "n", "о": "o", "п": "p", "р": "r",
+    "с": "s", "т": "t", "у": "u", "ф": "f", "х": "h", "ц": "ts", "ч": "ch", "ш": "sh", "щ": "sch",
+    "ъ": "", "ы": "y", "ь": "", "э": "e", "ю": "yu", "я": "ya",
+}
+
+RU_TO_EN_LAYOUT = str.maketrans(
+    "йцукенгшщзхъфывапролджэячсмитьбю",
+    "qwertyuiop[]asdfghjkl;'zxcvbnm,.",
+)
+EN_TO_RU_LAYOUT = str.maketrans(
+    "qwertyuiop[]asdfghjkl;'zxcvbnm,.",
+    "йцукенгшщзхъфывапролджэячсмитьбю",
+)
+
+
+def _normalize_search_text(value: str) -> str:
+    lowered = value.lower().strip()
+    ascii_folded = unicodedata.normalize("NFKD", lowered).encode("ascii", "ignore").decode("ascii")
+    cleaned = re.sub(r"[^a-z0-9\s]+", " ", ascii_folded)
+    return re.sub(r"\s+", " ", cleaned).strip()
+
+
+def _transliterate_cyrillic(value: str) -> str:
+    return "".join(CYRILLIC_TO_LATIN.get(char, char) for char in value.lower())
+
+
+def _build_search_variants(value: str) -> set[str]:
+    raw = value.strip()
+    if not raw:
+        return set()
+
+    candidates = {
+        raw,
+        raw.translate(RU_TO_EN_LAYOUT),
+        raw.translate(EN_TO_RU_LAYOUT),
+        _transliterate_cyrillic(raw),
+        _transliterate_cyrillic(raw.translate(EN_TO_RU_LAYOUT)),
+    }
+
+    return {normalized for normalized in (_normalize_search_text(item) for item in candidates) if normalized}
+
+
+def _candidate_matches_query(query_variants: set[str], candidate_text: str) -> bool:
+    candidate_variants = _build_search_variants(candidate_text)
+    if not candidate_variants:
+        return False
+
+    for query in query_variants:
+        for candidate in candidate_variants:
+            if query in candidate:
+                return True
+            if len(query) >= 4:
+                candidate_tokens = candidate.split()
+                if any(SequenceMatcher(None, query, token).ratio() >= 0.82 for token in candidate_tokens):
+                    return True
+    return False
 
 
 class UniversityListView(generics.ListAPIView):
@@ -59,12 +122,17 @@ class UniversityListView(generics.ListAPIView):
             qs = qs.filter(selectivity=selectivity)
 
         if query:
-            qs = qs.filter(
-                models.Q(name__icontains=query)
-                | models.Q(city__icontains=query)
-                | models.Q(state__icontains=query)
-                | models.Q(country__icontains=query)
-            )
+            query_variants = _build_search_variants(query)
+            matching_ids = []
+            for row in qs.values("id", "name", "city", "state", "country"):
+                candidate_text = " ".join(
+                    part.strip()
+                    for part in [row.get("name"), row.get("city"), row.get("state"), row.get("country")]
+                    if isinstance(part, str) and part.strip()
+                )
+                if _candidate_matches_query(query_variants, candidate_text):
+                    matching_ids.append(row["id"])
+            qs = qs.filter(id__in=matching_ids)
 
         metric_keys_to_annotate = set()
         if avg_sat_min or avg_sat_max:

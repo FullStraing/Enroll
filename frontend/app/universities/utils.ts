@@ -90,12 +90,14 @@ export function sumKnown(values: Array<number | string | null | undefined>): { t
 
 export function rowStatusTone(status: StudentUniversity["status"]): string {
   if (status === "admitted") return "bg-emerald-50/70";
+  if (status === "submitted") return "bg-[#FFF4CC]/80";
   if (status === "rejected") return "bg-rose-50/70";
   return "";
 }
 
 export function statusSelectTone(status: StudentUniversity["status"]): string {
   if (status === "admitted") return "bg-emerald-100 border-emerald-500";
+  if (status === "submitted") return "bg-[#FFF4CC] border-[#E0A800]";
   if (status === "rejected") return "bg-rose-100 border-rose-500";
   return "bg-white border-black/25";
 }

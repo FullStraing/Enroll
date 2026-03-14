@@ -22,7 +22,6 @@ type FieldConfig = {
 };
 
 const INPUT_FIELDS: FieldConfig[] = [
-  { key: "search", label: "Search", placeholder: "University / city / state" },
   { key: "major", label: "Major", placeholder: "CS, Business, Biology" },
   { key: "state", label: "State", placeholder: "CA, NY, TX" },
   { key: "acceptanceMin", label: "Acceptance % min", type: "number" },
@@ -63,7 +62,7 @@ export function DiscoverFiltersPanel({
 
       {open ? (
         <div className="grid gap-3 rounded-xl border border-black/10 bg-black/[0.02] p-3 md:grid-cols-2 xl:grid-cols-4">
-          {INPUT_FIELDS.slice(0, 3).map((field) => (
+          {INPUT_FIELDS.slice(0, 2).map((field) => (
             <label key={field.key} className="text-xs text-black/70">
               {field.label}
               <input
@@ -93,7 +92,7 @@ export function DiscoverFiltersPanel({
             </select>
           </label>
 
-          {INPUT_FIELDS.slice(3).map((field) => (
+          {INPUT_FIELDS.slice(2).map((field) => (
             <label key={field.key} className="text-xs text-black/70">
               {field.label}
               <input

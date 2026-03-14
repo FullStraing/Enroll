@@ -32,6 +32,25 @@ const nav = [
 ];
 const sidebarStorageKey = "enroll_sidebar_collapsed";
 
+function buildLocalDateTime(now: Date) {
+  const locale = typeof navigator !== "undefined" ? navigator.language : "en-US";
+  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+  const dateLabel = new Intl.DateTimeFormat(locale, {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  }).format(now);
+
+  const timeLabel = new Intl.DateTimeFormat(locale, {
+    hour: "numeric",
+    minute: "2-digit",
+    timeZoneName: "short",
+  }).format(now);
+
+  return { dateLabel, timeLabel, timeZone };
+}
+
 export function AppShell({
   title,
   subtitle,
@@ -49,6 +68,7 @@ export function AppShell({
     return window.localStorage.getItem(sidebarStorageKey) === "1";
   });
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [localDateTime, setLocalDateTime] = useState(() => buildLocalDateTime(new Date()));
 
   const name = profile?.full_name || profile?.username || profile?.email || "User";
 
@@ -63,6 +83,13 @@ export function AppShell({
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    const update = () => setLocalDateTime(buildLocalDateTime(new Date()));
+    update();
+    const timer = window.setInterval(update, 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   return (
     <div
@@ -185,7 +212,15 @@ export function AppShell({
             <p className="text-sm text-black/65">{subtitle}</p>
           </div>
           <div className="flex items-center gap-2">
-            <span className="rounded-xl border-2 border-black bg-white px-3 py-1.5 text-sm font-semibold">2026</span>
+            <span
+              className="rounded-xl border-2 border-black bg-white px-3 py-1.5 text-sm font-semibold leading-tight"
+              title={localDateTime.timeZone}
+            >
+              <span className="block text-[11px] font-semibold uppercase tracking-[0.14em] text-black/45">
+                {localDateTime.dateLabel}
+              </span>
+              <span className="block text-sm font-semibold text-black">{localDateTime.timeLabel}</span>
+            </span>
             <span className="rounded-xl border-2 border-black bg-white px-3 py-1.5 text-sm font-semibold">
               <span className="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#DAF5F0] text-xs">
                 {name.charAt(0).toUpperCase()}

@@ -175,6 +175,24 @@ class UniversityDataTests(APITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["count"], 1)
 
+    def test_university_search_is_case_insensitive(self):
+        university = University.objects.create(name="Princeton University", country="USA")
+
+        response = self.client.get(reverse("universities_list"), {"q": "princeton"})
+
+        self.assertEqual(response.status_code, 200)
+        result_names = [item["name"] for item in response.data["results"]]
+        self.assertIn(university.name, result_names)
+
+    def test_university_search_handles_keyboard_layout_mismatch(self):
+        university = University.objects.create(name="Princeton University", country="USA")
+
+        response = self.client.get(reverse("universities_list"), {"q": "зкштсуещт"})
+
+        self.assertEqual(response.status_code, 200)
+        result_names = [item["name"] for item in response.data["results"]]
+        self.assertIn(university.name, result_names)
+
 
 class DeadlineParserTests(APITestCase):
     def test_parse_deadlines_from_html(self):

@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { Search } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { ProtectedPage } from "@/components/protected-page";
 import { Button } from "@/components/ui/button";
@@ -64,6 +65,21 @@ export default function UniversitiesPage() {
             </div>
           ) : (
             <div className="mt-4">
+              <div className="mb-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <label className="relative block w-full max-w-xl">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-black/45" />
+                  <input
+                    value={state.searchQuery}
+                    onChange={(event) => state.setSearchQuery(event.target.value)}
+                    placeholder="Search universities by name"
+                    className="w-full rounded-2xl border-2 border-black bg-white py-2.5 pl-10 pr-4 text-sm text-black outline-none transition placeholder:text-black/40 focus:bg-[#DAF5F0]/30"
+                  />
+                </label>
+                <div className="text-sm text-black/60">
+                  {state.loadingDiscover ? "Searching..." : `Results across all pages: ${state.discoverCount}`}
+                </div>
+              </div>
+
               <DiscoverFiltersPanel
                 open={state.filtersOpen}
                 activeFiltersCount={state.activeFiltersCount}

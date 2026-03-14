@@ -1,6 +1,6 @@
 "use client";
 
-import { type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, useEffect, useMemo, useRef, useState } from "react";
+import { type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ACTION_MENU_GAP,
   DISCOVER_CACHE_KEY,
@@ -35,6 +35,7 @@ export function useUniversitiesPage() {
   const [filtersDraft, setFiltersDraft] = useState<DiscoverFilters>(EMPTY_FILTERS);
   const [filters, setFilters] = useState<DiscoverFilters>(EMPTY_FILTERS);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const [status, setStatus] = useState("");
   const [statusAction, setStatusAction] = useState<StatusAction>(null);
@@ -76,12 +77,12 @@ export function useUniversitiesPage() {
     }
   }
 
-  async function loadDiscover(
+  const loadDiscover = useCallback(async (
     page = discoverPage,
     nextFilters = filters,
     nextPageSize = pageSize,
     options?: { silent?: boolean },
-  ) {
+  ) => {
     const token = getToken();
     if (!token) return;
 
@@ -113,7 +114,7 @@ export function useUniversitiesPage() {
     } finally {
       if (!silent) setLoadingDiscover(false);
     }
-  }
+  }, [discoverPage, filters, pageSize]);
 
   async function patchMyUniversity(itemId: number, payload: Partial<Pick<StudentUniversity, "category" | "status" | "sort_order">>) {
     const token = getToken();
@@ -278,6 +279,7 @@ export function useUniversitiesPage() {
   function resetFilters() {
     setFiltersDraft(EMPTY_FILTERS);
     setFilters(EMPTY_FILTERS);
+    setSearchQuery("");
     void loadDiscover(1, EMPTY_FILTERS, pageSize);
   }
 
@@ -408,6 +410,7 @@ export function useUniversitiesPage() {
     setFilters(initialFilters);
     setFiltersDraft(initialFiltersDraft);
     setFiltersOpen(initialFiltersOpen);
+    setSearchQuery(initialFilters.search);
     void loadMyUniversities({ silent: hasMyCache });
     void loadDiscover(initialDiscoverPage, initialFilters, initialPageSize, { silent: hasDiscoverCache });
     setUiStateReady(true);
@@ -427,6 +430,22 @@ export function useUniversitiesPage() {
       }),
     );
   }, [activeTab, filters, filtersDraft, discoverPage, filtersOpen, uiStateReady]);
+
+  useEffect(() => {
+    if (!uiStateReady) return;
+
+    const normalizedSearch = searchQuery.trim();
+    if (normalizedSearch === filters.search) return;
+
+    const timer = window.setTimeout(() => {
+      const nextFilters = { ...filters, search: normalizedSearch };
+      setFilters(nextFilters);
+      setFiltersDraft((prev) => ({ ...prev, search: normalizedSearch }));
+      void loadDiscover(1, nextFilters, pageSize);
+    }, 300);
+
+    return () => window.clearTimeout(timer);
+  }, [searchQuery, filters, pageSize, uiStateReady, loadDiscover]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -475,6 +494,8 @@ export function useUniversitiesPage() {
     filters,
     filtersOpen,
     setFiltersOpen,
+    searchQuery,
+    setSearchQuery,
     status,
     statusAction,
     draggingItemId,
