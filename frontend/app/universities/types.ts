@@ -7,6 +7,7 @@ export type University = {
   selectivity?: "high" | "medium" | "low" | string;
   main_deadline?: string | null;
   acceptance_rate?: number | null;
+  sat_range?: string | null;
   tuition_out_state?: number | null;
   net_price?: number | null;
   aid_package?: number | null;
@@ -48,6 +49,29 @@ export type DiscoverFilters = {
   housingMin: string;
   housingMax: string;
 };
+
+export type MyUniversitiesColumnId =
+  | "category"
+  | "status"
+  | "acceptance"
+  | "sat"
+  | "tuition"
+  | "scholarship"
+  | "netCost"
+  | "appFee"
+  | "deadline";
+
+export type MyUniversitiesSortId =
+  | "university"
+  | "category"
+  | "status"
+  | "acceptance"
+  | "sat"
+  | "tuition"
+  | "scholarship"
+  | "netCost"
+  | "appFee"
+  | "deadline";
 
 export type ActionMenuState = {
   itemId: number;

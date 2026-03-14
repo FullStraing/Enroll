@@ -53,7 +53,7 @@ Backend:
 - protected API endpoints use standard auth permissions
 
 Frontend:
-- token is managed in cookie/local storage flow
+- token is stored in `localStorage` and mirrored into a non-HttpOnly cookie for frontend bootstrap
 - protected pages are guarded at the app layer
 - bootstrap logic determines whether to show workspace or redirect to auth
 

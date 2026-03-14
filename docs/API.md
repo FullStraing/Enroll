@@ -69,6 +69,7 @@ Common enriched metric keys in `/api/universities/{id}/metrics/` now include:
 - `GET /api/my-universities/`
 - `POST /api/my-universities/`
 - `GET /api/my-universities/{id}/`
+- `PATCH /api/my-universities/{id}/`
 - `PUT /api/my-universities/{id}/`
 - `DELETE /api/my-universities/{id}/`
 
@@ -77,6 +78,7 @@ Common enriched metric keys in `/api/universities/{id}/metrics/` now include:
 - `GET /api/applications/`
 - `POST /api/applications/`
 - `GET /api/applications/{id}/`
+- `PATCH /api/applications/{id}/`
 - `PUT /api/applications/{id}/`
 
 ## Tasks and planning
@@ -84,8 +86,8 @@ Common enriched metric keys in `/api/universities/{id}/metrics/` now include:
 - `GET /api/roadmap-stages/`
 - `GET /api/tasks/`
 - `POST /api/tasks/`
+- `PATCH /api/tasks/{id}/`
 - `PUT /api/tasks/{id}/`
-- `DELETE /api/tasks/{id}/`
 - `POST /api/tasks/generate/`
 
 Notes:
@@ -98,9 +100,6 @@ Notes:
 - `GET /api/documents/`
 - `POST /api/documents/`
 - `GET /api/documents/{id}/`
-- `PATCH /api/documents/{id}/`
-- `PUT /api/documents/{id}/`
-- `DELETE /api/documents/{id}/`
 - `GET /api/documents/{document_id}/versions/`
 - `POST /api/documents/{document_id}/versions/`
 
@@ -117,6 +116,7 @@ Notes:
 - `GET /api/essay-versions/{id}/`
 - `PATCH /api/essay-versions/{id}/`
 - `PUT /api/essay-versions/{id}/`
+- `DELETE /api/essay-versions/{id}/`
 - `GET /api/essays/{essay_id}/compare/?from_version={id}&to_version={id}`
 
 Current behavior:

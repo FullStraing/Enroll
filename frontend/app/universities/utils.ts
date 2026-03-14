@@ -23,6 +23,14 @@ export function categoryLabel(category: StudentUniversity["category"]): string {
   return "Target";
 }
 
+export function formatUniversityLocation(university: University): string {
+  const parts = [university.city, university.state, university.country || "USA"]
+    .map((value) => (typeof value === "string" ? value.trim() : ""))
+    .filter(Boolean);
+
+  return parts.length > 0 ? parts.join(", ") : "USA";
+}
+
 export function buildQuery(paramsSource: DiscoverFilters, page: number, pageSize: number): string {
   const queryParts = [paramsSource.search.trim(), paramsSource.major.trim(), paramsSource.state.trim()].filter(Boolean);
 

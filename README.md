@@ -13,7 +13,7 @@ The product focus is not auto-submission. It is structured preparation:
 
 - Backend: Django + Django REST Framework + PostgreSQL
 - Frontend: Next.js 14 + TypeScript + Tailwind CSS
-- Auth: JWT with frontend cookie/session handling
+- Auth: JWT with frontend localStorage plus a non-HttpOnly cookie mirror for bootstrap
 - Rich text editor: Tiptap
 
 ## Current product state
