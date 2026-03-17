@@ -33,6 +33,22 @@ export function categoryLabel(category: StudentUniversity["category"]): string {
   return "Target";
 }
 
+export function categoryToneClass(category: StudentUniversity["category"] | ChanceBand): string {
+  if (category === "high_reach") return "border-[#E58E5B]/60 bg-[#F8D6B3] text-black";
+  if (category === "reach") return "border-[#E7B77C]/60 bg-[#F6E3C8] text-black";
+  if (category === "likely") return "border-[#A9C973]/60 bg-[#E8F4CF] text-black";
+  if (category === "safety") return "border-[#E0B94B]/60 bg-[#FFF4CC] text-black";
+  return "border-[#84DCCB]/60 bg-[#DAF5F0] text-black";
+}
+
+export function categorySelectToneClass(category: StudentUniversity["category"]): string {
+  if (category === "high_reach") return "border-[#C97844] bg-[#F8D6B3]";
+  if (category === "reach") return "border-[#D5A363] bg-[#F6E3C8]";
+  if (category === "likely") return "border-[#8FB857] bg-[#E8F4CF]";
+  if (category === "safety") return "border-[#D9B13F] bg-[#FFF4CC]";
+  return "border-[#63CDB8] bg-[#DAF5F0]";
+}
+
 export function getChanceBandFromAcceptance(acceptanceRate?: number | null): ChanceBand {
   if (typeof acceptanceRate !== "number" || !Number.isFinite(acceptanceRate)) return "";
   if (acceptanceRate <= CHANCE_RANGES.high_reach.max) return "high_reach";

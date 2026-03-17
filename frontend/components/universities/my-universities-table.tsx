@@ -24,7 +24,7 @@ import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { STATUS_OPTIONS } from "@/app/universities/constants";
 import type { ActionMenuState, MyUniversitiesColumnId, MyUniversitiesSortId, StudentUniversity } from "@/app/universities/types";
-import { getNetCostValue, money, rowStatusTone, statusSelectTone, sumKnown } from "@/app/universities/utils";
+import { categorySelectToneClass, getNetCostValue, money, rowStatusTone, statusSelectTone, sumKnown } from "@/app/universities/utils";
 import { formatDateShort } from "@/lib/date-format";
 
 type MyUniversitiesTableProps = {
@@ -590,7 +590,7 @@ export function MyUniversitiesTable({
                       <select
                         value={item.category}
                         onChange={(event) => onUpdateCategory(item.id, event.target.value as StudentUniversity["category"])}
-                        className="h-10 appearance-none rounded-xl border-2 border-black bg-[#DAF5F0] px-3 pr-9 text-sm font-semibold text-black shadow-[0_2px_0_#000]"
+                        className={`h-10 appearance-none rounded-xl border-2 px-3 pr-9 text-sm font-semibold text-black shadow-[0_2px_0_#000] ${categorySelectToneClass(item.category)}`}
                         disabled={updatingItemId === item.id}
                       >
                         <option value="high_reach">High Reach</option>
