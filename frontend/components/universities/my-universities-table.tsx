@@ -22,6 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { UniversityLogo } from "@/components/universities/university-logo";
 import { STATUS_OPTIONS } from "@/app/universities/constants";
 import type { ActionMenuState, MyUniversitiesColumnId, MyUniversitiesSortId, StudentUniversity } from "@/app/universities/types";
 import { categorySelectToneClass, getNetCostValue, money, rowStatusTone, statusSelectTone, sumKnown } from "@/app/universities/utils";
@@ -580,6 +581,7 @@ export function MyUniversitiesTable({
                   >
                     <GripVertical className="h-4 w-4" />
                   </button>
+                  <UniversityLogo name={item.university.name} size="sm" />
                   <span>{item.university.name}</span>
                 </div>
               </td>

@@ -19,3 +19,9 @@ Lightweight session log for preserving short-term context across development ses
 - Added `scripts/session-start.ps1` to validate Serena before each work session and optionally append a log entry.
 
 - Session start 2026-03-14 11:24: Serena preflight passed.
+
+## 2026-03-17
+
+- Activated Serena for the Enroll project before UI work.
+- Started university media MVP with local logo assets and a shared `UniversityLogo` component.
+- Added clean university logo rendering to Discover cards and to the `My Universities` table with a graceful initials fallback.

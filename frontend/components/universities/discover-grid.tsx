@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { UniversityLogo } from "@/components/universities/university-logo";
 import { categoryToneClass, chanceLabel, formatUniversityLocation, getChanceBandFromAcceptance, money } from "@/app/universities/utils";
 import type { University } from "@/app/universities/types";
 
@@ -53,15 +54,18 @@ export function DiscoverGrid({
                 }}
               >
                 <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    <CardTitle>{university.name}</CardTitle>
-                    <CardDescription className="mt-1">{formatUniversityLocation(university)}</CardDescription>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      <Badge>Acceptance: {university.acceptance_rate != null ? `${university.acceptance_rate}%` : "N/A"}</Badge>
-                      <Badge className={categoryToneClass(chanceBand)}>
-                        {chanceLabel(chanceBand)}
-                      </Badge>
-                      <Badge variant="cyan">Tuition: {money(university.tuition_out_state)}</Badge>
+                  <div className="flex min-w-0 flex-1 items-start gap-3">
+                    <UniversityLogo name={university.name} size="md" />
+                    <div className="min-w-0 flex-1">
+                      <CardTitle>{university.name}</CardTitle>
+                      <CardDescription className="mt-1">{formatUniversityLocation(university)}</CardDescription>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <Badge>Acceptance: {university.acceptance_rate != null ? `${university.acceptance_rate}%` : "N/A"}</Badge>
+                        <Badge className={categoryToneClass(chanceBand)}>
+                          {chanceLabel(chanceBand)}
+                        </Badge>
+                        <Badge variant="cyan">Tuition: {money(university.tuition_out_state)}</Badge>
+                      </div>
                     </div>
                   </div>
 
