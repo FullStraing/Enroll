@@ -22,13 +22,16 @@ export function getUniversityLogoPath(name: string): string | null {
 }
 
 export function getUniversityInitials(name: string): string {
+  const stopWords = new Set(["of", "the", "and", "at", "for"]);
   const words = name
     .split(/\s+/)
     .map((word) => word.replace(/[^A-Za-z]/g, ""))
     .filter(Boolean);
+  const preferredWords = words.filter((word) => !stopWords.has(word.toLowerCase()));
+  const sourceWords = preferredWords.length > 0 ? preferredWords : words;
 
-  if (words.length === 0) return "U";
-  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+  if (sourceWords.length === 0) return "U";
+  if (sourceWords.length === 1) return sourceWords[0].slice(0, 2).toUpperCase();
 
-  return `${words[0][0] ?? ""}${words[1][0] ?? ""}`.toUpperCase();
+  return `${sourceWords[0][0] ?? ""}${sourceWords[1][0] ?? ""}`.toUpperCase();
 }
