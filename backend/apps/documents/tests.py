@@ -156,3 +156,38 @@ class DocumentTests(APITestCase):
 
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data["detail"][0], f"You can store up to {MAX_DOCUMENTS_PER_USER} documents.")
+
+    def test_create_document_rejects_duplicate_file_content(self):
+        first = SimpleUploadedFile(
+            "resume.pdf",
+            b"%PDF-1.4 duplicate test file",
+            content_type="application/pdf",
+        )
+        duplicate = SimpleUploadedFile(
+            "resume-copy.pdf",
+            b"%PDF-1.4 duplicate test file",
+            content_type="application/pdf",
+        )
+
+        first_response = self.client.post(
+            reverse("documents_list_create"),
+            {
+                "title": "Resume",
+                "type": "resume",
+                "file": first,
+            },
+            format="multipart",
+        )
+        duplicate_response = self.client.post(
+            reverse("documents_list_create"),
+            {
+                "title": "Resume copy",
+                "type": "resume",
+                "file": duplicate,
+            },
+            format="multipart",
+        )
+
+        self.assertEqual(first_response.status_code, 201)
+        self.assertEqual(duplicate_response.status_code, 400)
+        self.assertEqual(duplicate_response.data["file"][0], "You already uploaded this file.")

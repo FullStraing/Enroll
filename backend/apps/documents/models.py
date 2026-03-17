@@ -45,6 +45,7 @@ class Document(models.Model):
     file_name = models.CharField(max_length=255, blank=True)
     mime_type = models.CharField(max_length=120, blank=True)
     file_size = models.PositiveIntegerField(default=0)
+    checksum = models.CharField(max_length=64, blank=True, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

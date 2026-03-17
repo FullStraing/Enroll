@@ -1,3 +1,5 @@
+import hashlib
+
 from rest_framework import serializers
 
 from apps.universities.models import Application, StudentUniversity
@@ -124,6 +126,13 @@ class DocumentSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("File must be 5 MB or smaller.")
         return file
 
+    def _calculate_checksum(self, uploaded_file) -> str:
+        digest = hashlib.sha256()
+        for chunk in uploaded_file.chunks():
+            digest.update(chunk)
+        uploaded_file.seek(0)
+        return digest.hexdigest()
+
     def validate(self, attrs):
         if self.instance is None and not attrs.get("file"):
             raise serializers.ValidationError({"file": "Upload a file."})
@@ -134,6 +143,15 @@ class DocumentSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     {"detail": f"You can store up to {MAX_DOCUMENTS_PER_USER} documents."}
                 )
+        uploaded_file = attrs.get("file")
+        if uploaded_file and request and request.user and request.user.is_authenticated:
+            checksum = self._calculate_checksum(uploaded_file)
+            duplicate_qs = Document.objects.filter(user=request.user, checksum=checksum)
+            if self.instance is not None:
+                duplicate_qs = duplicate_qs.exclude(pk=self.instance.pk)
+            if duplicate_qs.exists():
+                raise serializers.ValidationError({"file": "You already uploaded this file."})
+            attrs["checksum"] = checksum
         return attrs
 
     def create(self, validated_data):
@@ -143,3 +161,11 @@ class DocumentSerializer(serializers.ModelSerializer):
             validated_data["mime_type"] = getattr(uploaded_file, "content_type", "") or ""
             validated_data["file_size"] = uploaded_file.size
         return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        uploaded_file = validated_data.get("file")
+        if uploaded_file is not None:
+            validated_data["file_name"] = uploaded_file.name
+            validated_data["mime_type"] = getattr(uploaded_file, "content_type", "") or ""
+            validated_data["file_size"] = uploaded_file.size
+        return super().update(instance, validated_data)
