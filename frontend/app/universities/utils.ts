@@ -26,7 +26,9 @@ export function money(value?: number | string | null): string {
 }
 
 export function categoryLabel(category: StudentUniversity["category"]): string {
+  if (category === "high_reach") return "High Reach";
   if (category === "reach") return "Reach";
+  if (category === "likely") return "Likely";
   if (category === "safety") return "Safety";
   return "Target";
 }
@@ -51,9 +53,8 @@ export function chanceLabel(chanceBand: ChanceBand): string {
 
 export function chanceBandToStudentCategory(acceptanceRate?: number | null): StudentUniversity["category"] {
   const chanceBand = getChanceBandFromAcceptance(acceptanceRate);
-  if (chanceBand === "safety" || chanceBand === "likely") return "safety";
-  if (chanceBand === "target") return "target";
-  return "reach";
+  if (!chanceBand) return "target";
+  return chanceBand;
 }
 
 export function formatUniversityLocation(university: University): string {

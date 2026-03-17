@@ -115,8 +115,10 @@ class University(models.Model):
 
 class StudentUniversity(models.Model):
     CATEGORY_CHOICES = [
+        ("high_reach", "High Reach"),
         ("reach", "Reach"),
         ("target", "Target"),
+        ("likely", "Likely"),
         ("safety", "Safety"),
     ]
 
@@ -141,7 +143,7 @@ class StudentUniversity(models.Model):
     )
 
     category = models.CharField(
-        max_length=10,
+        max_length=20,
         choices=CATEGORY_CHOICES,
         default="target",
     )

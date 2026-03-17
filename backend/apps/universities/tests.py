@@ -143,9 +143,10 @@ class UniversityDataTests(APITestCase):
         self.assertEqual(response.data["category"], "reach")
 
     def test_category_from_acceptance_rate_helper(self):
-        self.assertEqual(category_from_acceptance_rate(5), "reach")
+        self.assertEqual(category_from_acceptance_rate(5), "high_reach")
         self.assertEqual(category_from_acceptance_rate(16), "reach")
         self.assertEqual(category_from_acceptance_rate(35), "target")
+        self.assertEqual(category_from_acceptance_rate(60), "likely")
         self.assertEqual(category_from_acceptance_rate(90), "safety")
         self.assertEqual(category_from_acceptance_rate(None), "target")
 

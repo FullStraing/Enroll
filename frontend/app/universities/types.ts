@@ -19,7 +19,7 @@ export type ChanceBand = "" | "safety" | "likely" | "target" | "reach" | "high_r
 export type StudentUniversity = {
   id: number;
   sort_order: number;
-  category: "reach" | "target" | "safety";
+  category: "high_reach" | "reach" | "target" | "likely" | "safety";
   status: "planning" | "preparing" | "applying" | "submitted" | "admitted" | "rejected";
   university: University;
 };

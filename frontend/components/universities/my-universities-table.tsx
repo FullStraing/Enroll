@@ -593,8 +593,10 @@ export function MyUniversitiesTable({
                         className="h-10 appearance-none rounded-xl border-2 border-black bg-[#DAF5F0] px-3 pr-9 text-sm font-semibold text-black shadow-[0_2px_0_#000]"
                         disabled={updatingItemId === item.id}
                       >
+                        <option value="high_reach">High Reach</option>
                         <option value="reach">Reach</option>
                         <option value="target">Target</option>
+                        <option value="likely">Likely</option>
                         <option value="safety">Safety</option>
                       </select>
                       <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-black/70" />
