@@ -24,7 +24,7 @@ const nav = [
   { href: "/onboarding", label: "Onboarding", icon: UserRoundCheck },
   { href: "/universities", label: "Universities", icon: GraduationCap },
   { href: "/ui-lab", label: "UI Lab", icon: FlaskConical },
-  { href: "/calendar", label: "Calendar", icon: CalendarDays },
+  { href: "/calendar", label: "Tasks", icon: CalendarDays },
   { href: "/documents", label: "Documents", icon: FolderKanban },
   { href: "/essays", label: "Essays", icon: FileText },
   { href: "/common-app", label: "Common App", icon: FileText },
