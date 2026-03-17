@@ -22,6 +22,7 @@ export const MY_UNIVERSITIES_DEFAULT_COLUMNS: MyUniversitiesColumnId[] = [
 
 export const EMPTY_FILTERS: DiscoverFilters = {
   search: "",
+  chanceBand: "",
   major: "",
   state: "",
   rankingBand: "",

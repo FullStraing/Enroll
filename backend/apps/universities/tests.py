@@ -8,6 +8,7 @@ from django.utils import timezone
 from rest_framework.test import APITestCase, APIClient
 
 from .connectors.licensed_feed import LicensedFeedConnector
+from .categorying import category_from_acceptance_rate
 from .models import (
     ScrapeRun,
     StudentUniversity,
@@ -128,6 +129,25 @@ class UniversityDataTests(APITestCase):
         self.assertEqual(response.status_code, 200)
         item = next(row for row in response.data if row["university"]["name"] == "Boston College")
         self.assertEqual(item["university"]["application_fee"], 80.0)
+
+    def test_my_university_create_uses_acceptance_based_default_category(self):
+        university = University.objects.create(name="Princeton University", acceptance_rate=5)
+
+        response = self.client.post(
+            reverse("my_universities_list_create"),
+            {"university_id": university.id},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["category"], "reach")
+
+    def test_category_from_acceptance_rate_helper(self):
+        self.assertEqual(category_from_acceptance_rate(5), "reach")
+        self.assertEqual(category_from_acceptance_rate(16), "reach")
+        self.assertEqual(category_from_acceptance_rate(35), "target")
+        self.assertEqual(category_from_acceptance_rate(90), "safety")
+        self.assertEqual(category_from_acceptance_rate(None), "target")
 
     def test_internal_metrics_endpoint(self):
         UniversityMetric.objects.create(

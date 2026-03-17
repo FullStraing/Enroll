@@ -1,4 +1,12 @@
-import type { DiscoverFilters, StudentUniversity, University } from "./types";
+import type { ChanceBand, DiscoverFilters, StudentUniversity, University } from "./types";
+
+const CHANCE_RANGES: Record<Exclude<ChanceBand, "">, { min: number; max: number }> = {
+  high_reach: { min: 0, max: 10 },
+  reach: { min: 11, max: 24 },
+  target: { min: 25, max: 49 },
+  likely: { min: 50, max: 74 },
+  safety: { min: 75, max: 100 },
+};
 
 function asMoneyNumber(value: unknown): number | null {
   if (typeof value === "number" && Number.isFinite(value)) return value;
@@ -23,6 +31,31 @@ export function categoryLabel(category: StudentUniversity["category"]): string {
   return "Target";
 }
 
+export function getChanceBandFromAcceptance(acceptanceRate?: number | null): ChanceBand {
+  if (typeof acceptanceRate !== "number" || !Number.isFinite(acceptanceRate)) return "";
+  if (acceptanceRate <= CHANCE_RANGES.high_reach.max) return "high_reach";
+  if (acceptanceRate <= CHANCE_RANGES.reach.max) return "reach";
+  if (acceptanceRate <= CHANCE_RANGES.target.max) return "target";
+  if (acceptanceRate <= CHANCE_RANGES.likely.max) return "likely";
+  return "safety";
+}
+
+export function chanceLabel(chanceBand: ChanceBand): string {
+  if (chanceBand === "high_reach") return "High Reach";
+  if (chanceBand === "reach") return "Reach";
+  if (chanceBand === "target") return "Target";
+  if (chanceBand === "likely") return "Likely";
+  if (chanceBand === "safety") return "Safety";
+  return "All chances";
+}
+
+export function chanceBandToStudentCategory(acceptanceRate?: number | null): StudentUniversity["category"] {
+  const chanceBand = getChanceBandFromAcceptance(acceptanceRate);
+  if (chanceBand === "safety" || chanceBand === "likely") return "safety";
+  if (chanceBand === "target") return "target";
+  return "reach";
+}
+
 export function formatUniversityLocation(university: University): string {
   const parts = [university.city, university.state, university.country || "USA"]
     .map((value) => (typeof value === "string" ? value.trim() : ""))
@@ -40,6 +73,11 @@ export function buildQuery(paramsSource: DiscoverFilters, page: number, pageSize
 
   if (queryParts.length > 0) {
     params.set("q", queryParts.join(" "));
+  }
+  if (paramsSource.chanceBand) {
+    const range = CHANCE_RANGES[paramsSource.chanceBand];
+    params.set("acceptance_min", String(range.min));
+    params.set("acceptance_max", String(range.max));
   }
   if (paramsSource.rankingBand) params.set("selectivity", paramsSource.rankingBand);
   if (paramsSource.acceptanceMin.trim()) params.set("acceptance_min", paramsSource.acceptanceMin.trim());

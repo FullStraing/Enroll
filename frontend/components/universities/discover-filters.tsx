@@ -77,6 +77,24 @@ export function DiscoverFiltersPanel({
           ))}
 
           <label className="text-xs text-black/70">
+            Chances
+            <select
+              value={filtersDraft.chanceBand}
+              onChange={(event) =>
+                onChange((prev) => ({ ...prev, chanceBand: event.target.value as DiscoverFilters["chanceBand"] }))
+              }
+              className="mt-1 w-full rounded-lg border border-black/15 bg-white px-2 py-2 text-sm"
+            >
+              <option value="">All chances</option>
+              <option value="safety">Safety</option>
+              <option value="likely">Likely</option>
+              <option value="target">Target</option>
+              <option value="reach">Reach</option>
+              <option value="high_reach">High Reach</option>
+            </select>
+          </label>
+
+          <label className="text-xs text-black/70">
             Ranking band
             <select
               value={filtersDraft.rankingBand}

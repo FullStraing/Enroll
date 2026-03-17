@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .application_fee_fallbacks import get_application_fee_fallback
+from .categorying import category_from_acceptance_rate
 from .models import (
     Application,
     StudentUniversity,
@@ -210,6 +211,11 @@ class StudentUniversitySerializer(serializers.ModelSerializer):
             "notes",
             "progress_percent",
         ]
+
+    def create(self, validated_data):
+        if "category" not in validated_data and validated_data.get("university"):
+            validated_data["category"] = category_from_acceptance_rate(validated_data["university"].acceptance_rate)
+        return super().create(validated_data)
 
 
 class ApplicationSerializer(serializers.ModelSerializer):

@@ -14,6 +14,8 @@ export type University = {
   application_fee?: number | null;
 };
 
+export type ChanceBand = "" | "safety" | "likely" | "target" | "reach" | "high_reach";
+
 export type StudentUniversity = {
   id: number;
   sort_order: number;
@@ -31,6 +33,7 @@ export type PaginatedResponse<T> = {
 
 export type DiscoverFilters = {
   search: string;
+  chanceBand: ChanceBand;
   major: string;
   state: string;
   rankingBand: "" | "high" | "medium" | "low";

@@ -12,7 +12,7 @@ import {
   PAGE_UI_STATE_KEY,
 } from "@/app/universities/constants";
 import type { ActionMenuState, DiscoverFilters, PaginatedResponse, StudentUniversity, University } from "@/app/universities/types";
-import { buildQuery, filtersHash } from "@/app/universities/utils";
+import { buildQuery, chanceBandToStudentCategory, filtersHash } from "@/app/universities/utils";
 import { apiFetch } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 
@@ -252,7 +252,7 @@ export function useUniversitiesPage() {
           method: "POST",
           body: JSON.stringify({
             university_id: university.id,
-            category: "safety",
+            category: chanceBandToStudentCategory(university.acceptance_rate),
           }),
         },
         token,
@@ -286,6 +286,13 @@ export function useUniversitiesPage() {
   function applyFilters() {
     setFilters(filtersDraft);
     void loadDiscover(1, filtersDraft, pageSize);
+  }
+
+  function setChanceBandFilter(chanceBand: DiscoverFilters["chanceBand"]) {
+    const nextFilters = { ...filters, chanceBand };
+    setFilters(nextFilters);
+    setFiltersDraft((prev) => ({ ...prev, chanceBand }));
+    void loadDiscover(1, nextFilters, pageSize);
   }
 
   useEffect(() => {
@@ -511,6 +518,7 @@ export function useUniversitiesPage() {
     removeFromMyList,
     addToMyList,
     setPageSizeAndPersist,
+    setChanceBandFilter,
     resetFilters,
     applyFilters,
   };

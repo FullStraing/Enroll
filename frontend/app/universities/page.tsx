@@ -11,6 +11,7 @@ import { DiscoverGrid } from "@/components/universities/discover-grid";
 import { MyUniversitiesTable } from "@/components/universities/my-universities-table";
 import { UniversitiesTabs } from "@/components/universities/universities-tabs";
 import { PAGE_SIZE_OPTIONS } from "@/app/universities/constants";
+import { chanceLabel } from "@/app/universities/utils";
 import { useUniversitiesPage } from "@/app/universities/use-universities-page";
 
 function UniversitiesPageContent() {
@@ -75,15 +76,32 @@ function UniversitiesPageContent() {
           ) : (
             <div className="mt-4">
               <div className="mb-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                <label className="relative block w-full max-w-xl">
-                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-black/45" />
-                  <input
-                    value={state.searchQuery}
-                    onChange={(event) => state.setSearchQuery(event.target.value)}
-                    placeholder="Search universities by name"
-                    className="w-full rounded-2xl border-2 border-black bg-white py-2.5 pl-10 pr-4 text-sm text-black outline-none transition placeholder:text-black/40 focus:bg-[#DAF5F0]/30"
-                  />
-                </label>
+                <div className="flex w-full max-w-3xl flex-col gap-3 md:flex-row">
+                  <label className="relative block flex-1">
+                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-black/45" />
+                    <input
+                      value={state.searchQuery}
+                      onChange={(event) => state.setSearchQuery(event.target.value)}
+                      placeholder="Search universities by name"
+                      className="w-full rounded-2xl border-2 border-black bg-white py-2.5 pl-10 pr-4 text-sm text-black outline-none transition placeholder:text-black/40 focus:bg-[#DAF5F0]/30"
+                    />
+                  </label>
+                  <select
+                    value={state.filtersDraft.chanceBand}
+                    onChange={(event) => {
+                      const nextChanceBand = event.target.value as typeof state.filtersDraft.chanceBand;
+                      state.setChanceBandFilter(nextChanceBand);
+                    }}
+                    className="min-w-[190px] rounded-2xl border-2 border-black bg-white px-4 py-2.5 text-sm font-semibold text-black outline-none transition focus:bg-[#DAF5F0]/30"
+                  >
+                    <option value="">{chanceLabel("")}</option>
+                    <option value="safety">{chanceLabel("safety")}</option>
+                    <option value="likely">{chanceLabel("likely")}</option>
+                    <option value="target">{chanceLabel("target")}</option>
+                    <option value="reach">{chanceLabel("reach")}</option>
+                    <option value="high_reach">{chanceLabel("high_reach")}</option>
+                  </select>
+                </div>
                 <div className="text-sm text-black/60">
                   {state.loadingDiscover ? "Searching..." : `Results across all pages: ${state.discoverCount}`}
                 </div>
