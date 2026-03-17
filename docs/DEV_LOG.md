@@ -25,3 +25,5 @@ Lightweight session log for preserving short-term context across development ses
 - Activated Serena for the Enroll project before UI work.
 - Started university media MVP with local logo assets and a shared `UniversityLogo` component.
 - Added clean university logo rendering to Discover cards and to the `My Universities` table with a graceful initials fallback.
+- Refined `Edit table` state persistence so sort and visible columns survive route changes without reverting on first render.
+- Removed the placeholder `Filters` section from `Edit table` and aligned category sorting to the intended order: High Reach, Reach, Target, Likely, Safety.

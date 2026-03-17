@@ -49,7 +49,7 @@ type ActionMenuPopupProps = {
   children: ReactNode;
 };
 
-type TableSettingsSection = "columns" | "filters" | "sort";
+type TableSettingsSection = "columns" | "sort";
 type SortDirection = "asc" | "desc";
 type SortState = {
   column: MyUniversitiesSortId;
@@ -67,6 +67,19 @@ type SortDefinition = {
   id: MyUniversitiesSortId;
   label: string;
   getValue: (item: StudentUniversity) => string | number | null;
+};
+
+const CATEGORY_SORT_ORDER: Record<StudentUniversity["category"], number> = {
+  high_reach: 0,
+  reach: 1,
+  target: 2,
+  likely: 3,
+  safety: 4,
+};
+
+const DEFAULT_SORT_STATE: SortState = {
+  column: "deadline",
+  direction: "asc",
 };
 
 const COLUMN_DEFINITIONS: ColumnDefinition[] = [
@@ -142,7 +155,7 @@ const SORT_DEFINITIONS: SortDefinition[] = [
   {
     id: "category",
     label: "Category",
-    getValue: (item) => item.category,
+    getValue: (item) => CATEGORY_SORT_ORDER[item.category],
   },
   {
     id: "status",
@@ -199,6 +212,49 @@ function compareSortValues(left: string | number | null, right: string | number 
   }
 
   return direction === "asc" ? result : -result;
+}
+
+function loadStoredVisibleColumns(): MyUniversitiesColumnId[] {
+  if (typeof window === "undefined") return MY_UNIVERSITIES_DEFAULT_COLUMNS;
+
+  const raw = window.localStorage.getItem(MY_UNIVERSITIES_VISIBLE_COLUMNS_KEY);
+  if (!raw) return MY_UNIVERSITIES_DEFAULT_COLUMNS;
+
+  try {
+    const parsed = JSON.parse(raw) as MyUniversitiesColumnId[];
+    const allowed = new Set(COLUMN_DEFINITIONS.map((column) => column.id));
+    const normalized = parsed.filter((value) => allowed.has(value));
+    if (normalized.length) {
+      return COLUMN_DEFINITIONS.map((column) => column.id).filter((id) => normalized.includes(id));
+    }
+  } catch {
+    // Ignore invalid user preference payload.
+  }
+
+  return MY_UNIVERSITIES_DEFAULT_COLUMNS;
+}
+
+function loadStoredSortState(): SortState {
+  if (typeof window === "undefined") return DEFAULT_SORT_STATE;
+
+  const raw = window.localStorage.getItem(MY_UNIVERSITIES_SORT_KEY);
+  if (!raw) return DEFAULT_SORT_STATE;
+
+  try {
+    const parsed = JSON.parse(raw) as Partial<SortState>;
+    const allowed = new Set(SORT_DEFINITIONS.map((definition) => definition.id));
+    if (
+      parsed.column &&
+      allowed.has(parsed.column) &&
+      (parsed.direction === "asc" || parsed.direction === "desc")
+    ) {
+      return { column: parsed.column, direction: parsed.direction };
+    }
+  } catch {
+    // Ignore invalid sort preference payload.
+  }
+
+  return DEFAULT_SORT_STATE;
 }
 
 function ActionMenuPopup({ anchorRect, children }: ActionMenuPopupProps) {
@@ -261,8 +317,8 @@ export function MyUniversitiesTable({
   const appFeeSummary = sumKnown(items.map((item) => item.university.application_fee));
   const [tableSettingsOpen, setTableSettingsOpen] = useState(false);
   const [tableSettingsSection, setTableSettingsSection] = useState<TableSettingsSection>("columns");
-  const [visibleColumns, setVisibleColumns] = useState<MyUniversitiesColumnId[]>(MY_UNIVERSITIES_DEFAULT_COLUMNS);
-  const [sortState, setSortState] = useState<SortState>({ column: "deadline", direction: "asc" });
+  const [visibleColumns, setVisibleColumns] = useState<MyUniversitiesColumnId[]>(loadStoredVisibleColumns);
+  const [sortState, setSortState] = useState<SortState>(loadStoredSortState);
   const tableSettingsRef = useRef<HTMLDivElement | null>(null);
 
   const activeColumns = useMemo(() => {
@@ -287,45 +343,8 @@ export function MyUniversitiesTable({
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const raw = window.localStorage.getItem(MY_UNIVERSITIES_VISIBLE_COLUMNS_KEY);
-    if (!raw) return;
-
-    try {
-      const parsed = JSON.parse(raw) as MyUniversitiesColumnId[];
-      const allowed = new Set(COLUMN_DEFINITIONS.map((column) => column.id));
-      const normalized = parsed.filter((value) => allowed.has(value));
-      if (normalized.length) {
-        setVisibleColumns(COLUMN_DEFINITIONS.map((column) => column.id).filter((id) => normalized.includes(id)));
-      }
-    } catch {
-      // Ignore invalid user preference payload.
-    }
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
     window.localStorage.setItem(MY_UNIVERSITIES_VISIBLE_COLUMNS_KEY, JSON.stringify(visibleColumns));
   }, [visibleColumns]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const raw = window.localStorage.getItem(MY_UNIVERSITIES_SORT_KEY);
-    if (!raw) return;
-
-    try {
-      const parsed = JSON.parse(raw) as Partial<SortState>;
-      const allowed = new Set(SORT_DEFINITIONS.map((definition) => definition.id));
-      if (
-        parsed.column &&
-        allowed.has(parsed.column) &&
-        (parsed.direction === "asc" || parsed.direction === "desc")
-      ) {
-        setSortState({ column: parsed.column, direction: parsed.direction });
-      }
-    } catch {
-      // Ignore invalid sort preference payload.
-    }
-  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -414,21 +433,19 @@ export function MyUniversitiesTable({
               </div>
 
               <div className="mt-3 flex gap-2">
-                {(["columns", "filters", "sort"] as const).map((section) => {
-                  const disabled = section === "filters";
+                {(["columns", "sort"] as const).map((section) => {
                   return (
                     <button
                       key={section}
                       type="button"
-                      disabled={disabled}
                       onClick={() => setTableSettingsSection(section)}
                       className={`rounded-full border px-3 py-1.5 text-sm font-semibold transition ${
                         tableSettingsSection === section
                           ? "border-black bg-[#DAF5F0] text-black"
-                          : "border-black/15 bg-white text-black/55"
-                      } ${disabled ? "cursor-not-allowed opacity-50" : "hover:border-black/40"}`}
+                          : "border-black/15 bg-white text-black/55 hover:border-black/40"
+                      }`}
                     >
-                      {section === "columns" ? "Columns" : section === "filters" ? "Filters" : "Sort"}
+                      {section === "columns" ? "Columns" : "Sort"}
                     </button>
                   );
                 })}
@@ -482,7 +499,7 @@ export function MyUniversitiesTable({
                     <p className="text-xs font-semibold uppercase tracking-[0.16em] text-black/45">Sort rows</p>
                     <button
                       type="button"
-                      onClick={() => setSortState({ column: "deadline", direction: "asc" })}
+                      onClick={() => setSortState(DEFAULT_SORT_STATE)}
                       className="text-xs font-semibold text-black/55 underline underline-offset-2"
                     >
                       Reset
@@ -535,11 +552,6 @@ export function MyUniversitiesTable({
                 </div>
               ) : null}
 
-              {tableSettingsSection === "filters" ? (
-                <div className="mt-3 rounded-xl border border-dashed border-black/15 bg-black/[0.02] px-3 py-2 text-xs text-black/55">
-                  Filters will be added here next, inside the same control.
-                </div>
-              ) : null}
             </div>
           ) : null}
         </div>
