@@ -49,6 +49,7 @@ pnpm-debug.log*
 
 # VSCode
 .vscode/
+.serena/
 
 # OS
 .DS_Store
