@@ -6,8 +6,9 @@ const projectRootEnv = resolve(process.cwd(), "..", ".env");
 const nextBin = resolve(process.cwd(), "node_modules", "next", "dist", "bin", "next");
 const args = process.argv.slice(2);
 const command = args[0];
+const shouldCleanNext = process.env.ENROLL_CLEAN_NEXT === "1";
 
-if (command === "dev") {
+if (command === "dev" && shouldCleanNext) {
   const nextDir = resolve(process.cwd(), ".next");
 
   if (existsSync(nextDir)) {

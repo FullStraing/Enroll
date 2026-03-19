@@ -47,3 +47,11 @@ Lightweight session log for preserving short-term context across development ses
 - Session start 2026-03-19 14:29: Serena preflight passed.
 - Refactored dashboard architecture: moved types/constants/utils into app/dashboard modules, extracted snapshot card and edit-profile modal into components, and reduced frontend/app/dashboard/page.tsx from 1586 lines to 689 while keeping behavior stable. Verified with frontend lint/build.
 
+- Edit Profile modal now supports collapsing individual sections with local persistence, so users can hide blocks that distract them while editing. Verified with frontend lint/build.
+
+- Fixed frontend dev-runner stability: 
+pm run dev no longer wipes .next on every start, which was causing intermittent _next/static/* 404s after reload/restart. Added manual 
+pm run dev:clean for explicit cache resets. Verified with frontend lint/build.
+
+- Fixed dashboard country flag rendering by replacing mojibake flag strings with Unicode escape mappings. Verified with frontend lint/build before push.
+

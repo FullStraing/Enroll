@@ -245,7 +245,7 @@ function DashboardPageContent() {
 
   const latestEssay = essays[0] || null;
   const shareName = profile?.full_name || "Student";
-  const shareCountry = profileCountry !== "N/A" ? `${COUNTRY_FLAG_MAP[profileCountry] || "рџЊЌ"} ${profileCountry}` : "Country not set";
+  const shareCountry = profileCountry !== "N/A" ? `${COUNTRY_FLAG_MAP[profileCountry] || "\u{1F30D}"} ${profileCountry}` : "Country not set";
   const shareIntake = intake !== "N/A" ? `Applying for Fall ${intake}` : "Target intake not set";
   const activities = Array.isArray(profile?.activities) ? profile.activities.filter(Boolean).slice(0, 8) : [];
   const targetUniversityEntries = myUniversities.slice(0, 6).map((item) => ({

@@ -65,15 +65,15 @@ export const COUNTRY_OPTIONS = [
 ];
 
 export const COUNTRY_FLAG_MAP: Record<string, string> = {
-  "United States": "рџ‡єрџ‡ё",
-  Canada: "рџ‡Ёрџ‡¦",
-  Kyrgyzstan: "рџ‡°рџ‡¬",
-  Kazakhstan: "рџ‡°рџ‡ї",
-  Uzbekistan: "рџ‡єрџ‡ї",
-  Russia: "рџ‡·рџ‡є",
-  Ukraine: "рџ‡єрџ‡¦",
-  Turkey: "рџ‡№рџ‡·",
-  India: "рџ‡®рџ‡і",
+  "United States": "\u{1F1FA}\u{1F1F8}",
+  Canada: "\u{1F1E8}\u{1F1E6}",
+  Kyrgyzstan: "\u{1F1F0}\u{1F1EC}",
+  Kazakhstan: "\u{1F1F0}\u{1F1FF}",
+  Uzbekistan: "\u{1F1FA}\u{1F1FF}",
+  Russia: "\u{1F1F7}\u{1F1FA}",
+  Ukraine: "\u{1F1FA}\u{1F1E6}",
+  Turkey: "\u{1F1F9}\u{1F1F7}",
+  India: "\u{1F1EE}\u{1F1F3}",
 };
 
 export const TEST_SCORE_RULES = {
