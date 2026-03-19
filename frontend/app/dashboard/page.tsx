@@ -113,7 +113,7 @@ type IntroStorage = {
 };
 
 const introQuizStorageKey = "enroll_intro_quiz_v1";
-type EditableFieldKey = "major" | "gpa" | "tests" | "intake" | "country" | "level" | "budget" | "graduationYear";
+type EditableFieldKey = "major" | "gpa" | "tests" | "intake" | "country" | "level";
 
 type EditProfileForm = {
   fullName: string;
@@ -121,7 +121,6 @@ type EditProfileForm = {
   country: string;
   intakeYear: string;
   schoolLevel: string;
-  graduationYear: string;
   gpaScale: string;
   gpaValue: string;
   tests: Array<{ type: "SAT" | "TOEFL" | "IELTS" | "DET"; score: string }>;
@@ -244,7 +243,6 @@ function DashboardPageContent() {
     country: "",
     intakeYear: "",
     schoolLevel: "",
-    graduationYear: "",
     gpaScale: "4.0",
     gpaValue: "",
     tests: [],
@@ -451,7 +449,6 @@ function DashboardPageContent() {
       country: profile?.country || quizAnswers.country || "",
       intakeYear: quizAnswers.intakeYear || "",
       schoolLevel: quizAnswers.schoolLevel || "",
-      graduationYear: profile?.graduation_year ? String(profile.graduation_year) : "",
       gpaScale: quizAnswers.gpaScale || "4.0",
       gpaValue: quizAnswers.gpaValue || "",
       tests: buildInitialTests(profile, quizAnswers),
@@ -463,7 +460,7 @@ function DashboardPageContent() {
   useEffect(() => {
     const editParam = searchParams.get("edit");
     if (!editParam) return;
-    const allowed = new Set<EditableFieldKey>(["major", "gpa", "tests", "intake", "country", "level", "budget", "graduationYear"]);
+    const allowed = new Set<EditableFieldKey>(["major", "gpa", "tests", "intake", "country", "level"]);
     if (!allowed.has(editParam as EditableFieldKey)) return;
     setEditHint(editParam as EditableFieldKey);
     setEditOpen(true);
@@ -569,7 +566,6 @@ function DashboardPageContent() {
         full_name: editForm.fullName || "",
         intended_major: editForm.major || "",
         country: editForm.country || "",
-        graduation_year: editForm.graduationYear ? Number(editForm.graduationYear) : null,
         gpa: gpaNumber == null || Number.isNaN(gpaNumber) ? null : gpaNumber,
         sat_total: satNumber == null || Number.isNaN(satNumber) ? null : satNumber,
         toefl_total: toeflNumber == null || Number.isNaN(toeflNumber) ? null : toeflNumber,
@@ -608,6 +604,17 @@ function DashboardPageContent() {
 
   const gpaMax = editForm.gpaScale === "5.0" ? 5 : editForm.gpaScale === "Percent" ? 100 : 4;
   const gpaStep = editForm.gpaScale === "Percent" ? "1" : "0.01";
+
+  useEffect(() => {
+    if (!editOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [editOpen]);
 
   return (
     <ProtectedPage>
@@ -886,8 +893,8 @@ function DashboardPageContent() {
         <SharePreviewToast imageUrl={sharePreviewUrl} visible={sharePreviewVisible} />
 
         {editOpen ? (
-          <div className="fixed inset-0 z-50 bg-black/40 p-4">
-            <div className="mx-auto mt-8 w-full max-w-5xl rounded-3xl border-2 border-black bg-white p-5 shadow-[0_10px_0_0_rgba(0,0,0,1)]">
+          <div className="fixed inset-0 z-50 overflow-y-auto bg-black/40 p-4">
+            <div className="mx-auto my-8 w-full max-w-5xl rounded-3xl border-2 border-black bg-[linear-gradient(180deg,#FFFFFF_0%,#FFFDF8_100%)] p-5 shadow-[0_10px_0_0_rgba(0,0,0,1)]">
               <div className="mb-4 flex items-center justify-between gap-2">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wide text-black/50">Quick edit</p>
@@ -899,9 +906,11 @@ function DashboardPageContent() {
               </div>
 
               <div className="grid gap-4">
-                <section className="rounded-2xl border border-black/15 bg-black/[0.02] p-4">
+                <section className="rounded-2xl border border-[#63CDB8]/35 bg-[#DAF5F0]/35 p-4">
                   <div className="mb-3">
-                    <p className="text-sm font-black uppercase tracking-[0.14em] text-black/45">Basic Info</p>
+                    <span className="inline-flex rounded-full border border-[#63CDB8]/45 bg-white px-3 py-1 text-sm font-black uppercase tracking-[0.14em] text-black/60">
+                      Basic Info
+                    </span>
                   </div>
                   <div className="grid gap-3 md:grid-cols-2">
                     <label className="text-sm">
@@ -910,7 +919,7 @@ function DashboardPageContent() {
                         value={editForm.fullName}
                         onChange={(event) => setEditForm((prev) => ({ ...prev, fullName: event.target.value }))}
                         placeholder="Emirlan Togolokov"
-                        className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2"
+                        className="mt-2 w-full rounded-xl border border-[#63CDB8]/30 bg-white px-3 py-2"
                       />
                     </label>
                     <label className="text-sm">
@@ -918,7 +927,7 @@ function DashboardPageContent() {
                       <select
                         value={editForm.country}
                         onChange={(event) => setEditForm((prev) => ({ ...prev, country: event.target.value }))}
-                        className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2"
+                        className="mt-2 w-full rounded-xl border border-[#63CDB8]/30 bg-white px-3 py-2"
                       >
                         <option value="">Select country</option>
                         {COUNTRY_OPTIONS.map((country) => (
@@ -934,7 +943,7 @@ function DashboardPageContent() {
                         value={editForm.major}
                         onChange={(event) => setEditForm((prev) => ({ ...prev, major: event.target.value }))}
                         placeholder="Computer Science"
-                        className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2"
+                        className="mt-2 w-full rounded-xl border border-[#63CDB8]/30 bg-white px-3 py-2"
                       />
                     </label>
                     <label className="text-sm">
@@ -942,7 +951,7 @@ function DashboardPageContent() {
                       <select
                         value={editForm.intakeYear}
                         onChange={(event) => setEditForm((prev) => ({ ...prev, intakeYear: event.target.value }))}
-                        className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2"
+                        className="mt-2 w-full rounded-xl border border-[#63CDB8]/30 bg-white px-3 py-2"
                       >
                         <option value="">Select intake year</option>
                         {INTAKE_OPTIONS.map((option) => (
@@ -957,7 +966,7 @@ function DashboardPageContent() {
                       <select
                         value={editForm.schoolLevel}
                         onChange={(event) => setEditForm((prev) => ({ ...prev, schoolLevel: event.target.value }))}
-                        className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2"
+                        className="mt-2 w-full rounded-xl border border-[#63CDB8]/30 bg-white px-3 py-2"
                       >
                         <option value="">Select current level</option>
                         {SCHOOL_LEVEL_OPTIONS.map((option) => (
@@ -967,29 +976,19 @@ function DashboardPageContent() {
                         ))}
                       </select>
                     </label>
-                    <label className="text-sm">
-                      <span className="text-xs uppercase tracking-wide text-black/50">Graduation year</span>
-                      <input
-                        type="number"
-                        min={new Date().getFullYear() - 1}
-                        max={new Date().getFullYear() + 8}
-                        value={editForm.graduationYear}
-                        onChange={(event) => setEditForm((prev) => ({ ...prev, graduationYear: event.target.value }))}
-                        placeholder={String(new Date().getFullYear())}
-                        className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2"
-                      />
-                    </label>
                   </div>
                 </section>
 
-                <section className="rounded-2xl border border-black/15 bg-black/[0.02] p-4">
+                <section className="rounded-2xl border border-[#E7B77C]/35 bg-[#F8D6B3]/30 p-4">
                   <div className="mb-3 flex items-center justify-between gap-3">
-                    <p className="text-sm font-black uppercase tracking-[0.14em] text-black/45">Stats</p>
+                    <span className="inline-flex rounded-full border border-[#E7B77C]/45 bg-white px-3 py-1 text-sm font-black uppercase tracking-[0.14em] text-black/60">
+                      Stats
+                    </span>
                     <button
                       type="button"
                       onClick={addTestRow}
                       disabled={editForm.tests.length >= 4}
-                      className="rounded-full border border-black px-3 py-1 text-sm font-semibold disabled:opacity-40"
+                      className="rounded-full border border-black bg-white px-3 py-1 text-sm font-semibold hover:bg-[#FFF4CC] disabled:opacity-40"
                     >
                       + Add test
                     </button>
@@ -1010,7 +1009,7 @@ function DashboardPageContent() {
                             return { ...prev, gpaScale: nextScale, gpaValue: nextValue };
                           })
                         }
-                        className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2"
+                        className="mt-2 w-full rounded-xl border border-[#E7B77C]/30 bg-white px-3 py-2"
                       >
                         {GPA_SCALE_OPTIONS.map((option) => (
                           <option key={option} value={option}>
@@ -1040,7 +1039,7 @@ function DashboardPageContent() {
                           setEditForm((prev) => ({ ...prev, gpaValue: String(clamped) }));
                         }}
                         placeholder={editForm.gpaScale === "Percent" ? "0-100%" : `0-${gpaMax}`}
-                        className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2"
+                        className="mt-2 w-full rounded-xl border border-[#E7B77C]/30 bg-white px-3 py-2"
                       />
                     </label>
                   </div>
@@ -1048,13 +1047,13 @@ function DashboardPageContent() {
                   <div className="mt-4 grid gap-3">
                     {editForm.tests.length ? (
                       editForm.tests.map((test, index) => (
-                        <div key={`${test.type}-${index}`} className="grid gap-3 rounded-2xl border border-black/10 bg-white p-3 md:grid-cols-[0.95fr_1fr_auto]">
+                        <div key={`${test.type}-${index}`} className="grid gap-3 rounded-2xl border border-[#E7B77C]/30 bg-white p-3 md:grid-cols-[0.95fr_1fr_auto]">
                           <label className="text-sm">
                             <span className="text-xs uppercase tracking-wide text-black/50">Test type</span>
                             <select
                               value={test.type}
                               onChange={(event) => updateTestRow(index, { type: event.target.value as EditProfileForm["tests"][number]["type"] })}
-                              className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2"
+                              className="mt-2 w-full rounded-xl border border-[#E7B77C]/30 bg-white px-3 py-2"
                             >
                               {TEST_OPTIONS.map((option) => (
                                 <option key={option} value={option}>
@@ -1069,14 +1068,14 @@ function DashboardPageContent() {
                               value={test.score}
                               onChange={(event) => updateTestRow(index, { score: event.target.value })}
                               placeholder="1400"
-                              className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2"
+                              className="mt-2 w-full rounded-xl border border-[#E7B77C]/30 bg-white px-3 py-2"
                             />
                           </label>
                           <div className="flex items-end">
                             <button
                               type="button"
                               onClick={() => removeTestRow(index)}
-                              className="rounded-full border border-black px-3 py-2 text-sm font-semibold"
+                              className="rounded-full border border-black bg-white px-3 py-2 text-sm font-semibold hover:bg-[#FFF4CC]"
                             >
                               Remove
                             </button>
@@ -1091,14 +1090,16 @@ function DashboardPageContent() {
                   </div>
                 </section>
 
-                <section className="rounded-2xl border border-black/15 bg-black/[0.02] p-4">
+                <section className="rounded-2xl border border-[#E0B94B]/35 bg-[#FFF4CC]/45 p-4">
                   <div className="mb-3 flex items-center justify-between gap-3">
-                    <p className="text-sm font-black uppercase tracking-[0.14em] text-black/45">Activities</p>
+                    <span className="inline-flex rounded-full border border-[#E0B94B]/45 bg-white px-3 py-1 text-sm font-black uppercase tracking-[0.14em] text-black/60">
+                      Activities
+                    </span>
                     <button
                       type="button"
                       onClick={addActivityRow}
                       disabled={editForm.activities.length >= 6}
-                      className="rounded-full border border-black px-3 py-1 text-sm font-semibold disabled:opacity-40"
+                      className="rounded-full border border-black bg-white px-3 py-1 text-sm font-semibold hover:bg-[#FFF7D9] disabled:opacity-40"
                     >
                       + Add activity
                     </button>
@@ -1107,14 +1108,14 @@ function DashboardPageContent() {
                   <div className="grid gap-3">
                     {editForm.activities.length ? (
                       editForm.activities.map((activity, index) => (
-                        <div key={index} className="grid gap-3 rounded-2xl border border-black/10 bg-white p-3 md:grid-cols-[1fr_1.2fr_auto]">
+                        <div key={index} className="grid gap-3 rounded-2xl border border-[#E0B94B]/25 bg-white p-3 md:grid-cols-[1fr_1.2fr_auto]">
                           <label className="text-sm">
                             <span className="text-xs uppercase tracking-wide text-black/50">Title</span>
                             <input
                               value={activity.title}
                               onChange={(event) => updateActivityRow(index, { title: event.target.value })}
                               placeholder="Founder — Robotics Club"
-                              className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2"
+                              className="mt-2 w-full rounded-xl border border-[#E0B94B]/25 bg-white px-3 py-2"
                             />
                           </label>
                           <label className="text-sm">
@@ -1123,14 +1124,14 @@ function DashboardPageContent() {
                               value={activity.description}
                               onChange={(event) => updateActivityRow(index, { description: event.target.value })}
                               placeholder="One-line context"
-                              className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2"
+                              className="mt-2 w-full rounded-xl border border-[#E0B94B]/25 bg-white px-3 py-2"
                             />
                           </label>
                           <div className="flex items-end">
                             <button
                               type="button"
                               onClick={() => removeActivityRow(index)}
-                              className="rounded-full border border-black px-3 py-2 text-sm font-semibold"
+                              className="rounded-full border border-black bg-white px-3 py-2 text-sm font-semibold hover:bg-[#FFF7D9]"
                             >
                               Remove
                             </button>
@@ -1145,14 +1146,16 @@ function DashboardPageContent() {
                   </div>
                 </section>
 
-                <section className="rounded-2xl border border-black/15 bg-black/[0.02] p-4">
+                <section className="rounded-2xl border border-[#A9C973]/35 bg-[#E8F4CF]/45 p-4">
                   <div className="mb-3 flex items-center justify-between gap-3">
-                    <p className="text-sm font-black uppercase tracking-[0.14em] text-black/45">Honors</p>
+                    <span className="inline-flex rounded-full border border-[#A9C973]/45 bg-white px-3 py-1 text-sm font-black uppercase tracking-[0.14em] text-black/60">
+                      Honors
+                    </span>
                     <button
                       type="button"
                       onClick={addHonorRow}
                       disabled={editForm.honors.length >= 4}
-                      className="rounded-full border border-black px-3 py-1 text-sm font-semibold disabled:opacity-40"
+                      className="rounded-full border border-black bg-white px-3 py-1 text-sm font-semibold hover:bg-[#F4FBEB] disabled:opacity-40"
                     >
                       + Add honor
                     </button>
@@ -1161,21 +1164,21 @@ function DashboardPageContent() {
                   <div className="grid gap-3">
                     {editForm.honors.length ? (
                       editForm.honors.map((honor, index) => (
-                        <div key={index} className="grid gap-3 rounded-2xl border border-black/10 bg-white p-3 md:grid-cols-[1fr_auto]">
+                        <div key={index} className="grid gap-3 rounded-2xl border border-[#A9C973]/25 bg-white p-3 md:grid-cols-[1fr_auto]">
                           <label className="text-sm">
                             <span className="text-xs uppercase tracking-wide text-black/50">Title</span>
                             <input
                               value={honor}
                               onChange={(event) => updateHonorRow(index, event.target.value)}
                               placeholder="Math Olympiad participant"
-                              className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2"
+                              className="mt-2 w-full rounded-xl border border-[#A9C973]/25 bg-white px-3 py-2"
                             />
                           </label>
                           <div className="flex items-end">
                             <button
                               type="button"
                               onClick={() => removeHonorRow(index)}
-                              className="rounded-full border border-black px-3 py-2 text-sm font-semibold"
+                              className="rounded-full border border-black bg-white px-3 py-2 text-sm font-semibold hover:bg-[#F4FBEB]"
                             >
                               Remove
                             </button>
@@ -1190,10 +1193,12 @@ function DashboardPageContent() {
                   </div>
                 </section>
 
-                <section className="rounded-2xl border border-black/15 bg-black/[0.02] p-4">
+                <section className="rounded-2xl border border-[#8FB7F1]/35 bg-[#EEF5FF] p-4">
                   <div className="mb-3 flex items-center justify-between gap-3">
                     <div>
-                      <p className="text-sm font-black uppercase tracking-[0.14em] text-black/45">Universities</p>
+                      <span className="inline-flex rounded-full border border-[#8FB7F1]/45 bg-white px-3 py-1 text-sm font-black uppercase tracking-[0.14em] text-black/60">
+                        Universities
+                      </span>
                       <p className="mt-1 text-sm text-black/55">Keep university editing on the dedicated page.</p>
                     </div>
                     <button
@@ -1202,7 +1207,7 @@ function DashboardPageContent() {
                         setEditOpen(false);
                         router.push("/universities");
                       }}
-                      className="rounded-full border border-black px-3 py-1 text-sm font-semibold"
+                      className="rounded-full border border-black bg-white px-3 py-1 text-sm font-semibold hover:bg-[#F3F8FF]"
                     >
                       Edit universities
                     </button>
@@ -1211,9 +1216,9 @@ function DashboardPageContent() {
                   <div className="grid gap-2">
                     {targetUniversityEntries.length ? (
                       targetUniversityEntries.map((item) => (
-                        <div key={item.id} className="flex items-center justify-between gap-3 rounded-2xl border border-black/10 bg-white px-3 py-2">
+                        <div key={item.id} className="flex items-center justify-between gap-3 rounded-2xl border border-[#8FB7F1]/25 bg-white px-3 py-2">
                           <span className="text-sm font-semibold text-black">{item.name}</span>
-                          <span className="rounded-full border border-black/10 bg-[#F5F8FC] px-2.5 py-1 text-xs font-black uppercase tracking-[0.12em] text-black/60">
+                          <span className="rounded-full border border-[#8FB7F1]/20 bg-[#F5F8FC] px-2.5 py-1 text-xs font-black uppercase tracking-[0.12em] text-black/60">
                             {item.status}
                           </span>
                         </div>
