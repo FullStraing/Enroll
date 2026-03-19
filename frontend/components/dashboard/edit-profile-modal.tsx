@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type Dispatch, type RefObject, type SetStateAction } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import { statusSelectTone } from "@/app/universities/utils";
 import { Button } from "@/components/ui/button";
 import {
   AP_EXAM_OPTIONS,
@@ -46,7 +47,7 @@ type Props = {
   removeHonorRow: (index: number) => void;
   sanitizeScoreInput: (raw: string) => string | null;
   onEditUniversities: () => void;
-  targetUniversityEntries: Array<{ id: number; name: string; status: string }>;
+  targetUniversityEntries: Array<{ id: number; name: string; status: string; statusKey?: string }>;
 };
 
 type SectionKey = "basic" | "stats" | "activities" | "honors" | "universities";
@@ -607,7 +608,11 @@ export function EditProfileModal(props: Props) {
                   targetUniversityEntries.map((item) => (
                     <div key={item.id} className="flex items-center justify-between gap-3 rounded-[22px] border border-black/12 bg-[#FFFDF8] px-4 py-3">
                       <span className="text-sm font-semibold text-black">{item.name}</span>
-                      <span className="rounded-full border border-black/10 bg-[#F5F8FC] px-2.5 py-1 text-xs font-black uppercase tracking-[0.12em] text-black/60">
+                      <span
+                        className={`rounded-full border px-2.5 py-1 text-xs font-black uppercase tracking-[0.12em] text-black/70 ${statusSelectTone(
+                          (item.statusKey || item.status) as never,
+                        )}`}
+                      >
                         {item.status}
                       </span>
                     </div>

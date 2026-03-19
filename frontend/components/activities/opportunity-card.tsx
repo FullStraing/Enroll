@@ -7,6 +7,9 @@ import type { OpportunityRecord } from "@/app/activities/types";
 
 type Props = {
   item: OpportunityRecord;
+  isAdded: boolean;
+  syncing: boolean;
+  onToggleAdd: (item: OpportunityRecord) => void;
 };
 
 function toneClass(item: OpportunityRecord) {
@@ -17,7 +20,7 @@ function toneClass(item: OpportunityRecord) {
   return "bg-white";
 }
 
-export function OpportunityCard({ item }: Props) {
+export function OpportunityCard({ item, isAdded, syncing, onToggleAdd }: Props) {
   return (
     <Card className="shadow-none">
       <div className="grid gap-4 md:grid-cols-[1fr_auto] md:items-start">
@@ -38,7 +41,19 @@ export function OpportunityCard({ item }: Props) {
           <p className="mt-3 max-w-3xl text-sm text-black/75">{item.summary}</p>
         </div>
 
-        <div className="md:pl-4">
+        <div className="grid gap-2 md:pl-4">
+          <button
+            type="button"
+            onClick={() => onToggleAdd(item)}
+            disabled={syncing}
+            className={`inline-flex h-11 items-center justify-center rounded-2xl border-2 px-4 text-sm font-semibold transition ${
+              isAdded
+                ? "border-black bg-[#DAF5F0] text-black"
+                : "border-black bg-white text-black hover:-translate-y-0.5 hover:bg-[#FFF4CC]"
+            } ${syncing ? "cursor-not-allowed opacity-60" : ""}`}
+          >
+            {syncing ? "Saving..." : isAdded ? "Added to profile" : "Add to profile"}
+          </button>
           <Link href={item.officialUrl} target="_blank" rel="noreferrer" className="inline-flex">
             <Button className="gap-2 whitespace-nowrap">
               Official page

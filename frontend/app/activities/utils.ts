@@ -39,3 +39,23 @@ export function applyActivitiesFilters(items: OpportunityRecord[], filters: Acti
 export function countUsefulForCis(items: OpportunityRecord[]) {
   return items.filter((item) => item.cisFriendly).length;
 }
+
+export function buildProfileActivityText(item: OpportunityRecord) {
+  if (item.category === "competition") {
+    return `${item.title} — completed a competition-based activity through ${item.provider}`;
+  }
+  if (item.category === "research") {
+    return `${item.title} — participated in a research opportunity through ${item.provider}`;
+  }
+  if (item.category === "volunteering") {
+    return `${item.title} — volunteer experience through ${item.provider}`;
+  }
+  if (item.category === "summer_program") {
+    return `${item.title} — summer program experience through ${item.provider}`;
+  }
+  return `${item.title} — leadership-focused opportunity through ${item.provider}`;
+}
+
+export function buildProfileActivityPrefix(item: OpportunityRecord) {
+  return `${item.title} —`;
+}

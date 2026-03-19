@@ -1,4 +1,5 @@
 import { Share2, Trophy } from "lucide-react";
+import { statusSelectTone } from "@/app/universities/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { CircularProgress } from "@/components/ui/circular-progress";
@@ -7,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 type SnapshotUniversity = {
   id: number;
   name: string;
+  statusKey?: string;
   status: string;
 };
 
@@ -23,6 +25,7 @@ type Props = {
   allTestLabels: string[];
   profileClass: string;
   activities: string[];
+  honors: string[];
   targetUniversityEntries: SnapshotUniversity[];
   loading: boolean;
   admissions: number;
@@ -44,6 +47,7 @@ export function DashboardSnapshotCard({
   allTestLabels,
   profileClass,
   activities,
+  honors,
   targetUniversityEntries,
   loading,
   admissions,
@@ -109,13 +113,13 @@ export function DashboardSnapshotCard({
               ) : null}
             </div>
 
-            <div className="mt-6 grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+            <div className="mt-6 grid gap-4 lg:grid-cols-[1fr_0.86fr]">
               <div className="rounded-2xl border border-black/10 bg-[#F5F8FC] p-4">
                 <p className="text-sm font-black uppercase tracking-[0.14em] text-black/45">Activities</p>
                 {activities.length ? (
                   <ul className="mt-3 grid gap-3">
                     {activities.map((activity) => (
-                      <li key={activity} className="flex gap-2 text-sm font-semibold text-black/80">
+                      <li key={activity} className="flex gap-2 text-sm font-semibold leading-relaxed text-black/80">
                         <span className="mt-[1px] text-black">•</span>
                         <span>{activity}</span>
                       </li>
@@ -129,11 +133,15 @@ export function DashboardSnapshotCard({
               <div className="rounded-2xl border border-black/10 bg-[#FFF9E8] p-4">
                 <p className="text-sm font-black uppercase tracking-[0.14em] text-black/45">Target Universities</p>
                 {targetUniversityEntries.length ? (
-                  <ul className="mt-3 grid gap-2">
+                  <ul className="mt-3 grid gap-2.5">
                     {targetUniversityEntries.map((item) => (
-                      <li key={item.id} className="flex items-center justify-between gap-3 text-sm">
-                        <span className="font-semibold text-black">{item.name}</span>
-                        <span className="rounded-full border border-black/10 bg-white px-2.5 py-1 text-xs font-black uppercase tracking-[0.12em] text-black/60">
+                      <li key={item.id} className="flex items-start justify-between gap-3 text-sm">
+                        <span className="min-w-0 flex-1 font-semibold leading-relaxed text-black">{item.name}</span>
+                        <span
+                          className={`inline-flex shrink-0 rounded-full border px-2.5 py-1 text-xs font-black uppercase tracking-[0.12em] text-black/70 ${statusSelectTone(
+                            (item.statusKey || item.status) as never,
+                          )}`}
+                        >
                           {item.status}
                         </span>
                       </li>
@@ -143,6 +151,24 @@ export function DashboardSnapshotCard({
                   <p className="mt-3 text-sm text-black/55">No universities selected yet.</p>
                 )}
               </div>
+            </div>
+
+            <div className="mt-4 rounded-2xl border border-black/10 bg-white p-4">
+              <p className="text-sm font-black uppercase tracking-[0.14em] text-black/45">Honors</p>
+              {honors.length ? (
+                <div className="mt-3 grid gap-2 md:grid-cols-2">
+                  {honors.map((honor) => (
+                    <div
+                      key={honor}
+                      className="rounded-xl border border-black/12 bg-[#FFF4CC] px-3 py-3 text-sm font-semibold leading-relaxed text-black/80"
+                    >
+                      {honor}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-3 text-sm text-black/55">No honors added yet.</p>
+              )}
             </div>
           </div>
 

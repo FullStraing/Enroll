@@ -246,9 +246,11 @@ function DashboardPageContent() {
   const shareCountry = profileCountry !== "N/A" ? `${COUNTRY_FLAG_MAP[profileCountry] || "\u{1F30D}"} ${profileCountry}` : "Country not set";
   const shareIntake = intake !== "N/A" ? `Applying for Fall ${intake}` : "Target intake not set";
   const activities = Array.isArray(profile?.activities) ? profile.activities.filter(Boolean).slice(0, 8) : [];
+  const honors = Array.isArray(profile?.honors) ? profile.honors.filter(Boolean).slice(0, 6) : [];
   const targetUniversityEntries = myUniversities.slice(0, 6).map((item) => ({
     id: item.id,
     name: item.university.name,
+    statusKey: item.status,
     status: item.status.replaceAll("_", " "),
   }));
   const shareAcademicTests = buildInitialAcademicTests(profile, quizAnswers).filter((item) => item.score.trim());
@@ -550,6 +552,7 @@ function DashboardPageContent() {
             allTestLabels={allTestLabels}
             profileClass={profileClass}
             activities={activities}
+            honors={honors}
             targetUniversityEntries={targetUniversityEntries}
             loading={loading}
             admissions={admissions}

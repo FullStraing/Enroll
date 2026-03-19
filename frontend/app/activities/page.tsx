@@ -8,16 +8,30 @@ import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ActivitiesFiltersPanel } from "@/components/activities/activities-filters";
 import { OpportunityCard } from "@/components/activities/opportunity-card";
-import { ACTIVITIES_PAGE_STORAGE_KEY, ACTIVITIES_SEED_DATA, DEFAULT_ACTIVITIES_FILTERS } from "@/app/activities/constants";
+import { ACTIVITIES_PAGE_STORAGE_KEY, ACTIVITIES_SEED_DATA, DEFAULT_ACTIVITIES_FILTERS, MAX_PROFILE_ACTIVITIES } from "@/app/activities/constants";
 import type { ActivitiesFilters } from "@/app/activities/types";
-import { applyActivitiesFilters, countUsefulForCis } from "@/app/activities/utils";
+import { applyActivitiesFilters, buildProfileActivityPrefix, buildProfileActivityText, countUsefulForCis } from "@/app/activities/utils";
+import { apiFetch } from "@/lib/api";
+import { getToken } from "@/lib/auth";
+
+type ActivitiesProfile = {
+  activities?: string[];
+  common_app_profile?: {
+    activity_recommendation_ids?: string[];
+  };
+};
 
 export default function ActivitiesPage() {
   const [filters, setFilters] = useState<ActivitiesFilters>(DEFAULT_ACTIVITIES_FILTERS);
   const [debouncedSearch, setDebouncedSearch] = useState(filters.search);
   const [loading, setLoading] = useState(true);
+  const [profileActivities, setProfileActivities] = useState<string[]>([]);
+  const [selectedActivityIds, setSelectedActivityIds] = useState<string[]>([]);
+  const [syncingId, setSyncingId] = useState<string | null>(null);
+  const [statusText, setStatusText] = useState("");
 
   useEffect(() => {
+    const token = getToken();
     try {
       const raw = window.localStorage.getItem(ACTIVITIES_PAGE_STORAGE_KEY);
       if (!raw) return;
@@ -26,8 +40,32 @@ export default function ActivitiesPage() {
     } catch {
       // Ignore invalid local state.
     } finally {
-      window.setTimeout(() => setLoading(false), 280);
+      if (!token) {
+        window.setTimeout(() => setLoading(false), 280);
+      }
     }
+  }, []);
+
+  useEffect(() => {
+    const token = getToken();
+    if (!token) {
+      window.setTimeout(() => setLoading(false), 280);
+      return;
+    }
+
+    const run = async () => {
+      try {
+        const profile = await apiFetch<ActivitiesProfile>("/api/auth/profile/", { method: "GET" }, token);
+        setProfileActivities(Array.isArray(profile.activities) ? profile.activities.filter(Boolean) : []);
+        setSelectedActivityIds(Array.isArray(profile.common_app_profile?.activity_recommendation_ids) ? profile.common_app_profile.activity_recommendation_ids : []);
+      } catch (error) {
+        setStatusText(error instanceof Error ? error.message : "Failed to load profile activity state.");
+      } finally {
+        window.setTimeout(() => setLoading(false), 280);
+      }
+    };
+
+    void run();
   }, []);
 
   useEffect(() => {
@@ -42,6 +80,57 @@ export default function ActivitiesPage() {
   const effectiveFilters = useMemo(() => ({ ...filters, search: debouncedSearch }), [filters, debouncedSearch]);
   const filteredItems = useMemo(() => applyActivitiesFilters(ACTIVITIES_SEED_DATA, effectiveFilters), [effectiveFilters]);
   const usefulForCisCount = useMemo(() => countUsefulForCis(ACTIVITIES_SEED_DATA), []);
+
+  async function handleToggleAdd(item: (typeof ACTIVITIES_SEED_DATA)[number]) {
+    const token = getToken();
+    if (!token) return;
+
+    const activityText = buildProfileActivityText(item);
+    const activityPrefix = buildProfileActivityPrefix(item);
+    const isAdded = selectedActivityIds.includes(item.id);
+
+    if (!isAdded && profileActivities.length >= MAX_PROFILE_ACTIVITIES) {
+      setStatusText(`Your dashboard snapshot supports up to ${MAX_PROFILE_ACTIVITIES} activities. Remove one in Edit profile first.`);
+      return;
+    }
+
+    const nextActivityIds = isAdded
+      ? selectedActivityIds.filter((id) => id !== item.id)
+      : [...selectedActivityIds, item.id];
+
+    const nextActivities = isAdded
+      ? profileActivities.filter((entry) => !entry.startsWith(activityPrefix))
+      : [...profileActivities, activityText];
+
+    setSyncingId(item.id);
+    try {
+      const updatedProfile = await apiFetch<ActivitiesProfile>(
+        "/api/auth/profile/",
+        {
+          method: "PATCH",
+          body: JSON.stringify({
+            activities: nextActivities,
+            common_app_profile: {
+              activity_recommendation_ids: nextActivityIds,
+            },
+          }),
+        },
+        token,
+      );
+
+      setProfileActivities(Array.isArray(updatedProfile.activities) ? updatedProfile.activities.filter(Boolean) : nextActivities);
+      setSelectedActivityIds(
+        Array.isArray(updatedProfile.common_app_profile?.activity_recommendation_ids)
+          ? updatedProfile.common_app_profile.activity_recommendation_ids
+          : nextActivityIds,
+      );
+      setStatusText(isAdded ? "Activity removed from profile." : "Activity added to profile.");
+    } catch (error) {
+      setStatusText(error instanceof Error ? error.message : "Failed to update profile activities.");
+    } finally {
+      setSyncingId(null);
+    }
+  }
 
   return (
     <ProtectedPage>
@@ -100,6 +189,20 @@ export default function ActivitiesPage() {
                   </div>
                 </div>
               </Card>
+
+              <Card className="shadow-none">
+                <CardTitle className="text-lg">Saved to profile</CardTitle>
+                <CardDescription className="mt-2">
+                  Activities added here appear in your Dashboard snapshot and inside Edit profile.
+                </CardDescription>
+                <div className="mt-4 rounded-2xl border border-black/10 bg-[#F5F8FC] px-4 py-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-black/45">Selected now</p>
+                  <p className="mt-2 text-2xl font-black text-black">
+                    {profileActivities.length} / {MAX_PROFILE_ACTIVITIES}
+                  </p>
+                  <p className="mt-1 text-sm text-black/65">Use this page to add curated activities directly into your profile.</p>
+                </div>
+              </Card>
             </div>
 
             <div className="space-y-5">
@@ -133,7 +236,13 @@ export default function ActivitiesPage() {
               ) : filteredItems.length ? (
                 <div className="grid gap-4">
                   {filteredItems.map((item) => (
-                    <OpportunityCard key={item.id} item={item} />
+                    <OpportunityCard
+                      key={item.id}
+                      item={item}
+                      isAdded={selectedActivityIds.includes(item.id)}
+                      syncing={syncingId === item.id}
+                      onToggleAdd={handleToggleAdd}
+                    />
                   ))}
                 </div>
               ) : (
@@ -144,6 +253,10 @@ export default function ActivitiesPage() {
                   </CardDescription>
                 </Card>
               )}
+
+              {statusText ? (
+                <div className="rounded-2xl border border-black/15 bg-white px-4 py-3 text-sm text-black/70">{statusText}</div>
+              ) : null}
             </div>
           </div>
         </div>

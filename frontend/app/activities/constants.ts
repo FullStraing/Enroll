@@ -74,6 +74,7 @@ export const ACTIVITIES_MAJOR_OPTIONS = [
 ] as const;
 
 export const ACTIVITIES_PAGE_STORAGE_KEY = "enroll_activities_filters_v1";
+export const MAX_PROFILE_ACTIVITIES = 6;
 
 export const ACTIVITIES_SEED_DATA: OpportunityRecord[] = [
   {
