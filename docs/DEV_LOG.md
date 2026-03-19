@@ -75,3 +75,21 @@ pm run dev:clean for explicit cache resets. Verified with frontend lint/build.
 - 2026-03-19: Stabilized Edit Profile modal sizing. Removed persisted collapsed-section state and constrained the modal cleanly to the viewport so the full form and footer fit without clipping.
 
 - 2026-03-19: Fixed app-wide bottom clipping. Removed dashboard modal body scroll-lock and switched shared shell/background height calculations from vh to dvh so pages use the real visible viewport and stop hiding the lower part of the interface.
+
+- 2026-03-19: Found a broader shell-level cause for bottom clipping. The main AppShell content panel was still hard-pinned to viewport height, which kept last content rows flush to the screen edge. Removed the forced full-height on the shared section and now clear any stale html/body overflow locks on route change.
+
+- 2026-03-19: Added app-wide scroll safety: body now explicitly uses vertical scrolling with hidden horizontal overflow, and AppShell content gets extra bottom padding so final rows/cards do not sit flush against the viewport edge.
+
+- 2026-03-19: Removed the forced full-viewport height from the shared AppShell wrapper. The shell now grows from content instead of stretching to the viewport, which should restore the visible bottom shadow/black edge under the main glass container on short pages.
+
+- 2026-03-19: Identified a shadow-clipping issue in the shared shell. The main AppShell wrapper ended exactly at document bottom, so the outer black shadow was being clipped by the page edge. Added explicit bottom margin on the wrapper so the shell shadow has visible space below it.
+
+- 2026-03-19: Increased bottom breathing room in the shared shell. The previous margin/padding fix helped but still clipped the final card/shadow on some pages, so AppShell now uses larger bottom spacing both outside the shell and inside the main section.
+
+- 2026-03-19: Added an explicit bottom spacer inside the shared AppShell section. This guarantees physical room below the final page block so the last card shadow remains visible instead of being clipped at the viewport edge.
+
+- 2026-03-19: Corrected the shell spacing strategy. Removed the extra internal spacer/padding from inside the main glass section and moved the breathing room outside the whole AppShell instead. Also removed body-level horizontal clipping so the outer shell shadow has room on the right edge again.
+
+- 2026-03-19: Final shell spacing pass: increased external bottom space so users can scroll far enough to clearly see the end of the shared glass card, and normalized the outer horizontal gutters so right-side spacing stays visually consistent across app pages.
+
+- Session start 2026-03-19 20:07: Serena preflight passed.

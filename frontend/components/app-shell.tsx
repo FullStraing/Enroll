@@ -87,6 +87,11 @@ export function AppShell({
   }, [pathname]);
 
   useEffect(() => {
+    document.body.style.overflow = "";
+    document.documentElement.style.overflow = "";
+  }, [pathname]);
+
+  useEffect(() => {
     const update = () => setLocalDateTime(buildLocalDateTime(new Date()));
     update();
     const timer = window.setInterval(update, 60_000);
@@ -95,7 +100,7 @@ export function AppShell({
 
   return (
     <div
-      className={`theme-home mx-auto grid min-h-[100dvh] max-w-[1500px] grid-cols-1 items-start gap-4 p-3 sm:gap-6 sm:p-6 ${
+      className={`theme-home mx-auto mb-24 grid max-w-[1500px] grid-cols-1 items-start gap-4 px-4 py-4 pb-12 sm:mb-28 sm:gap-6 sm:px-6 sm:py-6 sm:pb-14 ${
         collapsed ? "lg:grid-cols-[92px_1fr]" : "lg:grid-cols-[260px_1fr]"
       } lg:transition-[grid-template-columns] lg:duration-300 lg:ease-in-out`}
     >
@@ -207,7 +212,7 @@ export function AppShell({
           </nav>
       </aside>
 
-      <section className="glass glass-soft min-h-[calc(100dvh-24px)] rounded-3xl p-4 sm:min-h-[calc(100dvh-48px)] sm:p-6">
+      <section className="glass glass-soft rounded-3xl p-4 sm:p-6">
         <header className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b-2 border-black/80 pb-4">
           <div>
             <h1 className="text-2xl font-black">{title}</h1>

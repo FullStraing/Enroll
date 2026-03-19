@@ -17,6 +17,7 @@ body {
   background-image: radial-gradient(rgba(0, 0, 0, 0.08) 1.2px, transparent 1.2px);
   background-size: 10px 10px;
   min-height: 100dvh;
+  overflow-y: auto;
 }
 
 .glass {
