@@ -43,3 +43,7 @@ Lightweight session log for preserving short-term context across development ses
 
 - Fixed dashboard exam input UX: score fields no longer snap to min/max during typing. Input stays editable, validation commits on blur/save, and build/lint remain clean.
 
+
+- Session start 2026-03-19 14:29: Serena preflight passed.
+- Refactored dashboard architecture: moved types/constants/utils into app/dashboard modules, extracted snapshot card and edit-profile modal into components, and reduced frontend/app/dashboard/page.tsx from 1586 lines to 689 while keeping behavior stable. Verified with frontend lint/build.
+
