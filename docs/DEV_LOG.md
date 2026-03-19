@@ -28,3 +28,6 @@ Lightweight session log for preserving short-term context across development ses
 - Refined `Edit table` state persistence so sort and visible columns survive route changes without reverting on first render.
 - Removed the placeholder `Filters` section from `Edit table` and aligned category sorting to the intended order: High Reach, Reach, Target, Likely, Safety.
 - Replaced the old `/calendar` grid-based experience with a simpler Todoist-style task workspace focused on fast task capture, Today/Upcoming/Inbox/Completed lists, and one-click completion.
+- Rebuilt the landing page into a modular Ben Hunt-style structure with editable marketing content in `frontend/app/landing-content.ts` and reusable product preview blocks prepared for future real screenshots.
+
+- Session start 2026-03-18 12:46: Serena preflight passed.

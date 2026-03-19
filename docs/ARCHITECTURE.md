@@ -14,7 +14,7 @@ Django owns persistence and business logic. Next.js owns the product interface.
 1. Public user lands on `/`
 2. Unauthenticated CTA can route into `/intro-quiz`
 3. User registers or logs in
-4. Protected workspace opens in Next.js
+4. Protec-ted workspace opens in Next.js
 5. Frontend reads and writes product state through Django API endpoints
 
 ## Backend structure
