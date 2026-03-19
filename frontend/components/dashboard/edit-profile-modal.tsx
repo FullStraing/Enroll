@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useEffect, useState, type Dispatch, type RefObject, type SetStateAction } from "react";
+import { useState, type Dispatch, type RefObject, type SetStateAction } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { statusSelectTone } from "@/app/universities/utils";
 import { Button } from "@/components/ui/button";
@@ -51,8 +51,6 @@ type Props = {
 };
 
 type SectionKey = "basic" | "stats" | "activities" | "honors" | "universities";
-
-const SECTION_STORAGE_KEY = "enroll_dashboard_edit_sections_v1";
 
 function SectionToggle({ open, onToggle }: { open: boolean; onToggle: () => void }) {
   return (
@@ -107,32 +105,17 @@ export function EditProfileModal(props: Props) {
     universities: true,
   });
 
-  useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem(SECTION_STORAGE_KEY);
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as Partial<Record<SectionKey, boolean>>;
-      setOpenSections((prev) => ({ ...prev, ...parsed }));
-    } catch {
-      // Ignore invalid stored state.
-    }
-  }, []);
-
   function toggleSection(key: SectionKey) {
-    setOpenSections((prev) => {
-      const next = { ...prev, [key]: !prev[key] };
-      window.localStorage.setItem(SECTION_STORAGE_KEY, JSON.stringify(next));
-      return next;
-    });
+    setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }));
   }
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/35 px-4 py-6">
+    <div className="fixed inset-0 z-50 overflow-hidden bg-black/35 p-4">
       <div
         ref={editModalRef}
-        className="mx-auto my-4 flex max-h-[calc(100vh-32px)] w-full max-w-5xl flex-col rounded-[32px] border-2 border-black bg-[#FFFDF8] p-6 shadow-[0_12px_0_0_rgba(0,0,0,1)]"
+        className="mx-auto flex h-[calc(100dvh-32px)] w-full max-w-5xl flex-col overflow-hidden rounded-[32px] border-2 border-black bg-[#FFFDF8] p-6 shadow-[0_12px_0_0_rgba(0,0,0,1)]"
       >
-        <div className="mb-5 rounded-[28px] border-2 border-black bg-white p-5 shadow-[0_5px_0_rgba(0,0,0,0.06)]">
+        <div className="mb-5 shrink-0 rounded-[28px] border-2 border-black bg-white p-5 shadow-[0_5px_0_rgba(0,0,0,0.06)]">
           <div className="flex items-start justify-between gap-3">
             <div>
               <span className="inline-flex rounded-full border border-black bg-[#FFDB58] px-3 py-1 text-xs font-black uppercase tracking-[0.16em] text-black">

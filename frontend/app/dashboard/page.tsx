@@ -138,15 +138,6 @@ function DashboardPageContent() {
 
   useEffect(() => {
     if (!editOpen) return;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [editOpen]);
-
-  useEffect(() => {
-    if (!editOpen) return;
 
     const handlePointerDown = (event: MouseEvent) => {
       if (!editModalRef.current) return;

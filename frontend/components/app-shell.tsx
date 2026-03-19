@@ -95,7 +95,7 @@ export function AppShell({
 
   return (
     <div
-      className={`theme-home mx-auto grid min-h-screen max-w-[1500px] grid-cols-1 items-start gap-4 p-3 sm:gap-6 sm:p-6 ${
+      className={`theme-home mx-auto grid min-h-[100dvh] max-w-[1500px] grid-cols-1 items-start gap-4 p-3 sm:gap-6 sm:p-6 ${
         collapsed ? "lg:grid-cols-[92px_1fr]" : "lg:grid-cols-[260px_1fr]"
       } lg:transition-[grid-template-columns] lg:duration-300 lg:ease-in-out`}
     >
@@ -207,7 +207,7 @@ export function AppShell({
           </nav>
       </aside>
 
-      <section className="glass glass-soft min-h-[calc(100vh-24px)] rounded-3xl p-4 sm:min-h-[calc(100vh-48px)] sm:p-6">
+      <section className="glass glass-soft min-h-[calc(100dvh-24px)] rounded-3xl p-4 sm:min-h-[calc(100dvh-48px)] sm:p-6">
         <header className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b-2 border-black/80 pb-4">
           <div>
             <h1 className="text-2xl font-black">{title}</h1>

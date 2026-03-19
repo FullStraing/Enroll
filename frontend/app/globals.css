@@ -16,7 +16,7 @@ body {
   background-color: var(--enroll-bg);
   background-image: radial-gradient(rgba(0, 0, 0, 0.08) 1.2px, transparent 1.2px);
   background-size: 10px 10px;
-  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .glass {
