@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { CalendarClock, CircleAlert, CircleCheck, FileText, GraduationCap, Target } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
-import { DashboardSnapshotCard } from "@/components/dashboard/dashboard-snapshot-card";
+import { DashboardExportCard, DashboardSnapshotCard } from "@/components/dashboard/dashboard-snapshot-card";
 import { EditProfileModal } from "@/components/dashboard/edit-profile-modal";
 import { ProgressBlockCard } from "@/components/dashboard/progress-block-card";
 import { SharePreviewToast } from "@/components/dashboard/share-preview-toast";
@@ -17,7 +17,7 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { COUNTRY_FLAG_MAP, introQuizStorageKey, TEST_SCORE_RULES } from "@/app/dashboard/constants";
 import { buildDashboardProgress } from "@/app/dashboard/progress";
-import { captureDashboardBlob, copyImageToClipboard } from "@/app/dashboard/share-dashboard";
+import { captureDashboardBlob, copyImageToClipboard, downloadImageBlob } from "@/app/dashboard/share-dashboard";
 import type {
   AcademicTestType,
   ApplicationItem,
@@ -53,6 +53,7 @@ function DashboardPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const dashboardShareRef = useRef<HTMLDivElement>(null);
+  const dashboardExportRef = useRef<HTMLDivElement>(null);
   const editModalRef = useRef<HTMLDivElement>(null);
 
   const [loading, setLoading] = useState(true);
@@ -69,6 +70,7 @@ function DashboardPageContent() {
   const [savingEdit, setSavingEdit] = useState(false);
   const [, setEditHint] = useState<EditableFieldKey | null>(null);
   const [sharingDashboard, setSharingDashboard] = useState(false);
+  const [savingSnapshot, setSavingSnapshot] = useState(false);
   const [sharePreviewUrl, setSharePreviewUrl] = useState<string | null>(null);
   const [sharePreviewVisible, setSharePreviewVisible] = useState(false);
   const [editForm, setEditForm] = useState<EditProfileForm>(buildEmptyEditForm());
@@ -399,7 +401,7 @@ function DashboardPageContent() {
   }
 
   async function handleShareProfile() {
-    const node = dashboardShareRef.current;
+    const node = dashboardExportRef.current;
     if (!node) {
       setStatusText("Dashboard snapshot is not ready yet.");
       return;
@@ -421,16 +423,32 @@ function DashboardPageContent() {
       if (copied) {
         setStatusText("Dashboard snapshot copied to clipboard.");
       } else {
-        const link = document.createElement("a");
-        link.href = previewUrl;
-        link.download = "enroll-dashboard.png";
-        link.click();
+        downloadImageBlob(blob);
         setStatusText("Clipboard image is not supported here. Downloaded a dashboard snapshot instead.");
       }
     } catch {
       setStatusText("Unable to create a dashboard snapshot right now.");
     } finally {
       setSharingDashboard(false);
+    }
+  }
+
+  async function handleSaveSnapshot() {
+    const node = dashboardExportRef.current;
+    if (!node) {
+      setStatusText("Dashboard snapshot is not ready yet.");
+      return;
+    }
+
+    setSavingSnapshot(true);
+    try {
+      const blob = await captureDashboardBlob(node);
+      downloadImageBlob(blob);
+      setStatusText("Dashboard snapshot saved as an image.");
+    } catch {
+      setStatusText("Unable to save the dashboard snapshot right now.");
+    } finally {
+      setSavingSnapshot(false);
     }
   }
 
@@ -529,8 +547,9 @@ function DashboardPageContent() {
   return (
     <ProtectedPage>
       <AppShell title="Dashboard" subtitle="Your admissions status, profile strength, and next action.">
-        <div ref={dashboardShareRef}>
+        <div>
           <DashboardSnapshotCard
+            snapshotRef={dashboardShareRef}
             shareName={shareName}
             shareCountry={shareCountry}
             shareIntake={shareIntake}
@@ -548,9 +567,33 @@ function DashboardPageContent() {
             loading={loading}
             admissions={admissions}
             sharingDashboard={sharingDashboard}
+            savingSnapshot={savingSnapshot}
             onShare={handleShareProfile}
+            onSaveImage={() => void handleSaveSnapshot()}
             onEdit={handleOpenEdit}
           />
+
+          <div aria-hidden className="pointer-events-none fixed left-[-20000px] top-0 opacity-100">
+            <DashboardExportCard
+              snapshotRef={dashboardExportRef}
+              shareName={shareName}
+              shareCountry={shareCountry}
+              shareIntake={shareIntake}
+              profileMajor={profileMajor}
+              gpaLabel={gpaLabel}
+              academicStatLabel={academicStatLabel}
+              primaryAcademicLabel={primaryAcademicLabel}
+              languageStatLabel={languageStatLabel}
+              primaryLanguageLabel={primaryLanguageLabel}
+              allTestLabels={allTestLabels}
+              profileClass={profileClass}
+              activities={activities}
+              honors={honors}
+              targetUniversityEntries={targetUniversityEntries}
+              loading={loading}
+              admissions={admissions}
+            />
+          </div>
 
           <div className="mt-5 grid gap-4 lg:grid-cols-2">
             <Card>

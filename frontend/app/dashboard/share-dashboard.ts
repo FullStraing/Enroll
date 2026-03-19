@@ -31,3 +31,12 @@ export async function copyImageToClipboard(blob: Blob): Promise<boolean> {
 
   return true;
 }
+
+export function downloadImageBlob(blob: Blob, filename = "enroll-dashboard-snapshot.png") {
+  const objectUrl = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = objectUrl;
+  link.download = filename;
+  link.click();
+  window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+}

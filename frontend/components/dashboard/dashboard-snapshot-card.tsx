@@ -1,18 +1,19 @@
-import { Share2, Trophy } from "lucide-react";
+import type { RefObject } from "react";
+import { Download, Share2, Trophy } from "lucide-react";
 import { statusSelectTone } from "@/app/universities/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { CircularProgress } from "@/components/ui/circular-progress";
 import { Skeleton } from "@/components/ui/skeleton";
 
-type SnapshotUniversity = {
+export type SnapshotUniversity = {
   id: number;
   name: string;
   statusKey?: string;
   status: string;
 };
 
-type Props = {
+export type DashboardSnapshotSurfaceProps = {
   shareName: string;
   shareCountry: string;
   shareIntake: string;
@@ -29,12 +30,18 @@ type Props = {
   targetUniversityEntries: SnapshotUniversity[];
   loading: boolean;
   admissions: number;
+};
+
+type DashboardSnapshotCardProps = DashboardSnapshotSurfaceProps & {
+  snapshotRef: RefObject<HTMLDivElement>;
   sharingDashboard: boolean;
+  savingSnapshot: boolean;
   onShare: () => void;
+  onSaveImage: () => void;
   onEdit: () => void;
 };
 
-export function DashboardSnapshotCard({
+function DashboardSnapshotSurface({
   shareName,
   shareCountry,
   shareIntake,
@@ -51,10 +58,7 @@ export function DashboardSnapshotCard({
   targetUniversityEntries,
   loading,
   admissions,
-  sharingDashboard,
-  onShare,
-  onEdit,
-}: Props) {
+}: DashboardSnapshotSurfaceProps) {
   const showAllTests = allTestLabels.length > 0;
 
   return (
@@ -65,7 +69,9 @@ export function DashboardSnapshotCard({
           Shareable Dashboard Snapshot
         </div>
         <CardTitle className="text-2xl">Profile snapshot worth sharing</CardTitle>
-        <CardDescription className="mt-1">A clean admissions card with your profile, activities, and current university list.</CardDescription>
+        <CardDescription className="mt-1">
+          A clean admissions card with your profile, activities, and current university list.
+        </CardDescription>
 
         <div className="mt-5 grid gap-4 xl:grid-cols-[1.3fr_0.7fr]">
           <div className="rounded-2xl border border-black/15 bg-white p-5">
@@ -120,7 +126,7 @@ export function DashboardSnapshotCard({
                   <ul className="mt-3 grid gap-3">
                     {activities.map((activity) => (
                       <li key={activity} className="flex gap-2 text-sm font-semibold leading-relaxed text-black/80">
-                        <span className="mt-[1px] text-black">•</span>
+                        <span className="mt-[1px] text-black">&bull;</span>
                         <span>{activity}</span>
                       </li>
                     ))}
@@ -178,23 +184,60 @@ export function DashboardSnapshotCard({
               Admissions Score
             </div>
             <div className="mt-4 flex items-center justify-center">
-              {loading ? <Skeleton className="h-36 w-36 rounded-full" /> : <CircularProgress value={admissions} size={150} fillColor="#FFDB58" trackColor="#E6EAEE" />}
+              {loading ? (
+                <Skeleton className="h-36 w-36 rounded-full" />
+              ) : (
+                <CircularProgress value={admissions} size={150} fillColor="#FFDB58" trackColor="#E6EAEE" />
+              )}
             </div>
             <p className="mt-3 text-center text-sm text-black/65">
               Score improves when profile completeness, tests, and university planning improve.
             </p>
-            <div className="mt-5 grid gap-2">
-              <Button onClick={onShare} className="gap-2" disabled={sharingDashboard}>
-                <Share2 className="h-4 w-4" />
-                {sharingDashboard ? "Preparing image..." : "Share dashboard"}
-              </Button>
-              <Button variant="secondary" onClick={onEdit}>
-                Edit profile
-              </Button>
-            </div>
           </div>
         </div>
       </div>
     </Card>
+  );
+}
+
+export function DashboardSnapshotCard({
+  snapshotRef,
+  sharingDashboard,
+  savingSnapshot,
+  onShare,
+  onSaveImage,
+  onEdit,
+  ...surfaceProps
+}: DashboardSnapshotCardProps) {
+  return (
+    <div ref={snapshotRef}>
+      <DashboardSnapshotSurface {...surfaceProps} />
+      <div className="mt-4 grid gap-2" data-share-ignore>
+        <Button onClick={onShare} className="gap-2" disabled={sharingDashboard || savingSnapshot}>
+          <Share2 className="h-4 w-4" />
+          {sharingDashboard ? "Preparing image..." : "Share dashboard"}
+        </Button>
+        <Button variant="outline" onClick={onSaveImage} className="gap-2" disabled={savingSnapshot || sharingDashboard}>
+          <Download className="h-4 w-4" />
+          {savingSnapshot ? "Saving image..." : "Save image"}
+        </Button>
+        <Button variant="secondary" onClick={onEdit}>
+          Edit profile
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+export function DashboardExportCard({
+  snapshotRef,
+  ...surfaceProps
+}: DashboardSnapshotSurfaceProps & { snapshotRef: RefObject<HTMLDivElement> }) {
+  return (
+    <div ref={snapshotRef} className="w-[1600px] bg-[#F9F5F6] p-10">
+      <div className="mx-auto w-[1520px]">
+        <DashboardSnapshotSurface {...surfaceProps} />
+      </div>
+    </div>
   );
 }
