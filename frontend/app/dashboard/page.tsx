@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useMemo, useState } from "react";
-import { CalendarClock, CircleAlert, CircleCheck, FileText, GraduationCap, Sparkles, Target, Trophy, UserRound } from "lucide-react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { CalendarClock, CircleAlert, CircleCheck, FileText, GraduationCap, Share2, Target, Trophy } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { ProgressBlockCard } from "@/components/dashboard/progress-block-card";
+import { SharePreviewToast } from "@/components/dashboard/share-preview-toast";
 import { ProtectedPage } from "@/components/protected-page";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,7 @@ import { CircularProgress } from "@/components/ui/circular-progress";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { buildDashboardProgress, type IntroAnswers as ProgressIntroAnswers } from "@/app/dashboard/progress";
+import { captureDashboardBlob, copyImageToClipboard } from "@/app/dashboard/share-dashboard";
 import { apiFetch } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import { formatDateShort, formatDateShortNoYear } from "@/lib/date-format";
@@ -47,6 +49,8 @@ type Profile = {
   ielts_overall?: string | number | null;
   det_score?: number | null;
   budget_range?: string;
+  activities?: string[];
+  honors?: string[];
 };
 
 type UniversityBrief = {
@@ -112,28 +116,23 @@ const introQuizStorageKey = "enroll_intro_quiz_v1";
 type EditableFieldKey = "major" | "gpa" | "tests" | "intake" | "country" | "level" | "budget" | "graduationYear";
 
 type EditProfileForm = {
+  fullName: string;
   major: string;
   country: string;
   intakeYear: string;
   schoolLevel: string;
   graduationYear: string;
-  budget: string;
   gpaScale: string;
   gpaValue: string;
-  satTotal: string;
-  tests: string[];
+  tests: Array<{ type: "SAT" | "TOEFL" | "IELTS" | "DET"; score: string }>;
+  activities: Array<{ title: string; description: string }>;
+  honors: string[];
 };
 
-const TEST_OPTIONS = ["SAT", "ACT", "TOEFL", "IELTS", "DET"];
+const TEST_OPTIONS = ["SAT", "TOEFL", "IELTS", "DET"] as const;
 const SCHOOL_LEVEL_OPTIONS = ["9", "10", "11", "12", "Gap Year", "College"];
 const INTAKE_OPTIONS = ["2026", "2027", "2028", "2029+"];
 const GPA_SCALE_OPTIONS = ["4.0", "5.0", "Percent"];
-const BUDGET_OPTIONS = [
-  { value: "low", label: "Low budget" },
-  { value: "medium", label: "Medium budget" },
-  { value: "high", label: "High budget" },
-  { value: "full_pay", label: "Full pay" },
-];
 const COUNTRY_OPTIONS = [
   "United States",
   "Canada",
@@ -145,6 +144,38 @@ const COUNTRY_OPTIONS = [
   "Turkey",
   "India",
 ];
+
+const COUNTRY_FLAG_MAP: Record<string, string> = {
+  "United States": "🇺🇸",
+  Canada: "🇨🇦",
+  Kyrgyzstan: "🇰🇬",
+  Kazakhstan: "🇰🇿",
+  Uzbekistan: "🇺🇿",
+  Russia: "🇷🇺",
+  Ukraine: "🇺🇦",
+  Turkey: "🇹🇷",
+  India: "🇮🇳",
+};
+
+function buildInitialTests(profile: Profile | null, quizAnswers: IntroAnswers): EditProfileForm["tests"] {
+  const tests: EditProfileForm["tests"] = [];
+
+  if (profile?.sat_total) tests.push({ type: "SAT", score: String(profile.sat_total) });
+  if (profile?.toefl_total) tests.push({ type: "TOEFL", score: String(profile.toefl_total) });
+  if (profile?.ielts_overall) tests.push({ type: "IELTS", score: String(profile.ielts_overall) });
+  if (profile?.det_score) tests.push({ type: "DET", score: String(profile.det_score) });
+
+  if (tests.length > 0) return tests;
+
+  return (quizAnswers.tests || [])
+    .filter((test): test is (typeof TEST_OPTIONS)[number] => (TEST_OPTIONS as readonly string[]).includes(test))
+    .map((test) => ({ type: test, score: "" }));
+}
+
+function buildInitialActivities(profile: Profile | null): EditProfileForm["activities"] {
+  const values = Array.isArray(profile?.activities) ? profile.activities : [];
+  return values.slice(0, 6).map((activity) => ({ title: activity, description: "" }));
+}
 
 function toPercent(value: number) {
   return Math.max(0, Math.min(100, Math.round(value)));
@@ -204,18 +235,23 @@ function DashboardPageContent() {
   const [editOpen, setEditOpen] = useState(false);
   const [savingEdit, setSavingEdit] = useState(false);
   const [editHint, setEditHint] = useState<EditableFieldKey | null>(null);
+  const [sharingDashboard, setSharingDashboard] = useState(false);
+  const [sharePreviewUrl, setSharePreviewUrl] = useState<string | null>(null);
+  const [sharePreviewVisible, setSharePreviewVisible] = useState(false);
   const [editForm, setEditForm] = useState<EditProfileForm>({
+    fullName: "",
     major: "",
     country: "",
     intakeYear: "",
     schoolLevel: "",
     graduationYear: "",
-    budget: "",
     gpaScale: "4.0",
     gpaValue: "",
-    satTotal: "",
     tests: [],
+    activities: [],
+    honors: [],
   });
+  const dashboardShareRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const token = getToken();
@@ -357,44 +393,72 @@ function DashboardPageContent() {
 
   const latestEssay = essays[0] || null;
   const targetUniversities = myUniversities.slice(0, 4).map((item) => item.university.name);
+  const shareName = profile?.full_name || "Student";
+  const shareCountry = profileCountry !== "N/A" ? `${COUNTRY_FLAG_MAP[profileCountry] || "🌍"} ${profileCountry}` : "Country not set";
+  const shareIntake = intake !== "N/A" ? `Applying for Fall ${intake}` : "Target intake not set";
+  const activities = Array.isArray(profile?.activities) ? profile.activities.filter(Boolean).slice(0, 8) : [];
+  const targetUniversityEntries = myUniversities.slice(0, 6).map((item) => ({
+    id: item.id,
+    name: item.university.name,
+    status: item.status.replaceAll("_", " "),
+  }));
 
   async function handleShareProfile() {
-    const title = "My Enroll Admissions Profile";
-    const text = `Major: ${profileMajor}\nGPA: ${gpaLabel}\nTests: ${testsLabel}\nTarget intake: ${intake}\nAdmissions score: ${admissions}/100\nUniversities: ${
-      targetUniversities.length ? targetUniversities.join(", ") : "Not selected yet"
-    }`;
-
-    if (navigator.share) {
-      try {
-        await navigator.share({ title, text });
-        return;
-      } catch {
-        // fallback to clipboard
-      }
+    const node = dashboardShareRef.current;
+    if (!node) {
+      setStatusText("Dashboard snapshot is not ready yet.");
+      return;
     }
 
+    setSharingDashboard(true);
     try {
-      await navigator.clipboard.writeText(text);
-      setStatusText("Profile summary copied to clipboard.");
+      const blob = await captureDashboardBlob(node);
+      const copied = await copyImageToClipboard(blob);
+      const previewUrl = URL.createObjectURL(blob);
+
+      setSharePreviewUrl((previous) => {
+        if (previous) URL.revokeObjectURL(previous);
+        return previewUrl;
+      });
+      setSharePreviewVisible(true);
+      window.setTimeout(() => setSharePreviewVisible(false), 2600);
+
+      if (copied) {
+        setStatusText("Dashboard snapshot copied to clipboard.");
+      } else {
+        const link = document.createElement("a");
+        link.href = previewUrl;
+        link.download = "enroll-dashboard.png";
+        link.click();
+        setStatusText("Clipboard image is not supported here. Downloaded a dashboard snapshot instead.");
+      }
     } catch {
-      setStatusText("Unable to share profile right now.");
+      setStatusText("Unable to create a dashboard snapshot right now.");
+    } finally {
+      setSharingDashboard(false);
     }
   }
 
   useEffect(() => {
+    if (!sharePreviewUrl) return;
+    return () => URL.revokeObjectURL(sharePreviewUrl);
+  }, [sharePreviewUrl]);
+
+  useEffect(() => {
     setEditForm({
+      fullName: profile?.full_name || "",
       major: profile?.intended_major || quizAnswers.major || "",
       country: profile?.country || quizAnswers.country || "",
       intakeYear: quizAnswers.intakeYear || "",
       schoolLevel: quizAnswers.schoolLevel || "",
       graduationYear: profile?.graduation_year ? String(profile.graduation_year) : "",
-      budget: profile?.budget_range || "",
       gpaScale: quizAnswers.gpaScale || "4.0",
       gpaValue: quizAnswers.gpaValue || "",
-      satTotal: profile?.sat_total ? String(profile.sat_total) : "",
-      tests: Array.isArray(quizAnswers.tests) ? quizAnswers.tests : [],
+      tests: buildInitialTests(profile, quizAnswers),
+      activities: buildInitialActivities(profile),
+      honors: Array.isArray(profile?.honors) ? profile.honors.slice(0, 4) : [],
     });
-  }, [profile?.budget_range, profile?.country, profile?.graduation_year, profile?.intended_major, profile?.sat_total, quizAnswers]);
+  }, [profile, quizAnswers]);
 
   useEffect(() => {
     const editParam = searchParams.get("edit");
@@ -405,19 +469,78 @@ function DashboardPageContent() {
     setEditOpen(true);
   }, [searchParams]);
 
-  function openEditMenu(field: EditableFieldKey) {
-    setEditHint(field);
-    setEditOpen(true);
+  function updateTestRow(index: number, patch: Partial<EditProfileForm["tests"][number]>) {
+    setEditForm((prev) => ({
+      ...prev,
+      tests: prev.tests.map((item, itemIndex) => (itemIndex === index ? { ...item, ...patch } : item)),
+    }));
   }
 
-  function toggleEditTest(test: string) {
+  function addTestRow() {
     setEditForm((prev) => {
-      const exists = prev.tests.includes(test);
+      if (prev.tests.length >= 4) return prev;
+      const usedTypes = new Set(prev.tests.map((item) => item.type));
+      const nextType = TEST_OPTIONS.find((option) => !usedTypes.has(option)) || "SAT";
       return {
         ...prev,
-        tests: exists ? prev.tests.filter((item) => item !== test) : [...prev.tests, test],
+        tests: [...prev.tests, { type: nextType, score: "" }],
       };
     });
+  }
+
+  function removeTestRow(index: number) {
+    setEditForm((prev) => ({
+      ...prev,
+      tests: prev.tests.filter((_, itemIndex) => itemIndex !== index),
+    }));
+  }
+
+  function updateActivityRow(index: number, patch: Partial<EditProfileForm["activities"][number]>) {
+    setEditForm((prev) => ({
+      ...prev,
+      activities: prev.activities.map((item, itemIndex) => (itemIndex === index ? { ...item, ...patch } : item)),
+    }));
+  }
+
+  function addActivityRow() {
+    setEditForm((prev) => {
+      if (prev.activities.length >= 6) return prev;
+      return {
+        ...prev,
+        activities: [...prev.activities, { title: "", description: "" }],
+      };
+    });
+  }
+
+  function removeActivityRow(index: number) {
+    setEditForm((prev) => ({
+      ...prev,
+      activities: prev.activities.filter((_, itemIndex) => itemIndex !== index),
+    }));
+  }
+
+  function updateHonorRow(index: number, value: string) {
+    setEditForm((prev) => ({
+      ...prev,
+      honors: prev.honors.map((item, itemIndex) => (itemIndex === index ? value : item)),
+    }));
+  }
+
+  function addHonorRow() {
+    setEditForm((prev) => {
+      if (prev.honors.length >= 4) return prev;
+      return {
+        ...prev,
+        honors: [...prev.honors, ""],
+      };
+    });
+  }
+
+  function removeHonorRow(index: number) {
+    setEditForm((prev) => ({
+      ...prev,
+      honors: prev.honors.filter((_, itemIndex) => itemIndex !== index),
+    }));
   }
 
   async function saveEditableProfile() {
@@ -426,15 +549,34 @@ function DashboardPageContent() {
     setSavingEdit(true);
     try {
       const gpaNumber = editForm.gpaValue ? Number(editForm.gpaValue) : null;
-      const satNumber = editForm.satTotal ? Number(editForm.satTotal) : null;
+      const getTestScore = (type: (typeof TEST_OPTIONS)[number]) => {
+        const match = editForm.tests.find((item) => item.type === type && item.score.trim());
+        if (!match) return null;
+        const numeric = Number(match.score);
+        return Number.isNaN(numeric) ? null : numeric;
+      };
+
+      const satNumber = getTestScore("SAT");
+      const toeflNumber = getTestScore("TOEFL");
+      const ieltsNumber = getTestScore("IELTS");
+      const detNumber = getTestScore("DET");
+      const cleanActivities = editForm.activities
+        .map((item) => [item.title.trim(), item.description.trim()].filter(Boolean).join(" — "))
+        .filter(Boolean);
+      const cleanHonors = editForm.honors.map((item) => item.trim()).filter(Boolean);
 
       const payload: Partial<Profile> = {
+        full_name: editForm.fullName || "",
         intended_major: editForm.major || "",
         country: editForm.country || "",
         graduation_year: editForm.graduationYear ? Number(editForm.graduationYear) : null,
-        budget_range: editForm.budget || "",
         gpa: gpaNumber == null || Number.isNaN(gpaNumber) ? null : gpaNumber,
         sat_total: satNumber == null || Number.isNaN(satNumber) ? null : satNumber,
+        toefl_total: toeflNumber == null || Number.isNaN(toeflNumber) ? null : toeflNumber,
+        ielts_overall: ieltsNumber == null || Number.isNaN(ieltsNumber) ? null : ieltsNumber,
+        det_score: detNumber == null || Number.isNaN(detNumber) ? null : detNumber,
+        activities: cleanActivities,
+        honors: cleanHonors,
       };
 
       const updatedProfile = await apiFetch<Profile>("/api/auth/profile/", { method: "PATCH", body: JSON.stringify(payload) }, token);
@@ -448,7 +590,7 @@ function DashboardPageContent() {
         schoolLevel: editForm.schoolLevel || undefined,
         gpaScale: editForm.gpaScale || undefined,
         gpaValue: editForm.gpaValue || undefined,
-        tests: editForm.tests,
+        tests: editForm.tests.map((item) => item.type),
       };
       setQuizAnswers(nextAnswers);
       window.localStorage.setItem(introQuizStorageKey, JSON.stringify({ step: 6, answers: nextAnswers }));
@@ -470,59 +612,79 @@ function DashboardPageContent() {
   return (
     <ProtectedPage>
       <AppShell title="Dashboard" subtitle="Your admissions status, profile strength, and next action.">
+        <div ref={dashboardShareRef}>
         <Card className="relative overflow-hidden bg-gradient-to-br from-white via-white to-[#DAF5F0]/35">
             <div className="absolute -right-14 -top-14 h-44 w-44 rounded-full border-2 border-black/10 bg-[#FFDB58]/20" />
             <div className="relative">
               <div className="mb-3 inline-flex items-center gap-2 rounded-xl border-2 border-black bg-white px-3 py-1 text-sm font-semibold">
-                <UserRound className="h-4 w-4" />
-                Admissions Profile
+                Shareable Dashboard Snapshot
               </div>
-              <CardTitle className="text-2xl">Your shareable profile snapshot</CardTitle>
-              <CardDescription className="mt-1">This is the profile summary students usually compare with each other.</CardDescription>
+              <CardTitle className="text-2xl">Profile snapshot worth sharing</CardTitle>
+              <CardDescription className="mt-1">A clean admissions card with your profile, activities, and current university list.</CardDescription>
 
-              <div className="mt-5 grid gap-3 xl:grid-cols-[1.35fr_0.65fr]">
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-xl border border-black/15 bg-white p-3">
-                    <p className="text-xs uppercase tracking-wide text-black/50">Major</p>
-                    <p className="mt-1 text-base font-bold">{profileMajor}</p>
-                    <Button variant="outline" size="sm" className="mt-2" onClick={() => openEditMenu("major")}>
-                      Change
-                    </Button>
+              <div className="mt-5 grid gap-4 xl:grid-cols-[1.3fr_0.7fr]">
+                <div className="rounded-2xl border border-black/15 bg-white p-5">
+                  <div>
+                    <h2 className="text-3xl font-black tracking-[-0.04em] text-black">{shareName}</h2>
+                    <p className="mt-2 text-base font-semibold text-black/70">{shareCountry}</p>
+                    <p className="mt-1 text-base font-semibold text-black/70">{shareIntake}</p>
+                    <p className="mt-4 text-lg font-bold text-black">Major: {profileMajor}</p>
                   </div>
-                  <div className="rounded-xl border border-black/15 bg-white p-3">
-                    <p className="text-xs uppercase tracking-wide text-black/50">GPA</p>
-                    <p className="mt-1 text-base font-bold">{gpaLabel}</p>
-                    <Button variant="outline" size="sm" className="mt-2" onClick={() => openEditMenu("gpa")}>
-                      Change
-                    </Button>
+
+                  <div className="mt-6 overflow-hidden rounded-2xl border border-black/12">
+                    <div className="grid grid-cols-2 border-b border-black/8 md:grid-cols-4">
+                      <div className="border-r border-black/8 px-4 py-3 md:last:border-r">
+                        <p className="text-xs font-black uppercase tracking-[0.16em] text-black/40">GPA</p>
+                        <p className="mt-1 text-lg font-black text-black">{gpaLabel}</p>
+                      </div>
+                      <div className="border-r border-black/8 px-4 py-3 md:last:border-r">
+                        <p className="text-xs font-black uppercase tracking-[0.16em] text-black/40">SAT</p>
+                        <p className="mt-1 text-lg font-black text-black">{profile?.sat_total || "N/A"}</p>
+                      </div>
+                      <div className="border-r border-black/8 px-4 py-3">
+                        <p className="text-xs font-black uppercase tracking-[0.16em] text-black/40">Duolingo</p>
+                        <p className="mt-1 text-lg font-black text-black">{profile?.det_score || "N/A"}</p>
+                      </div>
+                      <div className="px-4 py-3">
+                        <p className="text-xs font-black uppercase tracking-[0.16em] text-black/40">Level</p>
+                        <p className="mt-1 text-lg font-black text-black">{profileClass}</p>
+                      </div>
+                    </div>
                   </div>
-                  <div className="rounded-xl border border-black/15 bg-white p-3">
-                    <p className="text-xs uppercase tracking-wide text-black/50">SAT / Test status</p>
-                    <p className="mt-1 text-base font-bold">{testsLabel}</p>
-                    <Button variant="outline" size="sm" className="mt-2" onClick={() => openEditMenu("tests")}>
-                      Change
-                    </Button>
-                  </div>
-                  <div className="rounded-xl border border-black/15 bg-white p-3">
-                    <p className="text-xs uppercase tracking-wide text-black/50">Target intake</p>
-                    <p className="mt-1 text-base font-bold">Fall {intake}</p>
-                    <Button variant="outline" size="sm" className="mt-2" onClick={() => openEditMenu("intake")}>
-                      Change
-                    </Button>
-                  </div>
-                  <div className="rounded-xl border border-black/15 bg-white p-3">
-                    <p className="text-xs uppercase tracking-wide text-black/50">Country</p>
-                    <p className="mt-1 text-base font-bold">{profileCountry}</p>
-                    <Button variant="outline" size="sm" className="mt-2" onClick={() => openEditMenu("country")}>
-                      Change
-                    </Button>
-                  </div>
-                  <div className="rounded-xl border border-black/15 bg-white p-3">
-                    <p className="text-xs uppercase tracking-wide text-black/50">Current level</p>
-                    <p className="mt-1 text-base font-bold">{profileClass}</p>
-                    <Button variant="outline" size="sm" className="mt-2" onClick={() => openEditMenu("level")}>
-                      Change
-                    </Button>
+
+                  <div className="mt-6 grid gap-4 lg:grid-cols-2">
+                    <div className="rounded-2xl border border-black/10 bg-[#F5F8FC] p-4">
+                      <p className="text-sm font-black uppercase tracking-[0.14em] text-black/45">Activities</p>
+                      {activities.length ? (
+                        <ul className="mt-3 grid gap-2">
+                          {activities.map((activity) => (
+                            <li key={activity} className="text-sm font-semibold text-black/80">
+                              • {activity}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="mt-3 text-sm text-black/55">No activities added yet.</p>
+                      )}
+                    </div>
+
+                    <div className="rounded-2xl border border-black/10 bg-[#FFF9E8] p-4">
+                      <p className="text-sm font-black uppercase tracking-[0.14em] text-black/45">Target Universities</p>
+                      {targetUniversityEntries.length ? (
+                        <ul className="mt-3 grid gap-2">
+                          {targetUniversityEntries.map((item) => (
+                            <li key={item.id} className="flex items-center justify-between gap-3 text-sm">
+                              <span className="font-semibold text-black">{item.name}</span>
+                              <span className="rounded-full border border-black/10 bg-white px-2.5 py-1 text-xs font-black uppercase tracking-[0.12em] text-black/60">
+                                {item.status}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="mt-3 text-sm text-black/55">No universities selected yet.</p>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -541,28 +703,22 @@ function DashboardPageContent() {
                   <p className="mt-3 text-center text-sm text-black/65">
                     Score improves when profile completeness, tests, and university planning improve.
                   </p>
+                  <div className="mt-5 grid gap-2">
+                    <Button onClick={handleShareProfile} className="gap-2" disabled={sharingDashboard}>
+                      <Share2 className="h-4 w-4" />
+                      {sharingDashboard ? "Preparing image..." : "Share dashboard"}
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      onClick={() => {
+                        setEditHint(null);
+                        setEditOpen(true);
+                      }}
+                    >
+                      Edit profile
+                    </Button>
+                  </div>
                 </div>
-              </div>
-
-              <div className="mt-4 rounded-xl border border-black/15 bg-white p-3">
-                <p className="text-xs uppercase tracking-wide text-black/50">Target universities</p>
-                {loading ? (
-                  <Skeleton className="mt-2 h-5 w-2/3" />
-                ) : targetUniversities.length ? (
-                  <p className="mt-1 text-sm font-semibold">{targetUniversities.join(" - ")}</p>
-                ) : (
-                  <p className="mt-1 text-sm text-black/65">No universities selected yet.</p>
-                )}
-              </div>
-
-              <div className="mt-5 flex items-center gap-2">
-                <Button onClick={handleShareProfile} className="gap-2">
-                  <Sparkles className="h-4 w-4" />
-                  Share my profile
-                </Button>
-                <Link href="/common-app">
-                  <Button variant="secondary">Edit profile</Button>
-                </Link>
               </div>
             </div>
           </Card>
@@ -725,196 +881,351 @@ function DashboardPageContent() {
             Dashboard is synced with your latest profile and application data.
           </div>
         )}
+        </div>
+
+        <SharePreviewToast imageUrl={sharePreviewUrl} visible={sharePreviewVisible} />
 
         {editOpen ? (
           <div className="fixed inset-0 z-50 bg-black/40 p-4">
-            <div className="mx-auto mt-8 w-full max-w-3xl rounded-3xl border-2 border-black bg-white p-5 shadow-[0_10px_0_0_rgba(0,0,0,1)]">
+            <div className="mx-auto mt-8 w-full max-w-5xl rounded-3xl border-2 border-black bg-white p-5 shadow-[0_10px_0_0_rgba(0,0,0,1)]">
               <div className="mb-4 flex items-center justify-between gap-2">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wide text-black/50">Quick edit</p>
                   <h3 className="text-2xl font-black">Update your profile snapshot</h3>
                   <p className="mt-1 text-sm text-black/65">
-                    Duolingo-style fast update. Change values and keep your dashboard share-ready.
+                    Edit your profile in blocks, not one long form.
                   </p>
                 </div>
               </div>
 
-              <div className="grid gap-3 md:grid-cols-2">
-                <label className="rounded-xl border border-black/15 bg-black/[0.02] p-3 text-sm">
-                  <span className="text-xs uppercase tracking-wide text-black/50">Major</span>
-                  <input
-                    value={editForm.major}
-                    onChange={(event) => setEditForm((prev) => ({ ...prev, major: event.target.value }))}
-                    placeholder="Computer Science"
-                    className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2"
-                  />
-                </label>
-
-                <label className="rounded-xl border border-black/15 bg-black/[0.02] p-3 text-sm">
-                  <span className="text-xs uppercase tracking-wide text-black/50">Country</span>
-                  <select
-                    value={editForm.country}
-                    onChange={(event) => setEditForm((prev) => ({ ...prev, country: event.target.value }))}
-                    className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2"
-                  >
-                    <option value="">Select country</option>
-                    {COUNTRY_OPTIONS.map((country) => (
-                      <option key={country} value={country}>
-                        {country}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-
-                <label className="rounded-xl border border-black/15 bg-black/[0.02] p-3 text-sm">
-                  <span className="text-xs uppercase tracking-wide text-black/50">Target intake</span>
-                  <select
-                    value={editForm.intakeYear}
-                    onChange={(event) => setEditForm((prev) => ({ ...prev, intakeYear: event.target.value }))}
-                    className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2"
-                  >
-                    <option value="">Select intake year</option>
-                    {INTAKE_OPTIONS.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-
-                <label className="rounded-xl border border-black/15 bg-black/[0.02] p-3 text-sm">
-                  <span className="text-xs uppercase tracking-wide text-black/50">Current level</span>
-                  <select
-                    value={editForm.schoolLevel}
-                    onChange={(event) => setEditForm((prev) => ({ ...prev, schoolLevel: event.target.value }))}
-                    className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2"
-                  >
-                    <option value="">Select current level</option>
-                    {SCHOOL_LEVEL_OPTIONS.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-
-                <label className="rounded-xl border border-black/15 bg-black/[0.02] p-3 text-sm">
-                  <span className="text-xs uppercase tracking-wide text-black/50">Graduation year</span>
-                  <input
-                    type="number"
-                    min={new Date().getFullYear() - 1}
-                    max={new Date().getFullYear() + 8}
-                    value={editForm.graduationYear}
-                    onChange={(event) => setEditForm((prev) => ({ ...prev, graduationYear: event.target.value }))}
-                    placeholder={String(new Date().getFullYear())}
-                    className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2"
-                  />
-                </label>
-
-                <label className="rounded-xl border border-black/15 bg-black/[0.02] p-3 text-sm">
-                  <span className="text-xs uppercase tracking-wide text-black/50">Budget</span>
-                  <select
-                    value={editForm.budget}
-                    onChange={(event) => setEditForm((prev) => ({ ...prev, budget: event.target.value }))}
-                    className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2"
-                  >
-                    <option value="">Select budget</option>
-                    {BUDGET_OPTIONS.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-
-                <label className="rounded-xl border border-black/15 bg-black/[0.02] p-3 text-sm">
-                  <span className="text-xs uppercase tracking-wide text-black/50">GPA scale</span>
-                  <select
-                    value={editForm.gpaScale}
-                    onChange={(event) =>
-                      setEditForm((prev) => {
-                        const nextScale = event.target.value;
-                        const nextMax = nextScale === "5.0" ? 5 : nextScale === "Percent" ? 100 : 4;
-                        const current = Number(prev.gpaValue);
-                        const nextValue =
-                          prev.gpaValue && !Number.isNaN(current) ? String(Math.max(0, Math.min(nextMax, current))) : prev.gpaValue;
-                        return { ...prev, gpaScale: nextScale, gpaValue: nextValue };
-                      })
-                    }
-                    className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2"
-                  >
-                    {GPA_SCALE_OPTIONS.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-
-                <label className="rounded-xl border border-black/15 bg-black/[0.02] p-3 text-sm">
-                  <span className="text-xs uppercase tracking-wide text-black/50">GPA value</span>
-                  <input
-                    type="number"
-                    step={gpaStep}
-                    min={0}
-                    max={gpaMax}
-                    value={editForm.gpaValue}
-                    onChange={(event) => {
-                      const raw = event.target.value;
-                      if (raw === "") {
-                        setEditForm((prev) => ({ ...prev, gpaValue: "" }));
-                        return;
-                      }
-                      const numeric = Number(raw);
-                      if (Number.isNaN(numeric)) return;
-                      const clamped = Math.max(0, Math.min(gpaMax, numeric));
-                      setEditForm((prev) => ({ ...prev, gpaValue: String(clamped) }));
-                    }}
-                    placeholder={editForm.gpaScale === "Percent" ? "0-100%" : `0-${gpaMax}`}
-                    className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2"
-                  />
-                  <p className="mt-1 text-xs text-black/60">
-                    {editForm.gpaScale === "Percent" ? "Expected range: 0-100%" : `Expected range: 0-${gpaMax}`}
-                  </p>
-                </label>
-              </div>
-
-              <div className="mt-3 grid gap-3 md:grid-cols-2">
-                <label className="rounded-xl border border-black/15 bg-black/[0.02] p-3 text-sm">
-                  <span className="text-xs uppercase tracking-wide text-black/50">SAT total</span>
-                  <input
-                    type="number"
-                    value={editForm.satTotal}
-                    onChange={(event) => setEditForm((prev) => ({ ...prev, satTotal: event.target.value }))}
-                    placeholder="1450"
-                    className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2"
-                  />
-                </label>
-
-                <div className="rounded-xl border border-black/15 bg-black/[0.02] p-3 text-sm">
-                  <span className="text-xs uppercase tracking-wide text-black/50">Test status</span>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {TEST_OPTIONS.map((test) => (
-                      <button
-                        key={test}
-                        type="button"
-                        onClick={() => toggleEditTest(test)}
-                        className={`rounded-xl border-2 px-3 py-1 text-sm font-semibold transition ${
-                          editForm.tests.includes(test) ? "border-black bg-[#FFDB58]/70" : "border-black/20 bg-white"
-                        }`}
-                      >
-                        {test}
-                      </button>
-                    ))}
+              <div className="grid gap-4">
+                <section className="rounded-2xl border border-black/15 bg-black/[0.02] p-4">
+                  <div className="mb-3">
+                    <p className="text-sm font-black uppercase tracking-[0.14em] text-black/45">Basic Info</p>
                   </div>
-                </div>
-              </div>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <label className="text-sm">
+                      <span className="text-xs uppercase tracking-wide text-black/50">Name</span>
+                      <input
+                        value={editForm.fullName}
+                        onChange={(event) => setEditForm((prev) => ({ ...prev, fullName: event.target.value }))}
+                        placeholder="Emirlan Togolokov"
+                        className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2"
+                      />
+                    </label>
+                    <label className="text-sm">
+                      <span className="text-xs uppercase tracking-wide text-black/50">Country</span>
+                      <select
+                        value={editForm.country}
+                        onChange={(event) => setEditForm((prev) => ({ ...prev, country: event.target.value }))}
+                        className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2"
+                      >
+                        <option value="">Select country</option>
+                        {COUNTRY_OPTIONS.map((country) => (
+                          <option key={country} value={country}>
+                            {country}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="text-sm">
+                      <span className="text-xs uppercase tracking-wide text-black/50">Major</span>
+                      <input
+                        value={editForm.major}
+                        onChange={(event) => setEditForm((prev) => ({ ...prev, major: event.target.value }))}
+                        placeholder="Computer Science"
+                        className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2"
+                      />
+                    </label>
+                    <label className="text-sm">
+                      <span className="text-xs uppercase tracking-wide text-black/50">Target intake</span>
+                      <select
+                        value={editForm.intakeYear}
+                        onChange={(event) => setEditForm((prev) => ({ ...prev, intakeYear: event.target.value }))}
+                        className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2"
+                      >
+                        <option value="">Select intake year</option>
+                        {INTAKE_OPTIONS.map((option) => (
+                          <option key={option} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="text-sm">
+                      <span className="text-xs uppercase tracking-wide text-black/50">Current level</span>
+                      <select
+                        value={editForm.schoolLevel}
+                        onChange={(event) => setEditForm((prev) => ({ ...prev, schoolLevel: event.target.value }))}
+                        className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2"
+                      >
+                        <option value="">Select current level</option>
+                        {SCHOOL_LEVEL_OPTIONS.map((option) => (
+                          <option key={option} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="text-sm">
+                      <span className="text-xs uppercase tracking-wide text-black/50">Graduation year</span>
+                      <input
+                        type="number"
+                        min={new Date().getFullYear() - 1}
+                        max={new Date().getFullYear() + 8}
+                        value={editForm.graduationYear}
+                        onChange={(event) => setEditForm((prev) => ({ ...prev, graduationYear: event.target.value }))}
+                        placeholder={String(new Date().getFullYear())}
+                        className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2"
+                      />
+                    </label>
+                  </div>
+                </section>
 
-              {editHint ? (
-                <p className="mt-3 text-xs text-black/60">
-                  You opened this panel from: <span className="font-semibold uppercase">{editHint}</span>
-                </p>
-              ) : null}
+                <section className="rounded-2xl border border-black/15 bg-black/[0.02] p-4">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <p className="text-sm font-black uppercase tracking-[0.14em] text-black/45">Stats</p>
+                    <button
+                      type="button"
+                      onClick={addTestRow}
+                      disabled={editForm.tests.length >= 4}
+                      className="rounded-full border border-black px-3 py-1 text-sm font-semibold disabled:opacity-40"
+                    >
+                      + Add test
+                    </button>
+                  </div>
+
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <label className="text-sm">
+                      <span className="text-xs uppercase tracking-wide text-black/50">GPA scale</span>
+                      <select
+                        value={editForm.gpaScale}
+                        onChange={(event) =>
+                          setEditForm((prev) => {
+                            const nextScale = event.target.value;
+                            const nextMax = nextScale === "5.0" ? 5 : nextScale === "Percent" ? 100 : 4;
+                            const current = Number(prev.gpaValue);
+                            const nextValue =
+                              prev.gpaValue && !Number.isNaN(current) ? String(Math.max(0, Math.min(nextMax, current))) : prev.gpaValue;
+                            return { ...prev, gpaScale: nextScale, gpaValue: nextValue };
+                          })
+                        }
+                        className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2"
+                      >
+                        {GPA_SCALE_OPTIONS.map((option) => (
+                          <option key={option} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+
+                    <label className="text-sm">
+                      <span className="text-xs uppercase tracking-wide text-black/50">GPA</span>
+                      <input
+                        type="number"
+                        step={gpaStep}
+                        min={0}
+                        max={gpaMax}
+                        value={editForm.gpaValue}
+                        onChange={(event) => {
+                          const raw = event.target.value;
+                          if (raw === "") {
+                            setEditForm((prev) => ({ ...prev, gpaValue: "" }));
+                            return;
+                          }
+                          const numeric = Number(raw);
+                          if (Number.isNaN(numeric)) return;
+                          const clamped = Math.max(0, Math.min(gpaMax, numeric));
+                          setEditForm((prev) => ({ ...prev, gpaValue: String(clamped) }));
+                        }}
+                        placeholder={editForm.gpaScale === "Percent" ? "0-100%" : `0-${gpaMax}`}
+                        className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2"
+                      />
+                    </label>
+                  </div>
+
+                  <div className="mt-4 grid gap-3">
+                    {editForm.tests.length ? (
+                      editForm.tests.map((test, index) => (
+                        <div key={`${test.type}-${index}`} className="grid gap-3 rounded-2xl border border-black/10 bg-white p-3 md:grid-cols-[0.95fr_1fr_auto]">
+                          <label className="text-sm">
+                            <span className="text-xs uppercase tracking-wide text-black/50">Test type</span>
+                            <select
+                              value={test.type}
+                              onChange={(event) => updateTestRow(index, { type: event.target.value as EditProfileForm["tests"][number]["type"] })}
+                              className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2"
+                            >
+                              {TEST_OPTIONS.map((option) => (
+                                <option key={option} value={option}>
+                                  {option}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                          <label className="text-sm">
+                            <span className="text-xs uppercase tracking-wide text-black/50">Score</span>
+                            <input
+                              value={test.score}
+                              onChange={(event) => updateTestRow(index, { score: event.target.value })}
+                              placeholder="1400"
+                              className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2"
+                            />
+                          </label>
+                          <div className="flex items-end">
+                            <button
+                              type="button"
+                              onClick={() => removeTestRow(index)}
+                              className="rounded-full border border-black px-3 py-2 text-sm font-semibold"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="rounded-2xl border border-dashed border-black/15 bg-white px-4 py-5 text-sm text-black/50">
+                        No tests added yet.
+                      </p>
+                    )}
+                  </div>
+                </section>
+
+                <section className="rounded-2xl border border-black/15 bg-black/[0.02] p-4">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <p className="text-sm font-black uppercase tracking-[0.14em] text-black/45">Activities</p>
+                    <button
+                      type="button"
+                      onClick={addActivityRow}
+                      disabled={editForm.activities.length >= 6}
+                      className="rounded-full border border-black px-3 py-1 text-sm font-semibold disabled:opacity-40"
+                    >
+                      + Add activity
+                    </button>
+                  </div>
+
+                  <div className="grid gap-3">
+                    {editForm.activities.length ? (
+                      editForm.activities.map((activity, index) => (
+                        <div key={index} className="grid gap-3 rounded-2xl border border-black/10 bg-white p-3 md:grid-cols-[1fr_1.2fr_auto]">
+                          <label className="text-sm">
+                            <span className="text-xs uppercase tracking-wide text-black/50">Title</span>
+                            <input
+                              value={activity.title}
+                              onChange={(event) => updateActivityRow(index, { title: event.target.value })}
+                              placeholder="Founder — Robotics Club"
+                              className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2"
+                            />
+                          </label>
+                          <label className="text-sm">
+                            <span className="text-xs uppercase tracking-wide text-black/50">Description</span>
+                            <input
+                              value={activity.description}
+                              onChange={(event) => updateActivityRow(index, { description: event.target.value })}
+                              placeholder="One-line context"
+                              className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2"
+                            />
+                          </label>
+                          <div className="flex items-end">
+                            <button
+                              type="button"
+                              onClick={() => removeActivityRow(index)}
+                              className="rounded-full border border-black px-3 py-2 text-sm font-semibold"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="rounded-2xl border border-dashed border-black/15 bg-white px-4 py-5 text-sm text-black/50">
+                        Add up to 6 activities.
+                      </p>
+                    )}
+                  </div>
+                </section>
+
+                <section className="rounded-2xl border border-black/15 bg-black/[0.02] p-4">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <p className="text-sm font-black uppercase tracking-[0.14em] text-black/45">Honors</p>
+                    <button
+                      type="button"
+                      onClick={addHonorRow}
+                      disabled={editForm.honors.length >= 4}
+                      className="rounded-full border border-black px-3 py-1 text-sm font-semibold disabled:opacity-40"
+                    >
+                      + Add honor
+                    </button>
+                  </div>
+
+                  <div className="grid gap-3">
+                    {editForm.honors.length ? (
+                      editForm.honors.map((honor, index) => (
+                        <div key={index} className="grid gap-3 rounded-2xl border border-black/10 bg-white p-3 md:grid-cols-[1fr_auto]">
+                          <label className="text-sm">
+                            <span className="text-xs uppercase tracking-wide text-black/50">Title</span>
+                            <input
+                              value={honor}
+                              onChange={(event) => updateHonorRow(index, event.target.value)}
+                              placeholder="Math Olympiad participant"
+                              className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2"
+                            />
+                          </label>
+                          <div className="flex items-end">
+                            <button
+                              type="button"
+                              onClick={() => removeHonorRow(index)}
+                              className="rounded-full border border-black px-3 py-2 text-sm font-semibold"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="rounded-2xl border border-dashed border-black/15 bg-white px-4 py-5 text-sm text-black/50">
+                        Add up to 4 honors.
+                      </p>
+                    )}
+                  </div>
+                </section>
+
+                <section className="rounded-2xl border border-black/15 bg-black/[0.02] p-4">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-black uppercase tracking-[0.14em] text-black/45">Universities</p>
+                      <p className="mt-1 text-sm text-black/55">Keep university editing on the dedicated page.</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditOpen(false);
+                        router.push("/universities");
+                      }}
+                      className="rounded-full border border-black px-3 py-1 text-sm font-semibold"
+                    >
+                      Edit universities
+                    </button>
+                  </div>
+
+                  <div className="grid gap-2">
+                    {targetUniversityEntries.length ? (
+                      targetUniversityEntries.map((item) => (
+                        <div key={item.id} className="flex items-center justify-between gap-3 rounded-2xl border border-black/10 bg-white px-3 py-2">
+                          <span className="text-sm font-semibold text-black">{item.name}</span>
+                          <span className="rounded-full border border-black/10 bg-[#F5F8FC] px-2.5 py-1 text-xs font-black uppercase tracking-[0.12em] text-black/60">
+                            {item.status}
+                          </span>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="rounded-2xl border border-dashed border-black/15 bg-white px-4 py-5 text-sm text-black/50">
+                        No universities added yet.
+                      </p>
+                    )}
+                  </div>
+                </section>
+              </div>
 
               <div className="mt-5 flex items-center justify-end gap-2">
                 <Button variant="outline" onClick={() => setEditOpen(false)} disabled={savingEdit}>
