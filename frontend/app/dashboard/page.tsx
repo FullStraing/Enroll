@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -37,10 +37,8 @@ import {
   admissionsScore,
   buildEmptyEditForm,
   buildInitialAcademicTests,
-  buildInitialApScores,
   buildInitialEditForm,
   buildInitialLanguageTests,
-  formatTestDisplay,
   normalizeAcademicTestsForSave,
   normalizeGpaFromQuiz,
   normalizeLanguageTestsForSave,
@@ -179,7 +177,7 @@ function DashboardPageContent() {
       ? "N/A"
       : quizAnswers.gpaScale?.includes("5.0")
         ? `${Number(quizAnswers.gpaValue || 0).toFixed(2)} / 5.0`
-        : quizAnswers.gpaScale?.includes("РџСЂРѕС†РµРЅС‚С‹")
+        : quizAnswers.gpaScale?.includes("Percent")
           ? `${Number(quizAnswers.gpaValue || 0).toFixed(0)}%`
           : `${normalizedGpa.toFixed(2)} / 4.0`;
 
@@ -255,11 +253,18 @@ function DashboardPageContent() {
   }));
   const shareAcademicTests = buildInitialAcademicTests(profile, quizAnswers).filter((item) => item.score.trim());
   const shareLanguageTests = buildInitialLanguageTests(profile, quizAnswers).filter((item) => item.score.trim());
-  const shareApScores = buildInitialApScores(profile).filter((item) => item.exam && item.score);
   const primaryAcademicTest = shareAcademicTests[0] || null;
   const primaryLanguageTest = shareLanguageTests[0] || null;
-  const primaryAcademicLabel = primaryAcademicTest ? formatTestDisplay(primaryAcademicTest.type, primaryAcademicTest.score) : "N/A";
-  const primaryLanguageLabel = primaryLanguageTest ? formatTestDisplay(primaryLanguageTest.type, primaryLanguageTest.score) : "N/A";
+  const academicStatLabel = primaryAcademicTest?.type || "Academic";
+  const languageStatLabel = primaryLanguageTest?.type || "Language";
+  const primaryAcademicLabel = primaryAcademicTest?.score?.trim() || "N/A";
+  const primaryLanguageLabel = primaryLanguageTest?.score?.trim() || "N/A";
+  const extraAcademicTests = primaryAcademicTest ? shareAcademicTests.slice(1) : shareAcademicTests;
+  const extraLanguageTests = primaryLanguageTest ? shareLanguageTests.slice(1) : shareLanguageTests;
+  const allTestLabels = [...extraAcademicTests, ...extraLanguageTests].map((item) => {
+    const label = item.type === "DET" ? "Duolingo" : item.type;
+    return `${label} ${item.score.trim()}`;
+  });
 
   const gpaMax = editForm.gpaScale === "5.0" ? 5 : editForm.gpaScale === "Percent" ? 100 : 4;
   const gpaStep = editForm.gpaScale === "Percent" ? "1" : "0.01";
@@ -461,7 +466,7 @@ function DashboardPageContent() {
       };
 
       const cleanActivities = editForm.activities
-        .map((item) => [item.title.trim(), item.description.trim()].filter(Boolean).join(" вЂ” "))
+        .map((item) => [item.title.trim(), item.description.trim()].filter(Boolean).join(" — "))
         .filter(Boolean);
       const cleanHonors = editForm.honors.map((item) => item.trim()).filter(Boolean);
       const cleanAcademicTests = normalizedAcademicTests.map((item) => ({ type: item.type, score: item.score.trim() })).filter((item) => item.score);
@@ -538,12 +543,12 @@ function DashboardPageContent() {
             shareIntake={shareIntake}
             profileMajor={profileMajor}
             gpaLabel={gpaLabel}
+            academicStatLabel={academicStatLabel}
             primaryAcademicLabel={primaryAcademicLabel}
+            languageStatLabel={languageStatLabel}
             primaryLanguageLabel={primaryLanguageLabel}
+            allTestLabels={allTestLabels}
             profileClass={profileClass}
-            shareAcademicTests={shareAcademicTests}
-            shareLanguageTests={shareLanguageTests}
-            shareApScores={shareApScores}
             activities={activities}
             targetUniversityEntries={targetUniversityEntries}
             loading={loading}
@@ -551,7 +556,6 @@ function DashboardPageContent() {
             sharingDashboard={sharingDashboard}
             onShare={handleShareProfile}
             onEdit={handleOpenEdit}
-            formatTestDisplay={formatTestDisplay}
           />
 
           <div className="mt-5 grid gap-4 lg:grid-cols-2">
@@ -665,7 +669,7 @@ function DashboardPageContent() {
                   <div className="rounded-xl border border-black/15 bg-white p-3">
                     <p className="text-sm font-semibold">{latestEssay.title}</p>
                     <p className="mt-1 text-xs text-black/60">
-                      Versions: {latestEssay.versions_count} В· Last edited: {latestEssay.last_edited_at ? formatDateShort(latestEssay.last_edited_at) : "N/A"}
+                      Versions: {latestEssay.versions_count} · Last edited: {latestEssay.last_edited_at ? formatDateShort(latestEssay.last_edited_at) : "N/A"}
                     </p>
                   </div>
                   <Link href="/essays" className="inline-flex">
@@ -758,3 +762,4 @@ export default function DashboardPage() {
     </Suspense>
   );
 }
+

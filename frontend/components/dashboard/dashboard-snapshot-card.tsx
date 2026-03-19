@@ -1,19 +1,8 @@
-import Link from "next/link";
 import { Share2, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { CircularProgress } from "@/components/ui/circular-progress";
 import { Skeleton } from "@/components/ui/skeleton";
-
-type SnapshotTest = {
-  type?: string;
-  score: string;
-};
-
-type SnapshotAp = {
-  exam: string;
-  score: string;
-};
 
 type SnapshotUniversity = {
   id: number;
@@ -27,12 +16,12 @@ type Props = {
   shareIntake: string;
   profileMajor: string;
   gpaLabel: string;
+  academicStatLabel: string;
   primaryAcademicLabel: string;
+  languageStatLabel: string;
   primaryLanguageLabel: string;
+  allTestLabels: string[];
   profileClass: string;
-  shareAcademicTests: SnapshotTest[];
-  shareLanguageTests: SnapshotTest[];
-  shareApScores: SnapshotAp[];
   activities: string[];
   targetUniversityEntries: SnapshotUniversity[];
   loading: boolean;
@@ -40,7 +29,6 @@ type Props = {
   sharingDashboard: boolean;
   onShare: () => void;
   onEdit: () => void;
-  formatTestDisplay: (type: string, score: string | number | null | undefined) => string;
 };
 
 export function DashboardSnapshotCard({
@@ -49,12 +37,12 @@ export function DashboardSnapshotCard({
   shareIntake,
   profileMajor,
   gpaLabel,
+  academicStatLabel,
   primaryAcademicLabel,
+  languageStatLabel,
   primaryLanguageLabel,
+  allTestLabels,
   profileClass,
-  shareAcademicTests,
-  shareLanguageTests,
-  shareApScores,
   activities,
   targetUniversityEntries,
   loading,
@@ -62,10 +50,11 @@ export function DashboardSnapshotCard({
   sharingDashboard,
   onShare,
   onEdit,
-  formatTestDisplay,
 }: Props) {
+  const showAllTests = allTestLabels.length > 0;
+
   return (
-    <Card className="relative overflow-hidden bg-gradient-to-br from-white via-white to-[#DAF5F0]/35">
+    <Card className="relative overflow-hidden bg-white">
       <div className="absolute -right-14 -top-14 h-44 w-44 rounded-full border-2 border-black/10 bg-[#FFDB58]/20" />
       <div className="relative">
         <div className="mb-3 inline-flex items-center gap-2 rounded-xl border-2 border-black bg-white px-3 py-1 text-sm font-semibold">
@@ -84,17 +73,17 @@ export function DashboardSnapshotCard({
             </div>
 
             <div className="mt-6 overflow-hidden rounded-2xl border border-black/12">
-              <div className="grid grid-cols-2 border-b border-black/8 md:grid-cols-4">
+              <div className="grid grid-cols-2 md:grid-cols-4">
                 <div className="border-r border-black/8 px-4 py-3 md:last:border-r">
                   <p className="text-xs font-black uppercase tracking-[0.16em] text-black/40">GPA</p>
                   <p className="mt-1 text-lg font-black text-black">{gpaLabel}</p>
                 </div>
                 <div className="border-r border-black/8 px-4 py-3 md:last:border-r">
-                  <p className="text-xs font-black uppercase tracking-[0.16em] text-black/40">Academic</p>
+                  <p className="text-xs font-black uppercase tracking-[0.16em] text-black/40">{academicStatLabel}</p>
                   <p className="mt-1 text-lg font-black text-black">{primaryAcademicLabel}</p>
                 </div>
                 <div className="border-r border-black/8 px-4 py-3">
-                  <p className="text-xs font-black uppercase tracking-[0.16em] text-black/40">Language</p>
+                  <p className="text-xs font-black uppercase tracking-[0.16em] text-black/40">{languageStatLabel}</p>
                   <p className="mt-1 text-lg font-black text-black">{primaryLanguageLabel}</p>
                 </div>
                 <div className="px-4 py-3">
@@ -102,65 +91,33 @@ export function DashboardSnapshotCard({
                   <p className="mt-1 text-lg font-black text-black">{profileClass}</p>
                 </div>
               </div>
+
+              {showAllTests ? (
+                <div className="border-t border-black/8 px-4 py-3">
+                  <p className="text-xs font-black uppercase tracking-[0.16em] text-black/40">All Tests</p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {allTestLabels.map((label) => (
+                      <span
+                        key={label}
+                        className="inline-flex rounded-full border border-black/12 bg-[#F5F8FC] px-3 py-1 text-xs font-black tracking-[0.08em] text-black/70"
+                      >
+                        {label}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
             </div>
 
-            {shareAcademicTests.length > 1 || shareLanguageTests.length > 1 || shareApScores.length > 0 ? (
-              <div className="mt-4 grid gap-3 md:grid-cols-3">
-                <div className="rounded-2xl border border-black/10 bg-[#FFFDF8] p-3">
-                  <p className="text-xs font-black uppercase tracking-[0.16em] text-black/40">Academic Tests</p>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {shareAcademicTests.length ? (
-                      shareAcademicTests.map((item) => (
-                        <span key={`${item.type}-${item.score}`} className="rounded-full border border-black/10 bg-white px-2.5 py-1 text-xs font-bold text-black/75">
-                          {formatTestDisplay(item.type || "", item.score)}
-                        </span>
-                      ))
-                    ) : (
-                      <span className="text-sm text-black/50">N/A</span>
-                    )}
-                  </div>
-                </div>
-
-                <div className="rounded-2xl border border-black/10 bg-[#FFFDF8] p-3">
-                  <p className="text-xs font-black uppercase tracking-[0.16em] text-black/40">Language Tests</p>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {shareLanguageTests.length ? (
-                      shareLanguageTests.map((item) => (
-                        <span key={`${item.type}-${item.score}`} className="rounded-full border border-black/10 bg-white px-2.5 py-1 text-xs font-bold text-black/75">
-                          {formatTestDisplay(item.type || "", item.score)}
-                        </span>
-                      ))
-                    ) : (
-                      <span className="text-sm text-black/50">N/A</span>
-                    )}
-                  </div>
-                </div>
-
-                <div className="rounded-2xl border border-black/10 bg-[#FFFDF8] p-3">
-                  <p className="text-xs font-black uppercase tracking-[0.16em] text-black/40">AP Exams</p>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {shareApScores.length ? (
-                      shareApScores.slice(0, 4).map((item) => (
-                        <span key={`${item.exam}-${item.score}`} className="rounded-full border border-black/10 bg-white px-2.5 py-1 text-xs font-bold text-black/75">
-                          {item.exam.replace("AP ", "")}: {item.score}
-                        </span>
-                      ))
-                    ) : (
-                      <span className="text-sm text-black/50">None</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ) : null}
-
-            <div className="mt-6 grid gap-4 lg:grid-cols-2">
+            <div className="mt-6 grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
               <div className="rounded-2xl border border-black/10 bg-[#F5F8FC] p-4">
                 <p className="text-sm font-black uppercase tracking-[0.14em] text-black/45">Activities</p>
                 {activities.length ? (
-                  <ul className="mt-3 grid gap-2">
+                  <ul className="mt-3 grid gap-3">
                     {activities.map((activity) => (
-                      <li key={activity} className="text-sm font-semibold text-black/80">
-                        вЂў {activity}
+                      <li key={activity} className="flex gap-2 text-sm font-semibold text-black/80">
+                        <span className="mt-[1px] text-black">•</span>
+                        <span>{activity}</span>
                       </li>
                     ))}
                   </ul>

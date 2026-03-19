@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState, type Dispatch, type RefObject, type SetStateAction } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
@@ -509,7 +509,7 @@ export function EditProfileModal(props: Props) {
                         <input
                           value={activity.title}
                           onChange={(event) => updateActivityRow(index, { title: event.target.value })}
-                          placeholder="Founder вЂ” Robotics Club"
+                          placeholder="Founder — Robotics Club"
                           className={MODAL_FIELD_CLASS}
                         />
                       </label>
@@ -637,3 +637,4 @@ export function EditProfileModal(props: Props) {
     </div>
   );
 }
+

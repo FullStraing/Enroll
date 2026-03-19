@@ -1,4 +1,4 @@
-import {
+﻿import {
   ACADEMIC_TEST_OPTIONS,
   LANGUAGE_TEST_OPTIONS,
   TEST_SCORE_RULES,
@@ -97,7 +97,7 @@ export function normalizeGpaFromQuiz(scale?: string, raw?: string) {
   if (Number.isNaN(numeric)) return null;
   if (scale.includes("4.0")) return Math.max(0, Math.min(4, numeric));
   if (scale.includes("5.0")) return Math.max(0, Math.min(5, numeric)) * (4 / 5);
-  if (scale.includes("РџСЂРѕС†РµРЅС‚С‹")) return Math.max(0, Math.min(100, numeric)) * 0.04;
+  if (scale.includes("Percent")) return Math.max(0, Math.min(100, numeric)) * 0.04;
   return null;
 }
 
@@ -176,3 +176,4 @@ export function normalizeLanguageTestsForSave(tests: EditProfileForm["languageTe
     score: normalizeScoreOnCommit(item.score, TEST_SCORE_RULES[item.type]),
   }));
 }
+
