@@ -51,6 +51,13 @@ type Profile = {
   budget_range?: string;
   activities?: string[];
   honors?: string[];
+  common_app_profile?: {
+    dashboard_snapshot?: {
+      academic_tests?: Array<{ type: AcademicTestType; score: string }>;
+      language_tests?: Array<{ type: LanguageTestType; score: string }>;
+      ap_scores?: Array<{ exam: string; score: string }>;
+    };
+  };
 };
 
 type UniversityBrief = {
@@ -115,6 +122,9 @@ type IntroStorage = {
 const introQuizStorageKey = "enroll_intro_quiz_v1";
 type EditableFieldKey = "major" | "gpa" | "tests" | "intake" | "country" | "level";
 
+type AcademicTestType = "SAT" | "ACT";
+type LanguageTestType = "IELTS" | "TOEFL" | "DET" | "PTE" | "Cambridge";
+
 type EditProfileForm = {
   fullName: string;
   major: string;
@@ -123,12 +133,59 @@ type EditProfileForm = {
   schoolLevel: string;
   gpaScale: string;
   gpaValue: string;
-  tests: Array<{ type: "SAT" | "TOEFL" | "IELTS" | "DET"; score: string }>;
+  academicTests: Array<{ type: AcademicTestType; score: string }>;
+  languageTests: Array<{ type: LanguageTestType; score: string }>;
+  apScores: Array<{ exam: string; score: string }>;
   activities: Array<{ title: string; description: string }>;
   honors: string[];
 };
 
-const TEST_OPTIONS = ["SAT", "TOEFL", "IELTS", "DET"] as const;
+const ACADEMIC_TEST_OPTIONS = ["SAT", "ACT"] as const;
+const LANGUAGE_TEST_OPTIONS = ["IELTS", "TOEFL", "DET", "PTE", "Cambridge"] as const;
+const AP_SCORE_OPTIONS = ["5", "4", "3", "2", "1"] as const;
+const AP_EXAM_OPTIONS = [
+  "AP 2-D Art and Design",
+  "AP 3-D Art and Design",
+  "AP African American Studies",
+  "AP Art History",
+  "AP Biology",
+  "AP Calculus AB",
+  "AP Calculus BC",
+  "AP Chemistry",
+  "AP Chinese Language and Culture",
+  "AP Comparative Government and Politics",
+  "AP Computer Science A",
+  "AP Computer Science Principles",
+  "AP Drawing",
+  "AP English Language and Composition",
+  "AP English Literature and Composition",
+  "AP Environmental Science",
+  "AP European History",
+  "AP French Language and Culture",
+  "AP German Language and Culture",
+  "AP Human Geography",
+  "AP Italian Language and Culture",
+  "AP Japanese Language and Culture",
+  "AP Latin",
+  "AP Macroeconomics",
+  "AP Microeconomics",
+  "AP Music Theory",
+  "AP Physics 1: Algebra-Based",
+  "AP Physics 2: Algebra-Based",
+  "AP Physics C: Electricity and Magnetism",
+  "AP Physics C: Mechanics",
+  "AP Precalculus",
+  "AP Psychology",
+  "AP Research",
+  "AP Seminar",
+  "AP Spanish Language and Culture",
+  "AP Spanish Literature and Culture",
+  "AP Statistics",
+  "AP Studio Art",
+  "AP United States Government and Politics",
+  "AP United States History",
+  "AP World History: Modern",
+] as const;
 const SCHOOL_LEVEL_OPTIONS = ["9", "10", "11", "12", "Gap Year", "College"];
 const INTAKE_OPTIONS = ["2026", "2027", "2028", "2029+"];
 const GPA_SCALE_OPTIONS = ["4.0", "5.0", "Percent"];
@@ -156,19 +213,68 @@ const COUNTRY_FLAG_MAP: Record<string, string> = {
   India: "🇮🇳",
 };
 
-function buildInitialTests(profile: Profile | null, quizAnswers: IntroAnswers): EditProfileForm["tests"] {
-  const tests: EditProfileForm["tests"] = [];
+const TEST_SCORE_RULES = {
+  SAT: { min: 400, max: 1600, step: "10", placeholder: "1400", hint: "400-1600" },
+  ACT: { min: 1, max: 36, step: "1", placeholder: "32", hint: "1-36" },
+  IELTS: { min: 0, max: 9, step: "0.5", placeholder: "7.5", hint: "0-9, step 0.5" },
+  TOEFL: { min: 0, max: 120, step: "1", placeholder: "105", hint: "0-120" },
+  DET: { min: 10, max: 160, step: "5", placeholder: "145", hint: "10-160, step 5" },
+  PTE: { min: 10, max: 90, step: "1", placeholder: "76", hint: "10-90" },
+  Cambridge: { min: 80, max: 230, step: "1", placeholder: "190", hint: "80-230" },
+} as const;
 
-  if (profile?.sat_total) tests.push({ type: "SAT", score: String(profile.sat_total) });
-  if (profile?.toefl_total) tests.push({ type: "TOEFL", score: String(profile.toefl_total) });
-  if (profile?.ielts_overall) tests.push({ type: "IELTS", score: String(profile.ielts_overall) });
-  if (profile?.det_score) tests.push({ type: "DET", score: String(profile.det_score) });
+const MODAL_FIELD_CLASS =
+  "mt-2 h-12 w-full rounded-2xl border border-black/15 bg-white px-4 py-3 text-base text-black outline-none transition placeholder:text-black/30 focus:border-black/35 focus:ring-0";
+
+const MODAL_REMOVE_BUTTON_CLASS =
+  "rounded-full border border-black bg-white px-3 py-2 text-sm font-semibold transition hover:-translate-y-0.5 hover:bg-black/5";
+
+function buildInitialAcademicTests(profile: Profile | null, quizAnswers: IntroAnswers): EditProfileForm["academicTests"] {
+  const snapshot = profile?.common_app_profile?.dashboard_snapshot?.academic_tests || [];
+  const tests: EditProfileForm["academicTests"] = snapshot
+    .filter((test): test is { type: AcademicTestType; score: string } =>
+      (ACADEMIC_TEST_OPTIONS as readonly string[]).includes(test.type),
+    )
+    .slice(0, 2);
+
+  if (profile?.sat_total && !tests.some((item) => item.type === "SAT")) {
+    tests.unshift({ type: "SAT", score: String(profile.sat_total) });
+  }
 
   if (tests.length > 0) return tests;
 
   return (quizAnswers.tests || [])
-    .filter((test): test is (typeof TEST_OPTIONS)[number] => (TEST_OPTIONS as readonly string[]).includes(test))
+    .filter((test): test is AcademicTestType => (ACADEMIC_TEST_OPTIONS as readonly string[]).includes(test))
     .map((test) => ({ type: test, score: "" }));
+}
+
+function buildInitialLanguageTests(profile: Profile | null, quizAnswers: IntroAnswers): EditProfileForm["languageTests"] {
+  const snapshot = profile?.common_app_profile?.dashboard_snapshot?.language_tests || [];
+  const tests: EditProfileForm["languageTests"] = snapshot
+    .filter((test): test is { type: LanguageTestType; score: string } =>
+      (LANGUAGE_TEST_OPTIONS as readonly string[]).includes(test.type),
+    )
+    .slice(0, 5);
+
+  if (profile?.toefl_total && !tests.some((item) => item.type === "TOEFL")) {
+    tests.push({ type: "TOEFL", score: String(profile.toefl_total) });
+  }
+  if (profile?.ielts_overall && !tests.some((item) => item.type === "IELTS")) {
+    tests.push({ type: "IELTS", score: String(profile.ielts_overall) });
+  }
+  if (profile?.det_score && !tests.some((item) => item.type === "DET")) {
+    tests.push({ type: "DET", score: String(profile.det_score) });
+  }
+
+  if (tests.length > 0) return tests;
+
+  return (quizAnswers.tests || [])
+    .filter((test): test is LanguageTestType => (LANGUAGE_TEST_OPTIONS as readonly string[]).includes(test))
+    .map((test) => ({ type: test, score: "" }));
+}
+
+function buildInitialApScores(profile: Profile | null): EditProfileForm["apScores"] {
+  return (profile?.common_app_profile?.dashboard_snapshot?.ap_scores || []).slice(0, 8);
 }
 
 function buildInitialActivities(profile: Profile | null): EditProfileForm["activities"] {
@@ -178,6 +284,28 @@ function buildInitialActivities(profile: Profile | null): EditProfileForm["activ
 
 function toPercent(value: number) {
   return Math.max(0, Math.min(100, Math.round(value)));
+}
+
+function sanitizeScoreInput(raw: string) {
+  if (raw === "") return "";
+  if (!/^\d*\.?\d*$/.test(raw)) return null;
+  return raw;
+}
+
+function normalizeScoreOnCommit(raw: string, config: { min: number; max: number; step: string }) {
+  if (raw.trim() === "") return "";
+  const numeric = Number(raw);
+  if (Number.isNaN(numeric)) return "";
+  const step = Number(config.step);
+  const clamped = Math.max(config.min, Math.min(config.max, numeric));
+  const normalized = step < 1 ? Math.round(clamped / step) * step : Math.round(clamped / Math.max(step, 1)) * Math.max(step, 1);
+  const decimals = step < 1 ? String(config.step).split(".")[1]?.length || 1 : 0;
+  return String(Number(normalized.toFixed(decimals)));
+}
+
+function formatTestDisplay(type: string, score: string | number | null | undefined) {
+  if (score == null || score === "") return "N/A";
+  return `${type} ${score}`;
 }
 
 function normalizeGpaFromQuiz(scale?: string, raw?: string) {
@@ -245,11 +373,14 @@ function DashboardPageContent() {
     schoolLevel: "",
     gpaScale: "4.0",
     gpaValue: "",
-    tests: [],
+    academicTests: [],
+    languageTests: [],
+    apScores: [],
     activities: [],
     honors: [],
   });
   const dashboardShareRef = useRef<HTMLDivElement | null>(null);
+  const editModalRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const token = getToken();
@@ -302,15 +433,13 @@ function DashboardPageContent() {
   const profileCountry = profile?.country || quizAnswers.country || "N/A";
   const profileClass = quizAnswers.schoolLevel || "N/A";
   const intake = quizAnswers.intakeYear || "N/A";
-  const testsLabel = profile?.sat_total
-    ? `SAT ${profile.sat_total}`
-    : profile?.toefl_total
-      ? `TOEFL ${profile.toefl_total}`
-      : profile?.ielts_overall
-        ? `IELTS ${profile.ielts_overall}`
-        : (quizAnswers.tests || []).length > 0
-          ? quizAnswers.tests!.join(", ")
-          : "No tests yet";
+  const shareAcademicTests = buildInitialAcademicTests(profile, quizAnswers);
+  const shareLanguageTests = buildInitialLanguageTests(profile, quizAnswers);
+  const primaryAcademicTest = shareAcademicTests.find((item) => item.score.trim()) || null;
+  const primaryLanguageTest = shareLanguageTests.find((item) => item.score.trim()) || null;
+  const shareApScores = buildInitialApScores(profile).filter((item) => item.exam && item.score);
+  const primaryAcademicLabel = primaryAcademicTest ? formatTestDisplay(primaryAcademicTest.type, primaryAcademicTest.score) : "N/A";
+  const primaryLanguageLabel = primaryLanguageTest ? formatTestDisplay(primaryLanguageTest.type === "DET" ? "DET" : primaryLanguageTest.type, primaryLanguageTest.score) : "N/A";
 
   const normalizedGpa = useMemo(() => {
     const modelGpa = profile?.gpa != null ? Number(profile.gpa) : null;
@@ -451,7 +580,9 @@ function DashboardPageContent() {
       schoolLevel: quizAnswers.schoolLevel || "",
       gpaScale: quizAnswers.gpaScale || "4.0",
       gpaValue: quizAnswers.gpaValue || "",
-      tests: buildInitialTests(profile, quizAnswers),
+      academicTests: buildInitialAcademicTests(profile, quizAnswers),
+      languageTests: buildInitialLanguageTests(profile, quizAnswers),
+      apScores: buildInitialApScores(profile),
       activities: buildInitialActivities(profile),
       honors: Array.isArray(profile?.honors) ? profile.honors.slice(0, 4) : [],
     });
@@ -466,29 +597,99 @@ function DashboardPageContent() {
     setEditOpen(true);
   }, [searchParams]);
 
-  function updateTestRow(index: number, patch: Partial<EditProfileForm["tests"][number]>) {
+  function updateAcademicTestRow(index: number, patch: Partial<EditProfileForm["academicTests"][number]>) {
     setEditForm((prev) => ({
       ...prev,
-      tests: prev.tests.map((item, itemIndex) => (itemIndex === index ? { ...item, ...patch } : item)),
+      academicTests: prev.academicTests.map((item, itemIndex) => (itemIndex === index ? { ...item, ...patch } : item)),
     }));
   }
 
-  function addTestRow() {
+  function commitAcademicTestScore(index: number) {
+    setEditForm((prev) => ({
+      ...prev,
+      academicTests: prev.academicTests.map((item, itemIndex) =>
+        itemIndex === index ? { ...item, score: normalizeScoreOnCommit(item.score, TEST_SCORE_RULES[item.type]) } : item,
+      ),
+    }));
+  }
+
+  function addAcademicTestRow() {
     setEditForm((prev) => {
-      if (prev.tests.length >= 4) return prev;
-      const usedTypes = new Set(prev.tests.map((item) => item.type));
-      const nextType = TEST_OPTIONS.find((option) => !usedTypes.has(option)) || "SAT";
+      if (prev.academicTests.length >= 2) return prev;
+      const usedTypes = new Set(prev.academicTests.map((item) => item.type));
+      const nextType = ACADEMIC_TEST_OPTIONS.find((option) => !usedTypes.has(option)) || "SAT";
       return {
         ...prev,
-        tests: [...prev.tests, { type: nextType, score: "" }],
+        academicTests: [...prev.academicTests, { type: nextType, score: "" }],
       };
     });
   }
 
-  function removeTestRow(index: number) {
+  function removeAcademicTestRow(index: number) {
     setEditForm((prev) => ({
       ...prev,
-      tests: prev.tests.filter((_, itemIndex) => itemIndex !== index),
+      academicTests: prev.academicTests.filter((_, itemIndex) => itemIndex !== index),
+    }));
+  }
+
+  function updateLanguageTestRow(index: number, patch: Partial<EditProfileForm["languageTests"][number]>) {
+    setEditForm((prev) => ({
+      ...prev,
+      languageTests: prev.languageTests.map((item, itemIndex) => (itemIndex === index ? { ...item, ...patch } : item)),
+    }));
+  }
+
+  function commitLanguageTestScore(index: number) {
+    setEditForm((prev) => ({
+      ...prev,
+      languageTests: prev.languageTests.map((item, itemIndex) =>
+        itemIndex === index ? { ...item, score: normalizeScoreOnCommit(item.score, TEST_SCORE_RULES[item.type]) } : item,
+      ),
+    }));
+  }
+
+  function addLanguageTestRow() {
+    setEditForm((prev) => {
+      if (prev.languageTests.length >= 5) return prev;
+      const usedTypes = new Set(prev.languageTests.map((item) => item.type));
+      const nextType = LANGUAGE_TEST_OPTIONS.find((option) => !usedTypes.has(option)) || "IELTS";
+      return {
+        ...prev,
+        languageTests: [...prev.languageTests, { type: nextType, score: "" }],
+      };
+    });
+  }
+
+  function removeLanguageTestRow(index: number) {
+    setEditForm((prev) => ({
+      ...prev,
+      languageTests: prev.languageTests.filter((_, itemIndex) => itemIndex !== index),
+    }));
+  }
+
+  function updateApScoreRow(index: number, patch: Partial<EditProfileForm["apScores"][number]>) {
+    setEditForm((prev) => ({
+      ...prev,
+      apScores: prev.apScores.map((item, itemIndex) => (itemIndex === index ? { ...item, ...patch } : item)),
+    }));
+  }
+
+  function addApScoreRow() {
+    setEditForm((prev) => {
+      if (prev.apScores.length >= 8) return prev;
+      const usedExams = new Set(prev.apScores.map((item) => item.exam));
+      const nextExam = AP_EXAM_OPTIONS.find((option) => !usedExams.has(option)) || AP_EXAM_OPTIONS[0];
+      return {
+        ...prev,
+        apScores: [...prev.apScores, { exam: nextExam, score: "5" }],
+      };
+    });
+  }
+
+  function removeApScoreRow(index: number) {
+    setEditForm((prev) => ({
+      ...prev,
+      apScores: prev.apScores.filter((_, itemIndex) => itemIndex !== index),
     }));
   }
 
@@ -546,21 +747,44 @@ function DashboardPageContent() {
     setSavingEdit(true);
     try {
       const gpaNumber = editForm.gpaValue ? Number(editForm.gpaValue) : null;
-      const getTestScore = (type: (typeof TEST_OPTIONS)[number]) => {
-        const match = editForm.tests.find((item) => item.type === type && item.score.trim());
+      const normalizedAcademicTests = editForm.academicTests.map((item) => ({
+        ...item,
+        score: normalizeScoreOnCommit(item.score, TEST_SCORE_RULES[item.type]),
+      }));
+      const normalizedLanguageTests = editForm.languageTests.map((item) => ({
+        ...item,
+        score: normalizeScoreOnCommit(item.score, TEST_SCORE_RULES[item.type]),
+      }));
+      const getAcademicScore = (type: AcademicTestType) => {
+        const match = normalizedAcademicTests.find((item) => item.type === type && item.score.trim());
+        if (!match) return null;
+        const numeric = Number(match.score);
+        return Number.isNaN(numeric) ? null : numeric;
+      };
+      const getLanguageScore = (type: LanguageTestType) => {
+        const match = normalizedLanguageTests.find((item) => item.type === type && item.score.trim());
         if (!match) return null;
         const numeric = Number(match.score);
         return Number.isNaN(numeric) ? null : numeric;
       };
 
-      const satNumber = getTestScore("SAT");
-      const toeflNumber = getTestScore("TOEFL");
-      const ieltsNumber = getTestScore("IELTS");
-      const detNumber = getTestScore("DET");
+      const satNumber = getAcademicScore("SAT");
+      const toeflNumber = getLanguageScore("TOEFL");
+      const ieltsNumber = getLanguageScore("IELTS");
+      const detNumber = getLanguageScore("DET");
       const cleanActivities = editForm.activities
         .map((item) => [item.title.trim(), item.description.trim()].filter(Boolean).join(" — "))
         .filter(Boolean);
       const cleanHonors = editForm.honors.map((item) => item.trim()).filter(Boolean);
+      const cleanAcademicTests = normalizedAcademicTests
+        .map((item) => ({ type: item.type, score: item.score.trim() }))
+        .filter((item) => item.score);
+      const cleanLanguageTests = normalizedLanguageTests
+        .map((item) => ({ type: item.type, score: item.score.trim() }))
+        .filter((item) => item.score);
+      const cleanApScores = editForm.apScores
+        .map((item) => ({ exam: item.exam.trim(), score: item.score.trim() }))
+        .filter((item) => item.exam && item.score);
 
       const payload: Partial<Profile> = {
         full_name: editForm.fullName || "",
@@ -573,6 +797,13 @@ function DashboardPageContent() {
         det_score: detNumber == null || Number.isNaN(detNumber) ? null : detNumber,
         activities: cleanActivities,
         honors: cleanHonors,
+        common_app_profile: {
+          dashboard_snapshot: {
+            academic_tests: cleanAcademicTests,
+            language_tests: cleanLanguageTests,
+            ap_scores: cleanApScores,
+          },
+        },
       };
 
       const updatedProfile = await apiFetch<Profile>("/api/auth/profile/", { method: "PATCH", body: JSON.stringify(payload) }, token);
@@ -586,7 +817,7 @@ function DashboardPageContent() {
         schoolLevel: editForm.schoolLevel || undefined,
         gpaScale: editForm.gpaScale || undefined,
         gpaValue: editForm.gpaValue || undefined,
-        tests: editForm.tests.map((item) => item.type),
+        tests: [...editForm.academicTests, ...editForm.languageTests].map((item) => item.type),
       };
       setQuizAnswers(nextAnswers);
       window.localStorage.setItem(introQuizStorageKey, JSON.stringify({ step: 6, answers: nextAnswers }));
@@ -615,6 +846,20 @@ function DashboardPageContent() {
       document.body.style.overflow = previousOverflow;
     };
   }, [editOpen]);
+
+  useEffect(() => {
+    if (!editOpen) return;
+
+    const handlePointerDown = (event: MouseEvent) => {
+      if (!editModalRef.current) return;
+      if (editModalRef.current.contains(event.target as Node)) return;
+      if (savingEdit) return;
+      setEditOpen(false);
+    };
+
+    document.addEventListener("mousedown", handlePointerDown);
+    return () => document.removeEventListener("mousedown", handlePointerDown);
+  }, [editOpen, savingEdit]);
 
   return (
     <ProtectedPage>
@@ -645,12 +890,12 @@ function DashboardPageContent() {
                         <p className="mt-1 text-lg font-black text-black">{gpaLabel}</p>
                       </div>
                       <div className="border-r border-black/8 px-4 py-3 md:last:border-r">
-                        <p className="text-xs font-black uppercase tracking-[0.16em] text-black/40">SAT</p>
-                        <p className="mt-1 text-lg font-black text-black">{profile?.sat_total || "N/A"}</p>
+                        <p className="text-xs font-black uppercase tracking-[0.16em] text-black/40">Academic</p>
+                        <p className="mt-1 text-lg font-black text-black">{primaryAcademicLabel}</p>
                       </div>
                       <div className="border-r border-black/8 px-4 py-3">
-                        <p className="text-xs font-black uppercase tracking-[0.16em] text-black/40">Duolingo</p>
-                        <p className="mt-1 text-lg font-black text-black">{profile?.det_score || "N/A"}</p>
+                        <p className="text-xs font-black uppercase tracking-[0.16em] text-black/40">Language</p>
+                        <p className="mt-1 text-lg font-black text-black">{primaryLanguageLabel}</p>
                       </div>
                       <div className="px-4 py-3">
                         <p className="text-xs font-black uppercase tracking-[0.16em] text-black/40">Level</p>
@@ -658,6 +903,53 @@ function DashboardPageContent() {
                       </div>
                     </div>
                   </div>
+
+                  {(shareAcademicTests.length > 1 || shareLanguageTests.length > 1 || shareApScores.length > 0) ? (
+                    <div className="mt-4 grid gap-3 md:grid-cols-3">
+                      <div className="rounded-2xl border border-black/10 bg-[#FFFDF8] p-3">
+                        <p className="text-xs font-black uppercase tracking-[0.16em] text-black/40">Academic Tests</p>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {shareAcademicTests.length ? (
+                            shareAcademicTests.filter((item) => item.score.trim()).map((item) => (
+                              <span key={`${item.type}-${item.score}`} className="rounded-full border border-black/10 bg-white px-2.5 py-1 text-xs font-bold text-black/75">
+                                {formatTestDisplay(item.type, item.score)}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="text-sm text-black/50">N/A</span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="rounded-2xl border border-black/10 bg-[#FFFDF8] p-3">
+                        <p className="text-xs font-black uppercase tracking-[0.16em] text-black/40">Language Tests</p>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {shareLanguageTests.length ? (
+                            shareLanguageTests.filter((item) => item.score.trim()).map((item) => (
+                              <span key={`${item.type}-${item.score}`} className="rounded-full border border-black/10 bg-white px-2.5 py-1 text-xs font-bold text-black/75">
+                                {formatTestDisplay(item.type === "DET" ? "DET" : item.type, item.score)}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="text-sm text-black/50">N/A</span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="rounded-2xl border border-black/10 bg-[#FFFDF8] p-3">
+                        <p className="text-xs font-black uppercase tracking-[0.16em] text-black/40">AP Exams</p>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {shareApScores.length ? (
+                            shareApScores.slice(0, 4).map((item) => (
+                              <span key={`${item.exam}-${item.score}`} className="rounded-full border border-black/10 bg-white px-2.5 py-1 text-xs font-bold text-black/75">
+                                {item.exam.replace("AP ", "")}: {item.score}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="text-sm text-black/50">None</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
 
                   <div className="mt-6 grid gap-4 lg:grid-cols-2">
                     <div className="rounded-2xl border border-black/10 bg-[#F5F8FC] p-4">
@@ -893,33 +1185,41 @@ function DashboardPageContent() {
         <SharePreviewToast imageUrl={sharePreviewUrl} visible={sharePreviewVisible} />
 
         {editOpen ? (
-          <div className="fixed inset-0 z-50 overflow-y-auto bg-black/40 p-4">
-            <div className="mx-auto my-8 w-full max-w-5xl rounded-3xl border-2 border-black bg-[linear-gradient(180deg,#FFFFFF_0%,#FFFDF8_100%)] p-5 shadow-[0_10px_0_0_rgba(0,0,0,1)]">
-              <div className="mb-4 flex items-center justify-between gap-2">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-black/50">Quick edit</p>
-                  <h3 className="text-2xl font-black">Update your profile snapshot</h3>
-                  <p className="mt-1 text-sm text-black/65">
-                    Edit your profile in blocks, not one long form.
-                  </p>
+          <div className="fixed inset-0 z-50 overflow-y-auto bg-black/35 px-4 py-6">
+            <div ref={editModalRef} className="mx-auto my-4 w-full max-w-5xl rounded-[32px] border-2 border-black bg-[#FFFDF8] p-6 pb-32 shadow-[0_12px_0_0_rgba(0,0,0,1)]">
+              <div className="mb-5 rounded-[28px] border-2 border-black bg-white p-5 shadow-[0_5px_0_rgba(0,0,0,0.06)]">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <span className="inline-flex rounded-full border border-black bg-[#FFDB58] px-3 py-1 text-xs font-black uppercase tracking-[0.16em] text-black">
+                      Quick edit
+                    </span>
+                    <h3 className="mt-2 text-4xl font-black tracking-[-0.05em] text-black">Update your profile snapshot</h3>
+                    <p className="mt-2 max-w-2xl text-sm text-black/65">
+                      Edit your profile in blocks, keep it share-ready, and make the card look like a real admissions snapshot.
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border-2 border-black bg-[#DAF5F0] px-4 py-3 text-right shadow-[0_4px_0_#000]">
+                    <p className="text-[11px] font-black uppercase tracking-[0.16em] text-black/40">Sections</p>
+                    <p className="mt-1 text-lg font-black text-black">5 blocks</p>
+                  </div>
                 </div>
               </div>
 
-              <div className="grid gap-4">
-                <section className="rounded-2xl border border-[#63CDB8]/35 bg-[#DAF5F0]/35 p-4">
-                  <div className="mb-3">
-                    <span className="inline-flex rounded-full border border-[#63CDB8]/45 bg-white px-3 py-1 text-sm font-black uppercase tracking-[0.14em] text-black/60">
+              <div className="grid gap-5">
+                <section className="rounded-[28px] border border-black/12 bg-white shadow-[0_5px_0_rgba(0,0,0,0.04)]">
+                  <div className="rounded-t-[26px] border-b border-black/10 bg-[#DAF5F0] px-5 py-4">
+                    <span className="inline-flex rounded-full border border-black/15 bg-white px-3 py-1 text-sm font-black uppercase tracking-[0.14em] text-black/65">
                       Basic Info
                     </span>
                   </div>
-                  <div className="grid gap-3 md:grid-cols-2">
+                  <div className="grid gap-4 p-5 md:grid-cols-2">
                     <label className="text-sm">
                       <span className="text-xs uppercase tracking-wide text-black/50">Name</span>
                       <input
                         value={editForm.fullName}
                         onChange={(event) => setEditForm((prev) => ({ ...prev, fullName: event.target.value }))}
                         placeholder="Emirlan Togolokov"
-                        className="mt-2 w-full rounded-xl border border-[#63CDB8]/30 bg-white px-3 py-2"
+                        className={MODAL_FIELD_CLASS}
                       />
                     </label>
                     <label className="text-sm">
@@ -927,7 +1227,7 @@ function DashboardPageContent() {
                       <select
                         value={editForm.country}
                         onChange={(event) => setEditForm((prev) => ({ ...prev, country: event.target.value }))}
-                        className="mt-2 w-full rounded-xl border border-[#63CDB8]/30 bg-white px-3 py-2"
+                        className={MODAL_FIELD_CLASS}
                       >
                         <option value="">Select country</option>
                         {COUNTRY_OPTIONS.map((country) => (
@@ -943,7 +1243,7 @@ function DashboardPageContent() {
                         value={editForm.major}
                         onChange={(event) => setEditForm((prev) => ({ ...prev, major: event.target.value }))}
                         placeholder="Computer Science"
-                        className="mt-2 w-full rounded-xl border border-[#63CDB8]/30 bg-white px-3 py-2"
+                        className={MODAL_FIELD_CLASS}
                       />
                     </label>
                     <label className="text-sm">
@@ -951,7 +1251,7 @@ function DashboardPageContent() {
                       <select
                         value={editForm.intakeYear}
                         onChange={(event) => setEditForm((prev) => ({ ...prev, intakeYear: event.target.value }))}
-                        className="mt-2 w-full rounded-xl border border-[#63CDB8]/30 bg-white px-3 py-2"
+                        className={MODAL_FIELD_CLASS}
                       >
                         <option value="">Select intake year</option>
                         {INTAKE_OPTIONS.map((option) => (
@@ -966,7 +1266,7 @@ function DashboardPageContent() {
                       <select
                         value={editForm.schoolLevel}
                         onChange={(event) => setEditForm((prev) => ({ ...prev, schoolLevel: event.target.value }))}
-                        className="mt-2 w-full rounded-xl border border-[#63CDB8]/30 bg-white px-3 py-2"
+                        className={MODAL_FIELD_CLASS}
                       >
                         <option value="">Select current level</option>
                         {SCHOOL_LEVEL_OPTIONS.map((option) => (
@@ -979,22 +1279,15 @@ function DashboardPageContent() {
                   </div>
                 </section>
 
-                <section className="rounded-2xl border border-[#E7B77C]/35 bg-[#F8D6B3]/30 p-4">
-                  <div className="mb-3 flex items-center justify-between gap-3">
-                    <span className="inline-flex rounded-full border border-[#E7B77C]/45 bg-white px-3 py-1 text-sm font-black uppercase tracking-[0.14em] text-black/60">
+                <section className="rounded-[28px] border border-black/12 bg-white shadow-[0_5px_0_rgba(0,0,0,0.04)]">
+                  <div className="flex items-center justify-between gap-3 rounded-t-[26px] border-b border-black/10 bg-[#F8D6B3] px-5 py-4">
+                    <span className="inline-flex rounded-full border border-black/15 bg-white px-3 py-1 text-sm font-black uppercase tracking-[0.14em] text-black/65">
                       Stats
                     </span>
-                    <button
-                      type="button"
-                      onClick={addTestRow}
-                      disabled={editForm.tests.length >= 4}
-                      className="rounded-full border border-black bg-white px-3 py-1 text-sm font-semibold hover:bg-[#FFF4CC] disabled:opacity-40"
-                    >
-                      + Add test
-                    </button>
+                    <p className="text-sm font-semibold text-black/55">Academic, language, and AP scores</p>
                   </div>
 
-                  <div className="grid gap-3 md:grid-cols-2">
+                  <div className="grid gap-4 p-5 md:grid-cols-2">
                     <label className="text-sm">
                       <span className="text-xs uppercase tracking-wide text-black/50">GPA scale</span>
                       <select
@@ -1009,7 +1302,7 @@ function DashboardPageContent() {
                             return { ...prev, gpaScale: nextScale, gpaValue: nextValue };
                           })
                         }
-                        className="mt-2 w-full rounded-xl border border-[#E7B77C]/30 bg-white px-3 py-2"
+                        className={MODAL_FIELD_CLASS}
                       >
                         {GPA_SCALE_OPTIONS.map((option) => (
                           <option key={option} value={option}>
@@ -1039,83 +1332,234 @@ function DashboardPageContent() {
                           setEditForm((prev) => ({ ...prev, gpaValue: String(clamped) }));
                         }}
                         placeholder={editForm.gpaScale === "Percent" ? "0-100%" : `0-${gpaMax}`}
-                        className="mt-2 w-full rounded-xl border border-[#E7B77C]/30 bg-white px-3 py-2"
+                        className={MODAL_FIELD_CLASS}
                       />
                     </label>
-                  </div>
-
-                  <div className="mt-4 grid gap-3">
-                    {editForm.tests.length ? (
-                      editForm.tests.map((test, index) => (
-                        <div key={`${test.type}-${index}`} className="grid gap-3 rounded-2xl border border-[#E7B77C]/30 bg-white p-3 md:grid-cols-[0.95fr_1fr_auto]">
-                          <label className="text-sm">
-                            <span className="text-xs uppercase tracking-wide text-black/50">Test type</span>
-                            <select
-                              value={test.type}
-                              onChange={(event) => updateTestRow(index, { type: event.target.value as EditProfileForm["tests"][number]["type"] })}
-                              className="mt-2 w-full rounded-xl border border-[#E7B77C]/30 bg-white px-3 py-2"
-                            >
-                              {TEST_OPTIONS.map((option) => (
-                                <option key={option} value={option}>
-                                  {option}
-                                </option>
-                              ))}
-                            </select>
-                          </label>
-                          <label className="text-sm">
-                            <span className="text-xs uppercase tracking-wide text-black/50">Score</span>
-                            <input
-                              value={test.score}
-                              onChange={(event) => updateTestRow(index, { score: event.target.value })}
-                              placeholder="1400"
-                              className="mt-2 w-full rounded-xl border border-[#E7B77C]/30 bg-white px-3 py-2"
-                            />
-                          </label>
-                          <div className="flex items-end">
+                    
+                    <div className="md:col-span-2">
+                      <div className="mt-1 grid gap-4">
+                        <div className="rounded-[22px] border border-black/12 bg-[#FFFDF8] p-4">
+                          <div className="mb-3 flex items-center justify-between gap-3">
+                            <div>
+                              <p className="text-sm font-black uppercase tracking-[0.14em] text-black/50">Academic Tests</p>
+                              <p className="mt-1 text-sm text-black/55">SAT and ACT stay together.</p>
+                            </div>
                             <button
                               type="button"
-                              onClick={() => removeTestRow(index)}
-                              className="rounded-full border border-black bg-white px-3 py-2 text-sm font-semibold hover:bg-[#FFF4CC]"
+                              onClick={addAcademicTestRow}
+                              disabled={editForm.academicTests.length >= 2}
+                              className="rounded-full border-2 border-black bg-white px-3 py-1.5 text-sm font-semibold transition hover:-translate-y-0.5 hover:bg-[#FFF4CC] disabled:opacity-40"
                             >
-                              Remove
+                              + Add test
                             </button>
                           </div>
+                          <div className="grid gap-3">
+                            {editForm.academicTests.length ? (
+                              editForm.academicTests.map((test, index) => (
+                                <div key={`${test.type}-${index}`} className="grid gap-3 rounded-[20px] border border-black/10 bg-white p-4 md:grid-cols-[0.9fr_1fr_auto]">
+                                  <label className="text-sm">
+                                    <span className="text-xs uppercase tracking-wide text-black/50">Test type</span>
+                                    <select
+                                      value={test.type}
+                                      onChange={(event) => updateAcademicTestRow(index, { type: event.target.value as AcademicTestType })}
+                                      className={MODAL_FIELD_CLASS}
+                                    >
+                                      {ACADEMIC_TEST_OPTIONS.map((option) => (
+                                        <option key={option} value={option}>
+                                          {option}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  </label>
+                                  <label className="text-sm">
+                                    <span className="text-xs uppercase tracking-wide text-black/50">Score</span>
+                                    <input
+                                      type="text"
+                                      inputMode="decimal"
+                                      value={test.score}
+                                      onChange={(event) => {
+                                        const nextValue = sanitizeScoreInput(event.target.value);
+                                        if (nextValue == null) return;
+                                        updateAcademicTestRow(index, { score: nextValue });
+                                      }}
+                                      onBlur={() => commitAcademicTestScore(index)}
+                                      placeholder={TEST_SCORE_RULES[test.type].placeholder}
+                                      className={MODAL_FIELD_CLASS}
+                                    />
+                                    <p className="mt-1 text-xs text-black/45">{TEST_SCORE_RULES[test.type].hint}</p>
+                                  </label>
+                                  <div className="flex items-end">
+                                    <button type="button" onClick={() => removeAcademicTestRow(index)} className={MODAL_REMOVE_BUTTON_CLASS}>
+                                      Remove
+                                    </button>
+                                  </div>
+                                </div>
+                              ))
+                            ) : (
+                              <p className="rounded-2xl border border-dashed border-black/15 bg-white px-4 py-5 text-sm text-black/50">
+                                Add SAT or ACT.
+                              </p>
+                            )}
+                          </div>
                         </div>
-                      ))
-                    ) : (
-                      <p className="rounded-2xl border border-dashed border-black/15 bg-white px-4 py-5 text-sm text-black/50">
-                        No tests added yet.
-                      </p>
-                    )}
+
+                        <div className="rounded-[22px] border border-black/12 bg-[#FFFDF8] p-4">
+                          <div className="mb-3 flex items-center justify-between gap-3">
+                            <div>
+                              <p className="text-sm font-black uppercase tracking-[0.14em] text-black/50">Language Tests</p>
+                              <p className="mt-1 text-sm text-black/55">IELTS, TOEFL, Duolingo, PTE, Cambridge.</p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={addLanguageTestRow}
+                              disabled={editForm.languageTests.length >= 5}
+                              className="rounded-full border-2 border-black bg-white px-3 py-1.5 text-sm font-semibold transition hover:-translate-y-0.5 hover:bg-[#FFF4CC] disabled:opacity-40"
+                            >
+                              + Add test
+                            </button>
+                          </div>
+                          <div className="grid gap-3">
+                            {editForm.languageTests.length ? (
+                              editForm.languageTests.map((test, index) => (
+                                <div key={`${test.type}-${index}`} className="grid gap-3 rounded-[20px] border border-black/10 bg-white p-4 md:grid-cols-[0.9fr_1fr_auto]">
+                                  <label className="text-sm">
+                                    <span className="text-xs uppercase tracking-wide text-black/50">Test type</span>
+                                    <select
+                                      value={test.type}
+                                      onChange={(event) => updateLanguageTestRow(index, { type: event.target.value as LanguageTestType })}
+                                      className={MODAL_FIELD_CLASS}
+                                    >
+                                      {LANGUAGE_TEST_OPTIONS.map((option) => (
+                                        <option key={option} value={option}>
+                                          {option === "DET" ? "Duolingo English Test" : option}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  </label>
+                                  <label className="text-sm">
+                                    <span className="text-xs uppercase tracking-wide text-black/50">Score</span>
+                                    <input
+                                      type="text"
+                                      inputMode="decimal"
+                                      value={test.score}
+                                      onChange={(event) => {
+                                        const nextValue = sanitizeScoreInput(event.target.value);
+                                        if (nextValue == null) return;
+                                        updateLanguageTestRow(index, { score: nextValue });
+                                      }}
+                                      onBlur={() => commitLanguageTestScore(index)}
+                                      placeholder={TEST_SCORE_RULES[test.type].placeholder}
+                                      className={MODAL_FIELD_CLASS}
+                                    />
+                                    <p className="mt-1 text-xs text-black/45">{TEST_SCORE_RULES[test.type].hint}</p>
+                                  </label>
+                                  <div className="flex items-end">
+                                    <button type="button" onClick={() => removeLanguageTestRow(index)} className={MODAL_REMOVE_BUTTON_CLASS}>
+                                      Remove
+                                    </button>
+                                  </div>
+                                </div>
+                              ))
+                            ) : (
+                              <p className="rounded-2xl border border-dashed border-black/15 bg-white px-4 py-5 text-sm text-black/50">
+                                Add one or more language exams if you have them.
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="rounded-[22px] border border-black/12 bg-[#FFFDF8] p-4">
+                          <div className="mb-3 flex items-center justify-between gap-3">
+                            <div>
+                              <p className="text-sm font-black uppercase tracking-[0.14em] text-black/50">AP Exams</p>
+                              <p className="mt-1 text-sm text-black/55">Pick the exam and the real AP score from 1 to 5.</p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={addApScoreRow}
+                              disabled={editForm.apScores.length >= 8}
+                              className="rounded-full border-2 border-black bg-white px-3 py-1.5 text-sm font-semibold transition hover:-translate-y-0.5 hover:bg-[#FFF4CC] disabled:opacity-40"
+                            >
+                              + Add AP
+                            </button>
+                          </div>
+                          <div className="grid gap-3">
+                            {editForm.apScores.length ? (
+                              editForm.apScores.map((item, index) => (
+                                <div key={`${item.exam}-${index}`} className="grid gap-3 rounded-[20px] border border-black/10 bg-white p-4 md:grid-cols-[1.4fr_0.45fr_auto]">
+                                  <label className="text-sm">
+                                    <span className="text-xs uppercase tracking-wide text-black/50">Exam</span>
+                                    <select
+                                      value={item.exam}
+                                      onChange={(event) => updateApScoreRow(index, { exam: event.target.value })}
+                                      className={MODAL_FIELD_CLASS}
+                                    >
+                                      {AP_EXAM_OPTIONS.map((option) => (
+                                        <option key={option} value={option}>
+                                          {option}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  </label>
+                                  <label className="text-sm">
+                                    <span className="text-xs uppercase tracking-wide text-black/50">Score</span>
+                                    <select
+                                      value={item.score}
+                                      onChange={(event) => updateApScoreRow(index, { score: event.target.value })}
+                                      className={MODAL_FIELD_CLASS}
+                                    >
+                                      {AP_SCORE_OPTIONS.map((option) => (
+                                        <option key={option} value={option}>
+                                          {option}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  </label>
+                                  <div className="flex items-end">
+                                    <button type="button" onClick={() => removeApScoreRow(index)} className={MODAL_REMOVE_BUTTON_CLASS}>
+                                      Remove
+                                    </button>
+                                  </div>
+                                </div>
+                              ))
+                            ) : (
+                              <p className="rounded-2xl border border-dashed border-black/15 bg-white px-4 py-5 text-sm text-black/50">
+                                Add AP exams only if you actually took them.
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </section>
 
-                <section className="rounded-2xl border border-[#E0B94B]/35 bg-[#FFF4CC]/45 p-4">
-                  <div className="mb-3 flex items-center justify-between gap-3">
-                    <span className="inline-flex rounded-full border border-[#E0B94B]/45 bg-white px-3 py-1 text-sm font-black uppercase tracking-[0.14em] text-black/60">
+                <section className="rounded-[28px] border border-black/12 bg-white shadow-[0_5px_0_rgba(0,0,0,0.04)]">
+                  <div className="flex items-center justify-between gap-3 rounded-t-[26px] border-b border-black/10 bg-[#FFDB58] px-5 py-4">
+                    <span className="inline-flex rounded-full border border-black/15 bg-white px-3 py-1 text-sm font-black uppercase tracking-[0.14em] text-black/65">
                       Activities
                     </span>
                     <button
                       type="button"
                       onClick={addActivityRow}
                       disabled={editForm.activities.length >= 6}
-                      className="rounded-full border border-black bg-white px-3 py-1 text-sm font-semibold hover:bg-[#FFF7D9] disabled:opacity-40"
+                      className="rounded-full border-2 border-black bg-white px-3 py-1.5 text-sm font-semibold transition hover:-translate-y-0.5 hover:bg-[#FFF4CC] disabled:opacity-40"
                     >
                       + Add activity
                     </button>
                   </div>
 
-                  <div className="grid gap-3">
+                  <div className="grid gap-3 p-5">
                     {editForm.activities.length ? (
                       editForm.activities.map((activity, index) => (
-                        <div key={index} className="grid gap-3 rounded-2xl border border-[#E0B94B]/25 bg-white p-3 md:grid-cols-[1fr_1.2fr_auto]">
+                        <div key={index} className="grid gap-3 rounded-[22px] border border-black/12 bg-[#FFFDF8] p-4 md:grid-cols-[1fr_1.2fr_auto]">
                           <label className="text-sm">
                             <span className="text-xs uppercase tracking-wide text-black/50">Title</span>
                             <input
                               value={activity.title}
                               onChange={(event) => updateActivityRow(index, { title: event.target.value })}
                               placeholder="Founder — Robotics Club"
-                              className="mt-2 w-full rounded-xl border border-[#E0B94B]/25 bg-white px-3 py-2"
+                              className={MODAL_FIELD_CLASS}
                             />
                           </label>
                           <label className="text-sm">
@@ -1124,14 +1568,14 @@ function DashboardPageContent() {
                               value={activity.description}
                               onChange={(event) => updateActivityRow(index, { description: event.target.value })}
                               placeholder="One-line context"
-                              className="mt-2 w-full rounded-xl border border-[#E0B94B]/25 bg-white px-3 py-2"
+                              className={MODAL_FIELD_CLASS}
                             />
                           </label>
                           <div className="flex items-end">
                             <button
                               type="button"
                               onClick={() => removeActivityRow(index)}
-                              className="rounded-full border border-black bg-white px-3 py-2 text-sm font-semibold hover:bg-[#FFF7D9]"
+                              className={MODAL_REMOVE_BUTTON_CLASS}
                             >
                               Remove
                             </button>
@@ -1146,39 +1590,39 @@ function DashboardPageContent() {
                   </div>
                 </section>
 
-                <section className="rounded-2xl border border-[#A9C973]/35 bg-[#E8F4CF]/45 p-4">
-                  <div className="mb-3 flex items-center justify-between gap-3">
-                    <span className="inline-flex rounded-full border border-[#A9C973]/45 bg-white px-3 py-1 text-sm font-black uppercase tracking-[0.14em] text-black/60">
+                <section className="rounded-[28px] border border-black/12 bg-white shadow-[0_5px_0_rgba(0,0,0,0.04)]">
+                  <div className="flex items-center justify-between gap-3 rounded-t-[26px] border-b border-black/10 bg-[#FFF4CC] px-5 py-4">
+                    <span className="inline-flex rounded-full border border-black/15 bg-white px-3 py-1 text-sm font-black uppercase tracking-[0.14em] text-black/65">
                       Honors
                     </span>
                     <button
                       type="button"
                       onClick={addHonorRow}
                       disabled={editForm.honors.length >= 4}
-                      className="rounded-full border border-black bg-white px-3 py-1 text-sm font-semibold hover:bg-[#F4FBEB] disabled:opacity-40"
+                      className="rounded-full border-2 border-black bg-white px-3 py-1.5 text-sm font-semibold transition hover:-translate-y-0.5 hover:bg-[#FFF4CC] disabled:opacity-40"
                     >
                       + Add honor
                     </button>
                   </div>
 
-                  <div className="grid gap-3">
+                  <div className="grid gap-3 p-5">
                     {editForm.honors.length ? (
                       editForm.honors.map((honor, index) => (
-                        <div key={index} className="grid gap-3 rounded-2xl border border-[#A9C973]/25 bg-white p-3 md:grid-cols-[1fr_auto]">
+                        <div key={index} className="grid gap-3 rounded-[22px] border border-black/12 bg-[#FFFDF8] p-4 md:grid-cols-[1fr_auto]">
                           <label className="text-sm">
                             <span className="text-xs uppercase tracking-wide text-black/50">Title</span>
                             <input
                               value={honor}
                               onChange={(event) => updateHonorRow(index, event.target.value)}
                               placeholder="Math Olympiad participant"
-                              className="mt-2 w-full rounded-xl border border-[#A9C973]/25 bg-white px-3 py-2"
+                              className={MODAL_FIELD_CLASS}
                             />
                           </label>
                           <div className="flex items-end">
                             <button
                               type="button"
                               onClick={() => removeHonorRow(index)}
-                              className="rounded-full border border-black bg-white px-3 py-2 text-sm font-semibold hover:bg-[#F4FBEB]"
+                              className={MODAL_REMOVE_BUTTON_CLASS}
                             >
                               Remove
                             </button>
@@ -1193,10 +1637,10 @@ function DashboardPageContent() {
                   </div>
                 </section>
 
-                <section className="rounded-2xl border border-[#8FB7F1]/35 bg-[#EEF5FF] p-4">
-                  <div className="mb-3 flex items-center justify-between gap-3">
+                <section className="rounded-[28px] border border-black/12 bg-white shadow-[0_5px_0_rgba(0,0,0,0.04)]">
+                  <div className="mb-3 flex items-center justify-between gap-3 rounded-t-[26px] border-b border-black/10 bg-[#DAF5F0] px-5 py-4">
                     <div>
-                      <span className="inline-flex rounded-full border border-[#8FB7F1]/45 bg-white px-3 py-1 text-sm font-black uppercase tracking-[0.14em] text-black/60">
+                      <span className="inline-flex rounded-full border border-black/15 bg-white px-3 py-1 text-sm font-black uppercase tracking-[0.14em] text-black/65">
                         Universities
                       </span>
                       <p className="mt-1 text-sm text-black/55">Keep university editing on the dedicated page.</p>
@@ -1207,18 +1651,18 @@ function DashboardPageContent() {
                         setEditOpen(false);
                         router.push("/universities");
                       }}
-                      className="rounded-full border border-black bg-white px-3 py-1 text-sm font-semibold hover:bg-[#F3F8FF]"
+                      className="rounded-full border-2 border-black bg-white px-3 py-1.5 text-sm font-semibold transition hover:-translate-y-0.5 hover:bg-[#FFF4CC]"
                     >
                       Edit universities
                     </button>
                   </div>
 
-                  <div className="grid gap-2">
+                  <div className="grid gap-2 p-5 pt-0">
                     {targetUniversityEntries.length ? (
                       targetUniversityEntries.map((item) => (
-                        <div key={item.id} className="flex items-center justify-between gap-3 rounded-2xl border border-[#8FB7F1]/25 bg-white px-3 py-2">
+                        <div key={item.id} className="flex items-center justify-between gap-3 rounded-[22px] border border-black/12 bg-[#FFFDF8] px-4 py-3">
                           <span className="text-sm font-semibold text-black">{item.name}</span>
-                          <span className="rounded-full border border-[#8FB7F1]/20 bg-[#F5F8FC] px-2.5 py-1 text-xs font-black uppercase tracking-[0.12em] text-black/60">
+                          <span className="rounded-full border border-black/10 bg-[#F5F8FC] px-2.5 py-1 text-xs font-black uppercase tracking-[0.12em] text-black/60">
                             {item.status}
                           </span>
                         </div>
@@ -1232,13 +1676,18 @@ function DashboardPageContent() {
                 </section>
               </div>
 
-              <div className="mt-5 flex items-center justify-end gap-2">
-                <Button variant="outline" onClick={() => setEditOpen(false)} disabled={savingEdit}>
-                  Cancel
-                </Button>
-                <Button onClick={() => void saveEditableProfile()} disabled={savingEdit}>
-                  {savingEdit ? "Saving..." : "Save changes"}
-                </Button>
+              <div className="fixed bottom-4 left-1/2 z-10 w-[min(960px,calc(100vw-32px))] -translate-x-1/2 rounded-[24px] border-2 border-black bg-white px-4 py-3 shadow-[0_8px_0_0_rgba(0,0,0,1)]">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-semibold text-black/60">Changes update your dashboard snapshot immediately after save.</p>
+                  <div className="flex items-center gap-3">
+                    <Button variant="outline" onClick={() => setEditOpen(false)} disabled={savingEdit}>
+                      Close
+                    </Button>
+                    <Button onClick={() => void saveEditableProfile()} disabled={savingEdit}>
+                      {savingEdit ? "Saving..." : "Save changes"}
+                    </Button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
