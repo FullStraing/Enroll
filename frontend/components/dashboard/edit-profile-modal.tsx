@@ -128,7 +128,10 @@ export function EditProfileModal(props: Props) {
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-black/35 px-4 py-6">
-      <div ref={editModalRef} className="mx-auto my-4 w-full max-w-5xl rounded-[32px] border-2 border-black bg-[#FFFDF8] p-6 pb-32 shadow-[0_12px_0_0_rgba(0,0,0,1)]">
+      <div
+        ref={editModalRef}
+        className="mx-auto my-4 flex max-h-[calc(100vh-32px)] w-full max-w-5xl flex-col rounded-[32px] border-2 border-black bg-[#FFFDF8] p-6 shadow-[0_12px_0_0_rgba(0,0,0,1)]"
+      >
         <div className="mb-5 rounded-[28px] border-2 border-black bg-white p-5 shadow-[0_5px_0_rgba(0,0,0,0.06)]">
           <div className="flex items-start justify-between gap-3">
             <div>
@@ -147,7 +150,7 @@ export function EditProfileModal(props: Props) {
           </div>
         </div>
 
-        <div className="grid gap-5">
+        <div className="grid min-h-0 flex-1 gap-5 overflow-y-auto pr-1">
           <section className="rounded-[28px] border border-black/12 bg-white shadow-[0_5px_0_rgba(0,0,0,0.04)]">
             <div className="flex items-center justify-between gap-3 rounded-t-[26px] border-b border-black/10 bg-[#DAF5F0] px-5 py-4">
               <span className="inline-flex rounded-full border border-black/15 bg-white px-3 py-1 text-sm font-black uppercase tracking-[0.14em] text-black/65">
@@ -625,10 +628,10 @@ export function EditProfileModal(props: Props) {
           </section>
         </div>
 
-        <div className="fixed bottom-4 left-1/2 z-10 w-[min(960px,calc(100vw-32px))] -translate-x-1/2 rounded-[24px] border-2 border-black bg-white px-4 py-3 shadow-[0_8px_0_0_rgba(0,0,0,1)]">
-          <div className="flex items-center justify-between gap-3">
+        <div className="mt-5 shrink-0 rounded-[24px] border-2 border-black bg-white px-4 py-3 shadow-[0_8px_0_0_rgba(0,0,0,1)]">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm font-semibold text-black/60">Changes update your dashboard snapshot immediately after save.</p>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center justify-end gap-3">
               <Button variant="outline" onClick={onClose} disabled={savingEdit}>
                 Close
               </Button>
