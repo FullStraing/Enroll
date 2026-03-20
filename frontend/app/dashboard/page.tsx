@@ -121,8 +121,8 @@ function DashboardPageContent() {
   }, []);
 
   useEffect(() => {
-    setEditForm(buildInitialEditForm(profile, quizAnswers));
-  }, [profile, quizAnswers]);
+    setEditForm(buildInitialEditForm(profile, quizAnswers, myUniversities));
+  }, [profile, quizAnswers, myUniversities]);
 
   useEffect(() => {
     const editParam = searchParams.get("edit");
@@ -240,7 +240,14 @@ function DashboardPageContent() {
   const shareIntake = intake !== "N/A" ? `Applying for Fall ${intake}` : "Target intake not set";
   const activities = Array.isArray(profile?.activities) ? profile.activities.filter(Boolean).slice(0, 8) : [];
   const honors = Array.isArray(profile?.honors) ? profile.honors.filter(Boolean).slice(0, 6) : [];
-  const targetUniversityEntries = myUniversities.slice(0, 6).map((item) => ({
+  const selectedUniversityIds = profile?.common_app_profile?.dashboard_snapshot?.displayed_university_ids || [];
+  const visibleSnapshotUniversities =
+    selectedUniversityIds.length > 0
+      ? selectedUniversityIds
+          .map((id) => myUniversities.find((item) => item.id === id))
+          .filter((item): item is StudentUniversity => Boolean(item))
+      : myUniversities.slice(0, 6);
+  const targetUniversityEntries = visibleSnapshotUniversities.slice(0, 7).map((item) => ({
     id: item.id,
     name: item.university.name,
     statusKey: item.status,
@@ -260,6 +267,10 @@ function DashboardPageContent() {
     const label = item.type === "DET" ? "Duolingo" : item.type;
     return `${label} ${item.score.trim()}`;
   });
+  const apLabels = (profile?.common_app_profile?.dashboard_snapshot?.ap_scores || [])
+    .filter((item) => item.exam?.trim() && item.score?.trim())
+    .map((item) => `${item.exam.replace(/^AP\s+/u, "")} ${item.score.trim()}`)
+    .slice(0, 8);
 
   const gpaMax = editForm.gpaScale === "5.0" ? 5 : editForm.gpaScale === "Percent" ? 100 : 4;
   const gpaStep = editForm.gpaScale === "Percent" ? "1" : "0.01";
@@ -500,6 +511,7 @@ function DashboardPageContent() {
             academic_tests: cleanAcademicTests,
             language_tests: cleanLanguageTests,
             ap_scores: cleanApScores,
+            displayed_university_ids: editForm.selectedUniversityIds.slice(0, 7),
           },
         },
       };
@@ -560,6 +572,7 @@ function DashboardPageContent() {
             languageStatLabel={languageStatLabel}
             primaryLanguageLabel={primaryLanguageLabel}
             allTestLabels={allTestLabels}
+            apLabels={apLabels}
             profileClass={profileClass}
             activities={activities}
             honors={honors}
@@ -586,6 +599,7 @@ function DashboardPageContent() {
               languageStatLabel={languageStatLabel}
               primaryLanguageLabel={primaryLanguageLabel}
               allTestLabels={allTestLabels}
+              apLabels={apLabels}
               profileClass={profileClass}
               activities={activities}
               honors={honors}
@@ -784,7 +798,7 @@ function DashboardPageContent() {
             removeHonorRow={removeHonorRow}
             sanitizeScoreInput={sanitizeScoreInput}
             onEditUniversities={handleEditUniversities}
-            targetUniversityEntries={targetUniversityEntries}
+            myUniversities={myUniversities}
           />
         ) : null}
       </AppShell>

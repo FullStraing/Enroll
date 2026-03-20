@@ -97,3 +97,15 @@ pm run dev:clean for explicit cache resets. Verified with frontend lint/build.
 - 2026-03-19: Dashboard snapshot export now targets only the dedicated snapshot card, not the whole dashboard page. Added a separate Save image action for downloading the selected region and kept Share as a clipboard-first screenshot of that same card.
 
 - 2026-03-19: Reworked dashboard snapshot export to use a dedicated offscreen fixed-size card. Share and Save image now render from the export target instead of the live interactive snapshot, which improves image consistency and output quality.
+
+- 2026-03-19: Tightened dashboard snapshot composition by moving Honors into the right-side score panel. This reduces empty space around the circular score block and keeps the snapshot visually denser without adding new sections.
+
+- Session start 2026-03-20 00:00: Serena preflight passed.
+
+- 2026-03-20: Added dashboard snapshot university selection. Edit Profile now shows the full My Universities list, lets the user pick up to 7 universities for the shareable snapshot, and saves the chosen IDs into dashboard_snapshot so newly added universities can be selected without forcing the full list onto the card.
+
+- 2026-03-20: Restored AP visibility in the dashboard snapshot. AP scores now render as compact chips inside the summary card so saved AP exams appear alongside the rest of the shareable profile data.
+
+- 2026-03-20: Replaced the passive “Sections / 5 blocks” badge in Edit Profile with color-coded quick-jump buttons. Each button now matches its section tone and scrolls the modal directly to the selected block for faster navigation.
+
+- Session start 2026-03-20 18:35: Serena preflight passed.

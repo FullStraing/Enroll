@@ -24,6 +24,7 @@ export type DashboardSnapshotData = {
   academic_tests?: Array<{ type: AcademicTestType; score: string }>;
   language_tests?: Array<{ type: LanguageTestType; score: string }>;
   ap_scores?: Array<{ exam: string; score: string }>;
+  displayed_university_ids?: number[];
 };
 
 export type Profile = {
@@ -119,4 +120,5 @@ export type EditProfileForm = {
   apScores: Array<{ exam: string; score: string }>;
   activities: Array<{ title: string; description: string }>;
   honors: string[];
+  selectedUniversityIds: number[];
 };

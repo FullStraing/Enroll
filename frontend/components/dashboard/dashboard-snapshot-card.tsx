@@ -24,6 +24,7 @@ export type DashboardSnapshotSurfaceProps = {
   languageStatLabel: string;
   primaryLanguageLabel: string;
   allTestLabels: string[];
+  apLabels: string[];
   profileClass: string;
   activities: string[];
   honors: string[];
@@ -52,6 +53,7 @@ function DashboardSnapshotSurface({
   languageStatLabel,
   primaryLanguageLabel,
   allTestLabels,
+  apLabels,
   profileClass,
   activities,
   honors,
@@ -117,6 +119,22 @@ function DashboardSnapshotSurface({
                   </div>
                 </div>
               ) : null}
+
+              {apLabels.length ? (
+                <div className="border-t border-black/8 px-4 py-3">
+                  <p className="text-xs font-black uppercase tracking-[0.16em] text-black/40">AP Exams</p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {apLabels.map((label) => (
+                      <span
+                        key={label}
+                        className="inline-flex rounded-full border border-black/12 bg-[#FFF4CC] px-3 py-1 text-xs font-black tracking-[0.08em] text-black/70"
+                      >
+                        {label}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
             </div>
 
             <div className="mt-6 grid gap-4 lg:grid-cols-[1fr_0.86fr]">
@@ -159,26 +177,9 @@ function DashboardSnapshotSurface({
               </div>
             </div>
 
-            <div className="mt-4 rounded-2xl border border-black/10 bg-white p-4">
-              <p className="text-sm font-black uppercase tracking-[0.14em] text-black/45">Honors</p>
-              {honors.length ? (
-                <div className="mt-3 grid gap-2 md:grid-cols-2">
-                  {honors.map((honor) => (
-                    <div
-                      key={honor}
-                      className="rounded-xl border border-black/12 bg-[#FFF4CC] px-3 py-3 text-sm font-semibold leading-relaxed text-black/80"
-                    >
-                      {honor}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="mt-3 text-sm text-black/55">No honors added yet.</p>
-              )}
-            </div>
           </div>
 
-          <div className="rounded-2xl border border-black/15 bg-white p-4">
+          <div className="flex h-full flex-col rounded-2xl border border-black/15 bg-white p-4">
             <div className="inline-flex items-center gap-2 rounded-xl border-2 border-black bg-[#FFDB58]/40 px-3 py-1 text-sm font-semibold">
               <Trophy className="h-4 w-4" />
               Admissions Score
@@ -193,8 +194,27 @@ function DashboardSnapshotSurface({
             <p className="mt-3 text-center text-sm text-black/65">
               Score improves when profile completeness, tests, and university planning improve.
             </p>
+
+            <div className="mt-5 rounded-2xl border border-black/10 bg-[#FFFDF4] p-4">
+              <p className="text-sm font-black uppercase tracking-[0.14em] text-black/45">Honors</p>
+              {honors.length ? (
+                <div className="mt-3 grid gap-2">
+                  {honors.map((honor) => (
+                    <div
+                      key={honor}
+                      className="rounded-xl border border-black/12 bg-[#FFF4CC] px-3 py-3 text-sm font-semibold leading-relaxed text-black/80"
+                    >
+                      {honor}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-3 text-sm text-black/55">No honors added yet.</p>
+              )}
+            </div>
           </div>
         </div>
+
       </div>
     </Card>
   );

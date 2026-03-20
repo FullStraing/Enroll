@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useState, type Dispatch, type RefObject, type SetStateAction } from "react";
+import { useRef, useState, type Dispatch, type RefObject, type SetStateAction } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { statusSelectTone } from "@/app/universities/utils";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,7 @@ import {
   SCHOOL_LEVEL_OPTIONS,
   TEST_SCORE_RULES,
 } from "@/app/dashboard/constants";
-import type { AcademicTestType, EditProfileForm, LanguageTestType } from "@/app/dashboard/types";
+import type { AcademicTestType, EditProfileForm, LanguageTestType, StudentUniversity } from "@/app/dashboard/types";
 
 type Props = {
   editModalRef: RefObject<HTMLDivElement>;
@@ -47,10 +47,26 @@ type Props = {
   removeHonorRow: (index: number) => void;
   sanitizeScoreInput: (raw: string) => string | null;
   onEditUniversities: () => void;
-  targetUniversityEntries: Array<{ id: number; name: string; status: string; statusKey?: string }>;
+  myUniversities: StudentUniversity[];
 };
 
 type SectionKey = "basic" | "stats" | "activities" | "honors" | "universities";
+
+const SECTION_BUTTON_STYLES: Record<SectionKey, string> = {
+  basic: "bg-[#DAF5F0]",
+  stats: "bg-[#F8D6B3]",
+  activities: "bg-[#FFDB58]",
+  honors: "bg-[#FFF4CC]",
+  universities: "bg-[#DAF5F0]",
+};
+
+const SECTION_LABELS: Record<SectionKey, string> = {
+  basic: "Basic Info",
+  stats: "Stats",
+  activities: "Activities",
+  honors: "Honors",
+  universities: "Universities",
+};
 
 function SectionToggle({ open, onToggle }: { open: boolean; onToggle: () => void }) {
   return (
@@ -94,7 +110,7 @@ export function EditProfileModal(props: Props) {
     removeHonorRow,
     sanitizeScoreInput,
     onEditUniversities,
-    targetUniversityEntries,
+    myUniversities,
   } = props;
 
   const [openSections, setOpenSections] = useState<Record<SectionKey, boolean>>({
@@ -104,9 +120,41 @@ export function EditProfileModal(props: Props) {
     honors: true,
     universities: true,
   });
+  const sectionRefs = {
+    basic: useRef<HTMLElement>(null),
+    stats: useRef<HTMLElement>(null),
+    activities: useRef<HTMLElement>(null),
+    honors: useRef<HTMLElement>(null),
+    universities: useRef<HTMLElement>(null),
+  };
 
   function toggleSection(key: SectionKey) {
     setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }));
+  }
+
+  function jumpToSection(key: SectionKey) {
+    const node = sectionRefs[key].current;
+    if (!node) return;
+    node.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function toggleUniversitySelection(universityId: number) {
+    setEditForm((prev) => {
+      const alreadySelected = prev.selectedUniversityIds.includes(universityId);
+      if (alreadySelected) {
+        return {
+          ...prev,
+          selectedUniversityIds: prev.selectedUniversityIds.filter((id) => id !== universityId),
+        };
+      }
+      if (prev.selectedUniversityIds.length >= 7) {
+        return prev;
+      }
+      return {
+        ...prev,
+        selectedUniversityIds: [...prev.selectedUniversityIds, universityId],
+      };
+    });
   }
 
   return (
@@ -126,15 +174,23 @@ export function EditProfileModal(props: Props) {
                 Edit your profile in blocks, keep it share-ready, and make the card look like a real admissions snapshot.
               </p>
             </div>
-            <div className="rounded-2xl border-2 border-black bg-[#DAF5F0] px-4 py-3 text-right shadow-[0_4px_0_#000]">
-              <p className="text-[11px] font-black uppercase tracking-[0.16em] text-black/40">Sections</p>
-              <p className="mt-1 text-lg font-black text-black">5 blocks</p>
+            <div className="flex max-w-[360px] flex-wrap justify-end gap-2">
+              {(["basic", "stats", "activities", "honors", "universities"] as SectionKey[]).map((key) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => jumpToSection(key)}
+                  className={`rounded-full border-2 border-black px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-black shadow-[0_3px_0_#000] transition hover:-translate-y-0.5 ${SECTION_BUTTON_STYLES[key]}`}
+                >
+                  {SECTION_LABELS[key]}
+                </button>
+              ))}
             </div>
           </div>
         </div>
 
         <div className="grid min-h-0 flex-1 gap-5 overflow-y-auto pr-1">
-          <section className="rounded-[28px] border border-black/12 bg-white shadow-[0_5px_0_rgba(0,0,0,0.04)]">
+          <section ref={sectionRefs.basic} className="rounded-[28px] border border-black/12 bg-white shadow-[0_5px_0_rgba(0,0,0,0.04)]">
             <div className="flex items-center justify-between gap-3 rounded-t-[26px] border-b border-black/10 bg-[#DAF5F0] px-5 py-4">
               <span className="inline-flex rounded-full border border-black/15 bg-white px-3 py-1 text-sm font-black uppercase tracking-[0.14em] text-black/65">
                 Basic Info
@@ -210,7 +266,7 @@ export function EditProfileModal(props: Props) {
             ) : null}
           </section>
 
-          <section className="rounded-[28px] border border-black/12 bg-white shadow-[0_5px_0_rgba(0,0,0,0.04)]">
+          <section ref={sectionRefs.stats} className="rounded-[28px] border border-black/12 bg-white shadow-[0_5px_0_rgba(0,0,0,0.04)]">
             <div className="flex items-center justify-between gap-3 rounded-t-[26px] border-b border-black/10 bg-[#F8D6B3] px-5 py-4">
               <div className="flex items-center gap-3">
                 <span className="inline-flex rounded-full border border-black/15 bg-white px-3 py-1 text-sm font-black uppercase tracking-[0.14em] text-black/65">
@@ -469,7 +525,7 @@ export function EditProfileModal(props: Props) {
             ) : null}
           </section>
 
-          <section className="rounded-[28px] border border-black/12 bg-white shadow-[0_5px_0_rgba(0,0,0,0.04)]">
+          <section ref={sectionRefs.activities} className="rounded-[28px] border border-black/12 bg-white shadow-[0_5px_0_rgba(0,0,0,0.04)]">
             <div className="flex items-center justify-between gap-3 rounded-t-[26px] border-b border-black/10 bg-[#FFDB58] px-5 py-4">
               <span className="inline-flex rounded-full border border-black/15 bg-white px-3 py-1 text-sm font-black uppercase tracking-[0.14em] text-black/65">
                 Activities
@@ -523,7 +579,7 @@ export function EditProfileModal(props: Props) {
             ) : null}
           </section>
 
-          <section className="rounded-[28px] border border-black/12 bg-white shadow-[0_5px_0_rgba(0,0,0,0.04)]">
+          <section ref={sectionRefs.honors} className="rounded-[28px] border border-black/12 bg-white shadow-[0_5px_0_rgba(0,0,0,0.04)]">
             <div className="flex items-center justify-between gap-3 rounded-t-[26px] border-b border-black/10 bg-[#FFF4CC] px-5 py-4">
               <span className="inline-flex rounded-full border border-black/15 bg-white px-3 py-1 text-sm font-black uppercase tracking-[0.14em] text-black/65">
                 Honors
@@ -568,13 +624,13 @@ export function EditProfileModal(props: Props) {
             ) : null}
           </section>
 
-          <section className="rounded-[28px] border border-black/12 bg-white shadow-[0_5px_0_rgba(0,0,0,0.04)]">
+          <section ref={sectionRefs.universities} className="rounded-[28px] border border-black/12 bg-white shadow-[0_5px_0_rgba(0,0,0,0.04)]">
             <div className="mb-3 flex items-center justify-between gap-3 rounded-t-[26px] border-b border-black/10 bg-[#DAF5F0] px-5 py-4">
               <div>
                 <span className="inline-flex rounded-full border border-black/15 bg-white px-3 py-1 text-sm font-black uppercase tracking-[0.14em] text-black/65">
                   Universities
                 </span>
-                <p className="mt-1 text-sm text-black/55">Keep university editing on the dedicated page.</p>
+                <p className="mt-1 text-sm text-black/55">Choose which universities appear in your dashboard snapshot.</p>
               </div>
               <div className="flex items-center gap-3">
                 <button
@@ -589,20 +645,59 @@ export function EditProfileModal(props: Props) {
             </div>
 
             {openSections.universities ? (
-              <div className="grid gap-2 p-5 pt-0">
-                {targetUniversityEntries.length ? (
-                  targetUniversityEntries.map((item) => (
-                    <div key={item.id} className="flex items-center justify-between gap-3 rounded-[22px] border border-black/12 bg-[#FFFDF8] px-4 py-3">
-                      <span className="text-sm font-semibold text-black">{item.name}</span>
-                      <span
-                        className={`rounded-full border px-2.5 py-1 text-xs font-black uppercase tracking-[0.12em] text-black/70 ${statusSelectTone(
-                          (item.statusKey || item.status) as never,
-                        )}`}
+              <div className="grid gap-3 p-5 pt-0">
+                <div className="flex items-center justify-between gap-3 rounded-[22px] border border-black/12 bg-white px-4 py-3 text-sm">
+                  <p className="font-semibold text-black">Selected for snapshot</p>
+                  <span className="rounded-full border border-black/15 bg-[#FFF4CC] px-3 py-1 text-xs font-black uppercase tracking-[0.12em] text-black/65">
+                    {editForm.selectedUniversityIds.length}/7
+                  </span>
+                </div>
+
+                {myUniversities.length ? (
+                  myUniversities.map((item) => {
+                    const selected = editForm.selectedUniversityIds.includes(item.id);
+                    const selectionLocked = !selected && editForm.selectedUniversityIds.length >= 7;
+
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => toggleUniversitySelection(item.id)}
+                        disabled={selectionLocked}
+                        className={`grid gap-3 rounded-[22px] border px-4 py-3 text-left transition ${
+                          selected ? "border-black bg-[#FFF9E8] shadow-[0_4px_0_rgba(0,0,0,0.06)]" : "border-black/12 bg-[#FFFDF8]"
+                        } ${selectionLocked ? "opacity-45" : "hover:-translate-y-0.5 hover:border-black/25"}`}
                       >
-                        {item.status}
-                      </span>
-                    </div>
-                  ))
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-black">{item.university.name}</p>
+                            <p className="mt-1 text-xs text-black/55">
+                              {selected ? "Shown in dashboard snapshot" : "Tap to include in dashboard snapshot"}
+                            </p>
+                          </div>
+                          <span
+                            className={`rounded-full border px-2.5 py-1 text-xs font-black uppercase tracking-[0.12em] text-black/70 ${statusSelectTone(
+                              item.status as never,
+                            )}`}
+                          >
+                            {item.status.replaceAll("_", " ")}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-xs font-semibold text-black/55">
+                            {selected ? `Position ${editForm.selectedUniversityIds.indexOf(item.id) + 1}` : "Not selected"}
+                          </span>
+                          <span
+                            className={`rounded-full border px-3 py-1 text-xs font-black uppercase tracking-[0.12em] ${
+                              selected ? "border-black bg-[#DAF5F0] text-black" : "border-black/12 bg-white text-black/55"
+                            }`}
+                          >
+                            {selected ? "Selected" : "Select"}
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })
                 ) : (
                   <p className="rounded-2xl border border-dashed border-black/15 bg-white px-4 py-5 text-sm text-black/50">No universities added yet.</p>
                 )}

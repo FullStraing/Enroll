@@ -8,6 +8,7 @@ import type {
   EditProfileForm,
   IntroAnswers,
   Profile,
+  StudentUniversity,
 } from "@/app/dashboard/types";
 
 export function buildInitialAcademicTests(profile: Profile | null, quizAnswers: IntroAnswers): EditProfileForm["academicTests"] {
@@ -63,6 +64,18 @@ export function buildInitialApScores(profile: Profile | null): EditProfileForm["
 export function buildInitialActivities(profile: Profile | null): EditProfileForm["activities"] {
   const values = Array.isArray(profile?.activities) ? profile.activities : [];
   return values.slice(0, 6).map((activity) => ({ title: activity, description: "" }));
+}
+
+export function buildInitialSelectedUniversityIds(profile: Profile | null, universities: StudentUniversity[]) {
+  const snapshotIds = profile?.common_app_profile?.dashboard_snapshot?.displayed_university_ids || [];
+  const availableIds = new Set(universities.map((item) => item.id));
+  const validSnapshotIds = snapshotIds.filter((id) => availableIds.has(id)).slice(0, 7);
+
+  if (validSnapshotIds.length > 0) {
+    return validSnapshotIds;
+  }
+
+  return universities.slice(0, 6).map((item) => item.id);
 }
 
 export function toPercent(value: number) {
@@ -143,10 +156,11 @@ export function buildEmptyEditForm(): EditProfileForm {
     apScores: [],
     activities: [],
     honors: [],
+    selectedUniversityIds: [],
   };
 }
 
-export function buildInitialEditForm(profile: Profile | null, quizAnswers: IntroAnswers): EditProfileForm {
+export function buildInitialEditForm(profile: Profile | null, quizAnswers: IntroAnswers, universities: StudentUniversity[]): EditProfileForm {
   return {
     fullName: profile?.full_name || "",
     major: profile?.intended_major || quizAnswers.major || "",
@@ -160,6 +174,7 @@ export function buildInitialEditForm(profile: Profile | null, quizAnswers: Intro
     apScores: buildInitialApScores(profile),
     activities: buildInitialActivities(profile),
     honors: Array.isArray(profile?.honors) ? profile.honors.slice(0, 4) : [],
+    selectedUniversityIds: buildInitialSelectedUniversityIds(profile, universities),
   };
 }
 
