@@ -108,4 +108,8 @@ pm run dev:clean for explicit cache resets. Verified with frontend lint/build.
 
 - 2026-03-20: Replaced the passive “Sections / 5 blocks” badge in Edit Profile with color-coded quick-jump buttons. Each button now matches its section tone and scrolls the modal directly to the selected block for faster navigation.
 
+- 2026-03-20: Polished Edit Profile modal navigation and persistence. The section jump buttons now sit on a lower aligned row in the header, and the modal now autosaves profile changes after a short debounce while showing live autosave status in the footer.
+
+- 2026-03-20: Restored the original Edit Profile header button placement after the lower aligned variant felt worse in use. Autosave remains enabled, but the quick-jump controls are back in their previous top-right layout.
+
 - Session start 2026-03-20 18:35: Serena preflight passed.

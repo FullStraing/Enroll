@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CalendarClock, CircleAlert, CircleCheck, FileText, GraduationCap, Target } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { DashboardExportCard, DashboardSnapshotCard } from "@/components/dashboard/dashboard-snapshot-card";
@@ -55,6 +55,7 @@ function DashboardPageContent() {
   const dashboardShareRef = useRef<HTMLDivElement>(null);
   const dashboardExportRef = useRef<HTMLDivElement>(null);
   const editModalRef = useRef<HTMLDivElement>(null);
+  const lastSavedEditSignatureRef = useRef("");
 
   const [loading, setLoading] = useState(true);
   const [statusText, setStatusText] = useState("");
@@ -74,6 +75,7 @@ function DashboardPageContent() {
   const [sharePreviewUrl, setSharePreviewUrl] = useState<string | null>(null);
   const [sharePreviewVisible, setSharePreviewVisible] = useState(false);
   const [editForm, setEditForm] = useState<EditProfileForm>(buildEmptyEditForm());
+  const [autosaveStatus, setAutosaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
 
   useEffect(() => {
     const token = getToken();
@@ -121,8 +123,12 @@ function DashboardPageContent() {
   }, []);
 
   useEffect(() => {
-    setEditForm(buildInitialEditForm(profile, quizAnswers, myUniversities));
-  }, [profile, quizAnswers, myUniversities]);
+    if (editOpen) return;
+    const initialForm = buildInitialEditForm(profile, quizAnswers, myUniversities);
+    setEditForm(initialForm);
+    lastSavedEditSignatureRef.current = JSON.stringify(initialForm);
+    setAutosaveStatus("idle");
+  }, [profile, quizAnswers, myUniversities, editOpen]);
 
   useEffect(() => {
     const editParam = searchParams.get("edit");
@@ -274,6 +280,7 @@ function DashboardPageContent() {
 
   const gpaMax = editForm.gpaScale === "5.0" ? 5 : editForm.gpaScale === "Percent" ? 100 : 4;
   const gpaStep = editForm.gpaScale === "Percent" ? "1" : "0.01";
+  const editFormSignature = useMemo(() => JSON.stringify(editForm), [editForm]);
 
   function updateAcademicTestRow(index: number, patch: Partial<EditProfileForm["academicTests"][number]>) {
     setEditForm((prev) => ({
@@ -463,15 +470,19 @@ function DashboardPageContent() {
     }
   }
 
-  async function saveEditableProfile() {
+  const saveEditableProfile = useCallback(async (options?: { closeOnSuccess?: boolean; autosave?: boolean; form?: EditProfileForm }) => {
     const token = getToken();
     if (!token) return;
+    const closeOnSuccess = options?.closeOnSuccess ?? true;
+    const autosave = options?.autosave ?? false;
+    const form = options?.form ?? editForm;
 
     setSavingEdit(true);
+    setAutosaveStatus(autosave ? "saving" : "idle");
     try {
-      const gpaNumber = editForm.gpaValue ? Number(editForm.gpaValue) : null;
-      const normalizedAcademicTests = normalizeAcademicTestsForSave(editForm.academicTests);
-      const normalizedLanguageTests = normalizeLanguageTestsForSave(editForm.languageTests);
+      const gpaNumber = form.gpaValue ? Number(form.gpaValue) : null;
+      const normalizedAcademicTests = normalizeAcademicTestsForSave(form.academicTests);
+      const normalizedLanguageTests = normalizeLanguageTestsForSave(form.languageTests);
 
       const getAcademicScore = (type: AcademicTestType) => {
         const match = normalizedAcademicTests.find((item) => item.type === type && item.score.trim());
@@ -487,18 +498,18 @@ function DashboardPageContent() {
         return Number.isNaN(numeric) ? null : numeric;
       };
 
-      const cleanActivities = editForm.activities
+      const cleanActivities = form.activities
         .map((item) => [item.title.trim(), item.description.trim()].filter(Boolean).join(" — "))
         .filter(Boolean);
-      const cleanHonors = editForm.honors.map((item) => item.trim()).filter(Boolean);
+      const cleanHonors = form.honors.map((item) => item.trim()).filter(Boolean);
       const cleanAcademicTests = normalizedAcademicTests.map((item) => ({ type: item.type, score: item.score.trim() })).filter((item) => item.score);
       const cleanLanguageTests = normalizedLanguageTests.map((item) => ({ type: item.type, score: item.score.trim() })).filter((item) => item.score);
-      const cleanApScores = editForm.apScores.map((item) => ({ exam: item.exam.trim(), score: item.score.trim() })).filter((item) => item.exam && item.score);
+      const cleanApScores = form.apScores.map((item) => ({ exam: item.exam.trim(), score: item.score.trim() })).filter((item) => item.exam && item.score);
 
       const payload: Partial<Profile> = {
-        full_name: editForm.fullName || "",
-        intended_major: editForm.major || "",
-        country: editForm.country || "",
+        full_name: form.fullName || "",
+        intended_major: form.major || "",
+        country: form.country || "",
         gpa: gpaNumber == null || Number.isNaN(gpaNumber) ? null : gpaNumber,
         sat_total: getAcademicScore("SAT"),
         toefl_total: getLanguageScore("TOEFL"),
@@ -511,35 +522,58 @@ function DashboardPageContent() {
             academic_tests: cleanAcademicTests,
             language_tests: cleanLanguageTests,
             ap_scores: cleanApScores,
-            displayed_university_ids: editForm.selectedUniversityIds.slice(0, 7),
+            displayed_university_ids: form.selectedUniversityIds.slice(0, 7),
           },
         },
       };
 
       const updatedProfile = await apiFetch<Profile>("/api/auth/profile/", { method: "PATCH", body: JSON.stringify(payload) }, token);
       setProfile((prev) => ({ ...(prev || {}), ...updatedProfile }));
+      lastSavedEditSignatureRef.current = JSON.stringify(form);
 
       const nextAnswers: IntroAnswers = {
         ...quizAnswers,
-        major: editForm.major || undefined,
-        country: editForm.country || undefined,
-        intakeYear: editForm.intakeYear || undefined,
-        schoolLevel: editForm.schoolLevel || undefined,
-        gpaScale: editForm.gpaScale || undefined,
-        gpaValue: editForm.gpaValue || undefined,
-        tests: [...editForm.academicTests, ...editForm.languageTests].map((item) => item.type),
+        major: form.major || undefined,
+        country: form.country || undefined,
+        intakeYear: form.intakeYear || undefined,
+        schoolLevel: form.schoolLevel || undefined,
+        gpaScale: form.gpaScale || undefined,
+        gpaValue: form.gpaValue || undefined,
+        tests: [...form.academicTests, ...form.languageTests].map((item) => item.type),
       };
       setQuizAnswers(nextAnswers);
       window.localStorage.setItem(introQuizStorageKey, JSON.stringify({ step: 6, answers: nextAnswers }));
-      setStatusText("Profile snapshot updated.");
-      setEditOpen(false);
-      if (searchParams.get("edit")) router.replace("/dashboard");
+      if (autosave) {
+        setAutosaveStatus("saved");
+      } else {
+        setStatusText("Profile snapshot updated.");
+      }
+      if (closeOnSuccess) {
+        setEditOpen(false);
+        if (searchParams.get("edit")) router.replace("/dashboard");
+      }
     } catch (error) {
-      setStatusText(error instanceof Error ? error.message : "Unable to save profile changes.");
+      if (autosave) {
+        setAutosaveStatus("error");
+      } else {
+        setStatusText(error instanceof Error ? error.message : "Unable to save profile changes.");
+      }
     } finally {
       setSavingEdit(false);
     }
-  }
+  }, [editForm, quizAnswers, router, searchParams]);
+
+  useEffect(() => {
+    if (!editOpen) return;
+    if (savingEdit) return;
+    if (editFormSignature === lastSavedEditSignatureRef.current) return;
+
+    const timeoutId = window.setTimeout(() => {
+      void saveEditableProfile({ closeOnSuccess: false, autosave: true, form: editForm });
+    }, 1200);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [editOpen, editForm, editFormSignature, saveEditableProfile, savingEdit]);
 
   function handleCloseEdit() {
     if (savingEdit) return;
@@ -548,6 +582,10 @@ function DashboardPageContent() {
 
   function handleOpenEdit() {
     setEditHint(null);
+    const initialForm = buildInitialEditForm(profile, quizAnswers, myUniversities);
+    setEditForm(initialForm);
+    lastSavedEditSignatureRef.current = JSON.stringify(initialForm);
+    setAutosaveStatus("idle");
     setEditOpen(true);
   }
 
@@ -774,6 +812,7 @@ function DashboardPageContent() {
             editModalRef={editModalRef}
             editForm={editForm}
             savingEdit={savingEdit}
+            autosaveStatus={autosaveStatus}
             gpaMax={gpaMax}
             gpaStep={gpaStep}
             onClose={handleCloseEdit}

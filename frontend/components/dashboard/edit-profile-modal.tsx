@@ -23,6 +23,7 @@ type Props = {
   editModalRef: RefObject<HTMLDivElement>;
   editForm: EditProfileForm;
   savingEdit: boolean;
+  autosaveStatus: "idle" | "saving" | "saved" | "error";
   gpaMax: number;
   gpaStep: string;
   onClose: () => void;
@@ -86,6 +87,7 @@ export function EditProfileModal(props: Props) {
     editModalRef,
     editForm,
     savingEdit,
+    autosaveStatus,
     gpaMax,
     gpaStep,
     onClose,
@@ -708,7 +710,15 @@ export function EditProfileModal(props: Props) {
 
         <div className="mt-5 shrink-0 rounded-[24px] border-2 border-black bg-white px-4 py-3 shadow-[0_8px_0_0_rgba(0,0,0,1)]">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-sm font-semibold text-black/60">Changes update your dashboard snapshot immediately after save.</p>
+            <div className="flex flex-col gap-1">
+              <p className="text-sm font-semibold text-black/60">Changes update your dashboard snapshot automatically.</p>
+              <p className="text-xs font-semibold text-black/45">
+                {autosaveStatus === "saving" && "Autosaving changes..."}
+                {autosaveStatus === "saved" && "All changes saved."}
+                {autosaveStatus === "error" && "Autosave failed. Use Save changes to try again."}
+                {autosaveStatus === "idle" && "Autosave is on."}
+              </p>
+            </div>
             <div className="flex items-center justify-end gap-3">
               <Button variant="outline" onClick={onClose} disabled={savingEdit}>
                 Close
