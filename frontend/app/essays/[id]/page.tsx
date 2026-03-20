@@ -16,6 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EssayRichEditor } from "@/components/essay-rich-editor";
 import { Progress } from "@/components/ui/progress";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useBodyScrollLock } from "@/components/ui/use-body-scroll-lock";
 import { formatDateTimeShort } from "@/lib/date-format";
 
 type Essay = {
@@ -238,6 +239,8 @@ export default function EssayWorkspacePage() {
   const [compareOpen, setCompareOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  useBodyScrollLock(compareOpen || createVersionOpen);
   const [creatingVersion, setCreatingVersion] = useState(false);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "retrying" | "saved" | "error">("idle");
   const [statusText, setStatusText] = useState("");

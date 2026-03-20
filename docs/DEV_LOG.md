@@ -112,4 +112,8 @@ pm run dev:clean for explicit cache resets. Verified with frontend lint/build.
 
 - 2026-03-20: Restored the original Edit Profile header button placement after the lower aligned variant felt worse in use. Autosave remains enabled, but the quick-jump controls are back in their previous top-right layout.
 
+- 2026-03-20: Added shared body scroll locking for overlay popups. Edit Profile, document rename, confirm dialogs, and essay compare/create-version modals now lock background scrolling so only the popup content moves while open.
+
 - Session start 2026-03-20 18:35: Serena preflight passed.
+
+- 2026-03-20: Moved dashboard snapshot actions into the snapshot score panel as a compact control group, replacing the long full-width buttons under the card.

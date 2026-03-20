@@ -4,6 +4,7 @@ import { useRef, useState, type Dispatch, type RefObject, type SetStateAction } 
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { statusSelectTone } from "@/app/universities/utils";
 import { Button } from "@/components/ui/button";
+import { useBodyScrollLock } from "@/components/ui/use-body-scroll-lock";
 import {
   AP_EXAM_OPTIONS,
   AP_SCORE_OPTIONS,
@@ -114,6 +115,8 @@ export function EditProfileModal(props: Props) {
     onEditUniversities,
     myUniversities,
   } = props;
+
+  useBodyScrollLock(true);
 
   const [openSections, setOpenSections] = useState<Record<SectionKey, boolean>>({
     basic: true,

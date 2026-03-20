@@ -4,6 +4,7 @@ import { ReactNode } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CardTitle } from "@/components/ui/card";
+import { useBodyScrollLock } from "@/components/ui/use-body-scroll-lock";
 
 type ConfirmDialogProps = {
   open: boolean;
@@ -32,6 +33,8 @@ export function ConfirmDialog({
   confirmIcon,
   tone = "default",
 }: ConfirmDialogProps) {
+  useBodyScrollLock(open);
+
   if (!open) return null;
 
   const noteClass =

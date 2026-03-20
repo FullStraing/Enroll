@@ -1,4 +1,4 @@
-import type { RefObject } from "react";
+import type { ReactNode, RefObject } from "react";
 import { Download, Share2, Trophy } from "lucide-react";
 import { statusSelectTone } from "@/app/universities/utils";
 import { Button } from "@/components/ui/button";
@@ -31,6 +31,7 @@ export type DashboardSnapshotSurfaceProps = {
   targetUniversityEntries: SnapshotUniversity[];
   loading: boolean;
   admissions: number;
+  actionsSlot?: ReactNode;
 };
 
 type DashboardSnapshotCardProps = DashboardSnapshotSurfaceProps & {
@@ -60,6 +61,7 @@ function DashboardSnapshotSurface({
   targetUniversityEntries,
   loading,
   admissions,
+  actionsSlot,
 }: DashboardSnapshotSurfaceProps) {
   const showAllTests = allTestLabels.length > 0;
 
@@ -212,6 +214,8 @@ function DashboardSnapshotSurface({
                 <p className="mt-3 text-sm text-black/55">No honors added yet.</p>
               )}
             </div>
+
+            {actionsSlot ? <div className="mt-4" data-share-ignore>{actionsSlot}</div> : null}
           </div>
         </div>
 
@@ -231,20 +235,33 @@ export function DashboardSnapshotCard({
 }: DashboardSnapshotCardProps) {
   return (
     <div ref={snapshotRef}>
-      <DashboardSnapshotSurface {...surfaceProps} />
-      <div className="mt-4 grid gap-2" data-share-ignore>
-        <Button onClick={onShare} className="gap-2" disabled={sharingDashboard || savingSnapshot}>
-          <Share2 className="h-4 w-4" />
-          {sharingDashboard ? "Preparing image..." : "Share dashboard"}
-        </Button>
-        <Button variant="outline" onClick={onSaveImage} className="gap-2" disabled={savingSnapshot || sharingDashboard}>
-          <Download className="h-4 w-4" />
-          {savingSnapshot ? "Saving image..." : "Save image"}
-        </Button>
-        <Button variant="secondary" onClick={onEdit}>
-          Edit profile
-        </Button>
-      </div>
+      <DashboardSnapshotSurface
+        {...surfaceProps}
+        actionsSlot={
+          <div className="flex flex-wrap gap-2">
+            <Button
+              onClick={onShare}
+              className="min-w-[150px] gap-2"
+              disabled={sharingDashboard || savingSnapshot}
+            >
+              <Share2 className="h-4 w-4" />
+              {sharingDashboard ? "Preparing image..." : "Share dashboard"}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={onSaveImage}
+              className="min-w-[136px] gap-2"
+              disabled={savingSnapshot || sharingDashboard}
+            >
+              <Download className="h-4 w-4" />
+              {savingSnapshot ? "Saving image..." : "Save image"}
+            </Button>
+            <Button variant="secondary" onClick={onEdit} className="min-w-[132px]">
+              Edit profile
+            </Button>
+          </div>
+        }
+      />
     </div>
   );
 }

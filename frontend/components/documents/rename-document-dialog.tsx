@@ -3,6 +3,7 @@
 import { type FormEvent, useEffect, useState } from "react";
 import type { DocumentItem } from "@/app/documents/types";
 import { Button } from "@/components/ui/button";
+import { useBodyScrollLock } from "@/components/ui/use-body-scroll-lock";
 import { Loader } from "@/components/loader";
 
 type RenameDocumentDialogProps = {
@@ -14,6 +15,8 @@ type RenameDocumentDialogProps = {
 
 export function RenameDocumentDialog({ document, saving, onClose, onSave }: RenameDocumentDialogProps) {
   const [title, setTitle] = useState("");
+
+  useBodyScrollLock(Boolean(document));
 
   useEffect(() => {
     setTitle(document?.title || "");
