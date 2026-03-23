@@ -729,7 +729,7 @@ function DashboardPageContent() {
           </div>
 
           <div className="mt-5 grid gap-4 lg:grid-cols-2">
-            <Card>
+            <Card className="border border-black/10 bg-white/90 shadow-none">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <CardDescription>Overall progress</CardDescription>
@@ -750,7 +750,7 @@ function DashboardPageContent() {
               </div>
             </Card>
 
-            <Card>
+            <Card className="border border-black/10 bg-white/90 shadow-none">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <CardDescription>Next deadline</CardDescription>
@@ -783,7 +783,7 @@ function DashboardPageContent() {
           </div>
 
           <div className="mt-5 grid gap-4 xl:grid-cols-2">
-            <Card>
+            <Card className="border border-black/10 bg-white/90 shadow-none">
               <div className="mb-3 flex items-center justify-between gap-2">
                 <CardTitle className="flex items-center gap-2">
                   <GraduationCap className="h-4 w-4" />
@@ -798,7 +798,7 @@ function DashboardPageContent() {
                   <Skeleton className="h-10 w-full" />
                 </div>
               ) : myUniversities.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-black/25 p-4">
+                <div className="rounded-2xl bg-[#DAF5F0]/22 p-4 ring-1 ring-black/8">
                   <p className="text-sm font-semibold">Start building your university list</p>
                   <p className="mt-1 text-sm text-black/65">Pick 5-8 universities to unlock better deadline and planning recommendations.</p>
                   <Link href="/applications" className="mt-3 inline-flex">
@@ -808,7 +808,7 @@ function DashboardPageContent() {
               ) : (
                 <div className="space-y-2">
                   {myUniversities.slice(0, 5).map((item) => (
-                    <div key={item.id} className="flex items-center justify-between rounded-xl border border-black/15 bg-white p-3">
+                    <div key={item.id} className="flex items-center justify-between rounded-xl bg-white p-3 ring-1 ring-black/8">
                       <div>
                         <p className="text-sm font-semibold">{item.university.name}</p>
                         <p className="text-xs text-black/60">Status: {item.status.replaceAll("_", " ")}</p>
@@ -821,7 +821,7 @@ function DashboardPageContent() {
               )}
             </Card>
 
-            <Card>
+            <Card className="border border-black/10 bg-white/90 shadow-none">
               <div className="mb-3 flex items-center justify-between gap-2">
                 <CardTitle className="flex items-center gap-2">
                   <FileText className="h-4 w-4" />
@@ -836,7 +836,7 @@ function DashboardPageContent() {
                 </div>
               ) : latestEssay ? (
                 <div className="space-y-3">
-                  <div className="rounded-xl border border-black/15 bg-white p-3">
+                  <div className="rounded-xl bg-white p-3 ring-1 ring-black/8">
                     <p className="text-sm font-semibold">{latestEssay.title}</p>
                     <p className="mt-1 text-xs text-black/60">
                       Versions: {latestEssay.versions_count} · Last edited: {latestEssay.last_edited_at ? formatDateShort(latestEssay.last_edited_at) : "N/A"}
@@ -847,7 +847,7 @@ function DashboardPageContent() {
                   </Link>
                 </div>
               ) : (
-                <div className="rounded-xl border border-dashed border-black/25 p-4">
+                <div className="rounded-2xl bg-[#FFF4CC]/22 p-4 ring-1 ring-black/8">
                   <p className="text-sm font-semibold">Personal essay: not started</p>
                   <p className="mt-1 text-sm text-black/65">Create your first draft to start version tracking.</p>
                   <Link href="/essays" className="mt-3 inline-flex">
@@ -859,27 +859,27 @@ function DashboardPageContent() {
           </div>
 
           <div className="mt-5 grid gap-4 sm:grid-cols-3">
-            <Card className="shadow-none">
+            <Card className="border border-black/10 bg-white/90 shadow-none">
               <CardDescription>Open tasks</CardDescription>
               {loading ? <Skeleton className="mt-2 h-7 w-14" /> : <p className="mt-2 text-2xl font-black">{tasks.filter((task) => task.status !== "done").length}</p>}
             </Card>
-            <Card className="shadow-none">
+            <Card className="border border-black/10 bg-white/90 shadow-none">
               <CardDescription>Documents</CardDescription>
               {loading ? <Skeleton className="mt-2 h-7 w-14" /> : <p className="mt-2 text-2xl font-black">{documents.length}</p>}
             </Card>
-            <Card className="shadow-none">
+            <Card className="border border-black/10 bg-white/90 shadow-none">
               <CardDescription>Applications</CardDescription>
               {loading ? <Skeleton className="mt-2 h-7 w-14" /> : <p className="mt-2 text-2xl font-black">{applications.length}</p>}
             </Card>
           </div>
 
           {statusText ? (
-            <div className="mt-4 flex items-center gap-2 rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black/70">
+            <div className="mt-4 flex items-center gap-2 rounded-xl bg-white/90 px-3 py-2 text-sm text-black/70 ring-1 ring-black/10">
               <CircleAlert className="h-4 w-4" />
               {statusText}
             </div>
           ) : (
-            <div className="mt-4 flex items-center gap-2 rounded-xl border border-black/15 bg-[#DAF5F0]/50 px-3 py-2 text-sm">
+            <div className="mt-4 flex items-center gap-2 rounded-xl bg-[#DAF5F0]/50 px-3 py-2 text-sm ring-1 ring-black/10">
               <CircleCheck className="h-4 w-4" />
               Dashboard is synced with your latest profile and application data.
             </div>

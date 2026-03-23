@@ -20,7 +20,7 @@ export const Progress = React.forwardRef<
       className={cn(
         "h-full w-full flex-1 transition-all",
         variant === "primary" && "bg-[#FFDB58]",
-        variant === "cyan" && "bg-[#84DCCB]",
+        variant === "cyan" && "bg-[#DAF5F0]",
         indicatorClassName,
       )}
       style={{ transform: `translateX(-${100 - (value || 0)}%)` }}

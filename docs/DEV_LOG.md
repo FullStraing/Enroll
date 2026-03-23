@@ -141,3 +141,7 @@ pm run dev:clean for explicit cache resets. Verified with frontend lint/build.
 - 2026-03-23: Added a persistent Enroll brand mark inside the dashboard snapshot surface so both exported images and manual screenshots clearly show the product source and are discoverable when shared externally.
 
 - 2026-03-23: Standardized required-field indicators across the truly mandatory form fields. Added a reusable required mark component and applied it to auth, pilot signup, document upload, essay creation, and security password change flows, while keeping partial profile-edit surfaces free of fake mandatory markers.
+
+- 2026-03-23: Softened dashboard cards and internal surfaces to reduce border noise, then cleaned the experiment back to the Enroll UI Lab palette only. Removed the ad-hoc off-palette neutrals from the new dashboard treatment and kept the lighter structure using only brand yellows, cyans, warm neutrals, and white.
+
+- 2026-03-23: Tightened dashboard snapshot chip layout for export and smaller screens. `All Tests` and `AP Exams` pills now keep their labels on a single line with more stable spacing, so copied/saved images and narrow layouts no longer split short test labels awkwardly across lines.

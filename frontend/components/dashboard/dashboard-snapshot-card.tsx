@@ -67,7 +67,7 @@ function DashboardSnapshotSurface({
   const showAllTests = allTestLabels.length > 0;
 
   return (
-    <Card className="relative overflow-hidden bg-white">
+    <Card className="relative overflow-hidden border border-black/10 bg-white shadow-none">
       <div className="relative">
         <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
           <div>
@@ -89,7 +89,7 @@ function DashboardSnapshotSurface({
         </div>
 
         <div className="mt-5 grid gap-4 xl:grid-cols-[1.3fr_0.7fr]">
-          <div className="rounded-2xl border border-black/15 bg-white p-5">
+          <div className="rounded-2xl bg-white p-5">
             <div>
               <h2 className="text-3xl font-black tracking-[-0.04em] text-black">{shareName}</h2>
               <p className="mt-2 text-base font-semibold text-black/70">{shareCountry}</p>
@@ -97,7 +97,7 @@ function DashboardSnapshotSurface({
               <p className="mt-4 text-lg font-bold text-black">Major: {profileMajor}</p>
             </div>
 
-            <div className="mt-6 overflow-hidden rounded-2xl border border-black/12">
+            <div className="mt-6 overflow-hidden rounded-2xl bg-white ring-1 ring-black/8">
               <div className="grid grid-cols-2 md:grid-cols-4">
                 <div className="border-r border-black/8 px-4 py-3 md:last:border-r">
                   <p className="text-xs font-black uppercase tracking-[0.16em] text-black/40">GPA</p>
@@ -124,7 +124,7 @@ function DashboardSnapshotSurface({
                     {allTestLabels.map((label) => (
                       <span
                         key={label}
-                        className="inline-flex rounded-full border border-black/12 bg-[#F5F8FC] px-3 py-1 text-xs font-black tracking-[0.08em] text-black/70"
+                        className="inline-flex max-w-full items-center rounded-full border border-black/12 bg-[#DAF5F0]/45 px-3 py-1 text-xs font-black leading-none tracking-[0.04em] text-black/70 whitespace-nowrap"
                       >
                         {label}
                       </span>
@@ -140,7 +140,7 @@ function DashboardSnapshotSurface({
                     {apLabels.map((label) => (
                       <span
                         key={label}
-                        className="inline-flex rounded-full border border-black/12 bg-[#FFF4CC] px-3 py-1 text-xs font-black tracking-[0.08em] text-black/70"
+                        className="inline-flex max-w-full items-center rounded-full border border-black/12 bg-[#FFF4CC] px-3 py-1 text-xs font-black leading-none tracking-[0.04em] text-black/70 whitespace-nowrap"
                       >
                         {label}
                       </span>
@@ -151,7 +151,7 @@ function DashboardSnapshotSurface({
             </div>
 
             <div className="mt-6 grid gap-4 lg:grid-cols-[1fr_0.86fr]">
-              <div className="rounded-2xl border border-black/10 bg-[#F5F8FC] p-4">
+              <div className="rounded-2xl bg-[#DAF5F0]/35 p-4 ring-1 ring-black/8">
                 <p className="text-sm font-black uppercase tracking-[0.14em] text-black/45">Activities</p>
                 {activities.length ? (
                   <ul className="mt-3 grid gap-3">
@@ -167,7 +167,7 @@ function DashboardSnapshotSurface({
                 )}
               </div>
 
-              <div className="rounded-2xl border border-black/10 bg-[#FFF9E8] p-4">
+              <div className="rounded-2xl bg-[#FFF4CC]/45 p-4 ring-1 ring-black/8">
                 <p className="text-sm font-black uppercase tracking-[0.14em] text-black/45">Target Universities</p>
                 {targetUniversityEntries.length ? (
                   <ul className="mt-3 grid gap-2.5">
@@ -192,7 +192,7 @@ function DashboardSnapshotSurface({
 
           </div>
 
-          <div className="flex h-full flex-col rounded-2xl border border-black/15 bg-white p-4">
+          <div className="flex h-full flex-col rounded-2xl bg-white p-4 ring-1 ring-black/8">
             <div className="inline-flex items-center gap-2 rounded-xl border-2 border-black bg-[#FFDB58]/40 px-3 py-1 text-sm font-semibold">
               <Trophy className="h-4 w-4" />
               Admissions Score
@@ -208,7 +208,7 @@ function DashboardSnapshotSurface({
               Score improves when profile completeness, tests, and university planning improve.
             </p>
 
-            <div className="mt-5 rounded-2xl border border-black/10 bg-[#FFFDF4] p-4">
+            <div className="mt-5 rounded-2xl bg-[#FFF4CC]/25 p-4 ring-1 ring-black/8">
               <p className="text-sm font-black uppercase tracking-[0.14em] text-black/45">Honors</p>
               {honors.length ? (
                 <div className="mt-3 grid gap-2">
@@ -282,7 +282,7 @@ export function DashboardExportCard({
   ...surfaceProps
 }: DashboardSnapshotSurfaceProps & { snapshotRef: RefObject<HTMLDivElement> }) {
   return (
-    <div ref={snapshotRef} className="w-[1600px] bg-[#F9F5F6] p-10">
+    <div ref={snapshotRef} className="w-[1600px] bg-white p-10">
       <div className="mx-auto w-[1520px]">
         <DashboardSnapshotSurface {...surfaceProps} />
       </div>

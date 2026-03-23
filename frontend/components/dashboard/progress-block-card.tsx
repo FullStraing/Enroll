@@ -9,7 +9,7 @@ import type { ProgressBlock } from "@/app/dashboard/progress";
 
 export function ProgressBlockCard({ block }: { block: ProgressBlock }) {
   return (
-    <Card className="flex h-full flex-col shadow-none">
+    <Card className="flex h-full flex-col border border-black/10 bg-white/90 shadow-none">
       <div className="flex items-start justify-between gap-3">
         <div>
           <CardTitle>{block.title}</CardTitle>
