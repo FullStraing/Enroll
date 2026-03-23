@@ -8,10 +8,17 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getToken } from "@/lib/auth";
 import { apiFetch } from "@/lib/api";
+import { clearSessionCaches, readSessionCache, SESSION_CACHE_KEYS, SESSION_CACHE_TTLS, writeSessionCache } from "@/lib/session-cache";
 import type { ApplicationItem, DuePreset, MyUniversityItem, TaskItem } from "@/app/calendar/types";
 import { buildTaskUpdatePayload, getTaskLists, resolveDueDate } from "@/app/calendar/utils";
 import { QuickTaskComposer } from "@/components/calendar/quick-task-composer";
 import { TaskSection } from "@/components/calendar/task-section";
+
+type CalendarCachePayload = {
+  tasks: TaskItem[];
+  applications: ApplicationItem[];
+  myUniversities: MyUniversityItem[];
+};
 
 function LoadingState() {
   return (
@@ -57,7 +64,21 @@ export default function CalendarPage() {
     const token = getToken();
     if (!token) return;
 
-    setLoading(true);
+    const { payload: cached, isFresh } = readSessionCache<CalendarCachePayload>(SESSION_CACHE_KEYS.calendar, SESSION_CACHE_TTLS.calendar);
+    if (cached) {
+      setTasks(cached.tasks);
+      setApplications(cached.applications);
+      setMyUniversities(cached.myUniversities);
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
+
+    if (isFresh) {
+      setStatusText("");
+      return;
+    }
+
     try {
       const [taskData, appData, myUniData] = await Promise.all([
         apiFetch<TaskItem[]>("/api/tasks/", { method: "GET" }, token),
@@ -68,8 +89,15 @@ export default function CalendarPage() {
       setApplications(appData);
       setMyUniversities(myUniData);
       setStatusText("");
+      writeSessionCache(SESSION_CACHE_KEYS.calendar, {
+        tasks: taskData,
+        applications: appData,
+        myUniversities: myUniData,
+      });
     } catch (error) {
-      setStatusText(error instanceof Error ? error.message : "Could not load tasks.");
+      if (!cached) {
+        setStatusText(error instanceof Error ? error.message : "Could not load tasks.");
+      }
     } finally {
       setLoading(false);
     }
@@ -78,6 +106,15 @@ export default function CalendarPage() {
   useEffect(() => {
     void loadWorkspace();
   }, []);
+
+  useEffect(() => {
+    if (loading) return;
+    writeSessionCache(SESSION_CACHE_KEYS.calendar, {
+      tasks,
+      applications,
+      myUniversities,
+    });
+  }, [loading, tasks, applications, myUniversities]);
 
   const { todayTasks, upcomingTasks, inboxTasks, completedTasks } = useMemo(() => getTaskLists(tasks), [tasks]);
 
@@ -116,6 +153,7 @@ export default function CalendarPage() {
 
       const created = await apiFetch<TaskItem>("/api/tasks/", { method: "POST", body: JSON.stringify(payload) }, token);
       setTasks((prev) => [created, ...prev]);
+      clearSessionCaches([SESSION_CACHE_KEYS.dashboard]);
       setTaskTitle("");
       setDuePreset("today");
       setCustomDueDate("");
@@ -136,6 +174,7 @@ export default function CalendarPage() {
     try {
       await apiFetch(`/api/tasks/${task.id}/`, { method: "PUT", body: JSON.stringify(buildTaskUpdatePayload(task, { status: nextStatus })) }, token);
       setTasks((prev) => prev.map((item) => (item.id === task.id ? { ...item, status: nextStatus } : item)));
+      clearSessionCaches([SESSION_CACHE_KEYS.dashboard]);
     } catch (error) {
       setStatusText(error instanceof Error ? error.message : "Could not update task.");
     } finally {

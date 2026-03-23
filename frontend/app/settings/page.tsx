@@ -8,6 +8,7 @@ import { getToken } from "@/lib/auth";
 import { apiFetch } from "@/lib/api";
 import { Loader } from "@/components/loader";
 import { useAuth } from "@/components/auth-provider";
+import { clearSessionCaches, readSessionCache, SESSION_CACHE_KEYS, SESSION_CACHE_TTLS, writeSessionCache } from "@/lib/session-cache";
 
 type ProfileForm = {
   full_name: string;
@@ -45,17 +46,33 @@ export default function SettingsPage() {
   async function loadProfile() {
     const token = getToken();
     if (!token) return;
-    setLoading(true);
+    const { payload: cached, isFresh } = readSessionCache<ProfileForm>(SESSION_CACHE_KEYS.settings, SESSION_CACHE_TTLS.settings);
+    if (cached) {
+      setForm({ ...initialForm, ...cached });
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
+
+    if (isFresh) {
+      setStatusText("");
+      return;
+    }
+
     try {
       const profile = await apiFetch<Partial<ProfileForm>>("/api/auth/profile/", { method: "GET" }, token);
-      setForm({
+      const nextForm = {
         ...initialForm,
         ...profile,
         graduation_year: profile.graduation_year ?? null,
-      });
+      };
+      setForm(nextForm);
+      writeSessionCache(SESSION_CACHE_KEYS.settings, nextForm);
       setStatusText("");
     } catch (error) {
-      setStatusText(error instanceof Error ? error.message : "Не удалось загрузить профиль.");
+      if (!cached) {
+        setStatusText(error instanceof Error ? error.message : "Не удалось загрузить профиль.");
+      }
     } finally {
       setLoading(false);
     }
@@ -65,6 +82,11 @@ export default function SettingsPage() {
     void loadProfile();
   }, []);
 
+  useEffect(() => {
+    if (loading) return;
+    writeSessionCache(SESSION_CACHE_KEYS.settings, form);
+  }, [form, loading]);
+
   async function saveProfile(event: FormEvent) {
     event.preventDefault();
     const token = getToken();
@@ -72,6 +94,8 @@ export default function SettingsPage() {
     setSavingProfile(true);
     try {
       await apiFetch("/api/auth/profile/", { method: "PUT", body: JSON.stringify(form) }, token);
+      writeSessionCache(SESSION_CACHE_KEYS.settings, form);
+      clearSessionCaches([SESSION_CACHE_KEYS.dashboard, SESSION_CACHE_KEYS.activities, SESSION_CACHE_KEYS.onboarding]);
       setStatusText("Профиль обновлен.");
     } catch (error) {
       setStatusText(error instanceof Error ? error.message : "Не удалось сохранить профиль.");

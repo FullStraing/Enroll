@@ -133,3 +133,7 @@ pm run dev:clean for explicit cache resets. Verified with frontend lint/build.
 - Session start 2026-03-23 10:31: Serena preflight passed.
 
 - 2026-03-23: Added a lightweight dashboard session cache with a short TTL. Dashboard now restores the last successful payload from sessionStorage for instant rendering on revisit, skips redundant refetches while the cache is still fresh, and keeps the cache synchronized after local profile/data changes so the page no longer feels like a full reload on every navigation.
+
+- Session start 2026-03-23 10:41: Serena preflight passed.
+
+- 2026-03-23: Standardized the in-house session-cache pattern beyond dashboard. Added shared `frontend/lib/session-cache.ts` and applied short-TTL cache + write-through/invalidation behavior to Tasks/Calendar, Documents, Essays, Common App, Activities, Settings, and internal Onboarding. Mutations now clear related dashboard/settings/activities/onboarding caches where needed so revisit UX is faster without moving durable product data out of the backend profile/domain models.

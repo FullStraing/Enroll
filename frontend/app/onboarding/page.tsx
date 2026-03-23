@@ -1,10 +1,11 @@
 ﻿"use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { ProtectedPage } from "@/components/protected-page";
 import { getToken } from "@/lib/auth";
 import { apiFetch } from "@/lib/api";
+import { clearSessionCaches, readSessionCache, SESSION_CACHE_KEYS, SESSION_CACHE_TTLS, writeSessionCache } from "@/lib/session-cache";
 
 type ProfilePayload = {
   full_name: string;
@@ -37,24 +38,49 @@ export default function OnboardingPage() {
   async function loadProfile() {
     const token = getToken();
     if (!token) return;
-    setLoading(true);
-    setStatus("Загружаем профиль...");
+    const { payload: cached, isFresh } = readSessionCache<ProfilePayload>(SESSION_CACHE_KEYS.onboarding, SESSION_CACHE_TTLS.onboarding);
+    if (cached) {
+      setForm({ ...emptyForm, ...cached });
+      setLoading(false);
+      setStatus("");
+    } else {
+      setLoading(true);
+      setStatus("Загружаем профиль...");
+    }
+
+    if (isFresh) {
+      return;
+    }
+
     try {
       const profile = await apiFetch<Partial<ProfilePayload>>("/api/auth/profile/", { method: "GET" }, token);
-      setForm({
+      const nextForm = {
         ...emptyForm,
         ...profile,
         graduation_year: profile.graduation_year ?? null,
         target_country: profile.target_country || "USA",
         activities_level: profile.activities_level || "low",
-      });
+      };
+      setForm(nextForm);
+      writeSessionCache(SESSION_CACHE_KEYS.onboarding, nextForm);
       setStatus("Профиль загружен.");
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Ошибка загрузки");
+      if (!cached) {
+        setStatus(error instanceof Error ? error.message : "Ошибка загрузки");
+      }
     } finally {
       setLoading(false);
     }
   }
+
+  useEffect(() => {
+    void loadProfile();
+  }, []);
+
+  useEffect(() => {
+    if (loading) return;
+    writeSessionCache(SESSION_CACHE_KEYS.onboarding, form);
+  }, [form, loading]);
 
   async function saveProfile(e: FormEvent) {
     e.preventDefault();
@@ -67,6 +93,8 @@ export default function OnboardingPage() {
         method: "PUT",
         body: JSON.stringify(form),
       }, token);
+      writeSessionCache(SESSION_CACHE_KEYS.onboarding, form);
+      clearSessionCaches([SESSION_CACHE_KEYS.dashboard, SESSION_CACHE_KEYS.activities, SESSION_CACHE_KEYS.settings]);
       setStatus("Профиль сохранен.");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Ошибка сохранения");

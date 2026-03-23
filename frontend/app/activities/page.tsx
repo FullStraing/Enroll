@@ -13,12 +13,18 @@ import type { ActivitiesFilters } from "@/app/activities/types";
 import { applyActivitiesFilters, buildProfileActivityPrefix, buildProfileActivityText, countUsefulForCis } from "@/app/activities/utils";
 import { apiFetch } from "@/lib/api";
 import { getToken } from "@/lib/auth";
+import { clearSessionCaches, readSessionCache, SESSION_CACHE_KEYS, SESSION_CACHE_TTLS, writeSessionCache } from "@/lib/session-cache";
 
 type ActivitiesProfile = {
   activities?: string[];
   common_app_profile?: {
     activity_recommendation_ids?: string[];
   };
+};
+
+type ActivitiesCachePayload = {
+  profileActivities: string[];
+  selectedActivityIds: string[];
 };
 
 export default function ActivitiesPage() {
@@ -54,12 +60,35 @@ export default function ActivitiesPage() {
     }
 
     const run = async () => {
+      const { payload: cached, isFresh } = readSessionCache<ActivitiesCachePayload>(
+        SESSION_CACHE_KEYS.activities,
+        SESSION_CACHE_TTLS.activities,
+      );
+      if (cached) {
+        setProfileActivities(cached.profileActivities);
+        setSelectedActivityIds(cached.selectedActivityIds);
+        setLoading(false);
+      }
+
+      if (isFresh) {
+        setStatusText("");
+        return;
+      }
+
       try {
         const profile = await apiFetch<ActivitiesProfile>("/api/auth/profile/", { method: "GET" }, token);
-        setProfileActivities(Array.isArray(profile.activities) ? profile.activities.filter(Boolean) : []);
-        setSelectedActivityIds(Array.isArray(profile.common_app_profile?.activity_recommendation_ids) ? profile.common_app_profile.activity_recommendation_ids : []);
+        const nextProfileActivities = Array.isArray(profile.activities) ? profile.activities.filter(Boolean) : [];
+        const nextSelectedIds = Array.isArray(profile.common_app_profile?.activity_recommendation_ids) ? profile.common_app_profile.activity_recommendation_ids : [];
+        setProfileActivities(nextProfileActivities);
+        setSelectedActivityIds(nextSelectedIds);
+        writeSessionCache(SESSION_CACHE_KEYS.activities, {
+          profileActivities: nextProfileActivities,
+          selectedActivityIds: nextSelectedIds,
+        });
       } catch (error) {
-        setStatusText(error instanceof Error ? error.message : "Failed to load profile activity state.");
+        if (!cached) {
+          setStatusText(error instanceof Error ? error.message : "Failed to load profile activity state.");
+        }
       } finally {
         window.setTimeout(() => setLoading(false), 280);
       }
@@ -67,6 +96,14 @@ export default function ActivitiesPage() {
 
     void run();
   }, []);
+
+  useEffect(() => {
+    if (loading) return;
+    writeSessionCache(SESSION_CACHE_KEYS.activities, {
+      profileActivities,
+      selectedActivityIds,
+    });
+  }, [loading, profileActivities, selectedActivityIds]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setDebouncedSearch(filters.search), 220);
@@ -124,6 +161,7 @@ export default function ActivitiesPage() {
           ? updatedProfile.common_app_profile.activity_recommendation_ids
           : nextActivityIds,
       );
+      clearSessionCaches([SESSION_CACHE_KEYS.dashboard, SESSION_CACHE_KEYS.settings, SESSION_CACHE_KEYS.onboarding]);
       setStatusText(isAdded ? "Activity removed from profile." : "Activity added to profile.");
     } catch (error) {
       setStatusText(error instanceof Error ? error.message : "Failed to update profile activities.");

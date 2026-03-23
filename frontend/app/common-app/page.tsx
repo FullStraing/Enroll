@@ -23,6 +23,12 @@ import {
 } from "@/lib/common-app-progress";
 import { SectionNav } from "@/components/common-app/section-nav";
 import { StepForm } from "@/components/common-app/step-form";
+import { clearSessionCaches, readSessionCache, SESSION_CACHE_KEYS, SESSION_CACHE_TTLS, writeSessionCache } from "@/lib/session-cache";
+
+type CommonAppCachePayload = {
+  progressData: CommonAppProgress;
+  draftValues: Record<string, unknown>;
+};
 
 function CommonAppPageContent() {
   const searchParams = useSearchParams();
@@ -57,19 +63,35 @@ function CommonAppPageContent() {
     return Math.max(1, Math.ceil(requiredCount / 2));
   }, [currentStep, draftValues, visibleFields]);
 
-  const liveProgress = useMemo(
-    () => computeLiveProgress(progressData, draftValues),
-    [progressData, draftValues],
-  );
+  const liveProgress = useMemo(() => computeLiveProgress(progressData, draftValues), [progressData, draftValues]);
 
   const loadData = useCallback(async () => {
     const token = getToken();
     if (!token) return;
-    setLoading(true);
+
+    const { payload: cached, isFresh } = readSessionCache<CommonAppCachePayload>(
+      SESSION_CACHE_KEYS.commonApp,
+      SESSION_CACHE_TTLS.commonApp,
+    );
+
+    if (cached) {
+      setProgressData(cached.progressData);
+      setDraftValues(cached.draftValues);
+      setLoading(false);
+      lastAutosavedPayloadRef.current = JSON.stringify(cached.draftValues);
+    } else {
+      setLoading(true);
+    }
+
+    if (isFresh) {
+      setStatusText("");
+      return;
+    }
+
     try {
       const progress = await apiFetch<CommonAppProgress>("/api/auth/common-app-progress/", { method: "GET" }, token);
-      setProgressData(progress);
       const nextDrafts: Record<string, unknown> = {};
+
       for (const section of progress.sections) {
         for (const subsection of section.subsections) {
           for (const field of subsection.fields) {
@@ -77,11 +99,19 @@ function CommonAppPageContent() {
           }
         }
       }
+
+      setProgressData(progress);
       setDraftValues(nextDrafts);
       setStatusText("");
       lastAutosavedPayloadRef.current = JSON.stringify(nextDrafts);
+      writeSessionCache(SESSION_CACHE_KEYS.commonApp, {
+        progressData: progress,
+        draftValues: nextDrafts,
+      });
     } catch (error) {
-      setStatusText(error instanceof Error ? error.message : "Не удалось загрузить секции Common App.");
+      if (!cached) {
+        setStatusText(error instanceof Error ? error.message : "Failed to load Common App sections.");
+      }
     } finally {
       setLoading(false);
     }
@@ -109,11 +139,13 @@ function CommonAppPageContent() {
       hasRestoredStepRef.current = true;
       return;
     }
+
     const restoredStepId = restoredStepIdRef.current;
     if (restoredStepId) {
       const restoredIndex = steps.findIndex((step) => step.id === restoredStepId);
       if (restoredIndex >= 0) setCurrentStepIndex(restoredIndex);
     }
+
     hasRestoredStepRef.current = true;
   }, [searchParams, sectionStartIndexes, steps]);
 
@@ -133,6 +165,7 @@ function CommonAppPageContent() {
     const onScroll = () => {
       window.localStorage.setItem(SCROLL_STORAGE_KEY, String(window.scrollY));
     };
+
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
@@ -144,18 +177,29 @@ function CommonAppPageContent() {
       hasRestoredScrollRef.current = true;
       return;
     }
+
     const timer = window.setTimeout(() => {
       window.scrollTo({ top: y, behavior: "auto" });
       hasRestoredScrollRef.current = true;
     }, 0);
+
     return () => window.clearTimeout(timer);
-  }, [loading, currentStep]);
+  }, [currentStep, loading]);
+
+  useEffect(() => {
+    if (loading || !progressData) return;
+    writeSessionCache(SESSION_CACHE_KEYS.commonApp, {
+      progressData,
+      draftValues,
+    });
+  }, [draftValues, loading, progressData]);
 
   const saveStep = useCallback(
     async (silent = false) => {
       if (!currentStep) return false;
       const token = getToken();
       if (!token) return false;
+
       const payloadModel: Record<string, unknown> = {};
       const payloadJson: Record<string, unknown> = {};
 
@@ -181,10 +225,12 @@ function CommonAppPageContent() {
           },
           token,
         );
-        if (!silent) setStatusText(`Сохранено: ${currentStep.sectionTitle} / ${currentStep.subsectionTitle}`);
+
+        clearSessionCaches([SESSION_CACHE_KEYS.dashboard]);
+        if (!silent) setStatusText(`Saved: ${currentStep.sectionTitle} / ${currentStep.subsectionTitle}`);
         return true;
       } catch (error) {
-        setStatusText(error instanceof Error ? error.message : "Не удалось сохранить шаг.");
+        setStatusText(error instanceof Error ? error.message : "Failed to save step.");
         return false;
       } finally {
         setSaving(false);
@@ -196,20 +242,25 @@ function CommonAppPageContent() {
   useEffect(() => {
     if (!currentStep || loading) return;
     if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+
     autosaveTimerRef.current = setTimeout(async () => {
       const subset: Record<string, unknown> = {};
+
       for (const field of currentStep.subsection.fields) {
         if (!isFieldVisible(draftValues, currentStep, field) || field.readonly || field.bind === "user") continue;
         subset[getDraftKey(currentStep, field.id)] = draftValues[getDraftKey(currentStep, field.id)];
       }
+
       const signature = JSON.stringify({ step: currentStep.id, subset });
       if (signature === lastAutosavedPayloadRef.current) return;
+
       const ok = await saveStep(true);
       if (ok) {
         lastAutosavedPayloadRef.current = signature;
-        setStatusText("Черновик сохранен автоматически");
+        setStatusText("Draft autosaved.");
       }
     }, 700);
+
     return () => {
       if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
     };
@@ -228,15 +279,15 @@ function CommonAppPageContent() {
 
   return (
     <ProtectedPage>
-      <AppShell title="Common Application" subtitle="Заполняй заявку пошагово, как onboarding">
+      <AppShell title="Common Application" subtitle="Complete your application in guided steps.">
         <Card className="shadow-none">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <CardTitle>Application readiness</CardTitle>
               <CardDescription className="mt-2">
-                Шаг {Math.min(currentStepIndex + 1, Math.max(steps.length, 1))} из {Math.max(steps.length, 1)}
+                Step {Math.min(currentStepIndex + 1, Math.max(steps.length, 1))} of {Math.max(steps.length, 1)}
                 {" · "}
-                примерно {stepEstimatedMinutes} мин
+                about {stepEstimatedMinutes} min
               </CardDescription>
             </div>
             <Badge variant="primary">
@@ -256,7 +307,7 @@ function CommonAppPageContent() {
 
         {loading ? (
           <Card className="mt-5 shadow-none">
-            <Spinner size="md" label="Загружаем шаги Common App..." />
+            <Spinner size="md" label="Loading Common App steps..." />
           </Card>
         ) : null}
 

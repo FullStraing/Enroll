@@ -15,6 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
 import { Progress } from "@/components/ui/progress";
 import { formatDateTimeShort } from "@/lib/date-format";
+import { clearSessionCaches, readSessionCache, SESSION_CACHE_KEYS, SESSION_CACHE_TTLS, writeSessionCache } from "@/lib/session-cache";
 
 type EssayType = "personal_statement" | "motivation_essay" | "supplemental_essay" | "other";
 
@@ -44,6 +45,10 @@ type PaginatedResponse<T> = {
   next: string | null;
   previous: string | null;
   results: T[];
+};
+
+type EssaysCachePayload = {
+  essays: Essay[];
 };
 
 const essayTypeOptions: Array<{ value: EssayType; label: string }> = [
@@ -133,13 +138,28 @@ function EssaysPageContent() {
   async function loadData() {
     const token = getToken();
     if (!token) return;
-    setLoading(true);
+    const { payload: cached, isFresh } = readSessionCache<EssaysCachePayload>(SESSION_CACHE_KEYS.essays, SESSION_CACHE_TTLS.essays);
+    if (cached) {
+      setEssays(cached.essays);
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
+
+    if (isFresh) {
+      setStatusText("");
+      return;
+    }
+
     try {
       const essayData = await apiFetch<Essay[]>("/api/essays/", { method: "GET" }, token);
       setEssays(essayData);
       setStatusText("");
+      writeSessionCache(SESSION_CACHE_KEYS.essays, { essays: essayData });
     } catch (error) {
-      setStatusText(error instanceof Error ? error.message : "Failed to load essays.");
+      if (!cached) {
+        setStatusText(error instanceof Error ? error.message : "Failed to load essays.");
+      }
     } finally {
       setLoading(false);
     }
@@ -170,6 +190,11 @@ function EssaysPageContent() {
   useEffect(() => {
     void loadData();
   }, []);
+
+  useEffect(() => {
+    if (loading) return;
+    writeSessionCache(SESSION_CACHE_KEYS.essays, { essays });
+  }, [loading, essays]);
 
   useEffect(() => {
     const action = searchParams.get("action");
@@ -269,6 +294,7 @@ function EssaysPageContent() {
       };
       if (form.university) payload.university = Number(form.university);
       const created = await apiFetch<Essay>("/api/essays/", { method: "POST", body: JSON.stringify(payload) }, token);
+      clearSessionCaches([SESSION_CACHE_KEYS.dashboard, SESSION_CACHE_KEYS.essays]);
       setShowCreate(false);
       const template = getEssayDraftTemplate("personal_statement");
       setForm({
