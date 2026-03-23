@@ -107,6 +107,17 @@ export type IntroStorage = {
   answers?: IntroAnswers;
 };
 
+export type DashboardCachePayload = {
+  cachedAt: number;
+  profile: Profile | null;
+  progressData: CommonAppProgress | null;
+  myUniversities: StudentUniversity[];
+  tasks: Task[];
+  documents: DocumentItem[];
+  essays: EssayItem[];
+  applications: ApplicationItem[];
+};
+
 export type EditableFieldKey = "major" | "gpa" | "tests" | "intake" | "country" | "level";
 
 export type EditProfileForm = {

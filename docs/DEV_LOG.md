@@ -129,3 +129,7 @@ pm run dev:clean for explicit cache resets. Verified with frontend lint/build.
 - 2026-03-23: Reduced visual noise on the Essays page as an experiment for a broader UI cleanup. Removed the heavy nested manager/create-card stack, switched the create area to a softer tinted section, and lightened essay list cards to rely more on spacing and typography than stacked black borders.
 
 - 2026-03-23: Cleaned up the intro quiz persistence flow and landing source files. Replaced corrupted mojibake strings in the landing page and landing content config, fixed intro-quiz answer normalization maps so Russian quiz answers map correctly into the profile payload, removed the incorrect unauthenticated redirect from the quiz completion screen, and normalized landing social/footer copy. Also replaced the loader img tag with next/image so frontend lint and production build now pass without warnings.
+
+- Session start 2026-03-23 10:31: Serena preflight passed.
+
+- 2026-03-23: Added a lightweight dashboard session cache with a short TTL. Dashboard now restores the last successful payload from sessionStorage for instant rendering on revisit, skips redundant refetches while the cache is still fresh, and keeps the cache synchronized after local profile/data changes so the page no longer feels like a full reload on every navigation.

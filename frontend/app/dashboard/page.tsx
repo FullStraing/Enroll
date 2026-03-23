@@ -15,13 +15,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { COUNTRY_FLAG_MAP, TEST_SCORE_RULES } from "@/app/dashboard/constants";
+import { COUNTRY_FLAG_MAP, DASHBOARD_CACHE_KEY, DASHBOARD_CACHE_TTL_MS, TEST_SCORE_RULES } from "@/app/dashboard/constants";
 import { buildDashboardProgress } from "@/app/dashboard/progress";
 import { captureDashboardBlob, copyImageToClipboard, downloadImageBlob } from "@/app/dashboard/share-dashboard";
 import type {
   AcademicTestType,
   ApplicationItem,
   CommonAppProgress,
+  DashboardCachePayload,
   DocumentItem,
   EditProfileForm,
   EditableFieldKey,
@@ -49,6 +50,22 @@ import { apiFetch } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import { readStoredIntroQuiz, writeStoredIntroQuiz } from "@/lib/intro-quiz";
 import { formatDateShort, formatDateShortNoYear } from "@/lib/date-format";
+
+function readDashboardCache(): DashboardCachePayload | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.sessionStorage.getItem(DASHBOARD_CACHE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as DashboardCachePayload;
+  } catch {
+    return null;
+  }
+}
+
+function writeDashboardCache(payload: DashboardCachePayload) {
+  if (typeof window === "undefined") return;
+  window.sessionStorage.setItem(DASHBOARD_CACHE_KEY, JSON.stringify(payload));
+}
 
 function DashboardPageContent() {
   const router = useRouter();
@@ -78,6 +95,19 @@ function DashboardPageContent() {
   const [editForm, setEditForm] = useState<EditProfileForm>(buildEmptyEditForm());
   const [autosaveStatus, setAutosaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
 
+  const applyDashboardData = useCallback((payload: Omit<DashboardCachePayload, "cachedAt">) => {
+    setProfile(payload.profile);
+    setProgressData(payload.progressData);
+    setMyUniversities(payload.myUniversities);
+    setTasks(payload.tasks);
+    setDocuments(payload.documents);
+    setEssays(payload.essays);
+    setApplications(payload.applications);
+    if (!readStoredIntroQuiz()?.answers && payload.profile?.common_app_profile?.intro_quiz_answers) {
+      setQuizAnswers(payload.profile.common_app_profile.intro_quiz_answers);
+    }
+  }, []);
+
   useEffect(() => {
     const token = getToken();
     if (!token) return;
@@ -92,7 +122,30 @@ function DashboardPageContent() {
     }
 
     const run = async () => {
-      setLoading(true);
+      const cached = readDashboardCache();
+      const cacheAge = cached ? Date.now() - cached.cachedAt : Number.POSITIVE_INFINITY;
+      const isCacheFresh = Boolean(cached) && cacheAge < DASHBOARD_CACHE_TTL_MS;
+
+      if (cached) {
+        applyDashboardData({
+          profile: cached.profile,
+          progressData: cached.progressData,
+          myUniversities: cached.myUniversities,
+          tasks: cached.tasks,
+          documents: cached.documents,
+          essays: cached.essays,
+          applications: cached.applications,
+        });
+        setLoading(false);
+      } else {
+        setLoading(true);
+      }
+
+      if (isCacheFresh) {
+        setStatusText("");
+        return;
+      }
+
       setStatusText("");
       try {
         const [profileResp, progressResp, universitiesResp, tasksResp, documentsResp, essaysResp, applicationsResp] = await Promise.all([
@@ -105,25 +158,50 @@ function DashboardPageContent() {
           apiFetch<ApplicationItem[]>("/api/applications/", { method: "GET" }, token),
         ]);
 
-        setProfile(profileResp);
-        setProgressData(progressResp);
-        setMyUniversities(universitiesResp);
-        setTasks(tasksResp);
-        setDocuments(documentsResp);
-        setEssays(essaysResp);
-        setApplications(applicationsResp);
-        if (!readStoredIntroQuiz()?.answers && profileResp.common_app_profile?.intro_quiz_answers) {
-          setQuizAnswers(profileResp.common_app_profile.intro_quiz_answers);
-        }
+        applyDashboardData({
+          profile: profileResp,
+          progressData: progressResp,
+          myUniversities: universitiesResp,
+          tasks: tasksResp,
+          documents: documentsResp,
+          essays: essaysResp,
+          applications: applicationsResp,
+        });
+        writeDashboardCache({
+          cachedAt: Date.now(),
+          profile: profileResp,
+          progressData: progressResp,
+          myUniversities: universitiesResp,
+          tasks: tasksResp,
+          documents: documentsResp,
+          essays: essaysResp,
+          applications: applicationsResp,
+        });
       } catch (error) {
-        setStatusText(error instanceof Error ? error.message : "Failed to load dashboard.");
+        if (!cached) {
+          setStatusText(error instanceof Error ? error.message : "Failed to load dashboard.");
+        }
       } finally {
         setLoading(false);
       }
     };
 
     void run();
-  }, []);
+  }, [applyDashboardData]);
+
+  useEffect(() => {
+    if (loading || !profile || !progressData) return;
+    writeDashboardCache({
+      cachedAt: Date.now(),
+      profile,
+      progressData,
+      myUniversities,
+      tasks,
+      documents,
+      essays,
+      applications,
+    });
+  }, [loading, profile, progressData, myUniversities, tasks, documents, essays, applications]);
 
   useEffect(() => {
     if (editOpen) return;

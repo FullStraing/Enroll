@@ -1,6 +1,8 @@
 import type { AcademicTestType, LanguageTestType } from "@/app/dashboard/types";
 
 export const introQuizStorageKey = "enroll_intro_quiz_v1";
+export const DASHBOARD_CACHE_KEY = "enroll_dashboard_cache_v1";
+export const DASHBOARD_CACHE_TTL_MS = 60_000;
 
 export const ACADEMIC_TEST_OPTIONS: readonly AcademicTestType[] = ["SAT", "ACT"] as const;
 export const LANGUAGE_TEST_OPTIONS: readonly LanguageTestType[] = ["IELTS", "TOEFL", "DET", "PTE", "Cambridge"] as const;
