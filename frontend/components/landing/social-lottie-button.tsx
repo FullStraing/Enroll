@@ -11,14 +11,14 @@ const SOCIALS = [
   {
     href: "https://t.me",
     label: "Telegram",
-    sublabel: "Ask questions and stay close to product updates.",
+    sublabel: "Задавай вопросы и следи за обновлениями продукта.",
     animationData: messengerAnimation,
     toneClass: "bg-[#DAF5F0]",
   },
   {
     href: "https://instagram.com",
     label: "Instagram",
-    sublabel: "See product moments, tips, and student stories.",
+    sublabel: "Смотри обновления продукта, советы и реальные истории студентов.",
     animationData: instagramAnimation,
     toneClass: "bg-[#FFF4CC]",
   },

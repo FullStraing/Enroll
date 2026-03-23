@@ -11,6 +11,7 @@ import { getToken } from "@/lib/auth";
 import {
   INTRO_QUIZ_COMPLETED_STORAGE_KEY,
   INTRO_QUIZ_LINKED_STORAGE_KEY,
+  hasPendingStoredIntroQuiz,
   readStoredIntroQuiz,
   syncStoredIntroQuizToProfile,
   writeStoredIntroQuiz,
@@ -105,6 +106,8 @@ export default function IntroQuizPage() {
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<IntroAnswers>(initialAnswers);
   const [isAuthed, setIsAuthed] = useState(false);
+  const [syncingProfile, setSyncingProfile] = useState(false);
+  const [statusText, setStatusText] = useState("");
 
   useEffect(() => {
     setIsAuthed(Boolean(getToken()));
@@ -170,11 +173,26 @@ export default function IntroQuizPage() {
   async function handleAuthedContinue() {
     const token = getToken();
     if (!token) return;
+    setSyncingProfile(true);
+    setStatusText("");
     try {
       await syncStoredIntroQuizToProfile(token);
+      if (!hasPendingStoredIntroQuiz()) {
+        window.location.assign("/dashboard");
+      }
+    } catch (error) {
+      setStatusText(error instanceof Error ? error.message : "Не удалось сохранить ответы в профиль.");
     } finally {
-      window.location.assign("/dashboard");
+      setSyncingProfile(false);
+      if (!hasPendingStoredIntroQuiz()) {
+        setStatusText("");
+      }
     }
+  }
+
+  async function handleContinueToAuth(path: "/register" | "/login") {
+    if (syncingProfile) return;
+    window.location.assign(path);
   }
 
   return (
@@ -254,27 +272,31 @@ export default function IntroQuizPage() {
                     <button
                       type="button"
                       onClick={() => void handleAuthedContinue()}
+                      disabled={syncingProfile}
                       className="inline-flex h-11 items-center justify-center rounded-xl border-2 border-black bg-[#FFDB58] px-5 text-sm font-semibold transition hover:-translate-y-0.5"
                     >
-                      Перейти в Dashboard
+                      {syncingProfile ? "Сохраняем..." : "Перейти в Dashboard"}
                     </button>
                   ) : (
                     <>
-                      <Link
-                        href="/register"
+                      <button
+                        type="button"
+                        onClick={() => void handleContinueToAuth("/register")}
                         className="inline-flex h-11 items-center justify-center rounded-xl border-2 border-black bg-[#FFDB58] px-5 text-sm font-semibold transition hover:-translate-y-0.5"
                       >
                         Создать аккаунт
-                      </Link>
-                      <Link
-                        href="/login"
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void handleContinueToAuth("/login")}
                         className="inline-flex h-11 items-center justify-center rounded-xl border-2 border-black bg-white px-5 text-sm font-semibold transition hover:bg-black/5"
                       >
                         Войти
-                      </Link>
+                      </button>
                     </>
                   )}
                 </div>
+                {statusText ? <p className="mt-3 text-sm text-red-600">{statusText}</p> : null}
               </div>
             ) : null}
           </div>

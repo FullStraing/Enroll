@@ -13,11 +13,11 @@ export const painPoints = [
   "10+ дедлайнов на разные типы подачи и разные университеты",
   "Документы, эссе, рекомендации и формы лежат в разных местах",
   "Common App и реальные шаги по поступлению не связаны между собой",
-  "Ты не понимаешь, что делать сегодня, чтобы не сорвать подачу позже",
+  "Непонятно, что делать сегодня, чтобы не сорвать подачу позже",
 ];
 
 export const proofPoints = [
-  "Один workflow вместо заметок, таблиц, писем и случайных чеклистов",
+  "Один admissions workflow вместо заметок, таблиц, писем и случайных чеклистов",
   "Сделано под поступление в университеты США, а не под абстрактный todo-app",
   "Universities, tasks, documents, essays и Common App работают как одна система",
 ];
@@ -27,15 +27,15 @@ export const storySections = [
     eyebrow: "Проблема",
     title: "Поступление ломается не из-за мотивации. Оно ломается из-за хаоса.",
     body:
-      "Студент теряет темп, когда shortlist, дедлайны, документы и essays существуют отдельно друг от друга. Enroll убирает этот разрыв и делает следующий шаг очевидным.",
+      "Студент теряет темп, когда shortlist, дедлайны, документы и essays живут отдельно друг от друга. Enroll убирает этот разрыв и делает следующий шаг очевидным.",
     tone: "orange" as const,
     preview: {
-      label: "Without a system",
-      title: "Chaos between tabs, docs and deadlines",
+      label: "Без системы",
+      title: "Хаос между вкладками, дедлайнами и файлами",
       rows: [
-        { label: "Common App draft", value: "Half filled" },
-        { label: "Deadlines", value: "Scattered" },
-        { label: "Essay drafts", value: "Different places" },
+        { label: "Черновик Common App", value: "Заполнен частично" },
+        { label: "Дедлайны", value: "Разбросаны" },
+        { label: "Черновики эссе", value: "В разных местах" },
       ],
     },
   },
@@ -43,14 +43,14 @@ export const storySections = [
     eyebrow: "Решение",
     title: "Enroll превращает поступление в один управляемый workflow.",
     body:
-      "Ты видишь shortlist, задачи, документы и Common App в одном продукте. Не нужно помнить всё в голове: система сама удерживает контекст.",
+      "Ты видишь shortlist, задачи, документы и Common App в одном продукте. Не нужно держать всё в голове: система сама удерживает контекст и подсказывает, что улучшать дальше.",
     tone: "cyan" as const,
     preview: {
       label: "Dashboard",
-      title: "What needs attention right now",
+      title: "Что требует внимания прямо сейчас",
       rows: [
-        { label: "Profile", value: "71%" },
-        { label: "Documents", value: "20%" },
+        { label: "Профиль", value: "71%" },
+        { label: "Документы", value: "20%" },
         { label: "Applications", value: "33%" },
       ],
     },
@@ -59,15 +59,15 @@ export const storySections = [
     eyebrow: "Как это выглядит",
     title: "Пользователь скроллит и сразу понимает: проблема знакомая, решение конкретное.",
     body:
-      "Сначала боль. Затем экран продукта. Затем конкретный призыв к действию. Это и есть правильная история для первого визита: не перечисление функций, а понятный переход от хаоса к контролю.",
+      "Сначала боль. Затем экран продукта. Затем конкретный призыв к действию. Это и есть правильная история для первого визита: не перечень функций, а понятный переход от хаоса к контролю.",
     tone: "yellow" as const,
     preview: {
-      label: "Task flow",
-      title: "Add a task for today and move forward",
+      label: "Tasks",
+      title: "Today-first planning без перегруза календарём",
       rows: [
-        { label: "Today", value: "2 tasks" },
-        { label: "Upcoming", value: "3 tasks" },
-        { label: "Completed", value: "8 tasks" },
+        { label: "Сегодня", value: "2 задачи" },
+        { label: "Дальше", value: "3 задачи" },
+        { label: "Готово", value: "8 задач" },
       ],
     },
   },
@@ -76,10 +76,10 @@ export const storySections = [
 export const productShowcase = [
   {
     title: "Universities + deadlines",
-    body: "Shortlist universities, see your category, status and important dates in one place.",
+    body: "Shortlist университетов, категории, статусы и ключевые дедлайны в одном месте.",
     preview: {
       label: "Universities",
-      title: "Track where you stand",
+      title: "Отслеживай, где ты стоишь",
       rows: [
         { label: "Brown", value: "High Reach" },
         { label: "Boston College", value: "Reach" },
@@ -89,26 +89,26 @@ export const productShowcase = [
   },
   {
     title: "Tasks for today",
-    body: "One clean list for what matters today, without calendar overload.",
+    body: "Один чистый список того, что важно сегодня, без перегруза календарём.",
     preview: {
       label: "Tasks",
-      title: "Today-first planning",
+      title: "Планирование от сегодняшнего дня",
       rows: [
-        { label: "Draft personal essay", value: "Today" },
-        { label: "Upload transcript", value: "Tomorrow" },
-        { label: "Ask for recommendation", value: "No date" },
+        { label: "Черновик personal essay", value: "Сегодня" },
+        { label: "Загрузить transcript", value: "Завтра" },
+        { label: "Попросить recommendation", value: "Без даты" },
       ],
     },
   },
   {
     title: "Documents vault",
-    body: "Keep transcript, resume, ID and recommendation letters inside the admissions workflow.",
+    body: "Transcript, resume, ID и recommendation letters внутри единого admissions workflow.",
     preview: {
       label: "Documents",
-      title: "Simple admissions file locker",
+      title: "Простое хранилище admission-файлов",
       rows: [
-        { label: "Transcript", value: "Uploaded" },
-        { label: "Resume", value: "Uploaded" },
+        { label: "Transcript", value: "Загружен" },
+        { label: "Resume", value: "Загружен" },
         { label: "Passport", value: "Missing" },
       ],
     },

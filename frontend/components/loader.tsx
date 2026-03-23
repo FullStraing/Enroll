@@ -1,4 +1,6 @@
-﻿"use client";
+"use client";
+
+import Image from "next/image";
 
 type LoaderSize = "sm" | "md" | "lg";
 
@@ -21,7 +23,7 @@ export function Loader({
 }) {
   return (
     <div className={`flex flex-col items-center gap-2 ${className}`} role="status" aria-label={ariaLabel}>
-      <img src="/loader/load.svg" alt="" className={sizeClass[size]} />
+      <Image src="/loader/load.svg" alt="" width={56} height={56} className={sizeClass[size]} />
       {label ? <p className="text-sm text-white/65">{label}</p> : null}
     </div>
   );

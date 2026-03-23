@@ -366,19 +366,23 @@ function EssaysPageContent() {
           </div>
         ) : null}
 
-        <section className="glass rounded-2xl p-5">
-          <div className="flex flex-wrap items-center justify-between gap-3">
+        <section className="space-y-5">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-[24px] border border-black/10 bg-white/70 px-5 py-4">
             <div>
-              <h2 className="text-lg font-semibold">Essay Manager</h2>
-              <p className="mt-1 text-sm text-black/65">Manage drafts like GitHub: each essay has its own version history.</p>
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-black/45">Workspace</p>
+              <p className="mt-1 text-sm text-black/65">Manage drafts like GitHub: each essay keeps its own version history.</p>
             </div>
             <Button onClick={() => setShowCreate((prev) => !prev)}>{showCreate ? "Close" : "+ New Essay"}</Button>
           </div>
 
           {showCreate ? (
-            <Card className="mt-4 shadow-none">
-              <CardTitle>Create New Essay</CardTitle>
-              <form onSubmit={createEssay} className="mt-3 grid gap-3">
+            <div className="rounded-[24px] border border-black/10 bg-[#FFF9E8] p-5">
+              <div className="max-w-3xl">
+                <CardTitle className="text-xl">Create New Essay</CardTitle>
+                <p className="mt-1 text-sm text-black/65">Start a fresh draft without wrapping the form in another heavy card.</p>
+              </div>
+
+              <form onSubmit={createEssay} className="mt-5 grid gap-4">
                 <label className="text-sm text-black/70">
                   Essay type
                   <select
@@ -468,18 +472,28 @@ function EssaysPageContent() {
                   />
                 </label>
 
-                <Button type="submit" disabled={saving}>
-                  {saving ? <Spinner size="sm" /> : null}
-                  <span>{saving ? "Creating..." : "Create Essay"}</span>
-                </Button>
+                <div className="flex flex-wrap items-center gap-3 pt-1">
+                  <Button type="submit" disabled={saving} className="min-w-[180px]">
+                    {saving ? <Spinner size="sm" /> : null}
+                    <span>{saving ? "Creating..." : "Create Essay"}</span>
+                  </Button>
+                  <p className="text-sm text-black/55">The draft opens immediately in the editor after creation.</p>
+                </div>
               </form>
-            </Card>
+            </div>
           ) : null}
 
-          <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {!loading && !essays.length ? (
+            <div className="rounded-[24px] border border-dashed border-black/20 bg-white/75 px-5 py-6">
+              <p className="text-sm font-semibold text-black">No essays yet.</p>
+              <p className="mt-1 text-sm text-black/65">Start with a personal statement or create a university-specific draft.</p>
+            </div>
+          ) : null}
+
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {loading
               ? Array.from({ length: 6 }).map((_, idx) => (
-                  <Card key={`essay-sk-${idx}`} className="shadow-none">
+                  <Card key={`essay-sk-${idx}`} className="p-4 shadow-none">
                     <Skeleton className="h-6 w-3/4" />
                     <Skeleton className="mt-2 h-4 w-1/2" />
                     <Skeleton className="mt-3 h-4 w-full" />
@@ -487,9 +501,11 @@ function EssaysPageContent() {
                 ))
               : essays.map((essay) => (
                   <Link key={essay.id} href={`/essays/${essay.id}`}>
-                    <Card className="card-shadow-hover shadow-none">
+                    <Card className="card-shadow-hover h-full p-4 shadow-none">
                       <div className="flex items-start justify-between gap-2">
-                        <CardTitle>{essay.title}</CardTitle>
+                        <CardTitle className="max-w-[15rem] text-base leading-snug tracking-[-0.02em]">
+                          {essay.title}
+                        </CardTitle>
                         <Badge>{formatEssayType(essay.essay_type)}</Badge>
                       </div>
                       <p className="mt-2 text-sm text-black/65">
@@ -503,7 +519,7 @@ function EssaysPageContent() {
                           <span className="text-black/60">Target:</span> {essay.target_word_count}
                         </p>
                       </div>
-                      <p className="mt-2 text-xs text-black/55">
+                      <p className="mt-3 text-xs text-black/55">
                         Last edited:{" "}
                         {essay.last_edited_at
                           ? formatDateTimeShort(essay.last_edited_at)
@@ -514,10 +530,7 @@ function EssaysPageContent() {
                 ))}
           </div>
 
-          {!loading && !essays.length ? (
-            <p className="mt-4 text-sm text-black/65">No essays yet. Start with + New Essay.</p>
-          ) : null}
-          {statusText ? <p className="mt-4 text-sm text-black/65">{statusText}</p> : null}
+          {statusText ? <p className="text-sm text-black/65">{statusText}</p> : null}
         </section>
       </AppShell>
     </ProtectedPage>

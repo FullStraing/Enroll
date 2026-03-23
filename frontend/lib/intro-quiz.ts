@@ -22,13 +22,13 @@ export const INTRO_QUIZ_LINKED_STORAGE_KEY = "enroll_intro_quiz_linked";
 export const INTRO_QUIZ_LINKED_COOKIE_KEY = "enroll_intro_quiz_linked";
 
 const COUNTRY_MAP: Record<string, string> = {
-  "Кыргызстан": "Kyrgyzstan",
-  "Казахстан": "Kazakhstan",
-  "Узбекистан": "Uzbekistan",
-  "Россия": "Russia",
-  "Украина": "Ukraine",
-  "Турция": "Turkey",
-  "Индия": "India",
+  Кыргызстан: "Kyrgyzstan",
+  Казахстан: "Kazakhstan",
+  Узбекистан: "Uzbekistan",
+  Россия: "Russia",
+  Украина: "Ukraine",
+  Турция: "Turkey",
+  Индия: "India",
   "Другая страна": "",
 };
 
@@ -88,9 +88,22 @@ export function writeStoredIntroQuiz(payload: IntroQuizStorage) {
   window.localStorage.setItem(INTRO_QUIZ_STORAGE_KEY, JSON.stringify(payload));
 }
 
+export function clearStoredIntroQuizProgress() {
+  if (typeof window === "undefined") return;
+  window.localStorage.removeItem(INTRO_QUIZ_STORAGE_KEY);
+  window.localStorage.removeItem(INTRO_QUIZ_COMPLETED_STORAGE_KEY);
+}
+
 export function isIntroQuizLinked() {
   if (typeof window === "undefined") return false;
   return window.localStorage.getItem(INTRO_QUIZ_LINKED_STORAGE_KEY) === "1";
+}
+
+export function hasPendingStoredIntroQuiz() {
+  if (typeof window === "undefined") return false;
+  const payload = readStoredIntroQuiz();
+  const completed = window.localStorage.getItem(INTRO_QUIZ_COMPLETED_STORAGE_KEY) === "1";
+  return !isIntroQuizLinked() && completed && Boolean(payload?.answers);
 }
 
 export function markIntroQuizLinked() {
@@ -121,11 +134,16 @@ export async function syncStoredIntroQuizToProfile(token: string) {
 
   if (!answers || !completed) return false;
 
-  await apiFetch("/api/auth/profile/", {
-    method: "PATCH",
-    body: JSON.stringify(syncIntroQuizToProfilePatch(answers)),
-  }, token);
+  await apiFetch(
+    "/api/auth/profile/",
+    {
+      method: "PATCH",
+      body: JSON.stringify(syncIntroQuizToProfilePatch(answers)),
+    },
+    token,
+  );
 
+  clearStoredIntroQuizProgress();
   markIntroQuizLinked();
   return true;
 }

@@ -1,11 +1,24 @@
 import { cookies } from "next/headers";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, CheckCircle2, CircleAlert, FileStack, GraduationCap, ListTodo } from "lucide-react";
 import { landingTheme, painPoints, productShowcase, proofPoints, storySections } from "@/app/landing-content";
 import { ProductShot } from "@/components/landing/product-shot";
-import { SocialLottieButtons } from "@/components/landing/social-lottie-button";
 import { INTRO_QUIZ_LINKED_COOKIE_KEY } from "@/lib/intro-quiz";
+
+const SocialLottieButtons = dynamic(
+  () => import("@/components/landing/social-lottie-button").then((mod) => mod.SocialLottieButtons),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="h-[112px] rounded-[24px] border-2 border-black bg-white" />
+        <div className="h-[112px] rounded-[24px] border-2 border-black bg-white" />
+      </div>
+    ),
+  },
+);
 
 function SectionHeader({
   eyebrow,
@@ -32,12 +45,9 @@ export default function LandingPage() {
 
   return (
     <main
-      className="min-h-screen px-4 py-6 md:px-8"
+      className="theme-home min-h-screen px-4 py-6 md:px-8"
       style={{
-        backgroundColor: landingTheme.bg,
         color: landingTheme.black,
-        backgroundImage: "radial-gradient(rgba(0,0,0,0.05) 1px, transparent 1px)",
-        backgroundSize: "6px 6px",
       }}
     >
       <div className="blob blob-cyan" />
@@ -106,23 +116,23 @@ export default function LandingPage() {
               <div className="rounded-2xl border-2 border-black bg-white p-4">
                 <div className="flex items-center gap-2">
                   <GraduationCap className="h-4 w-4" />
-                  <p className="text-sm font-black">Universities</p>
+                  <p className="text-sm font-black">Университеты</p>
                 </div>
-                <p className="mt-2 text-sm text-black/65">Shortlist, categories, acceptance rate, deadlines.</p>
+                <p className="mt-2 text-sm text-black/65">Shortlist, категории, acceptance rate и дедлайны в одном месте.</p>
               </div>
               <div className="rounded-2xl border-2 border-black bg-white p-4">
                 <div className="flex items-center gap-2">
                   <ListTodo className="h-4 w-4" />
-                  <p className="text-sm font-black">Tasks</p>
+                  <p className="text-sm font-black">Задачи</p>
                 </div>
-                <p className="mt-2 text-sm text-black/65">Today-first planning instead of calendar overload.</p>
+                <p className="mt-2 text-sm text-black/65">Today-first planning вместо перегруза календарём.</p>
               </div>
               <div className="rounded-2xl border-2 border-black bg-white p-4">
                 <div className="flex items-center gap-2">
                   <FileStack className="h-4 w-4" />
-                  <p className="text-sm font-black">Documents</p>
+                  <p className="text-sm font-black">Документы</p>
                 </div>
-                <p className="mt-2 text-sm text-black/65">Transcript, resume, ID and letters in one flow.</p>
+                <p className="mt-2 text-sm text-black/65">Transcript, resume, ID и letters внутри единого flow.</p>
               </div>
             </div>
           </div>
@@ -130,13 +140,13 @@ export default function LandingPage() {
           <div className="grid gap-4">
             <ProductShot
               tone="cyan"
-              label="Hero product view"
-              title="One workspace for the whole admissions process"
+              label="Главный экран продукта"
+              title="Одна рабочая система для всего процесса поступления"
               rows={[
-                { label: "Dashboard", value: "Next actions" },
-                { label: "Universities", value: "6 tracked" },
-                { label: "Tasks", value: "Today-first" },
-                { label: "Documents", value: "3 uploaded" },
+                { label: "Dashboard", value: "Следующие шаги" },
+                { label: "Universities", value: "6 в списке" },
+                { label: "Tasks", value: "Фокус на сегодня" },
+                { label: "Documents", value: "3 загружены" },
               ]}
             />
           </div>
@@ -146,7 +156,7 @@ export default function LandingPage() {
           <SectionHeader
             eyebrow="Проблема"
             title="Пользователь должен сразу узнать свою ситуацию."
-            description="Первый экран не должен просто рассказывать про функции. Он должен показать знакомую проблему, её цену и только потом раскрыть новый механизм решения."
+            description="Первый экран не должен просто перечислять функции. Он должен показать знакомую проблему, её цену и только потом раскрыть новый механизм решения."
           />
 
           <div className="mt-6 grid gap-3 md:grid-cols-2">
@@ -209,7 +219,7 @@ export default function LandingPage() {
           <SectionHeader
             eyebrow="Почему верят"
             title="После решения должен идти trust layer."
-            description="Не обещания “поступишь гарантированно”, а честное объяснение, почему этот продукт стоит попробовать прямо сейчас."
+            description="Не обещания «поступишь гарантированно», а честное объяснение, почему этот продукт стоит попробовать прямо сейчас."
           />
 
           <div className="mt-6 grid gap-3 md:grid-cols-3">
@@ -267,12 +277,12 @@ export default function LandingPage() {
         <footer className="border-t-2 border-black px-5 py-10 md:px-8">
           <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr] lg:items-end">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-black/45">Socials</p>
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-black/45">Соцсети</p>
               <h2 className="mt-2 text-3xl font-black leading-[0.95] tracking-[-0.04em] text-black md:text-4xl">
-                Stay close to Enroll outside the app.
+                Следи за Enroll и вне продукта.
               </h2>
               <p className="mt-4 max-w-2xl text-base text-black/65 md:text-lg">
-                Follow product updates, ask questions, and see how students build a stronger admissions workflow step by step.
+                Там мы показываем обновления продукта, отвечаем на вопросы и делимся тем, как студенты строят более сильный admissions workflow шаг за шагом.
               </p>
               <div className="mt-5 flex flex-wrap gap-2 text-sm text-black/55">
                 <span className="rounded-full border-2 border-black bg-white px-3 py-1 font-semibold">Telegram</span>

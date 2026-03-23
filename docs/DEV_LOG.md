@@ -125,3 +125,7 @@ pm run dev:clean for explicit cache resets. Verified with frontend lint/build.
 - 2026-03-20: Added a landing-page footer with animated Telegram and Instagram buttons powered by Lottie JSON assets from public/animations. Social actions now live in a dedicated reusable client component instead of inline page logic.
 
 - 2026-03-20: Updated landing social Lottie buttons so animations no longer autoplay. They now play only on hover/focus and reset when the pointer leaves.
+
+- 2026-03-23: Reduced visual noise on the Essays page as an experiment for a broader UI cleanup. Removed the heavy nested manager/create-card stack, switched the create area to a softer tinted section, and lightened essay list cards to rely more on spacing and typography than stacked black borders.
+
+- 2026-03-23: Cleaned up the intro quiz persistence flow and landing source files. Replaced corrupted mojibake strings in the landing page and landing content config, fixed intro-quiz answer normalization maps so Russian quiz answers map correctly into the profile payload, removed the incorrect unauthenticated redirect from the quiz completion screen, and normalized landing social/footer copy. Also replaced the loader img tag with next/image so frontend lint and production build now pass without warnings.
