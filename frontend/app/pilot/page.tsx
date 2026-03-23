@@ -2,6 +2,7 @@
 
 import { FormEvent, useMemo, useState } from "react";
 import Link from "next/link";
+import { RequiredMark } from "@/components/ui/required-mark";
 
 const TELEGRAM_HANDLE = "@enroll_ai";
 const INSTAGRAM_HANDLE = "@enroll.ai";
@@ -44,11 +45,11 @@ export default function PilotPage() {
       <section className="glass rounded-2xl p-6">
         <form onSubmit={handleSubmit} className="grid gap-4">
           <label className="text-sm text-white/80">
-            Имя
+            Имя<RequiredMark />
             <input value={name} onChange={(e) => setName(e.target.value)} className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2" required />
           </label>
           <label className="text-sm text-white/80">
-            Контакт (Telegram / Instagram / Email)
+            Контакт (Telegram / Instagram / Email)<RequiredMark />
             <input value={contact} onChange={(e) => setContact(e.target.value)} className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2" required />
           </label>
           <label className="text-sm text-white/80">

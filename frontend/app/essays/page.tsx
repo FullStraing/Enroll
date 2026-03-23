@@ -16,6 +16,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { Progress } from "@/components/ui/progress";
 import { formatDateTimeShort } from "@/lib/date-format";
 import { clearSessionCaches, readSessionCache, SESSION_CACHE_KEYS, SESSION_CACHE_TTLS, writeSessionCache } from "@/lib/session-cache";
+import { RequiredMark } from "@/components/ui/required-mark";
 
 type EssayType = "personal_statement" | "motivation_essay" | "supplemental_essay" | "other";
 
@@ -410,11 +411,12 @@ function EssaysPageContent() {
 
               <form onSubmit={createEssay} className="mt-5 grid gap-4">
                 <label className="text-sm text-black/70">
-                  Essay type
+                  Essay type<RequiredMark />
                   <select
                     value={form.essay_type}
                     onChange={(event) => applyEssayTypeTemplate(event.target.value as EssayType)}
                     className="mt-1 w-full rounded-xl border border-black/20 bg-white px-3 py-2"
+                    required
                   >
                     {essayTypeOptions.map((option) => (
                       <option key={option.value} value={option.value}>
@@ -425,11 +427,12 @@ function EssaysPageContent() {
                 </label>
 
                 <label className="text-sm text-black/70">
-                  Essay title
+                  Essay title<RequiredMark />
                   <input
                     value={form.title}
                     onChange={(event) => setForm((prev) => ({ ...prev, title: event.target.value }))}
                     className="mt-1 w-full rounded-xl border border-black/20 bg-white px-3 py-2"
+                    required
                   />
                 </label>
 
@@ -446,12 +449,13 @@ function EssaysPageContent() {
                     </label>
 
                     <label className="text-sm text-black/70">
-                      University
+                      University<RequiredMark />
                       <select
                         value={form.university}
                         onChange={(event) => setForm((prev) => ({ ...prev, university: event.target.value }))}
                         disabled={universitiesLoading}
                         className="mt-1 w-full rounded-xl border border-black/20 bg-white px-3 py-2"
+                        required
                       >
                         {universitiesLoading ? <option value="">Loading...</option> : null}
                         <option value="">Select university</option>
@@ -464,12 +468,13 @@ function EssaysPageContent() {
                     </label>
 
                     <label className="text-sm text-black/70">
-                      Prompt title
+                      Prompt title<RequiredMark />
                       <input
                         value={form.prompt_title}
                         onChange={(event) => setForm((prev) => ({ ...prev, prompt_title: event.target.value }))}
                         placeholder="Example: Why this university?"
                         className="mt-1 w-full rounded-xl border border-black/20 bg-white px-3 py-2"
+                        required
                       />
                     </label>
 

@@ -8,6 +8,7 @@ import { validateSelectedFiles } from "@/app/documents/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { Loader } from "@/components/loader";
+import { RequiredMark } from "@/components/ui/required-mark";
 
 type UploadPanelProps = {
   documentTypes: readonly DocumentTypeMeta[];
@@ -101,7 +102,7 @@ export function UploadPanel({
         </label>
 
         <label className="text-sm text-black/70">
-          Document type
+          Document type<RequiredMark />
           <select
             value={type}
             onChange={(event) => setType(event.target.value as DocumentType)}
@@ -143,7 +144,9 @@ export function UploadPanel({
           }`}
         >
           <Upload className="mx-auto h-5 w-5 text-black/55" />
-          <p className="mt-2 text-sm font-semibold text-black">Drag & drop files here</p>
+          <p className="mt-2 text-sm font-semibold text-black">
+            Drag & drop files here<RequiredMark />
+          </p>
           <p className="mt-1 text-xs text-black/55">Up to 5 MB per file, {remainingSlots} slot{remainingSlots === 1 ? "" : "s"} left.</p>
           <input
             ref={inputRef}

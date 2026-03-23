@@ -139,3 +139,5 @@ pm run dev:clean for explicit cache resets. Verified with frontend lint/build.
 - 2026-03-23: Standardized the in-house session-cache pattern beyond dashboard. Added shared `frontend/lib/session-cache.ts` and applied short-TTL cache + write-through/invalidation behavior to Tasks/Calendar, Documents, Essays, Common App, Activities, Settings, and internal Onboarding. Mutations now clear related dashboard/settings/activities/onboarding caches where needed so revisit UX is faster without moving durable product data out of the backend profile/domain models.
 
 - 2026-03-23: Added a persistent Enroll brand mark inside the dashboard snapshot surface so both exported images and manual screenshots clearly show the product source and are discoverable when shared externally.
+
+- 2026-03-23: Standardized required-field indicators across the truly mandatory form fields. Added a reusable required mark component and applied it to auth, pilot signup, document upload, essay creation, and security password change flows, while keeping partial profile-edit surfaces free of fake mandatory markers.

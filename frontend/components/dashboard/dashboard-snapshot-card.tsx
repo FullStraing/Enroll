@@ -256,7 +256,7 @@ export function DashboardSnapshotCard({
               disabled={sharingDashboard || savingSnapshot}
             >
               <Share2 className="h-4 w-4" />
-              {sharingDashboard ? "Preparing image..." : "Share dashboard"}
+              {sharingDashboard ? "Preparing image..." : "Copy image"}
             </Button>
             <Button
               variant="outline"

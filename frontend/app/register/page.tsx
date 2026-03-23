@@ -8,6 +8,7 @@ import { useAuth } from "@/components/auth-provider";
 import { Button } from "@/components/ui/button";
 import { GoogleAuthButton } from "@/components/google-auth-button";
 import { hasPendingStoredIntroQuiz, syncStoredIntroQuizToProfile } from "@/lib/intro-quiz";
+import { RequiredMark } from "@/components/ui/required-mark";
 
 export default function RegisterPage() {
   const { setSession } = useAuth();
@@ -68,28 +69,31 @@ export default function RegisterPage() {
     <main className="theme-home mx-auto flex min-h-screen max-w-md items-center px-6 py-16">
       <form onSubmit={onSubmit} className="glass w-full rounded-3xl p-6">
         <h1 className="text-2xl font-semibold">Регистрация</h1>
-        <label className="mt-4 block text-sm text-black/70">Username</label>
+        <label className="mt-4 block text-sm text-black/70">Username<RequiredMark /></label>
         <input
           className="mt-1 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-black placeholder:text-black/45"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           placeholder="Введите username"
+          required
         />
-        <label className="mt-4 block text-sm text-black/70">Email</label>
+        <label className="mt-4 block text-sm text-black/70">Email<RequiredMark /></label>
         <input
           type="email"
           className="mt-1 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-black placeholder:text-black/45"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="Введите email"
+          required
         />
-        <label className="mt-4 block text-sm text-black/70">Password</label>
+        <label className="mt-4 block text-sm text-black/70">Password<RequiredMark /></label>
         <input
           type="password"
           className="mt-1 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-black placeholder:text-black/45"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Введите пароль"
+          required
         />
         <Button disabled={pending} className="mt-6 w-full">
           {pending ? <Loader size="sm" /> : "Создать аккаунт"}
