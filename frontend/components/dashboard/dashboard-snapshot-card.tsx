@@ -1,3 +1,4 @@
+import Image from "next/image";
 import type { ReactNode, RefObject } from "react";
 import { Download, Share2, Trophy } from "lucide-react";
 import { statusSelectTone } from "@/app/universities/utils";
@@ -67,15 +68,25 @@ function DashboardSnapshotSurface({
 
   return (
     <Card className="relative overflow-hidden bg-white">
-      <div className="absolute -right-14 -top-14 h-44 w-44 rounded-full border-2 border-black/10 bg-[#FFDB58]/20" />
       <div className="relative">
-        <div className="mb-3 inline-flex items-center gap-2 rounded-xl border-2 border-black bg-white px-3 py-1 text-sm font-semibold">
-          Shareable Dashboard Snapshot
+        <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-xl border-2 border-black bg-white px-3 py-1 text-sm font-semibold">
+              Shareable Dashboard Snapshot
+            </div>
+            <CardTitle className="mt-3 text-2xl">Profile snapshot worth sharing</CardTitle>
+            <CardDescription className="mt-1">
+              A clean admissions card with your profile, activities, and current university list.
+            </CardDescription>
+          </div>
+          <div className="mt-3 inline-flex items-center gap-2 self-start text-black">
+            <Image src="/icons/logo.svg" alt="Enroll" width={28} height={28} className="h-7 w-7" />
+            <div className="leading-none">
+              <p className="text-[11px] font-black uppercase tracking-[0.22em] text-black/45">Powered by</p>
+              <p className="mt-1 text-[34px] font-black leading-none tracking-[-0.04em] text-black">Enroll</p>
+            </div>
+          </div>
         </div>
-        <CardTitle className="text-2xl">Profile snapshot worth sharing</CardTitle>
-        <CardDescription className="mt-1">
-          A clean admissions card with your profile, activities, and current university list.
-        </CardDescription>
 
         <div className="mt-5 grid gap-4 xl:grid-cols-[1.3fr_0.7fr]">
           <div className="rounded-2xl border border-black/15 bg-white p-5">
