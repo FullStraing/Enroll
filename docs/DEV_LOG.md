@@ -145,3 +145,7 @@ pm run dev:clean for explicit cache resets. Verified with frontend lint/build.
 - 2026-03-23: Softened dashboard cards and internal surfaces to reduce border noise, then cleaned the experiment back to the Enroll UI Lab palette only. Removed the ad-hoc off-palette neutrals from the new dashboard treatment and kept the lighter structure using only brand yellows, cyans, warm neutrals, and white.
 
 - 2026-03-23: Tightened dashboard snapshot chip layout for export and smaller screens. `All Tests` and `AP Exams` pills now keep their labels on a single line with more stable spacing, so copied/saved images and narrow layouts no longer split short test labels awkwardly across lines.
+
+- 2026-03-23: Swapped visible brand entry points to the new `public/brand/logo-mark.svg` asset and simplified the user-facing product wordmark from `Enroll AI` to `Enroll` in the app shell and landing header.
+
+- 2026-03-23: Removed the semi-transparent white shell from the landing container and restored a fully opaque page surface so the header/card background matches the rest of the product instead of reading as a glass layer.

@@ -1,5 +1,6 @@
 ﻿"use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -153,8 +154,8 @@ export function AppShell({
               <>
                 <Link href="/" className="block">
                   <div className="flex h-12 w-36 items-center gap-2 rounded-lg border-2 border-black bg-white px-3 transition-all duration-300 ease-in-out">
-                    <GraduationCap className="h-5 w-5 shrink-0" />
-                    <span className="text-sm font-bold">Enroll AI</span>
+                    <Image src="/brand/logo-mark.svg" alt="Enroll" width={20} height={20} className="h-5 w-5 shrink-0" />
+                    <span className="text-sm font-bold">Enroll</span>
                   </div>
                 </Link>
               <Button

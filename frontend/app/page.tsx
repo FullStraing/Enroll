@@ -53,14 +53,12 @@ export default function LandingPage() {
       <div className="blob blob-cyan" />
       <div className="blob blob-orange" />
 
-      <div className="relative mx-auto max-w-7xl rounded-[28px] border-2 border-black bg-white/90 shadow-[0_10px_0_#000]">
+      <div className="relative mx-auto max-w-7xl rounded-[28px] border-2 border-black bg-white shadow-[0_10px_0_#000]">
         <header className="flex flex-wrap items-center justify-between gap-4 border-b-2 border-black px-5 py-4 md:px-8">
           <Link href="/" className="inline-flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl border-2 border-black bg-white">
-              <Image src="/icons/logo.svg" alt="Enroll AI" width={28} height={28} className="h-7 w-7" />
-            </div>
+            <Image src="/brand/logo-mark.svg" alt="Enroll" width={44} height={44} className="h-11 w-11" />
             <div>
-              <p className="text-xl font-black tracking-tight">Enroll AI</p>
+              <p className="text-xl font-black tracking-tight">Enroll</p>
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-black/45">Admissions OS</p>
             </div>
           </Link>
