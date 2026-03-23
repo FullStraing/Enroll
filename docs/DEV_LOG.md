@@ -117,3 +117,11 @@ pm run dev:clean for explicit cache resets. Verified with frontend lint/build.
 - Session start 2026-03-20 18:35: Serena preflight passed.
 
 - 2026-03-20: Moved dashboard snapshot actions into the snapshot score panel as a compact control group, replacing the long full-width buttons under the card.
+
+- Session start 2026-03-20 20:11: Serena preflight passed.
+
+- 2026-03-20: Reworked intro quiz flow so it stays required until answers are linked to an authenticated profile. Landing now routes to intro-quiz only before linking, login/register sync stored quiz answers into the backend profile on first auth, and dashboard can fall back to profile-backed intro quiz answers instead of depending only on local storage.
+
+- 2026-03-20: Added a landing-page footer with animated Telegram and Instagram buttons powered by Lottie JSON assets from public/animations. Social actions now live in a dedicated reusable client component instead of inline page logic.
+
+- 2026-03-20: Updated landing social Lottie buttons so animations no longer autoplay. They now play only on hover/focus and reset when the pointer leaves.

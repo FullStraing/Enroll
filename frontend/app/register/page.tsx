@@ -7,6 +7,7 @@ import { Loader } from "@/components/loader";
 import { useAuth } from "@/components/auth-provider";
 import { Button } from "@/components/ui/button";
 import { GoogleAuthButton } from "@/components/google-auth-button";
+import { syncStoredIntroQuizToProfile } from "@/lib/intro-quiz";
 
 export default function RegisterPage() {
   const { setSession } = useAuth();
@@ -30,6 +31,7 @@ export default function RegisterPage() {
         body: JSON.stringify({ username, password }),
       });
       await setSession(data.access, data.refresh);
+      await syncStoredIntroQuizToProfile(data.access);
       window.location.assign("/dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Register failed");
@@ -40,6 +42,7 @@ export default function RegisterPage() {
 
   const handleGoogleTokens = useCallback(async (access: string, refresh: string) => {
     await setSession(access, refresh);
+    await syncStoredIntroQuizToProfile(access);
     window.location.assign("/dashboard");
   }, [setSession]);
 

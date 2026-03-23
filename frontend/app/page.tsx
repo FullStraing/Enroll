@@ -4,6 +4,8 @@ import Link from "next/link";
 import { ArrowRight, CheckCircle2, CircleAlert, FileStack, GraduationCap, ListTodo } from "lucide-react";
 import { landingTheme, painPoints, productShowcase, proofPoints, storySections } from "@/app/landing-content";
 import { ProductShot } from "@/components/landing/product-shot";
+import { SocialLottieButtons } from "@/components/landing/social-lottie-button";
+import { INTRO_QUIZ_LINKED_COOKIE_KEY } from "@/lib/intro-quiz";
 
 function SectionHeader({
   eyebrow,
@@ -25,8 +27,8 @@ function SectionHeader({
 
 export default function LandingPage() {
   const token = cookies().get("enroll_token")?.value;
-  const introQuizDone = cookies().get("enroll_intro_quiz_done")?.value === "1";
-  const primaryHref = token || introQuizDone ? "/dashboard" : "/intro-quiz";
+  const introQuizLinked = cookies().get(INTRO_QUIZ_LINKED_COOKIE_KEY)?.value === "1";
+  const primaryHref = token ? "/dashboard" : introQuizLinked ? "/register" : "/intro-quiz";
 
   return (
     <main
@@ -261,6 +263,26 @@ export default function LandingPage() {
             </div>
           </div>
         </section>
+
+        <footer className="border-t-2 border-black px-5 py-10 md:px-8">
+          <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr] lg:items-end">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-black/45">Socials</p>
+              <h2 className="mt-2 text-3xl font-black leading-[0.95] tracking-[-0.04em] text-black md:text-4xl">
+                Stay close to Enroll outside the app.
+              </h2>
+              <p className="mt-4 max-w-2xl text-base text-black/65 md:text-lg">
+                Follow product updates, ask questions, and see how students build a stronger admissions workflow step by step.
+              </p>
+              <div className="mt-5 flex flex-wrap gap-2 text-sm text-black/55">
+                <span className="rounded-full border-2 border-black bg-white px-3 py-1 font-semibold">Telegram</span>
+                <span className="rounded-full border-2 border-black bg-white px-3 py-1 font-semibold">Instagram</span>
+              </div>
+            </div>
+
+            <SocialLottieButtons />
+          </div>
+        </footer>
       </div>
 
       <style>{`

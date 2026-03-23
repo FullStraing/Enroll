@@ -43,6 +43,8 @@ export type Profile = {
   honors?: string[];
   common_app_profile?: {
     dashboard_snapshot?: DashboardSnapshotData;
+    intro_quiz_completed?: boolean;
+    intro_quiz_answers?: IntroAnswers;
   };
 };
 

@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { COUNTRY_FLAG_MAP, introQuizStorageKey, TEST_SCORE_RULES } from "@/app/dashboard/constants";
+import { COUNTRY_FLAG_MAP, TEST_SCORE_RULES } from "@/app/dashboard/constants";
 import { buildDashboardProgress } from "@/app/dashboard/progress";
 import { captureDashboardBlob, copyImageToClipboard, downloadImageBlob } from "@/app/dashboard/share-dashboard";
 import type {
@@ -47,6 +47,7 @@ import {
 } from "@/app/dashboard/utils";
 import { apiFetch } from "@/lib/api";
 import { getToken } from "@/lib/auth";
+import { readStoredIntroQuiz, writeStoredIntroQuiz } from "@/lib/intro-quiz";
 import { formatDateShort, formatDateShortNoYear } from "@/lib/date-format";
 
 function DashboardPageContent() {
@@ -82,10 +83,9 @@ function DashboardPageContent() {
     if (!token) return;
 
     try {
-      const raw = window.localStorage.getItem(introQuizStorageKey);
-      if (raw) {
-        const parsed = JSON.parse(raw) as IntroStorage;
-        if (parsed?.answers) setQuizAnswers(parsed.answers);
+      const parsed = readStoredIntroQuiz() as IntroStorage | null;
+      if (parsed?.answers) {
+        setQuizAnswers(parsed.answers);
       }
     } catch {
       // Ignore invalid local quiz payload.
@@ -112,6 +112,9 @@ function DashboardPageContent() {
         setDocuments(documentsResp);
         setEssays(essaysResp);
         setApplications(applicationsResp);
+        if (!readStoredIntroQuiz()?.answers && profileResp.common_app_profile?.intro_quiz_answers) {
+          setQuizAnswers(profileResp.common_app_profile.intro_quiz_answers);
+        }
       } catch (error) {
         setStatusText(error instanceof Error ? error.message : "Failed to load dashboard.");
       } finally {
@@ -542,7 +545,7 @@ function DashboardPageContent() {
         tests: [...form.academicTests, ...form.languageTests].map((item) => item.type),
       };
       setQuizAnswers(nextAnswers);
-      window.localStorage.setItem(introQuizStorageKey, JSON.stringify({ step: 6, answers: nextAnswers }));
+      writeStoredIntroQuiz({ step: 6, answers: nextAnswers });
       if (autosave) {
         setAutosaveStatus("saved");
       } else {

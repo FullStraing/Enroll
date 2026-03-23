@@ -8,6 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { getToken } from "@/lib/auth";
+import {
+  INTRO_QUIZ_COMPLETED_STORAGE_KEY,
+  INTRO_QUIZ_LINKED_STORAGE_KEY,
+  readStoredIntroQuiz,
+  syncStoredIntroQuizToProfile,
+  writeStoredIntroQuiz,
+} from "@/lib/intro-quiz";
 
 type IntroAnswers = {
   country: string;
@@ -20,9 +27,6 @@ type IntroAnswers = {
   shortlistSize: string;
 };
 
-const storageKey = "enroll_intro_quiz_v1";
-const completedStorageKey = "enroll_intro_quiz_done";
-const completedCookieKey = "enroll_intro_quiz_done";
 const totalSteps = 7;
 
 const initialAnswers: IntroAnswers = {
@@ -105,14 +109,13 @@ export default function IntroQuizPage() {
   useEffect(() => {
     setIsAuthed(Boolean(getToken()));
     try {
-      const done = localStorage.getItem(completedStorageKey) === "1";
-      if (done) {
-        router.replace("/dashboard");
+      const linked = localStorage.getItem(INTRO_QUIZ_LINKED_STORAGE_KEY) === "1";
+      if (linked) {
+        router.replace(getToken() ? "/dashboard" : "/register");
         return;
       }
-      const raw = localStorage.getItem(storageKey);
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as { step: number; answers: IntroAnswers };
+      const parsed = readStoredIntroQuiz() as { step: number; answers: IntroAnswers } | null;
+      if (!parsed) return;
       if (parsed?.answers) setAnswers({ ...initialAnswers, ...parsed.answers });
       if (typeof parsed?.step === "number") setStep(Math.min(Math.max(parsed.step, 0), totalSteps));
     } catch {
@@ -121,13 +124,12 @@ export default function IntroQuizPage() {
   }, [router]);
 
   useEffect(() => {
-    localStorage.setItem(storageKey, JSON.stringify({ step, answers }));
+    writeStoredIntroQuiz({ step, answers });
   }, [step, answers]);
 
   useEffect(() => {
     if (step < totalSteps) return;
-    localStorage.setItem(completedStorageKey, "1");
-    document.cookie = `${completedCookieKey}=1; Path=/; Max-Age=${60 * 60 * 24 * 365}; SameSite=Lax`;
+    localStorage.setItem(INTRO_QUIZ_COMPLETED_STORAGE_KEY, "1");
   }, [step]);
 
   const progress = useMemo(() => Math.round((Math.min(step, totalSteps) / totalSteps) * 100), [step]);
@@ -163,6 +165,16 @@ export default function IntroQuizPage() {
     if (step === 5) return "Можно выбрать несколько вариантов.";
     if (step === 7) return "Дальше вы получите персональный стартовый план подачи.";
     return "Ответ займет 5-10 секунд.";
+  }
+
+  async function handleAuthedContinue() {
+    const token = getToken();
+    if (!token) return;
+    try {
+      await syncStoredIntroQuizToProfile(token);
+    } finally {
+      window.location.assign("/dashboard");
+    }
   }
 
   return (
@@ -239,12 +251,13 @@ export default function IntroQuizPage() {
                 </p>
                 <div className="mt-5 flex flex-wrap gap-2">
                   {isAuthed ? (
-                    <Link
-                      href="/dashboard"
+                    <button
+                      type="button"
+                      onClick={() => void handleAuthedContinue()}
                       className="inline-flex h-11 items-center justify-center rounded-xl border-2 border-black bg-[#FFDB58] px-5 text-sm font-semibold transition hover:-translate-y-0.5"
                     >
                       Перейти в Dashboard
-                    </Link>
+                    </button>
                   ) : (
                     <>
                       <Link
