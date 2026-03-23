@@ -521,21 +521,21 @@ export default function EssayWorkspacePage() {
         title={essay ? `Essay Workspace - ${essay.title}` : "Essay Workspace"}
         subtitle="Versions + Editor"
       >
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
           <div className="flex items-center gap-2 text-sm text-black/70">
             <Sparkles className="h-4 w-4" />
             Keep writing focus: tools open on demand.
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => setCompareOpen(true)} disabled={versions.length < 2}>
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-end">
+            <Button variant="outline" size="sm" onClick={() => setCompareOpen(true)} disabled={versions.length < 2} className="w-full sm:w-auto">
               <GitCompare className="h-4 w-4" />
               <span>Compare versions</span>
             </Button>
-            <Button variant="outline" size="sm" onClick={toggleAiPanel}>
+            <Button variant="outline" size="sm" onClick={toggleAiPanel} className="w-full sm:w-auto">
               <Bot className="h-4 w-4" />
               <span>AI Assistant</span>
             </Button>
-            <Button variant="outline" size="sm" onClick={() => setFocusMode((prev) => !prev)}>
+            <Button variant="outline" size="sm" onClick={() => setFocusMode((prev) => !prev)} className="w-full sm:w-auto">
               <Focus className="h-4 w-4" />
               <span>{focusMode ? "Exit focus" : "Focus mode"}</span>
             </Button>
@@ -623,18 +623,18 @@ export default function EssayWorkspacePage() {
             ) : null}
 
             <div className="min-w-0 w-full">
-              <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="flex flex-col gap-3 md:flex-row md:flex-wrap md:items-start md:justify-between">
                 <div>
-                  <h2 className="text-2xl font-bold">{essay.title}</h2>
+                  <h2 className="text-2xl font-bold break-words">{essay.title}</h2>
                   <p className="mt-1 text-sm text-black/65">{essay.university_detail?.name || "General essay"}</p>
                   {essay.prompt_title ? <p className="mt-1 text-sm text-black/75">Prompt: {essay.prompt_title}</p> : null}
                 </div>
-                <div className="flex flex-col items-end gap-2">
+                <div className="flex flex-col gap-2 md:items-end">
                   <span className="text-xs text-black/60">{saveState === "error" ? "Autosave failed" : savedAgoLabel}</span>
-                  <div className="flex items-center gap-2">
-                  <Badge variant="cyan">Words: {wordCount}</Badge>
-                  <Badge>Target: {essay.target_word_count}</Badge>
-                  <Badge variant={wordTargetState.variant}>{wordTargetState.label}</Badge>
+                  <div className="flex flex-wrap items-center gap-2 md:justify-end">
+                    <Badge variant="cyan">Words: {wordCount}</Badge>
+                    <Badge>Target: {essay.target_word_count}</Badge>
+                    <Badge variant={wordTargetState.variant}>{wordTargetState.label}</Badge>
                   </div>
                 </div>
               </div>
@@ -671,12 +671,12 @@ export default function EssayWorkspacePage() {
                 <p className="mt-2 text-xs text-black/70">{wordTargetState.hint}</p>
               </div>
 
-              <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-sm">
+              <div className="mt-3 flex flex-col gap-3 text-sm md:flex-row md:flex-wrap md:items-center md:justify-between">
                 <div className="text-black/65">
                   Word count: {wordCount} / {essay.target_word_count} | Essay Score: coming soon
                 </div>
-                <div className="flex items-center gap-2">
-                  <Button size="sm" onClick={saveNow} disabled={saving}>
+                <div className="flex w-full items-center gap-2 md:w-auto">
+                  <Button size="sm" onClick={saveNow} disabled={saving} className="w-full md:w-auto">
                     {saving ? <Spinner size="sm" /> : null}
                     <span>{saving ? "Saving..." : "Save now"}</span>
                   </Button>
@@ -688,7 +688,7 @@ export default function EssayWorkspacePage() {
         )}
 
         {aiPanelVisible && !loading && essay ? (
-          <div className="fixed inset-y-20 right-4 z-40 w-[min(380px,92vw)] rounded-2xl border-2 border-black bg-white p-4 shadow-[0_8px_0_#000]">
+          <div className="fixed inset-x-3 bottom-3 z-40 rounded-2xl border-2 border-black bg-white p-4 shadow-[0_8px_0_#000] sm:inset-y-20 sm:right-4 sm:left-auto sm:bottom-auto sm:w-[min(380px,92vw)]">
             <div className="flex items-center justify-between gap-2">
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Bot className="h-4 w-4" />
@@ -710,8 +710,8 @@ export default function EssayWorkspacePage() {
         ) : null}
 
         {compareOpen && !loading && essay ? (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-            <div className="max-h-[90vh] w-full max-w-5xl overflow-auto rounded-2xl border-2 border-black bg-white p-4 shadow-[0_8px_0_#000]">
+          <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 p-2 sm:items-center sm:p-4">
+            <div className="max-h-[calc(100dvh-16px)] w-full max-w-5xl overflow-auto rounded-2xl border-2 border-black bg-white p-3 shadow-[0_8px_0_#000] sm:max-h-[90vh] sm:p-4">
               <div className="flex items-center justify-between gap-2">
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <GitCompare className="h-4 w-4" />
@@ -788,16 +788,16 @@ export default function EssayWorkspacePage() {
                   </Button>
                 ) : null}
               </div>
-              <div className="mt-3 max-h-[60vh] space-y-2 overflow-auto rounded-xl border border-black/10 bg-white p-3 text-xs">
+              <div className="mt-3 max-h-[55vh] space-y-2 overflow-auto rounded-xl border border-black/10 bg-white p-3 text-xs sm:max-h-[60vh]">
                 {compareLoading ? <p className="text-black/60">Loading diff...</p> : null}
                 {compareMode === "side" ? (
-                  <div className="grid grid-cols-[1fr_1fr] gap-2">
+                  <div className="grid grid-cols-1 gap-2 md:grid-cols-[1fr_1fr]">
                     <div className="rounded-lg border border-black/10 bg-black/[0.02] px-2 py-1 font-semibold">OLD VERSION</div>
                     <div className="rounded-lg border border-black/10 bg-black/[0.02] px-2 py-1 font-semibold">NEW VERSION</div>
                     {compareDisplayRows.map((row, index) => {
                       if (row.kind === "ellipsis") {
                         return (
-                          <div key={`diff-${index}`} className="col-span-2 rounded-lg border border-black/10 px-2 py-1 text-black/55">
+                          <div key={`diff-${index}`} className="rounded-lg border border-black/10 px-2 py-1 text-black/55 md:col-span-2">
                             ... {row.unchangedCount} lines unchanged ...
                           </div>
                         );
@@ -880,13 +880,13 @@ export default function EssayWorkspacePage() {
         ) : null}
 
         {createVersionOpen ? (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 p-2 sm:items-center sm:p-4">
             <form
               onSubmit={async (event) => {
                 const ok = await createVersion(event);
                 if (ok) setCreateVersionOpen(false);
               }}
-              className="w-full max-w-md rounded-2xl border-2 border-black bg-white p-4 shadow-[0_8px_0_#000]"
+              className="mt-2 w-full max-w-md rounded-2xl border-2 border-black bg-white p-4 shadow-[0_8px_0_#000] sm:mt-0"
             >
               <div className="flex items-center justify-between gap-2">
                 <CardTitle className="text-lg">Create new version</CardTitle>

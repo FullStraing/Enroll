@@ -484,17 +484,17 @@ export default function UniversityProfilePage() {
               <article className="rounded-2xl border border-white/15 bg-white/5 p-5">
                 <h2 className="text-xl font-semibold">Average SAT</h2>
                 <p className="mt-2 text-sm text-white/70">25th-75th: {sat25 ?? "-"} - {sat75 ?? "-"}</p>
-                <p className="mt-2 text-5xl font-black">{avgSat ? Math.round(avgSat) : "-"}</p>
+                <p className="mt-2 text-4xl font-black md:text-5xl">{avgSat ? Math.round(avgSat) : "-"}</p>
               </article>
               <article className="rounded-2xl border border-white/15 bg-white/5 p-5">
                 <h2 className="text-xl font-semibold">Average ACT</h2>
                 <p className="mt-2 text-sm text-white/70">25th-75th: {act25 ?? "-"} - {act75 ?? "-"}</p>
-                <p className="mt-2 text-5xl font-black">{avgAct ? Math.round(avgAct) : "-"}</p>
+                <p className="mt-2 text-4xl font-black md:text-5xl">{avgAct ? Math.round(avgAct) : "-"}</p>
               </article>
               <article className="rounded-2xl border border-white/15 bg-white/5 p-5">
                 <h2 className="text-xl font-semibold">Average GPA</h2>
                 <p className="mt-2 text-sm text-white/70">Unweighted scale (0-4)</p>
-                <p className="mt-2 text-5xl font-black">{avgGpa != null ? avgGpa.toFixed(2) : "N/A"}</p>
+                <p className="mt-2 text-4xl font-black md:text-5xl">{avgGpa != null ? avgGpa.toFixed(2) : "N/A"}</p>
               </article>
             </section>
 
@@ -504,7 +504,7 @@ export default function UniversityProfilePage() {
                   <span aria-hidden>👩‍🎓</span>
                   Female Admissions
                 </h2>
-                <div className="mt-4 grid grid-cols-[1fr_1fr_88px] items-center gap-3">
+                <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_1fr_88px] sm:items-center">
                   <div>
                     <p className="text-3xl font-black">{formatInt(femaleAdmissions.applied)}</p>
                     <p className="text-xs text-white/60">Females Applied</p>
@@ -513,7 +513,9 @@ export default function UniversityProfilePage() {
                     <p className="text-3xl font-black">{formatInt(femaleAdmissions.accepted)}</p>
                     <p className="text-xs text-white/60">Females Accepted</p>
                   </div>
-                  <CircularProgress value={Math.round(femaleAdmissions.rate || 0)} size={88} thickness={12} fillColor="#F4A6C8" />
+                  <div className="justify-self-start sm:justify-self-end">
+                    <CircularProgress value={Math.round(femaleAdmissions.rate || 0)} size={88} thickness={12} fillColor="#F4A6C8" />
+                  </div>
                 </div>
               </Card>
 
@@ -522,7 +524,7 @@ export default function UniversityProfilePage() {
                   <span aria-hidden>👨‍🎓</span>
                   Male Admissions
                 </h2>
-                <div className="mt-4 grid grid-cols-[1fr_1fr_88px] items-center gap-3">
+                <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_1fr_88px] sm:items-center">
                   <div>
                     <p className="text-3xl font-black">{formatInt(maleAdmissions.applied)}</p>
                     <p className="text-xs text-white/60">Males Applied</p>
@@ -531,7 +533,9 @@ export default function UniversityProfilePage() {
                     <p className="text-3xl font-black">{formatInt(maleAdmissions.accepted)}</p>
                     <p className="text-xs text-white/60">Males Accepted</p>
                   </div>
-                  <CircularProgress value={Math.round(maleAdmissions.rate || 0)} size={88} thickness={12} fillColor="#7FB6FF" />
+                  <div className="justify-self-start sm:justify-self-end">
+                    <CircularProgress value={Math.round(maleAdmissions.rate || 0)} size={88} thickness={12} fillColor="#7FB6FF" />
+                  </div>
                 </div>
               </Card>
             </section>
@@ -541,7 +545,7 @@ export default function UniversityProfilePage() {
               <div className="mt-4 grid gap-2">
                 {factors.length ? (
                   factors.map((f, idx) => (
-                    <div key={`${f.factor_name || "factor"}-${idx}`} className="grid grid-cols-[1fr_140px] items-center gap-3">
+                    <div key={`${f.factor_name || "factor"}-${idx}`} className="grid gap-2 sm:grid-cols-[1fr_140px] sm:items-center sm:gap-3">
                       <p className="truncate text-sm">{(f.factor_name || "-").replaceAll("_", " ")}</p>
                       <Progress value={factorWeight(f.importance_level)} variant="primary" className="h-2" />
                     </div>

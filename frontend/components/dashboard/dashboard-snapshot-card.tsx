@@ -79,11 +79,11 @@ function DashboardSnapshotSurface({
               A clean admissions card with your profile, activities, and current university list.
             </CardDescription>
           </div>
-          <div className="mt-3 inline-flex items-center gap-2 self-start text-black">
+          <div className="mt-3 inline-flex items-center gap-2 self-start text-black sm:ml-auto">
             <Image src="/icons/logo.svg" alt="Enroll" width={28} height={28} className="h-7 w-7" />
             <div className="leading-none">
               <p className="text-[11px] font-black uppercase tracking-[0.22em] text-black/45">Powered by</p>
-              <p className="mt-1 text-[34px] font-black leading-none tracking-[-0.04em] text-black">Enroll</p>
+              <p className="mt-1 text-[28px] font-black leading-none tracking-[-0.04em] text-black sm:text-[34px]">Enroll</p>
             </div>
           </div>
         </div>
@@ -124,7 +124,7 @@ function DashboardSnapshotSurface({
                     {allTestLabels.map((label) => (
                       <span
                         key={label}
-                        className="inline-flex max-w-full items-center rounded-full border border-black/12 bg-[#DAF5F0]/45 px-3 py-1 text-xs font-black leading-none tracking-[0.04em] text-black/70 whitespace-nowrap"
+                        className="inline-flex shrink-0 items-center rounded-full border border-black/12 bg-[#DAF5F0]/45 px-3 py-1 text-xs font-black leading-none tracking-[0.03em] text-black/70 whitespace-nowrap"
                       >
                         {label}
                       </span>
@@ -140,7 +140,7 @@ function DashboardSnapshotSurface({
                     {apLabels.map((label) => (
                       <span
                         key={label}
-                        className="inline-flex max-w-full items-center rounded-full border border-black/12 bg-[#FFF4CC] px-3 py-1 text-xs font-black leading-none tracking-[0.04em] text-black/70 whitespace-nowrap"
+                        className="inline-flex shrink-0 items-center rounded-full border border-black/12 bg-[#FFF4CC] px-3 py-1 text-xs font-black leading-none tracking-[0.03em] text-black/70 whitespace-nowrap"
                       >
                         {label}
                       </span>
@@ -249,10 +249,10 @@ export function DashboardSnapshotCard({
       <DashboardSnapshotSurface
         {...surfaceProps}
         actionsSlot={
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
             <Button
               onClick={onShare}
-              className="min-w-[150px] gap-2"
+              className="w-full gap-2 sm:min-w-[150px] sm:w-auto"
               disabled={sharingDashboard || savingSnapshot}
             >
               <Share2 className="h-4 w-4" />
@@ -261,13 +261,13 @@ export function DashboardSnapshotCard({
             <Button
               variant="outline"
               onClick={onSaveImage}
-              className="min-w-[136px] gap-2"
+              className="w-full gap-2 sm:min-w-[136px] sm:w-auto"
               disabled={savingSnapshot || sharingDashboard}
             >
               <Download className="h-4 w-4" />
               {savingSnapshot ? "Saving image..." : "Save image"}
             </Button>
-            <Button variant="secondary" onClick={onEdit} className="min-w-[132px]">
+            <Button variant="secondary" onClick={onEdit} className="w-full sm:min-w-[132px] sm:w-auto">
               Edit profile
             </Button>
           </div>

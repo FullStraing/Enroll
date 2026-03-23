@@ -352,11 +352,11 @@ function DashboardPageContent() {
   const extraLanguageTests = primaryLanguageTest ? shareLanguageTests.slice(1) : shareLanguageTests;
   const allTestLabels = [...extraAcademicTests, ...extraLanguageTests].map((item) => {
     const label = item.type === "DET" ? "Duolingo" : item.type;
-    return `${label} ${item.score.trim()}`;
+    return `${label}\u00A0${item.score.trim().replace(/\s+/g, " ")}`;
   });
   const apLabels = (profile?.common_app_profile?.dashboard_snapshot?.ap_scores || [])
     .filter((item) => item.exam?.trim() && item.score?.trim())
-    .map((item) => `${item.exam.replace(/^AP\s+/u, "")} ${item.score.trim()}`)
+    .map((item) => `${item.exam.replace(/^AP\s+/u, "").replace(/\s+/g, " ")}\u00A0${item.score.trim().replace(/\s+/g, " ")}`)
     .slice(0, 8);
 
   const gpaMax = editForm.gpaScale === "5.0" ? 5 : editForm.gpaScale === "Percent" ? 100 : 4;

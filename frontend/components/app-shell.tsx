@@ -125,7 +125,7 @@ export function AppShell({
 
       <aside
         className={`glass glass-soft z-50 h-fit rounded-3xl p-4 transition-all duration-300 ease-in-out ${
-          mobileMenuOpen ? "fixed inset-y-3 left-3 w-[280px] overflow-auto" : "hidden"
+          mobileMenuOpen ? "fixed inset-y-3 left-3 w-[min(280px,calc(100vw-24px))] overflow-auto" : "hidden"
         } lg:sticky lg:top-6 lg:block lg:w-auto`}
       >
           <div className={`mb-4 flex items-center gap-2 ${collapsed ? "justify-center" : "justify-between"}`}>

@@ -148,4 +148,10 @@ pm run dev:clean for explicit cache resets. Verified with frontend lint/build.
 
 - 2026-03-23: Swapped visible brand entry points to the new `public/brand/logo-mark.svg` asset and simplified the user-facing product wordmark from `Enroll AI` to `Enroll` in the app shell and landing header.
 
+- 2026-03-23: Started a broader responsive cleanup pass across the shared shell and highest-risk mobile surfaces. Tightened the mobile sidebar width, stacked dashboard snapshot actions cleanly on small screens, relaxed the Discover universities card action area, and converted several fixed-width university detail grids into mobile-safe layouts.
+
 - 2026-03-23: Removed the semi-transparent white shell from the landing container and restored a fully opaque page surface so the header/card background matches the rest of the product instead of reading as a glass layer.
+
+- Tightened dashboard snapshot label rendering so All Tests and AP chips use non-breaking labels and stay stable in exports/mobile widths.
+
+- Continued the responsive cleanup pass: made Edit Profile modal header/footer mobile-safe, stabilized snapshot chips, and improved Essay workspace toolbars, side panels, and comparison/version dialogs for phones and small tablets.
