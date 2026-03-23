@@ -121,9 +121,9 @@ function DashboardSnapshotSurface({
                 <div className="border-t border-black/8 px-4 py-3">
                   <p className="text-xs font-black uppercase tracking-[0.16em] text-black/40">All Tests</p>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {allTestLabels.map((label) => (
+                    {allTestLabels.map((label, index) => (
                       <span
-                        key={label}
+                        key={`test-${index}-${label}`}
                         className="inline-flex shrink-0 items-center rounded-full border border-black/12 bg-[#DAF5F0]/45 px-3 py-1 text-xs font-black leading-none tracking-[0.03em] text-black/70 whitespace-nowrap"
                       >
                         {label}
@@ -137,9 +137,9 @@ function DashboardSnapshotSurface({
                 <div className="border-t border-black/8 px-4 py-3">
                   <p className="text-xs font-black uppercase tracking-[0.16em] text-black/40">AP Exams</p>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {apLabels.map((label) => (
+                    {apLabels.map((label, index) => (
                       <span
-                        key={label}
+                        key={`ap-${index}-${label}`}
                         className="inline-flex shrink-0 items-center rounded-full border border-black/12 bg-[#FFF4CC] px-3 py-1 text-xs font-black leading-none tracking-[0.03em] text-black/70 whitespace-nowrap"
                       >
                         {label}
@@ -155,8 +155,8 @@ function DashboardSnapshotSurface({
                 <p className="text-sm font-black uppercase tracking-[0.14em] text-black/45">Activities</p>
                 {activities.length ? (
                   <ul className="mt-3 grid gap-3">
-                    {activities.map((activity) => (
-                      <li key={activity} className="flex gap-2 text-sm font-semibold leading-relaxed text-black/80">
+                    {activities.map((activity, index) => (
+                      <li key={`activity-${index}-${activity}`} className="flex gap-2 text-sm font-semibold leading-relaxed text-black/80">
                         <span className="mt-[1px] text-black">&bull;</span>
                         <span>{activity}</span>
                       </li>
@@ -212,9 +212,9 @@ function DashboardSnapshotSurface({
               <p className="text-sm font-black uppercase tracking-[0.14em] text-black/45">Honors</p>
               {honors.length ? (
                 <div className="mt-3 grid gap-2">
-                  {honors.map((honor) => (
+                  {honors.map((honor, index) => (
                     <div
-                      key={honor}
+                      key={`honor-${index}-${honor}`}
                       className="rounded-xl border border-black/12 bg-[#FFF4CC] px-3 py-3 text-sm font-semibold leading-relaxed text-black/80"
                     >
                       {honor}

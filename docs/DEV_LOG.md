@@ -155,3 +155,5 @@ pm run dev:clean for explicit cache resets. Verified with frontend lint/build.
 - Tightened dashboard snapshot label rendering so All Tests and AP chips use non-breaking labels and stay stable in exports/mobile widths.
 
 - Continued the responsive cleanup pass: made Edit Profile modal header/footer mobile-safe, stabilized snapshot chips, and improved Essay workspace toolbars, side panels, and comparison/version dialogs for phones and small tablets.
+
+- Investigated a large repeated DevTools console error dump: fixed duplicate React keys in dashboard snapshot chips/lists and added a proper app icon to remove favicon 404 noise.
