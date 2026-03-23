@@ -191,8 +191,8 @@ export default function CalendarPage() {
           <LoadingState />
         ) : (
           <div className="grid gap-4">
-            <Card className="relative overflow-hidden bg-gradient-to-br from-white via-white to-[#DAF5F0]/35 shadow-none">
-              <div className="grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
+            <Card className="relative overflow-hidden bg-gradient-to-br from-white via-white to-[#DAF5F0]/20 shadow-none">
+              <div className="grid gap-5 xl:grid-cols-[minmax(0,1.28fr)_320px]">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-black/45">Today-first workspace</p>
                   <h2 className="mt-2 text-4xl font-black tracking-[-0.05em] text-black">Today</h2>
@@ -217,39 +217,39 @@ export default function CalendarPage() {
                   </div>
                 </div>
 
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
+                <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
                   <div className="rounded-2xl border border-black/10 bg-white/90 p-4">
                     <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#FFF4CC]">
-                        <ListTodo className="h-5 w-5 text-black/70" />
+                      <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-[#FFF4CC]">
+                        <ListTodo className="h-4 w-4 text-black/70" />
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-black">Open tasks</p>
-                        <p className="text-2xl font-black text-black">{openTasksCount}</p>
+                        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-black/45">Open tasks</p>
+                        <p className="mt-1 text-2xl font-black text-black">{openTasksCount}</p>
                       </div>
                     </div>
                   </div>
 
                   <div className="rounded-2xl border border-black/10 bg-white/90 p-4">
                     <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#DAF5F0]">
-                        <Clock3 className="h-5 w-5 text-black/70" />
+                      <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-[#DAF5F0]">
+                        <Clock3 className="h-4 w-4 text-black/70" />
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-black">Due today</p>
-                        <p className="text-2xl font-black text-black">{todayTasks.length}</p>
+                        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-black/45">Due today</p>
+                        <p className="mt-1 text-2xl font-black text-black">{todayTasks.length}</p>
                       </div>
                     </div>
                   </div>
 
                   <div className="rounded-2xl border border-black/10 bg-white/90 p-4">
                     <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#E8F4CF]">
-                        <CheckCircle2 className="h-5 w-5 text-black/70" />
+                      <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-[#E8F4CF]">
+                        <CheckCircle2 className="h-4 w-4 text-black/70" />
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-black">Completed</p>
-                        <p className="text-2xl font-black text-black">{completedTasks.length}</p>
+                        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-black/45">Completed</p>
+                        <p className="mt-1 text-2xl font-black text-black">{completedTasks.length}</p>
                       </div>
                     </div>
                   </div>

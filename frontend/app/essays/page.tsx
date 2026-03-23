@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
 import { Progress } from "@/components/ui/progress";
+import { Select } from "@/components/ui/select";
 import { formatDateTimeShort } from "@/lib/date-format";
 import { clearSessionCaches, readSessionCache, SESSION_CACHE_KEYS, SESSION_CACHE_TTLS, writeSessionCache } from "@/lib/session-cache";
 import { RequiredMark } from "@/components/ui/required-mark";
@@ -412,18 +413,13 @@ function EssaysPageContent() {
               <form onSubmit={createEssay} className="mt-5 grid gap-4">
                 <label className="text-sm text-black/70">
                   Essay type<RequiredMark />
-                  <select
+                  <Select
                     value={form.essay_type}
-                    onChange={(event) => applyEssayTypeTemplate(event.target.value as EssayType)}
-                    className="mt-1 w-full rounded-xl border border-black/20 bg-white px-3 py-2"
-                    required
-                  >
-                    {essayTypeOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(value) => applyEssayTypeTemplate(value as EssayType)}
+                    options={essayTypeOptions.map((option) => ({ value: option.value, label: option.label }))}
+                    className="mt-1 w-full border border-black/20"
+                    ariaLabel="Essay type"
+                  />
                 </label>
 
                 <label className="text-sm text-black/70">
@@ -450,21 +446,17 @@ function EssaysPageContent() {
 
                     <label className="text-sm text-black/70">
                       University<RequiredMark />
-                      <select
+                      <Select
                         value={form.university}
-                        onChange={(event) => setForm((prev) => ({ ...prev, university: event.target.value }))}
+                        onChange={(value) => setForm((prev) => ({ ...prev, university: value }))}
                         disabled={universitiesLoading}
-                        className="mt-1 w-full rounded-xl border border-black/20 bg-white px-3 py-2"
-                        required
-                      >
-                        {universitiesLoading ? <option value="">Loading...</option> : null}
-                        <option value="">Select university</option>
-                        {sortedUniversities.map((item) => (
-                          <option key={item.id} value={item.id}>
-                            {item.name}
-                          </option>
-                        ))}
-                      </select>
+                        className="mt-1 w-full border border-black/20"
+                        options={[
+                          { value: "", label: universitiesLoading ? "Loading..." : "Select university" },
+                          ...sortedUniversities.map((item) => ({ value: String(item.id), label: item.name })),
+                        ]}
+                        ariaLabel="University"
+                      />
                     </label>
 
                     <label className="text-sm text-black/70">

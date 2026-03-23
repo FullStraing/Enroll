@@ -157,3 +157,11 @@ pm run dev:clean for explicit cache resets. Verified with frontend lint/build.
 - Continued the responsive cleanup pass: made Edit Profile modal header/footer mobile-safe, stabilized snapshot chips, and improved Essay workspace toolbars, side panels, and comparison/version dialogs for phones and small tablets.
 
 - Investigated a large repeated DevTools console error dump: fixed duplicate React keys in dashboard snapshot chips/lists and added a proper app icon to remove favicon 404 noise.
+
+- Reworked Tasks hero so task capture is the primary focal point: enlarged the quick composer, improved CTA prominence, and compressed the right-side stats into a lighter support rail.
+
+- Added a rotating typewriter-style placeholder to the Tasks quick composer so the main input demonstrates example admissions tasks before the user starts typing.
+
+- Tuned the Tasks typewriter placeholder to animate faster and read slightly smaller, keeping the input focused without overpowering the user-entered text.
+
+- Built a shared branded `Select` component in `frontend/components/ui/select.tsx` and replaced the remaining native `<select>` menus across the main product surfaces. Tasks, Universities, Essays, Documents, Activities, Dashboard Edit Profile, Common App fields, Onboarding, and Pilot now share one dropdown language instead of mixing browser-default menus with page-local styling.

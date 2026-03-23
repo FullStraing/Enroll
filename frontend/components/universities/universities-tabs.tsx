@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/select";
 
 type UniversitiesTabsProps = {
   activeTab: "my" | "discover";
@@ -43,17 +44,13 @@ export function UniversitiesTabs({
       {activeTab === "discover" ? (
         <label className="flex items-center gap-2 text-sm text-black/70">
           Per page
-          <select
-            value={pageSize}
-            onChange={(event) => onPageSizeChange(Number(event.target.value) || 10)}
-            className="rounded-lg border border-black/20 bg-white px-2 py-1 text-sm"
-          >
-            {pageSizeOptions.map((size) => (
-              <option key={size} value={size}>
-                {size}
-              </option>
-            ))}
-          </select>
+          <Select
+            value={String(pageSize)}
+            onChange={(value) => onPageSizeChange(Number(value) || 10)}
+            options={pageSizeOptions.map((size) => ({ value: String(size), label: String(size) }))}
+            className="h-9 min-w-[92px] rounded-lg border border-black/20 px-3 py-1 text-sm shadow-none"
+            ariaLabel="Results per page"
+          />
         </label>
       ) : null}
     </div>

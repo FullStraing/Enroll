@@ -12,7 +12,7 @@ import {
   useState,
 } from "react";
 import { createPortal } from "react-dom";
-import { Check, ChevronDown, GripVertical, MoreVertical, SlidersHorizontal } from "lucide-react";
+import { Check, GripVertical, MoreVertical, SlidersHorizontal } from "lucide-react";
 import {
   ACTION_MENU_GAP,
   MY_UNIVERSITIES_DEFAULT_COLUMNS,
@@ -20,6 +20,7 @@ import {
   MY_UNIVERSITIES_VISIBLE_COLUMNS_KEY,
 } from "@/app/universities/constants";
 import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/select";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UniversityLogo } from "@/components/universities/university-logo";
@@ -600,36 +601,32 @@ export function MyUniversitiesTable({
               {activeColumns.map((column) => (
                 <td key={column.id} className="px-2 py-3">
                   {column.id === "category" ? (
-                    <div className="relative inline-block">
-                      <select
+                    <div className="inline-block">
+                      <Select
                         value={item.category}
-                        onChange={(event) => onUpdateCategory(item.id, event.target.value as StudentUniversity["category"])}
-                        className={`h-10 appearance-none rounded-xl border-2 px-3 pr-9 text-sm font-semibold text-black shadow-[0_2px_0_#000] ${categorySelectToneClass(item.category)}`}
+                        onChange={(value) => onUpdateCategory(item.id, value as StudentUniversity["category"])}
+                        className={`h-10 rounded-xl border-2 px-3 py-2 text-sm font-semibold text-black shadow-[0_2px_0_#000] ${categorySelectToneClass(item.category)}`}
                         disabled={updatingItemId === item.id}
-                      >
-                        <option value="high_reach">High Reach</option>
-                        <option value="reach">Reach</option>
-                        <option value="target">Target</option>
-                        <option value="likely">Likely</option>
-                        <option value="safety">Safety</option>
-                      </select>
-                      <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-black/70" />
+                        options={[
+                          { value: "high_reach", label: "High Reach" },
+                          { value: "reach", label: "Reach" },
+                          { value: "target", label: "Target" },
+                          { value: "likely", label: "Likely" },
+                          { value: "safety", label: "Safety" },
+                        ]}
+                        ariaLabel={`Category for ${item.university.name}`}
+                      />
                     </div>
                   ) : column.id === "status" ? (
-                    <div className="relative inline-block">
-                      <select
+                    <div className="inline-block">
+                      <Select
                         value={item.status}
-                        onChange={(event) => onUpdateStatus(item.id, event.target.value as StudentUniversity["status"])}
-                        className={`h-10 appearance-none rounded-xl border-2 px-3 pr-9 text-sm font-semibold text-black shadow-[0_2px_0_#000] ${statusSelectTone(item.status)}`}
+                        onChange={(value) => onUpdateStatus(item.id, value as StudentUniversity["status"])}
+                        className={`h-10 rounded-xl border-2 px-3 py-2 text-sm font-semibold text-black shadow-[0_2px_0_#000] ${statusSelectTone(item.status)}`}
                         disabled={updatingItemId === item.id}
-                      >
-                        {STATUS_OPTIONS.map((statusOption) => (
-                          <option key={statusOption.value} value={statusOption.value}>
-                            {statusOption.label}
-                          </option>
-                        ))}
-                      </select>
-                      <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-black/70" />
+                        options={STATUS_OPTIONS.map((statusOption) => ({ value: statusOption.value, label: statusOption.label }))}
+                        ariaLabel={`Status for ${item.university.name}`}
+                      />
                     </div>
                   ) : (
                     column.renderCell?.(item)

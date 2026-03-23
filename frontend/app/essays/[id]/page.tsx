@@ -17,6 +17,7 @@ import { EssayRichEditor } from "@/components/essay-rich-editor";
 import { Progress } from "@/components/ui/progress";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useBodyScrollLock } from "@/components/ui/use-body-scroll-lock";
+import { Select } from "@/components/ui/select";
 import { formatDateTimeShort } from "@/lib/date-format";
 
 type Essay = {
@@ -722,28 +723,26 @@ export default function EssayWorkspacePage() {
                 </Button>
               </div>
               <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
-                <select
-                  value={compareLeftId || ""}
-                  onChange={(event) => setCompareLeftId(Number(event.target.value))}
-                  className="rounded-xl border border-black/20 bg-white px-2 py-2 text-sm"
-                >
-                  {versions.map((item) => (
-                    <option key={`left-${item.id}`} value={item.id}>
-                      v{item.version_number} {versionSuffix(item)}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  value={compareRightId || ""}
-                  onChange={(event) => setCompareRightId(Number(event.target.value))}
-                  className="rounded-xl border border-black/20 bg-white px-2 py-2 text-sm"
-                >
-                  {versions.map((item) => (
-                    <option key={`right-${item.id}`} value={item.id}>
-                      v{item.version_number} {versionSuffix(item)}
-                    </option>
-                  ))}
-                </select>
+                <Select
+                  value={compareLeftId ? String(compareLeftId) : ""}
+                  onChange={(value) => setCompareLeftId(Number(value))}
+                  className="border border-black/20 px-2 py-2 text-sm"
+                  options={versions.map((item) => ({
+                    value: String(item.id),
+                    label: `v${item.version_number} ${versionSuffix(item)}`,
+                  }))}
+                  ariaLabel="Left version"
+                />
+                <Select
+                  value={compareRightId ? String(compareRightId) : ""}
+                  onChange={(value) => setCompareRightId(Number(value))}
+                  className="border border-black/20 px-2 py-2 text-sm"
+                  options={versions.map((item) => ({
+                    value: String(item.id),
+                    label: `v${item.version_number} ${versionSuffix(item)}`,
+                  }))}
+                  ariaLabel="Right version"
+                />
               </div>
               <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
@@ -906,16 +905,18 @@ export default function EssayWorkspacePage() {
                 </label>
                 <label className="text-xs font-semibold uppercase tracking-wide text-black/60">
                   Version status
-                  <select
-                    className="mt-1 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm"
+                  <Select
+                    className="mt-1 w-full border border-black/20 text-sm"
                     value={newVersionStatus}
-                    onChange={(event) => setNewVersionStatus(event.target.value as EssayVersion["status"])}
-                  >
-                    <option value="draft">draft</option>
-                    <option value="revised">revised</option>
-                    <option value="ai_improved">ai_improved</option>
-                    <option value="final">final</option>
-                  </select>
+                    onChange={(value) => setNewVersionStatus(value as EssayVersion["status"])}
+                    options={[
+                      { value: "draft", label: "draft" },
+                      { value: "revised", label: "revised" },
+                      { value: "ai_improved", label: "ai_improved" },
+                      { value: "final", label: "final" },
+                    ]}
+                    ariaLabel="Version status"
+                  />
                 </label>
                 <Button type="submit" disabled={creatingVersion}>
                   {creatingVersion ? <Spinner size="sm" /> : null}

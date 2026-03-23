@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { ProtectedPage } from "@/components/protected-page";
+import { Select } from "@/components/ui/select";
 import { getToken } from "@/lib/auth";
 import { apiFetch } from "@/lib/api";
 import { clearSessionCaches, readSessionCache, SESSION_CACHE_KEYS, SESSION_CACHE_TTLS, writeSessionCache } from "@/lib/session-cache";
@@ -187,13 +188,13 @@ function SelectField({
   return (
     <label className="text-sm text-white/75">
       {label}
-      <select value={value} onChange={(event) => onChange(event.target.value)} className="mt-1 block w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white">
-        {options.map((option) => (
-          <option key={option || "empty"} value={option} className="bg-[#0b1020]">
-            {option || "-"}
-          </option>
-        ))}
-      </select>
+      <Select
+        value={value}
+        onChange={onChange}
+        options={options.map((option) => ({ value: option, label: option || "-" }))}
+        className="mt-1 block w-full border-white/10 bg-white/5 text-sm text-white hover:border-white/25 focus-visible:border-white/40"
+        ariaLabel={label}
+      />
     </label>
   );
 }

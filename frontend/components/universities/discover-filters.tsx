@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/select";
 import type { DiscoverFilters } from "@/app/universities/types";
 
 type DiscoverFiltersProps = {
@@ -78,36 +79,36 @@ export function DiscoverFiltersPanel({
 
           <label className="text-xs text-black/70">
             Chances
-            <select
+            <Select
               value={filtersDraft.chanceBand}
-              onChange={(event) =>
-                onChange((prev) => ({ ...prev, chanceBand: event.target.value as DiscoverFilters["chanceBand"] }))
-              }
-              className="mt-1 w-full rounded-lg border border-black/15 bg-white px-2 py-2 text-sm"
-            >
-              <option value="">All chances</option>
-              <option value="safety">Safety</option>
-              <option value="likely">Likely</option>
-              <option value="target">Target</option>
-              <option value="reach">Reach</option>
-              <option value="high_reach">High Reach</option>
-            </select>
+              onChange={(value) => onChange((prev) => ({ ...prev, chanceBand: value as DiscoverFilters["chanceBand"] }))}
+              options={[
+                { value: "", label: "All chances" },
+                { value: "safety", label: "Safety" },
+                { value: "likely", label: "Likely" },
+                { value: "target", label: "Target" },
+                { value: "reach", label: "Reach" },
+                { value: "high_reach", label: "High Reach" },
+              ]}
+              className="mt-1 w-full rounded-lg border border-black/15 px-2 py-2 text-sm"
+              ariaLabel="Filter by chances"
+            />
           </label>
 
           <label className="text-xs text-black/70">
             Ranking band
-            <select
+            <Select
               value={filtersDraft.rankingBand}
-              onChange={(event) =>
-                onChange((prev) => ({ ...prev, rankingBand: event.target.value as DiscoverFilters["rankingBand"] }))
-              }
-              className="mt-1 w-full rounded-lg border border-black/15 bg-white px-2 py-2 text-sm"
-            >
-              <option value="">Any</option>
-              <option value="high">High selectivity</option>
-              <option value="medium">Medium selectivity</option>
-              <option value="low">Low selectivity</option>
-            </select>
+              onChange={(value) => onChange((prev) => ({ ...prev, rankingBand: value as DiscoverFilters["rankingBand"] }))}
+              options={[
+                { value: "", label: "Any" },
+                { value: "high", label: "High selectivity" },
+                { value: "medium", label: "Medium selectivity" },
+                { value: "low", label: "Low selectivity" },
+              ]}
+              className="mt-1 w-full rounded-lg border border-black/15 px-2 py-2 text-sm"
+              ariaLabel="Filter by ranking band"
+            />
           </label>
 
           {INPUT_FIELDS.slice(2).map((field) => (

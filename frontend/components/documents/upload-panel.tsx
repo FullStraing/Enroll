@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { Loader } from "@/components/loader";
 import { RequiredMark } from "@/components/ui/required-mark";
+import { Select } from "@/components/ui/select";
 
 type UploadPanelProps = {
   documentTypes: readonly DocumentTypeMeta[];
@@ -103,33 +104,27 @@ export function UploadPanel({
 
         <label className="text-sm text-black/70">
           Document type<RequiredMark />
-          <select
+          <Select
             value={type}
-            onChange={(event) => setType(event.target.value as DocumentType)}
-            className="mt-1 w-full rounded-xl border border-black/15 bg-white px-3 py-2"
-          >
-            {documentTypes.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.label}
-              </option>
-            ))}
-          </select>
+            onChange={(value) => setType(value as DocumentType)}
+            options={documentTypes.map((item) => ({ value: item.id, label: item.label }))}
+            className="mt-1 w-full border border-black/15"
+            ariaLabel="Document type"
+          />
         </label>
 
         <label className="text-sm text-black/70">
           Link to university
-          <select
+          <Select
             value={studentUniversityId}
-            onChange={(event) => setStudentUniversityId(event.target.value)}
-            className="mt-1 w-full rounded-xl border border-black/15 bg-white px-3 py-2"
-          >
-            <option value="">No university link</option>
-            {studentUniversities.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.university.name}
-              </option>
-            ))}
-          </select>
+            onChange={setStudentUniversityId}
+            options={[
+              { value: "", label: "No university link" },
+              ...studentUniversities.map((item) => ({ value: String(item.id), label: item.university.name })),
+            ]}
+            className="mt-1 w-full border border-black/15"
+            ariaLabel="Link document to university"
+          />
         </label>
 
         <label

@@ -6,6 +6,7 @@ import { Search } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { ProtectedPage } from "@/components/protected-page";
 import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/select";
 import { DiscoverFiltersPanel } from "@/components/universities/discover-filters";
 import { DiscoverGrid } from "@/components/universities/discover-grid";
 import { MyUniversitiesTable } from "@/components/universities/my-universities-table";
@@ -86,21 +87,23 @@ function UniversitiesPageContent() {
                       className="w-full rounded-2xl border-2 border-black bg-white py-2.5 pl-10 pr-4 text-sm text-black outline-none transition placeholder:text-black/40 focus:bg-[#DAF5F0]/30"
                     />
                   </label>
-                  <select
+                  <Select
                     value={state.filtersDraft.chanceBand}
-                    onChange={(event) => {
-                      const nextChanceBand = event.target.value as typeof state.filtersDraft.chanceBand;
+                    onChange={(value) => {
+                      const nextChanceBand = value as typeof state.filtersDraft.chanceBand;
                       state.setChanceBandFilter(nextChanceBand);
                     }}
-                    className="min-w-[190px] rounded-2xl border-2 border-black bg-white px-4 py-2.5 text-sm font-semibold text-black outline-none transition focus:bg-[#DAF5F0]/30"
-                  >
-                    <option value="">{chanceLabel("")}</option>
-                    <option value="safety">{chanceLabel("safety")}</option>
-                    <option value="likely">{chanceLabel("likely")}</option>
-                    <option value="target">{chanceLabel("target")}</option>
-                    <option value="reach">{chanceLabel("reach")}</option>
-                    <option value="high_reach">{chanceLabel("high_reach")}</option>
-                  </select>
+                    options={[
+                      { value: "", label: chanceLabel("") },
+                      { value: "safety", label: chanceLabel("safety") },
+                      { value: "likely", label: chanceLabel("likely") },
+                      { value: "target", label: chanceLabel("target") },
+                      { value: "reach", label: chanceLabel("reach") },
+                      { value: "high_reach", label: chanceLabel("high_reach") },
+                    ]}
+                    className="min-w-[190px] border-2 border-black bg-white px-4 py-2.5 text-sm font-semibold"
+                    ariaLabel="Chance band"
+                  />
                 </div>
                 <div className="text-sm text-black/60">
                   {state.loadingDiscover ? "Searching..." : `Results across all pages: ${state.discoverCount}`}

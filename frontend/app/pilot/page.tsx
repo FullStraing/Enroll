@@ -3,6 +3,7 @@
 import { FormEvent, useMemo, useState } from "react";
 import Link from "next/link";
 import { RequiredMark } from "@/components/ui/required-mark";
+import { Select } from "@/components/ui/select";
 
 const TELEGRAM_HANDLE = "@enroll_ai";
 const INSTAGRAM_HANDLE = "@enroll.ai";
@@ -54,11 +55,17 @@ export default function PilotPage() {
           </label>
           <label className="text-sm text-white/80">
             Горизонт подачи
-            <select value={timeline} onChange={(e) => setTimeline(e.target.value)} className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2">
-              <option className="bg-[#0b1020]" value="0-3 месяца">0-3 месяца</option>
-              <option className="bg-[#0b1020]" value="3-9 месяцев">3-9 месяцев</option>
-              <option className="bg-[#0b1020]" value="9+ месяцев">9+ месяцев</option>
-            </select>
+            <Select
+              value={timeline}
+              onChange={setTimeline}
+              options={[
+                { value: "0-3 месяца", label: "0-3 месяца" },
+                { value: "3-9 месяцев", label: "3-9 месяцев" },
+                { value: "9+ месяцев", label: "9+ месяцев" },
+              ]}
+              className="mt-1 w-full border-white/10 bg-white/5 text-white hover:border-white/25 focus-visible:border-white/40"
+              ariaLabel="Горизонт подачи"
+            />
           </label>
           <label className="text-sm text-white/80">
             Комментарий

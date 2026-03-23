@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
+import { Select } from "@/components/ui/select";
 import {
   ACTIVITIES_CATEGORY_OPTIONS,
   ACTIVITIES_COST_OPTIONS,
@@ -40,46 +41,46 @@ export function ActivitiesFiltersPanel({ filters, resultsCount, onChange, onRese
 
         <label className="block text-sm">
           <span className="text-xs font-semibold uppercase tracking-[0.16em] text-black/45">Category</span>
-          <select value={filters.category} onChange={(event) => onChange({ ...filters, category: event.target.value as ActivitiesFilters["category"] })} className={fieldClass}>
-            {ACTIVITIES_CATEGORY_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+          <Select
+            value={filters.category}
+            onChange={(value) => onChange({ ...filters, category: value as ActivitiesFilters["category"] })}
+            options={ACTIVITIES_CATEGORY_OPTIONS.map((option) => ({ value: option.value, label: option.label }))}
+            className={fieldClass}
+            ariaLabel="Filter by category"
+          />
         </label>
 
         <label className="block text-sm">
           <span className="text-xs font-semibold uppercase tracking-[0.16em] text-black/45">Format</span>
-          <select value={filters.format} onChange={(event) => onChange({ ...filters, format: event.target.value as ActivitiesFilters["format"] })} className={fieldClass}>
-            {ACTIVITIES_FORMAT_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+          <Select
+            value={filters.format}
+            onChange={(value) => onChange({ ...filters, format: value as ActivitiesFilters["format"] })}
+            options={ACTIVITIES_FORMAT_OPTIONS.map((option) => ({ value: option.value, label: option.label }))}
+            className={fieldClass}
+            ariaLabel="Filter by format"
+          />
         </label>
 
         <label className="block text-sm">
           <span className="text-xs font-semibold uppercase tracking-[0.16em] text-black/45">Cost</span>
-          <select value={filters.cost} onChange={(event) => onChange({ ...filters, cost: event.target.value as ActivitiesFilters["cost"] })} className={fieldClass}>
-            {ACTIVITIES_COST_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+          <Select
+            value={filters.cost}
+            onChange={(value) => onChange({ ...filters, cost: value as ActivitiesFilters["cost"] })}
+            options={ACTIVITIES_COST_OPTIONS.map((option) => ({ value: option.value, label: option.label }))}
+            className={fieldClass}
+            ariaLabel="Filter by cost"
+          />
         </label>
 
         <label className="block text-sm">
           <span className="text-xs font-semibold uppercase tracking-[0.16em] text-black/45">Track</span>
-          <select value={filters.major} onChange={(event) => onChange({ ...filters, major: event.target.value as ActivitiesFilters["major"] })} className={fieldClass}>
-            {ACTIVITIES_MAJOR_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+          <Select
+            value={filters.major}
+            onChange={(value) => onChange({ ...filters, major: value as ActivitiesFilters["major"] })}
+            options={ACTIVITIES_MAJOR_OPTIONS.map((option) => ({ value: option.value, label: option.label }))}
+            className={fieldClass}
+            ariaLabel="Filter by track"
+          />
         </label>
 
         <label className="flex items-center gap-3 rounded-2xl border border-black/10 bg-[#DAF5F0]/45 px-4 py-3 text-sm font-semibold text-black">

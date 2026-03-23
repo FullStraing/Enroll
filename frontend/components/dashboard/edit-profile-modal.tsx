@@ -4,6 +4,7 @@ import { useRef, useState, type Dispatch, type RefObject, type SetStateAction } 
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { statusSelectTone } from "@/app/universities/utils";
 import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/select";
 import { useBodyScrollLock } from "@/components/ui/use-body-scroll-lock";
 import {
   AP_EXAM_OPTIONS,
@@ -215,18 +216,16 @@ export function EditProfileModal(props: Props) {
                 </label>
                 <label className="text-sm">
                   <span className="text-xs uppercase tracking-wide text-black/50">Country</span>
-                  <select
+                  <Select
                     value={editForm.country}
-                    onChange={(event) => setEditForm((prev) => ({ ...prev, country: event.target.value }))}
+                    onChange={(value) => setEditForm((prev) => ({ ...prev, country: value }))}
                     className={MODAL_FIELD_CLASS}
-                  >
-                    <option value="">Select country</option>
-                    {COUNTRY_OPTIONS.map((country) => (
-                      <option key={country} value={country}>
-                        {country}
-                      </option>
-                    ))}
-                  </select>
+                    options={[
+                      { value: "", label: "Select country" },
+                      ...COUNTRY_OPTIONS.map((country) => ({ value: country, label: country })),
+                    ]}
+                    ariaLabel="Country"
+                  />
                 </label>
                 <label className="text-sm">
                   <span className="text-xs uppercase tracking-wide text-black/50">Major</span>
@@ -239,33 +238,29 @@ export function EditProfileModal(props: Props) {
                 </label>
                 <label className="text-sm">
                   <span className="text-xs uppercase tracking-wide text-black/50">Target intake</span>
-                  <select
+                  <Select
                     value={editForm.intakeYear}
-                    onChange={(event) => setEditForm((prev) => ({ ...prev, intakeYear: event.target.value }))}
+                    onChange={(value) => setEditForm((prev) => ({ ...prev, intakeYear: value }))}
                     className={MODAL_FIELD_CLASS}
-                  >
-                    <option value="">Select intake year</option>
-                    {INTAKE_OPTIONS.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </select>
+                    options={[
+                      { value: "", label: "Select intake year" },
+                      ...INTAKE_OPTIONS.map((option) => ({ value: option, label: option })),
+                    ]}
+                    ariaLabel="Target intake"
+                  />
                 </label>
                 <label className="text-sm">
                   <span className="text-xs uppercase tracking-wide text-black/50">Current level</span>
-                  <select
+                  <Select
                     value={editForm.schoolLevel}
-                    onChange={(event) => setEditForm((prev) => ({ ...prev, schoolLevel: event.target.value }))}
+                    onChange={(value) => setEditForm((prev) => ({ ...prev, schoolLevel: value }))}
                     className={MODAL_FIELD_CLASS}
-                  >
-                    <option value="">Select current level</option>
-                    {SCHOOL_LEVEL_OPTIONS.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </select>
+                    options={[
+                      { value: "", label: "Select current level" },
+                      ...SCHOOL_LEVEL_OPTIONS.map((option) => ({ value: option, label: option })),
+                    ]}
+                    ariaLabel="Current level"
+                  />
                 </label>
               </div>
             ) : null}
@@ -285,11 +280,10 @@ export function EditProfileModal(props: Props) {
               <div className="grid gap-4 p-5 md:grid-cols-2">
                 <label className="text-sm">
                   <span className="text-xs uppercase tracking-wide text-black/50">GPA scale</span>
-                  <select
+                  <Select
                     value={editForm.gpaScale}
-                    onChange={(event) =>
+                    onChange={(nextScale) =>
                       setEditForm((prev) => {
-                        const nextScale = event.target.value;
                         const nextMax = nextScale === "5.0" ? 5 : nextScale === "Percent" ? 100 : 4;
                         const current = Number(prev.gpaValue);
                         const nextValue =
@@ -298,13 +292,9 @@ export function EditProfileModal(props: Props) {
                       })
                     }
                     className={MODAL_FIELD_CLASS}
-                  >
-                    {GPA_SCALE_OPTIONS.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </select>
+                    options={GPA_SCALE_OPTIONS.map((option) => ({ value: option, label: option }))}
+                    ariaLabel="GPA scale"
+                  />
                 </label>
 
                 <label className="text-sm">
@@ -354,17 +344,13 @@ export function EditProfileModal(props: Props) {
                             <div key={`${test.type}-${index}`} className="grid gap-3 rounded-[20px] border border-black/10 bg-white p-4 md:grid-cols-[0.9fr_1fr_auto]">
                               <label className="text-sm">
                                 <span className="text-xs uppercase tracking-wide text-black/50">Test type</span>
-                                <select
+                                <Select
                                   value={test.type}
-                                  onChange={(event) => updateAcademicTestRow(index, { type: event.target.value as AcademicTestType })}
+                                  onChange={(value) => updateAcademicTestRow(index, { type: value as AcademicTestType })}
                                   className={MODAL_FIELD_CLASS}
-                                >
-                                  {ACADEMIC_TEST_OPTIONS.map((option) => (
-                                    <option key={option} value={option}>
-                                      {option}
-                                    </option>
-                                  ))}
-                                </select>
+                                  options={ACADEMIC_TEST_OPTIONS.map((option) => ({ value: option, label: option }))}
+                                  ariaLabel="Academic test type"
+                                />
                               </label>
                               <label className="text-sm">
                                 <span className="text-xs uppercase tracking-wide text-black/50">Score</span>
@@ -419,17 +405,16 @@ export function EditProfileModal(props: Props) {
                             <div key={`${test.type}-${index}`} className="grid gap-3 rounded-[20px] border border-black/10 bg-white p-4 md:grid-cols-[0.9fr_1fr_auto]">
                               <label className="text-sm">
                                 <span className="text-xs uppercase tracking-wide text-black/50">Test type</span>
-                                <select
+                                <Select
                                   value={test.type}
-                                  onChange={(event) => updateLanguageTestRow(index, { type: event.target.value as LanguageTestType })}
+                                  onChange={(value) => updateLanguageTestRow(index, { type: value as LanguageTestType })}
                                   className={MODAL_FIELD_CLASS}
-                                >
-                                  {LANGUAGE_TEST_OPTIONS.map((option) => (
-                                    <option key={option} value={option}>
-                                      {option === "DET" ? "Duolingo English Test" : option}
-                                    </option>
-                                  ))}
-                                </select>
+                                  options={LANGUAGE_TEST_OPTIONS.map((option) => ({
+                                    value: option,
+                                    label: option === "DET" ? "Duolingo English Test" : option,
+                                  }))}
+                                  ariaLabel="Language test type"
+                                />
                               </label>
                               <label className="text-sm">
                                 <span className="text-xs uppercase tracking-wide text-black/50">Score</span>
@@ -484,31 +469,23 @@ export function EditProfileModal(props: Props) {
                             <div key={`${item.exam}-${index}`} className="grid gap-3 rounded-[20px] border border-black/10 bg-white p-4 md:grid-cols-[1.4fr_0.45fr_auto]">
                               <label className="text-sm">
                                 <span className="text-xs uppercase tracking-wide text-black/50">Exam</span>
-                                <select
+                                <Select
                                   value={item.exam}
-                                  onChange={(event) => updateApScoreRow(index, { exam: event.target.value })}
+                                  onChange={(value) => updateApScoreRow(index, { exam: value })}
                                   className={MODAL_FIELD_CLASS}
-                                >
-                                  {AP_EXAM_OPTIONS.map((option) => (
-                                    <option key={option} value={option}>
-                                      {option}
-                                    </option>
-                                  ))}
-                                </select>
+                                  options={AP_EXAM_OPTIONS.map((option) => ({ value: option, label: option }))}
+                                  ariaLabel="AP exam"
+                                />
                               </label>
                               <label className="text-sm">
                                 <span className="text-xs uppercase tracking-wide text-black/50">Score</span>
-                                <select
+                                <Select
                                   value={item.score}
-                                  onChange={(event) => updateApScoreRow(index, { score: event.target.value })}
+                                  onChange={(value) => updateApScoreRow(index, { score: value })}
                                   className={MODAL_FIELD_CLASS}
-                                >
-                                  {AP_SCORE_OPTIONS.map((option) => (
-                                    <option key={option} value={option}>
-                                      {option}
-                                    </option>
-                                  ))}
-                                </select>
+                                  options={AP_SCORE_OPTIONS.map((option) => ({ value: option, label: option }))}
+                                  ariaLabel="AP score"
+                                />
                               </label>
                               <div className="flex items-end">
                                 <button type="button" onClick={() => removeApScoreRow(index)} className={MODAL_REMOVE_BUTTON_CLASS}>

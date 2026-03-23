@@ -1,5 +1,6 @@
 "use client";
 
+import { Select } from "@/components/ui/select";
 import { ProgressField } from "@/lib/common-app-progress";
 
 type Props = {
@@ -15,16 +16,18 @@ export function FieldInput({ field, value, onChange, onClear }: Props) {
 
   if (field.type === "boolean") {
     return (
-      <select
+      <Select
         value={typeof value === "boolean" ? String(value) : ""}
         disabled={field.readonly}
-        onChange={(event) => onChange(event.target.value === "true")}
-        className="mt-1 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm disabled:bg-black/[0.04]"
-      >
-        <option value="">Выбери</option>
-        <option value="true">Да</option>
-        <option value="false">Нет</option>
-      </select>
+        onChange={(next) => onChange(next === "" ? "" : next === "true")}
+        options={[
+          { value: "", label: "Choose" },
+          { value: "true", label: "Yes" },
+          { value: "false", label: "No" },
+        ]}
+        className="mt-1 w-full border border-black/20 text-sm disabled:bg-black/[0.04]"
+        ariaLabel={field.label}
+      />
     );
   }
 
@@ -69,7 +72,7 @@ export function FieldInput({ field, value, onChange, onClear }: Props) {
                 onChange={() => onChange(option)}
                 className="h-4 w-4 border-black/30"
               />
-              <span>{isYesNo ? (option === "Yes" ? "Да" : "Нет") : option}</span>
+              <span>{isYesNo ? (option === "Yes" ? "Yes" : "No") : option}</span>
             </label>
           ))}
           {field.clearable && onClear ? (
@@ -86,19 +89,17 @@ export function FieldInput({ field, value, onChange, onClear }: Props) {
     }
     return (
       <div className="space-y-2">
-        <select
+        <Select
           value={stringValue}
           disabled={field.readonly}
-          onChange={(event) => onChange(event.target.value)}
-          className="mt-1 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm disabled:bg-black/[0.04]"
-        >
-          <option value="">- Choose an option -</option>
-          {(field.options || []).map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
+          onChange={onChange}
+          options={[
+            { value: "", label: "- Choose an option -" },
+            ...options.map((option) => ({ value: option, label: option })),
+          ]}
+          className="mt-1 w-full border border-black/20 text-sm disabled:bg-black/[0.04]"
+          ariaLabel={field.label}
+        />
         {field.clearable && onClear ? (
           <button
             type="button"
@@ -159,7 +160,7 @@ export function FieldInput({ field, value, onChange, onClear }: Props) {
           )
         }
         className="mt-1 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm disabled:bg-black/[0.04]"
-        placeholder="Значения через запятую"
+        placeholder="Values separated by commas"
       />
     );
   }
