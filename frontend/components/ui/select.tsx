@@ -30,6 +30,9 @@ type MenuPosition = {
   maxHeight: number;
 };
 
+const OPTION_ROW_HEIGHT = 50;
+const MENU_VERTICAL_PADDING = 12;
+
 function cn(...parts: Array<string | false | null | undefined>) {
   return parts.filter(Boolean).join(" ");
 }
@@ -72,9 +75,14 @@ export function Select({
       const left = Math.min(Math.max(gutter, rect.left), window.innerWidth - width - gutter);
       const spaceBelow = window.innerHeight - rect.bottom - gutter;
       const spaceAbove = rect.top - gutter;
-      const showAbove = spaceBelow < 220 && spaceAbove > spaceBelow;
-      const maxHeight = Math.max(140, showAbove ? spaceAbove - 8 : spaceBelow - 8);
-      const top = showAbove ? Math.max(gutter, rect.top - maxHeight - 8) : rect.bottom + 8;
+      const estimatedContentHeight = Math.min(OPTION_ROW_HEIGHT * Math.max(options.length, 1) + MENU_VERTICAL_PADDING, 340);
+      const canFitBelow = spaceBelow >= estimatedContentHeight;
+      const canFitAbove = spaceAbove >= estimatedContentHeight;
+      const showAbove = !canFitBelow && canFitAbove && spaceAbove > spaceBelow + 48;
+      const availableHeight = Math.max(140, (showAbove ? spaceAbove : spaceBelow) - 8);
+      const renderedHeight = Math.min(estimatedContentHeight, availableHeight);
+      const maxHeight = availableHeight;
+      const top = showAbove ? Math.max(gutter, rect.top - renderedHeight - 8) : rect.bottom + 8;
 
       setMenuPosition({ top, left, width, maxHeight });
     };
@@ -86,7 +94,7 @@ export function Select({
       window.removeEventListener("resize", updatePosition);
       window.removeEventListener("scroll", updatePosition, true);
     };
-  }, [open]);
+  }, [open, options.length]);
 
   useEffect(() => {
     if (!open) return;

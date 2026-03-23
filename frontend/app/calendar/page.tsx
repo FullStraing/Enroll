@@ -265,6 +265,7 @@ export default function CalendarPage() {
                 emptyText="Nothing due today. Add one important task and keep the momentum."
                 savingTaskId={savingTaskId}
                 onToggle={(task) => void toggleTask(task)}
+                bodyClassName="max-h-[360px] xl:max-h-[390px]"
               />
 
               <TaskSection
@@ -274,6 +275,7 @@ export default function CalendarPage() {
                 emptyText="No upcoming tasks yet."
                 savingTaskId={savingTaskId}
                 onToggle={(task) => void toggleTask(task)}
+                bodyClassName="max-h-[360px] xl:max-h-[390px]"
               />
 
               <TaskSection
@@ -283,6 +285,7 @@ export default function CalendarPage() {
                 emptyText="Your inbox is clear."
                 savingTaskId={savingTaskId}
                 onToggle={(task) => void toggleTask(task)}
+                bodyClassName="max-h-[320px] xl:max-h-[360px]"
               />
 
               <TaskSection
@@ -292,6 +295,7 @@ export default function CalendarPage() {
                 emptyText="Completed tasks will show up here."
                 savingTaskId={savingTaskId}
                 onToggle={(task) => void toggleTask(task)}
+                bodyClassName="max-h-[320px] xl:max-h-[360px]"
               />
             </div>
 

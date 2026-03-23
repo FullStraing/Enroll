@@ -165,3 +165,7 @@ pm run dev:clean for explicit cache resets. Verified with frontend lint/build.
 - Tuned the Tasks typewriter placeholder to animate faster and read slightly smaller, keeping the input focused without overpowering the user-entered text.
 
 - Built a shared branded `Select` component in `frontend/components/ui/select.tsx` and replaced the remaining native `<select>` menus across the main product surfaces. Tasks, Universities, Essays, Documents, Activities, Dashboard Edit Profile, Common App fields, Onboarding, and Pilot now share one dropdown language instead of mixing browser-default menus with page-local styling.
+
+- Fixed the shared custom select positioning logic so dropdowns no longer jump to the top of the viewport on lower rows. The menu now estimates its real content height, prefers opening below when viable, and only flips upward when there is clearly more usable space above.
+
+- Stabilized the Tasks workspace for long lists. Each task section now keeps a controlled height with its own internal scroll area, so large Today/Inbox/Completed lists no longer stretch the whole page and break the layout rhythm.
