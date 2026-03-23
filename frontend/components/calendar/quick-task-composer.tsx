@@ -28,7 +28,6 @@ type QuickTaskComposerProps = {
 const DUE_PRESET_OPTIONS: Array<{ value: DuePreset; label: string }> = [
   { value: "today", label: "Today" },
   { value: "tomorrow", label: "Tomorrow" },
-  { value: "none", label: "No date" },
 ];
 
 const TASK_PLACEHOLDER_EXAMPLES = [
@@ -140,7 +139,7 @@ export function QuickTaskComposer({
               </span>
             </label>
             <p className="mt-2 text-sm text-black/55">
-              Start with one clear task. You can add the date and university right after.
+              Start with one clear task. New tasks are dated today by default, and you can override the date right after.
             </p>
           </div>
         </div>

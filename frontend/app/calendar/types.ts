@@ -3,6 +3,7 @@ export type TaskItem = {
   title: string;
   description: string;
   due_date: string | null;
+  completed_at?: string | null;
   status: "planned" | "in_progress" | "done";
   priority: "low" | "medium" | "high";
   roadmap_stage?: {
@@ -37,4 +38,4 @@ export type MyUniversityItem = {
   } | null;
 };
 
-export type DuePreset = "today" | "tomorrow" | "none" | "custom";
+export type DuePreset = "today" | "tomorrow" | "custom";

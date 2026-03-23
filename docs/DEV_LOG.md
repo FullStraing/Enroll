@@ -169,3 +169,5 @@ pm run dev:clean for explicit cache resets. Verified with frontend lint/build.
 - Fixed the shared custom select positioning logic so dropdowns no longer jump to the top of the viewport on lower rows. The menu now estimates its real content height, prefers opening below when viable, and only flips upward when there is clearly more usable space above.
 
 - Stabilized the Tasks workspace for long lists. Each task section now keeps a controlled height with its own internal scroll area, so large Today/Inbox/Completed lists no longer stretch the whole page and break the layout rhythm.
+
+- Updated task date behavior so quick-captured tasks default to today unless the user explicitly overrides the date. Added a durable `completed_at` timestamp to backend tasks and switched the Completed list to a compact `Done · Mar 24` style label sourced from real completion time instead of reusing the due-date pill.

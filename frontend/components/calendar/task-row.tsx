@@ -2,7 +2,7 @@
 
 import { Circle, CircleCheckBig } from "lucide-react";
 import type { TaskItem } from "@/app/calendar/types";
-import { formatTaskDueLabel } from "@/app/calendar/utils";
+import { formatCompletedTaskLabel, formatTaskDueLabel } from "@/app/calendar/utils";
 
 type TaskRowProps = {
   task: TaskItem;
@@ -11,8 +11,8 @@ type TaskRowProps = {
 };
 
 export function TaskRow({ task, saving, onToggle }: TaskRowProps) {
-  const dueLabel = formatTaskDueLabel(task);
   const isDone = task.status === "done";
+  const metaLabel = isDone ? formatCompletedTaskLabel(task) : formatTaskDueLabel(task);
 
   return (
     <button
@@ -29,9 +29,9 @@ export function TaskRow({ task, saving, onToggle }: TaskRowProps) {
       <span className="min-w-0 flex-1">
         <span className={`block text-base font-semibold text-black ${isDone ? "line-through" : ""}`}>{task.title}</span>
         <span className="mt-1 flex flex-wrap items-center gap-2 text-sm text-black/55">
-          {dueLabel ? (
+          {metaLabel ? (
             <span className="rounded-full border border-black/10 bg-black/[0.03] px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.14em]">
-              {dueLabel}
+              {metaLabel}
             </span>
           ) : null}
           {task.application?.university_name ? <span>{task.application.university_name}</span> : null}

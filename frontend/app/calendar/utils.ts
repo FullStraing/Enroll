@@ -19,9 +19,8 @@ export function getTodayIso(): string {
 }
 
 export function resolveDueDate(preset: DuePreset, customDate: string): string | null {
-  if (preset === "none") return null;
   if (preset === "tomorrow") return toIsoDate(addDays(new Date(), 1));
-  if (preset === "custom") return customDate || null;
+  if (preset === "custom") return customDate || getTodayIso();
   return getTodayIso();
 }
 
@@ -54,13 +53,27 @@ export function formatTaskDueLabel(task: TaskItem): string | null {
   return formatDateShortNoYear(task.due_date);
 }
 
+export function formatCompletedTaskLabel(task: TaskItem): string | null {
+  if (task.completed_at) {
+    return `Done · ${formatDateShortNoYear(task.completed_at)}`;
+  }
+  if (task.due_date) {
+    return `Done · ${formatDateShortNoYear(task.due_date)}`;
+  }
+  return "Done";
+}
+
 export function getTaskLists(tasks: TaskItem[]) {
   const today = getTodayIso();
 
   const active = tasks.filter((task) => task.status !== "done");
   const completedTasks = tasks
     .filter((task) => task.status === "done")
-    .sort((left, right) => right.id - left.id);
+    .sort((left, right) => {
+      const leftValue = parseDateInput(left.completed_at)?.getTime() ?? left.id;
+      const rightValue = parseDateInput(right.completed_at)?.getTime() ?? right.id;
+      return rightValue - leftValue;
+    });
 
   const todayTasks = active
     .filter((task) => Boolean(task.due_date) && (task.due_date as string) <= today)

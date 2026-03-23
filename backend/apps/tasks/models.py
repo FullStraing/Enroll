@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
 
 from apps.universities.models import Application
 
@@ -61,6 +62,7 @@ class Task(models.Model):
         choices=PRIORITY_CHOICES,
         default="medium",
     )
+    completed_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -69,3 +71,18 @@ class Task(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.title}"
+
+    def save(self, *args, **kwargs):
+        previous_status = None
+        if self.pk:
+            previous_status = (
+                Task.objects.filter(pk=self.pk).values_list("status", flat=True).first()
+            )
+
+        if self.status == "done":
+            if previous_status != "done" or not self.completed_at:
+                self.completed_at = timezone.now()
+        elif self.completed_at:
+            self.completed_at = None
+
+        super().save(*args, **kwargs)

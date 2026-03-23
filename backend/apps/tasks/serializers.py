@@ -51,11 +51,13 @@ class TaskSerializer(serializers.ModelSerializer):
             "due_date",
             "status",
             "priority",
+            "completed_at",
             "roadmap_stage",
             "application",
             "roadmap_stage_id",
             "application_id",
         ]
+        read_only_fields = ["completed_at"]
 
     def validate_application(self, application):
         request = self.context.get("request")
