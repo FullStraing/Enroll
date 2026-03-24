@@ -171,3 +171,8 @@ pm run dev:clean for explicit cache resets. Verified with frontend lint/build.
 - Stabilized the Tasks workspace for long lists. Each task section now keeps a controlled height with its own internal scroll area, so large Today/Inbox/Completed lists no longer stretch the whole page and break the layout rhythm.
 
 - Updated task date behavior so quick-captured tasks default to today unless the user explicitly overrides the date. Added a durable `completed_at` timestamp to backend tasks and switched the Completed list to a compact `Done · Mar 24` style label sourced from real completion time instead of reusing the due-date pill.
+- 2026-03-24: Tightened the Tasks mobile layout by adding safe header spacing under the floating menu button, trimming extra hero copy, and shrinking the quick-capture composer so the main task input stays readable on narrow phones.
+
+- 2026-03-24: Reworked the mobile app shell into a proper left drawer. Navigation now opens as a slide-over panel with dimmed backdrop, while mobile header clutter (time, profile, logout) was moved into the drawer to keep page content clear.
+
+- 2026-03-24: Fixed the mobile drawer regression by removing the duplicated desktop brand/toggle row from the slide-over, restoring proper drawer-only scrolling, and locking the page scroll while the drawer is open.

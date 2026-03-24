@@ -108,7 +108,7 @@ export function QuickTaskComposer({
         event.preventDefault();
         onSubmit();
       }}
-      className="rounded-[28px] border-2 border-black bg-white p-5 shadow-[0_8px_0_rgba(0,0,0,0.06)]"
+      className="rounded-[28px] border-2 border-black bg-white p-4 shadow-[0_8px_0_rgba(0,0,0,0.06)] sm:p-5"
     >
       <div className="flex flex-col gap-4">
         <div className="flex items-start gap-3">
@@ -117,7 +117,9 @@ export function QuickTaskComposer({
           </div>
 
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-black/45">Quick capture</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-black/45 sm:text-xs sm:tracking-[0.18em]">
+              Quick capture
+            </p>
             <label className="mt-2 block">
               <span className="sr-only">Task title</span>
               <span className="relative block">
@@ -125,21 +127,21 @@ export function QuickTaskComposer({
                   value={title}
                   onChange={(event) => onTitleChange(event.target.value)}
                   placeholder=""
-                  className="relative z-[1] w-full border-0 bg-transparent px-0 py-0 text-[26px] font-black tracking-[-0.04em] text-black outline-none sm:text-[30px]"
+                  className="relative z-[1] w-full border-0 bg-transparent px-0 py-0 text-[18px] font-black leading-[1.2] tracking-[-0.03em] text-black outline-none sm:text-[26px] sm:tracking-[-0.04em]"
                 />
                 {!title.trim() ? (
                   <span
                     aria-hidden="true"
-                    className="pointer-events-none absolute inset-0 z-0 flex items-center text-[26px] font-black tracking-[-0.04em] text-black/28 sm:text-[30px]"
+                    className="pointer-events-none absolute inset-0 z-0 flex items-center overflow-hidden text-[18px] font-black leading-[1.2] tracking-[-0.03em] text-black/28 sm:text-[26px] sm:tracking-[-0.04em]"
                   >
-                    <span>{animatedPlaceholder}</span>
+                    <span className="truncate">{animatedPlaceholder}</span>
                     <span className="ml-1 inline-block h-[1.05em] w-[2px] animate-pulse rounded-full bg-black/28" />
                   </span>
                 ) : null}
               </span>
             </label>
-            <p className="mt-2 text-sm text-black/55">
-              Start with one clear task. New tasks are dated today by default, and you can override the date right after.
+            <p className="mt-2 hidden text-sm text-black/55 sm:block">
+              New tasks are dated today by default, and you can override the date right after.
             </p>
           </div>
         </div>

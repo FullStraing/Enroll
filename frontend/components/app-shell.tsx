@@ -88,9 +88,18 @@ export function AppShell({
   }, [pathname]);
 
   useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = "";
+        document.documentElement.style.overflow = "";
+      };
+    }
+
     document.body.style.overflow = "";
     document.documentElement.style.overflow = "";
-  }, [pathname]);
+  }, [mobileMenuOpen, pathname]);
 
   useEffect(() => {
     const update = () => setLocalDateTime(buildLocalDateTime(new Date()));
@@ -108,7 +117,7 @@ export function AppShell({
       <button
         type="button"
         onClick={() => setMobileMenuOpen((prev) => !prev)}
-        className="fixed left-3 top-3 z-50 rounded-xl border-2 border-black bg-white p-2 lg:hidden"
+        className="fixed left-3 top-3 z-50 rounded-xl border-2 border-black bg-white p-2 shadow-[0_4px_0_rgba(0,0,0,0.08)] lg:hidden"
         aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
       >
         {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -124,11 +133,50 @@ export function AppShell({
       ) : null}
 
       <aside
-        className={`glass glass-soft z-50 h-fit rounded-3xl p-4 transition-all duration-300 ease-in-out ${
-          mobileMenuOpen ? "fixed inset-y-3 left-3 w-[min(280px,calc(100vw-24px))] overflow-auto" : "hidden"
-        } lg:sticky lg:top-6 lg:block lg:w-auto`}
+        className={`glass glass-soft z-50 rounded-3xl p-4 transition-all duration-300 ease-in-out ${
+          mobileMenuOpen
+            ? "fixed inset-y-3 left-3 w-[min(320px,calc(88vw))] overflow-y-auto overscroll-contain"
+            : "hidden"
+        } lg:sticky lg:top-6 lg:block lg:h-fit lg:w-auto`}
       >
-          <div className={`mb-4 flex items-center gap-2 ${collapsed ? "justify-center" : "justify-between"}`}>
+          <div className="mb-4 grid gap-3 lg:hidden">
+            <div className="flex items-center justify-between gap-3 rounded-2xl border border-black/10 bg-white px-3 py-3">
+              <div className="flex min-w-0 items-center gap-2">
+                <Image src="/brand/logo-mark.svg" alt="Enroll" width={20} height={20} className="h-6 w-6 shrink-0" />
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-black text-black">Enroll</p>
+                  <p className="truncate text-[11px] uppercase tracking-[0.16em] text-black/45">Admissions OS</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setMobileMenuOpen(false)}
+                className="rounded-xl border-2 border-black bg-white p-2"
+                aria-label="Close menu"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="rounded-2xl border border-black/10 bg-white px-3 py-3">
+              <div className="flex items-center gap-3">
+                <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#DAF5F0] text-sm font-bold text-black">
+                  {name.charAt(0).toUpperCase()}
+                </span>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-black">{name}</p>
+                  <p className="truncate text-xs text-black/45">{profile?.email || "Enroll workspace"}</p>
+                </div>
+              </div>
+
+              <div className="mt-3 rounded-2xl border border-black/10 bg-[#FFF4CC] px-3 py-2">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-black/45">{localDateTime.dateLabel}</p>
+                <p className="mt-1 text-sm font-semibold text-black">{localDateTime.timeLabel}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className={`mb-4 hidden items-center gap-2 lg:flex ${collapsed ? "justify-center" : "justify-between"}`}>
             {collapsed ? (
               <Button
                 type="button"
@@ -211,6 +259,18 @@ export function AppShell({
               {!collapsed ? "Landing" : null}
             </Link>
           </nav>
+
+          <div className="mt-4 lg:hidden">
+            <button
+              onClick={() => {
+                logout();
+                router.push("/");
+              }}
+              className="w-full rounded-xl border-2 border-black bg-[#FFDB58] px-3 py-2 text-sm font-semibold hover:-translate-y-0.5"
+            >
+              Выйти
+            </button>
+          </div>
       </aside>
 
       <section className="glass glass-soft rounded-3xl p-4 sm:p-6">
@@ -219,7 +279,7 @@ export function AppShell({
             <h1 className="text-2xl font-black">{title}</h1>
             <p className="text-sm text-black/65">{subtitle}</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="hidden items-center gap-2 sm:flex">
             <span
               className="rounded-xl border-2 border-black bg-white px-3 py-1.5 text-sm font-semibold leading-tight"
               title={localDateTime.timeZone}
@@ -244,6 +304,11 @@ export function AppShell({
             >
               Выйти
             </button>
+          </div>
+          <div className="flex items-center gap-2 sm:hidden">
+            <span className="inline-flex h-9 min-w-9 items-center justify-center rounded-full border border-black/10 bg-[#DAF5F0] px-3 text-sm font-bold text-black">
+              {name.charAt(0).toUpperCase()}
+            </span>
           </div>
         </header>
         {children}

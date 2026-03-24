@@ -194,13 +194,12 @@ export default function CalendarPage() {
             <Card className="relative overflow-hidden bg-gradient-to-br from-white via-white to-[#DAF5F0]/20 shadow-none">
               <div className="grid gap-5 xl:grid-cols-[minmax(0,1.28fr)_320px]">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-black/45">Today-first workspace</p>
-                  <h2 className="mt-2 text-4xl font-black tracking-[-0.05em] text-black">Today</h2>
-                  <p className="mt-2 max-w-xl text-sm text-black/60">
-                    Add one task fast, keep the list clean, and mark it done when it is finished. No calendar grid, no clutter.
+                  <h2 className="text-3xl font-black tracking-[-0.05em] text-black sm:text-4xl">Today</h2>
+                  <p className="mt-2 max-w-xl text-sm text-black/60 sm:text-[15px]">
+                    Add one task fast and keep your day clear.
                   </p>
 
-                  <div className="mt-5">
+                  <div className="mt-4 sm:mt-5">
                     <QuickTaskComposer
                       title={taskTitle}
                       onTitleChange={setTaskTitle}
