@@ -180,3 +180,6 @@ pm run dev:clean for explicit cache resets. Verified with frontend lint/build.
 - 2026-03-24: Cleaned up the Documents mobile layout by restoring safe header spacing under the drawer button, shortening page/upload/readiness copy, and stacking document actions into a phone-friendly layout.
 
 - 2026-03-24: Fixed an additional 360px Documents overflow case by forcing document grid columns and group cards to shrink with min-w-0, and trimmed the remaining mobile-only copy.
+
+- 2026-03-24: Reworked the Essays top section into a tighter intro block with one clear CTA, reducing the empty header feel and removing redundant workspace labeling.
+
