@@ -152,6 +152,25 @@ SIMPLE_JWT = {
 
 GOOGLE_OAUTH_CLIENT_ID = os.getenv("GOOGLE_OAUTH_CLIENT_ID", "")
 
+# AI providers / essay coach
+AI_PROVIDER = os.getenv("AI_PROVIDER", "gemini").strip().lower()
+AI_TIMEOUT_SECONDS = int(os.getenv("AI_TIMEOUT_SECONDS", os.getenv("OPENAI_AI_TIMEOUT_SECONDS", "25")))
+AI_ESSAY_COMPLEX_MODEL = os.getenv("AI_ESSAY_COMPLEX_MODEL", "gemini-2.5-flash").strip()
+AI_ESSAY_GUIDANCE_MODEL = os.getenv("AI_ESSAY_GUIDANCE_MODEL", "gemini-2.5-flash-lite").strip()
+
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
+GEMINI_API_URL_TEMPLATE = os.getenv(
+    "GEMINI_API_URL_TEMPLATE",
+    "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}",
+).strip()
+
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "").strip()
+OPENAI_RESPONSES_URL = os.getenv("OPENAI_RESPONSES_URL", "https://api.openai.com/v1/responses").strip()
+AI_ESSAY_STARTER_DRAFT_DAILY_LIMIT = int(os.getenv("AI_ESSAY_STARTER_DRAFT_DAILY_LIMIT", "10"))
+AI_ESSAY_SELECTION_FEEDBACK_DAILY_LIMIT = int(os.getenv("AI_ESSAY_SELECTION_FEEDBACK_DAILY_LIMIT", "40"))
+AI_ESSAY_EXPLAIN_PROMPT_DAILY_LIMIT = int(os.getenv("AI_ESSAY_EXPLAIN_PROMPT_DAILY_LIMIT", "15"))
+AI_ESSAY_OUTLINE_DAILY_LIMIT = int(os.getenv("AI_ESSAY_OUTLINE_DAILY_LIMIT", "15"))
+
 # Redis / Django cache
 REDIS_CACHE_URL = os.getenv("REDIS_CACHE_URL", "").strip()
 REDIS_CACHE_DEFAULT_TIMEOUT = int(os.getenv("REDIS_CACHE_DEFAULT_TIMEOUT", "300"))

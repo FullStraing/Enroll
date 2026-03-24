@@ -27,6 +27,10 @@ export const SESSION_CACHE_TTLS = {
   onboarding: 120_000,
 } as const;
 
+export function getEssayDetailCacheKey(essayId: number) {
+  return `enroll_essay_detail_cache_v1_${essayId}`;
+}
+
 export function readSessionCache<T>(key: string, ttlMs: number) {
   if (typeof window === "undefined") {
     return { payload: null as T | null, isFresh: false };

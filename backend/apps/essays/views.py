@@ -47,7 +47,7 @@ class EssayListCreateView(generics.ListCreateAPIView):
         essay_type = serializer.validated_data.get("essay_type", "other")
         title = serializer.validated_data.get("title", "").strip() or _default_title(essay_type)
         essay = serializer.save(student=self.request.user, title=title)
-        EssayVersion.objects.create(
+        self.created_initial_version = EssayVersion.objects.create(
             essay=essay,
             version_number=1,
             label="Initial draft",
@@ -56,6 +56,13 @@ class EssayListCreateView(generics.ListCreateAPIView):
             status="draft",
         )
         Essay.objects.filter(pk=essay.pk).update(updated_at=timezone.now())
+
+    def create(self, request, *args, **kwargs):
+        response = super().create(request, *args, **kwargs)
+        initial_version = getattr(self, "created_initial_version", None)
+        if initial_version is not None:
+            response.data["initial_version"] = EssayVersionSerializer(initial_version).data
+        return response
 
 
 class EssayDetailView(generics.RetrieveUpdateDestroyAPIView):

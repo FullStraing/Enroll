@@ -13,12 +13,13 @@ import { Card, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Spinner } from "@/components/ui/spinner";
 import { Skeleton } from "@/components/ui/skeleton";
-import { EssayRichEditor } from "@/components/essay-rich-editor";
+import { EssayRichEditor, EssayRichEditorHandle, EssaySelectionSnapshot } from "@/components/essay-rich-editor";
 import { Progress } from "@/components/ui/progress";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useBodyScrollLock } from "@/components/ui/use-body-scroll-lock";
 import { Select } from "@/components/ui/select";
 import { formatDateTimeShort } from "@/lib/date-format";
+import { clearSessionCaches, getEssayDetailCacheKey, readSessionCache, SESSION_CACHE_KEYS, SESSION_CACHE_TTLS, writeSessionCache } from "@/lib/session-cache";
 
 type Essay = {
   id: number;
@@ -65,6 +66,70 @@ type CompareDisplayRow = {
   right: string;
   unchangedCount?: number;
 };
+
+type EssayDetailCachePayload = {
+  essay: Essay;
+  versions: EssayVersion[];
+};
+
+type StarterDraftResponse = {
+  draft_title: string;
+  draft_content: string;
+  rationale: string;
+  tone_notes: string;
+  word_count_estimate: number;
+  provider: string;
+  model: string;
+  latency_ms: number;
+  response_id?: string;
+  version: EssayVersion;
+};
+
+type SelectionFeedbackResponse = {
+  verdict: "keep" | "revise";
+  message: string;
+  suggested_text?: string | null;
+  why: string;
+  confidence: number;
+  action: string;
+  selection_start: number;
+  selection_end: number;
+  provider: string;
+  model: string;
+  latency_ms: number;
+  response_id?: string;
+};
+
+type ExplainPromptResponse = {
+  plain_english_summary: string;
+  what_the_school_is_asking: string;
+  avoid: string[];
+  must_cover: string[];
+  good_angle_examples: string[];
+  provider: string;
+  model: string;
+  latency_ms: number;
+  response_id?: string;
+};
+
+type OutlineResponse = {
+  recommended_angle: string;
+  alternatives: string[];
+  outline_points: string[];
+  opening_idea: string;
+  risks_to_avoid: string[];
+  provider: string;
+  model: string;
+  latency_ms: number;
+  response_id?: string;
+};
+
+type AiPanelState =
+  | { kind: "idle" }
+  | { kind: "starter"; data: StarterDraftResponse }
+  | { kind: "selection"; data: SelectionFeedbackResponse; selection: EssaySelectionSnapshot }
+  | { kind: "explain"; data: ExplainPromptResponse }
+  | { kind: "outline"; data: OutlineResponse };
 
 function buildDiffRows(leftText: string, rightText: string): DiffRow[] {
   const leftLines = leftText.split("\n");
@@ -222,9 +287,19 @@ function buildStructureHelper(text: string) {
   return sections;
 }
 
+const selectionActionLabels: Record<string, string> = {
+  improve_clarity: "Improve",
+  make_more_specific: "More specific",
+  make_less_generic: "Less generic",
+  fix_grammar: "Fix grammar",
+  shorten: "Shorten",
+  review_only: "Review only",
+};
+
 export default function EssayWorkspacePage() {
   const params = useParams<{ id: string }>();
   const essayId = Number(params.id);
+  const editorRef = useRef<EssayRichEditorHandle | null>(null);
   const [essay, setEssay] = useState<Essay | null>(null);
   const [versions, setVersions] = useState<EssayVersion[]>([]);
   const [selectedVersionId, setSelectedVersionId] = useState<number | null>(null);
@@ -255,36 +330,66 @@ export default function EssayWorkspacePage() {
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const [savedAgoLabel, setSavedAgoLabel] = useState("Not saved yet");
   const autosaveSeqRef = useRef(0);
+  const cacheKey = useMemo(() => (essayId ? getEssayDetailCacheKey(essayId) : null), [essayId]);
+  const [selectedTextRange, setSelectedTextRange] = useState<EssaySelectionSnapshot | null>(null);
+  const [aiPanelState, setAiPanelState] = useState<AiPanelState>({ kind: "idle" });
+  const [aiActionLoading, setAiActionLoading] = useState<string | null>(null);
+
+  const applyWorkspaceState = useCallback((essayData: Essay, versionData: EssayVersion[]) => {
+    setEssay(essayData);
+    setVersions(versionData);
+    const first = versionData[0] || null;
+    setSelectedVersionId(first?.id || null);
+    setEditorContent(first?.content || "<p></p>");
+    setEditorPlainText(htmlToText(first?.content || ""));
+    setLoadedVersionId(first?.id || null);
+    setCompareLeftId(versionData[1]?.id || first?.id || null);
+    setCompareRightId(first?.id || null);
+    setLastSavedAt(first?.updated_at ? new Date(first.updated_at) : null);
+    setSaveState("idle");
+    setStatusText("");
+  }, []);
 
   const loadWorkspace = useCallback(async () => {
     const token = getToken();
     if (!token || !essayId) return;
+    const cached = cacheKey ? readSessionCache<EssayDetailCachePayload>(cacheKey, SESSION_CACHE_TTLS.essays) : null;
+    if (cached?.payload) {
+      applyWorkspaceState(cached.payload.essay, cached.payload.versions);
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
+
+    if (cached?.isFresh) {
+      return;
+    }
+
     setLoading(true);
     try {
       const [essayData, versionData] = await Promise.all([
         apiFetch<Essay>(`/api/essays/${essayId}/`, { method: "GET" }, token),
         apiFetch<EssayVersion[]>(`/api/essays/${essayId}/versions/`, { method: "GET" }, token),
       ]);
-      setEssay(essayData);
-      setVersions(versionData);
-      const first = versionData[0] || null;
-      setSelectedVersionId(first?.id || null);
-      setEditorContent(first?.content || "<p></p>");
-      setEditorPlainText(htmlToText(first?.content || ""));
-      setLoadedVersionId(first?.id || null);
-      setCompareLeftId(versionData[1]?.id || first?.id || null);
-      setCompareRightId(first?.id || null);
-      setStatusText("");
+      applyWorkspaceState(essayData, versionData);
+      if (cacheKey) {
+        writeSessionCache(cacheKey, { essay: essayData, versions: versionData });
+      }
     } catch (error) {
       setStatusText(error instanceof Error ? error.message : "Failed to load workspace.");
     } finally {
       setLoading(false);
     }
-  }, [essayId]);
+  }, [applyWorkspaceState, cacheKey, essayId]);
 
   useEffect(() => {
     void loadWorkspace();
   }, [loadWorkspace]);
+
+  useEffect(() => {
+    if (!cacheKey || !essay || versions.length === 0) return;
+    writeSessionCache(cacheKey, { essay, versions });
+  }, [cacheKey, essay, versions]);
 
   const selectedVersion = useMemo(
     () => versions.find((item) => item.id === selectedVersionId) || null,
@@ -403,6 +508,7 @@ export default function EssayWorkspacePage() {
         status: selectedVersion.status,
       });
       setVersions((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
+      setLoadedVersionId(updated.id);
       setSaveState("saved");
       setLastSavedAt(new Date());
       setStatusText("Saved.");
@@ -448,6 +554,133 @@ export default function EssayWorkspacePage() {
     } finally {
       setDeleteConfirmVersionId(null);
     }
+  }
+
+  async function runStarterDraft() {
+    const token = getToken();
+    if (!token || !essay) return;
+    setAiActionLoading("starter");
+    setAiPanelVisible(true);
+    try {
+      const response = await apiFetch<StarterDraftResponse>(
+        "/api/ai/essays/starter-draft/",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            essay_id: essay.id,
+            mode: "starter_draft",
+          }),
+        },
+        token,
+      );
+      const nextVersions = [response.version, ...versions.filter((item) => item.id !== response.version.id)];
+      setVersions(nextVersions);
+      setSelectedVersionId(response.version.id);
+      setLoadedVersionId(null);
+      clearSessionCaches([SESSION_CACHE_KEYS.essays, SESSION_CACHE_KEYS.dashboard]);
+      setAiPanelState({ kind: "starter", data: response });
+      setStatusText("AI starter draft created.");
+    } catch (error) {
+      setStatusText(error instanceof Error ? error.message : "Failed to generate starter draft.");
+    } finally {
+      setAiActionLoading(null);
+    }
+  }
+
+  async function runExplainPrompt() {
+    const token = getToken();
+    if (!token || !essay) return;
+    setAiActionLoading("explain");
+    setAiPanelVisible(true);
+    try {
+      const response = await apiFetch<ExplainPromptResponse>(
+        "/api/ai/essays/explain-prompt/",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            essay_id: essay.id,
+          }),
+        },
+        token,
+      );
+      setAiPanelState({ kind: "explain", data: response });
+      setStatusText("Prompt guidance ready.");
+    } catch (error) {
+      setStatusText(error instanceof Error ? error.message : "Failed to explain prompt.");
+    } finally {
+      setAiActionLoading(null);
+    }
+  }
+
+  async function runOutline() {
+    const token = getToken();
+    if (!token || !essay) return;
+    setAiActionLoading("outline");
+    setAiPanelVisible(true);
+    try {
+      const response = await apiFetch<OutlineResponse>(
+        "/api/ai/essays/outline/",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            essay_id: essay.id,
+          }),
+        },
+        token,
+      );
+      setAiPanelState({ kind: "outline", data: response });
+      setStatusText("Outline generated.");
+    } catch (error) {
+      setStatusText(error instanceof Error ? error.message : "Failed to generate outline.");
+    } finally {
+      setAiActionLoading(null);
+    }
+  }
+
+  async function runSelectionAction(action: keyof typeof selectionActionLabels) {
+    const token = getToken();
+    if (!token || !essay || !selectedTextRange) return;
+    setAiActionLoading(action);
+    setAiPanelVisible(true);
+    try {
+      const response = await apiFetch<SelectionFeedbackResponse>(
+        "/api/ai/essays/selection-feedback/",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            essay_id: essay.id,
+            selected_text: selectedTextRange.text,
+            selection_start: selectedTextRange.from,
+            selection_end: selectedTextRange.to,
+            action,
+          }),
+        },
+        token,
+      );
+      setAiPanelState({ kind: "selection", data: response, selection: selectedTextRange });
+      setStatusText(response.verdict === "keep" ? "Selection is already strong." : "AI suggestion ready.");
+    } catch (error) {
+      setStatusText(error instanceof Error ? error.message : "Failed to review selected text.");
+    } finally {
+      setAiActionLoading(null);
+    }
+  }
+
+  function dismissSelectionActions() {
+    setSelectedTextRange(null);
+    if (aiPanelState.kind === "selection") {
+      setAiPanelState({ kind: "idle" });
+    }
+    editorRef.current?.clearSelection();
+  }
+
+  function applySelectionSuggestion() {
+    if (aiPanelState.kind !== "selection" || !aiPanelState.data.suggested_text) return;
+    const ok = editorRef.current?.replaceSelection(aiPanelState.selection, aiPanelState.data.suggested_text);
+    if (ok) {
+      setStatusText("AI suggestion applied.");
+    }
+    dismissSelectionActions();
   }
 
   const wordCount = useMemo(() => {
@@ -528,6 +761,18 @@ export default function EssayWorkspacePage() {
             Keep writing focus: tools open on demand.
           </div>
           <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-end">
+            <Button size="sm" onClick={() => void runStarterDraft()} disabled={aiActionLoading !== null} className="w-full sm:w-auto">
+              {aiActionLoading === "starter" ? <Spinner size="sm" /> : <Sparkles className="h-4 w-4" />}
+              <span>Generate starter draft</span>
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => void runExplainPrompt()} disabled={aiActionLoading !== null} className="w-full sm:w-auto">
+              {aiActionLoading === "explain" ? <Spinner size="sm" /> : <Bot className="h-4 w-4" />}
+              <span>Explain prompt</span>
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => void runOutline()} disabled={aiActionLoading !== null} className="w-full sm:w-auto">
+              {aiActionLoading === "outline" ? <Spinner size="sm" /> : <Sparkles className="h-4 w-4" />}
+              <span>Generate outline</span>
+            </Button>
             <Button variant="outline" size="sm" onClick={() => setCompareOpen(true)} disabled={versions.length < 2} className="w-full sm:w-auto">
               <GitCompare className="h-4 w-4" />
               <span>Compare versions</span>
@@ -648,12 +893,50 @@ export default function EssayWorkspacePage() {
                 ))}
               </div>
 
+              {selectedTextRange ? (
+                <div className="mt-3 rounded-xl border border-black/10 bg-[#FFF9E8] p-3">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+                    <div className="min-w-0">
+                      <p className="text-xs font-black uppercase tracking-[0.14em] text-black/45">Selected text</p>
+                      <p className="mt-1 line-clamp-2 text-sm text-black/75">{selectedTextRange.text}</p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Button size="sm" variant="outline" onClick={() => void runSelectionAction("improve_clarity")} disabled={aiActionLoading !== null}>
+                        {aiActionLoading === "improve_clarity" ? <Spinner size="sm" /> : null}
+                        <span>Improve</span>
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => void runSelectionAction("make_more_specific")} disabled={aiActionLoading !== null}>
+                        {aiActionLoading === "make_more_specific" ? <Spinner size="sm" /> : null}
+                        <span>More specific</span>
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => void runSelectionAction("make_less_generic")} disabled={aiActionLoading !== null}>
+                        {aiActionLoading === "make_less_generic" ? <Spinner size="sm" /> : null}
+                        <span>Less generic</span>
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => void runSelectionAction("fix_grammar")} disabled={aiActionLoading !== null}>
+                        {aiActionLoading === "fix_grammar" ? <Spinner size="sm" /> : null}
+                        <span>Fix grammar</span>
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => void runSelectionAction("shorten")} disabled={aiActionLoading !== null}>
+                        {aiActionLoading === "shorten" ? <Spinner size="sm" /> : null}
+                        <span>Shorten</span>
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => dismissSelectionActions()}>
+                        <span>Keep as is</span>
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+
               <div className="mt-3">
                 <EssayRichEditor
+                  ref={editorRef}
                   content={editorContent}
                   stickyToolbar
                   minimalToolbar
                   editable={Boolean(selectedVersion)}
+                  onSelectionChange={setSelectedTextRange}
                   onChange={(html, text) => {
                     setEditorContent(html);
                     setEditorPlainText(text);
@@ -693,20 +976,128 @@ export default function EssayWorkspacePage() {
             <div className="flex items-center justify-between gap-2">
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Bot className="h-4 w-4" />
-                AI Assistant
+                Essay Coach
               </CardTitle>
               <Button size="sm" variant="outline" onClick={toggleAiPanel}>
                 <X className="h-4 w-4" />
               </Button>
             </div>
-            <div className="mt-3 rounded-xl border border-black/15 bg-[#DAF5F0]/40 p-3 text-sm text-black/75">
-              AI actions are hidden by default and open only on demand.
-              <ul className="mt-2 list-disc pl-5">
-                <li>Create draft (Hook / Conflict / Growth / Impact)</li>
-                <li>Selection-based improvements</li>
-                <li>Admissions-style review</li>
-              </ul>
-            </div>
+            {aiPanelState.kind === "idle" ? (
+              <div className="mt-3 rounded-xl border border-black/15 bg-[#DAF5F0]/40 p-3 text-sm text-black/75">
+                Use AI for guided help, not full essay replacement.
+                <ul className="mt-2 list-disc pl-5">
+                  <li>Generate a short starter draft</li>
+                  <li>Explain what the prompt is really asking</li>
+                  <li>Build an outline before writing</li>
+                  <li>Improve only the text you highlight</li>
+                </ul>
+              </div>
+            ) : null}
+
+            {aiPanelState.kind === "starter" ? (
+              <div className="mt-3 space-y-3 rounded-xl border border-black/15 bg-[#FFF9E8] p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <Badge variant="primary">Starter draft</Badge>
+                  <span className="text-xs text-black/55">{aiPanelState.data.word_count_estimate} words</span>
+                </div>
+                <p className="text-sm font-semibold text-black/85">{aiPanelState.data.draft_title}</p>
+                <p className="text-sm leading-6 text-black/75">{aiPanelState.data.rationale}</p>
+                <div className="rounded-xl border border-black/10 bg-white p-3 text-sm leading-6 text-black/80">
+                  {aiPanelState.data.draft_content}
+                </div>
+                <p className="text-xs text-black/55">Tone notes: {aiPanelState.data.tone_notes}</p>
+              </div>
+            ) : null}
+
+            {aiPanelState.kind === "selection" ? (
+              <div className="mt-3 space-y-3 rounded-xl border border-black/15 bg-[#DAF5F0]/30 p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <Badge variant={aiPanelState.data.verdict === "keep" ? "cyan" : "orange"}>
+                    {aiPanelState.data.verdict === "keep" ? "Already strong" : "Suggested revision"}
+                  </Badge>
+                  <span className="text-xs text-black/55">{selectionActionLabels[aiPanelState.data.action] || "Selection feedback"}</span>
+                </div>
+                <p className="text-sm font-semibold text-black/85">{aiPanelState.data.message}</p>
+                <p className="text-sm leading-6 text-black/75">{aiPanelState.data.why}</p>
+                <div className="rounded-xl border border-black/10 bg-white p-3 text-sm leading-6 text-black/80">
+                  {aiPanelState.data.suggested_text || "This is already strong. No changes needed."}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {aiPanelState.data.verdict === "revise" && aiPanelState.data.suggested_text ? (
+                    <Button size="sm" onClick={applySelectionSuggestion}>
+                      Apply
+                    </Button>
+                  ) : null}
+                  <Button size="sm" variant="outline" onClick={dismissSelectionActions}>
+                    Keep original
+                  </Button>
+                </div>
+              </div>
+            ) : null}
+
+            {aiPanelState.kind === "explain" ? (
+              <div className="mt-3 space-y-3 rounded-xl border border-black/15 bg-white p-3">
+                <Badge variant="orange">Prompt guidance</Badge>
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.12em] text-black/45">Plain summary</p>
+                  <p className="mt-1 text-sm leading-6 text-black/78">{aiPanelState.data.plain_english_summary}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.12em] text-black/45">What the school is asking</p>
+                  <p className="mt-1 text-sm leading-6 text-black/78">{aiPanelState.data.what_the_school_is_asking}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.12em] text-black/45">Must cover</p>
+                  <ul className="mt-1 list-disc pl-5 text-sm leading-6 text-black/78">
+                    {aiPanelState.data.must_cover.map((item, index) => <li key={`must-${index}`}>{item}</li>)}
+                  </ul>
+                </div>
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.12em] text-black/45">Avoid</p>
+                  <ul className="mt-1 list-disc pl-5 text-sm leading-6 text-black/78">
+                    {aiPanelState.data.avoid.map((item, index) => <li key={`avoid-${index}`}>{item}</li>)}
+                  </ul>
+                </div>
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.12em] text-black/45">Good angle examples</p>
+                  <ul className="mt-1 list-disc pl-5 text-sm leading-6 text-black/78">
+                    {aiPanelState.data.good_angle_examples.map((item, index) => <li key={`angle-${index}`}>{item}</li>)}
+                  </ul>
+                </div>
+              </div>
+            ) : null}
+
+            {aiPanelState.kind === "outline" ? (
+              <div className="mt-3 space-y-3 rounded-xl border border-black/15 bg-white p-3">
+                <Badge variant="cyan">Outline</Badge>
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.12em] text-black/45">Recommended angle</p>
+                  <p className="mt-1 text-sm leading-6 text-black/78">{aiPanelState.data.recommended_angle}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.12em] text-black/45">Opening idea</p>
+                  <p className="mt-1 text-sm leading-6 text-black/78">{aiPanelState.data.opening_idea}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.12em] text-black/45">Outline points</p>
+                  <ol className="mt-1 list-decimal pl-5 text-sm leading-6 text-black/78">
+                    {aiPanelState.data.outline_points.map((item, index) => <li key={`outline-${index}`}>{item}</li>)}
+                  </ol>
+                </div>
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.12em] text-black/45">Alternative directions</p>
+                  <ul className="mt-1 list-disc pl-5 text-sm leading-6 text-black/78">
+                    {aiPanelState.data.alternatives.map((item, index) => <li key={`alt-${index}`}>{item}</li>)}
+                  </ul>
+                </div>
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.12em] text-black/45">Risks to avoid</p>
+                  <ul className="mt-1 list-disc pl-5 text-sm leading-6 text-black/78">
+                    {aiPanelState.data.risks_to_avoid.map((item, index) => <li key={`risk-${index}`}>{item}</li>)}
+                  </ul>
+                </div>
+              </div>
+            ) : null}
           </div>
         ) : null}
 

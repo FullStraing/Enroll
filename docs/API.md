@@ -139,14 +139,27 @@ Current behavior:
 
 ## AI
 
-Current baseline endpoints:
+Baseline endpoints:
 
 - `POST /api/ai/next-step/`
 - `POST /api/ai/document-draft/`
 - `POST /api/ai/document-feedback/`
 - `POST /api/ai/commonapp-draft/`
 
-These exist as API surface, but product-grade AI flows are still incomplete.
+Essay Coach MVP endpoints:
+
+- `POST /api/ai/essays/starter-draft/`
+- `POST /api/ai/essays/selection-feedback/`
+- `POST /api/ai/essays/explain-prompt/`
+- `POST /api/ai/essays/outline/`
+
+Current behavior:
+
+- AI provider is selected server-side through `AI_PROVIDER`
+- default provider is `gemini`
+- `openai` remains supported as an optional fallback provider
+- per-action daily limits are enforced server-side before provider calls
+- frontend never calls the model provider directly
 
 ## Common App progress payload
 

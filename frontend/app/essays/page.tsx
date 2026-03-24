@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, Suspense, useEffect, useMemo, useState } from "react";
+import { FormEvent, Suspense, startTransition, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { ProtectedPage } from "@/components/protected-page";
@@ -16,7 +16,14 @@ import { Spinner } from "@/components/ui/spinner";
 import { Progress } from "@/components/ui/progress";
 import { Select } from "@/components/ui/select";
 import { formatDateTimeShort } from "@/lib/date-format";
-import { clearSessionCaches, readSessionCache, SESSION_CACHE_KEYS, SESSION_CACHE_TTLS, writeSessionCache } from "@/lib/session-cache";
+import {
+  clearSessionCaches,
+  getEssayDetailCacheKey,
+  readSessionCache,
+  SESSION_CACHE_KEYS,
+  SESSION_CACHE_TTLS,
+  writeSessionCache,
+} from "@/lib/session-cache";
 import { RequiredMark } from "@/components/ui/required-mark";
 
 type EssayType = "personal_statement" | "motivation_essay" | "supplemental_essay" | "other";
@@ -35,6 +42,25 @@ type Essay = {
   target_word_count: number;
   versions_count: number;
   last_edited_at: string | null;
+  created_at?: string;
+  updated_at?: string;
+};
+
+type EssayVersion = {
+  id: number;
+  essay: number;
+  version_number: number;
+  label: string;
+  content: string;
+  source: "user" | "ai";
+  status: "draft" | "revised" | "ai_improved" | "final";
+  is_latest: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+type CreatedEssayResponse = Essay & {
+  initial_version?: EssayVersion;
 };
 
 type University = {
@@ -116,6 +142,7 @@ function EssaysPageContent() {
   const [universitiesLoaded, setUniversitiesLoaded] = useState(false);
   const [universitySearch, setUniversitySearch] = useState("");
   const [loading, setLoading] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
   const [saving, setSaving] = useState(false);
   const [savingOnboarding, setSavingOnboarding] = useState(false);
   const [statusText, setStatusText] = useState("");
@@ -164,6 +191,7 @@ function EssaysPageContent() {
       }
     } finally {
       setLoading(false);
+      setHydrated(true);
     }
   }
 
@@ -194,9 +222,9 @@ function EssaysPageContent() {
   }, []);
 
   useEffect(() => {
-    if (loading) return;
+    if (loading || !hydrated) return;
     writeSessionCache(SESSION_CACHE_KEYS.essays, { essays });
-  }, [loading, essays]);
+  }, [hydrated, loading, essays]);
 
   useEffect(() => {
     const action = searchParams.get("action");
@@ -295,8 +323,22 @@ function EssaysPageContent() {
         target_word_count: Number(form.target_word_count) || 650,
       };
       if (form.university) payload.university = Number(form.university);
-      const created = await apiFetch<Essay>("/api/essays/", { method: "POST", body: JSON.stringify(payload) }, token);
-      clearSessionCaches([SESSION_CACHE_KEYS.dashboard, SESSION_CACHE_KEYS.essays]);
+      const created = await apiFetch<CreatedEssayResponse>("/api/essays/", { method: "POST", body: JSON.stringify(payload) }, token);
+      const nextEssay: Essay = {
+        ...created,
+        versions_count: created.versions_count ?? 1,
+        last_edited_at: created.last_edited_at ?? created.updated_at ?? created.created_at ?? null,
+      };
+      const nextEssays = [nextEssay, ...essays.filter((essay) => essay.id !== nextEssay.id)];
+      setEssays(nextEssays);
+      writeSessionCache(SESSION_CACHE_KEYS.essays, { essays: nextEssays });
+      if (created.initial_version) {
+        writeSessionCache(getEssayDetailCacheKey(created.id), {
+          essay: nextEssay,
+          versions: [created.initial_version],
+        });
+      }
+      clearSessionCaches([SESSION_CACHE_KEYS.dashboard]);
       setShowCreate(false);
       const template = getEssayDraftTemplate("personal_statement");
       setForm({
@@ -307,7 +349,10 @@ function EssaysPageContent() {
         prompt_text: template.promptText,
         target_word_count: template.targetWordCount,
       });
-      router.push(`/essays/${created.id}`);
+      setStatusText("Opening your essay...");
+      startTransition(() => {
+        router.push(`/essays/${created.id}`);
+      });
     } catch (error) {
       setStatusText(error instanceof Error ? error.message : "Failed to create essay.");
     } finally {
