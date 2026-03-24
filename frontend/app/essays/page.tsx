@@ -347,7 +347,7 @@ function EssaysPageContent() {
 
   return (
     <ProtectedPage>
-      <AppShell title="Essays" subtitle="Essay Manager: one essay -> many versions">
+      <AppShell title="Essays" subtitle="Drafts, versions, and university-specific prompts.">
         {showOnboarding ? (
           <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/45 p-4">
             <div className="w-full max-w-3xl rounded-3xl border-2 border-black bg-white p-6 shadow-2xl">
@@ -395,12 +395,17 @@ function EssaysPageContent() {
         ) : null}
 
         <section className="space-y-5">
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-[24px] border border-black/10 bg-white/70 px-5 py-4">
-            <div>
-              <p className="text-xs font-black uppercase tracking-[0.16em] text-black/45">Workspace</p>
-              <p className="mt-1 text-sm text-black/65">Manage drafts like GitHub: each essay keeps its own version history.</p>
+          <div className="flex flex-col gap-4 rounded-[24px] border border-black/10 bg-[#FFF9E8] px-5 py-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-black/45">Essay workspace</p>
+              <h2 className="mt-2 text-2xl font-black tracking-[-0.03em] text-black">Create and manage drafts</h2>
+              <p className="mt-2 max-w-2xl text-sm text-black/65">
+                Keep personal statements and supplemental essays in one clean versioned workspace.
+              </p>
             </div>
-            <Button onClick={() => setShowCreate((prev) => !prev)}>{showCreate ? "Close" : "+ New Essay"}</Button>
+            <Button onClick={() => setShowCreate((prev) => !prev)} className="w-full sm:w-auto">
+              {showCreate ? "Close" : "+ New Essay"}
+            </Button>
           </div>
 
           {showCreate ? (

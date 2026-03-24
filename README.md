@@ -90,7 +90,6 @@ Public:
 - `/register`
 - `/privacy-policy`
 - `/pilot`
-- `/ui-lab`
 
 Protected workspace:
 - `/dashboard`

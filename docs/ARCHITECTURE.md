@@ -6,6 +6,7 @@ Enroll uses a split product architecture:
 - Backend: Django + DRF for auth, data models, business rules, ingestion commands, and admin
 - Frontend: Next.js App Router for the full user-facing application
 - Database: PostgreSQL as the main system of record
+- Cache / queue: Redis for Django cache and Celery broker/result backend
 
 Django owns persistence and business logic. Next.js owns the product interface.
 
@@ -38,7 +39,7 @@ Main route groups:
 - public marketing and acquisition: landing, intro quiz, legal pages
 - auth: login, register
 - workspace: dashboard, applications, calendar, documents, essays, common app, settings
-- support / design surfaces: pilot, UI Lab
+- support surfaces: pilot
 
 Shared UI entry points:
 - `frontend/components/app-shell.tsx`
@@ -143,6 +144,17 @@ Tasks and calendar are connected product surfaces:
 - tasks are API-backed
 - calendar aggregates actionable planning state
 - dashboard is intended to become the main orchestration surface tying profile readiness, deadlines, essays, and tasks together
+
+## Cache and queue architecture
+
+Redis is used in two roles:
+- Django cache backend for low-latency server-side caching
+- Celery broker / result backend for asynchronous ingestion and scraping jobs
+
+The Django cache layer is configured to:
+- use Redis when `REDIS_CACHE_URL` is available
+- fall back to local in-memory cache when Redis is not configured
+- tolerate temporary Redis unavailability without taking down the app
 
 ## Legal and top-of-funnel surfaces
 

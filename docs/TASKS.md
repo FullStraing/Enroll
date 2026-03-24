@@ -23,7 +23,7 @@ The project is past the skeleton phase. The current state is:
 ### Frontend foundation
 - Next.js frontend established as the primary UI layer
 - shared app shell and protected page pattern
-- UI Lab for reusable component decisions
+- shared UI system and reusable components for design decisions
 - unified visual system governed by `docs/UI_SYSTEM_RULES.md`
 - dashboard visual redesign baseline with admissions profile, score, readiness, next step, universities, essays, and deadline blocks
 

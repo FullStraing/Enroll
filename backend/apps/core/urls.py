@@ -1,3 +1,5 @@
+from django.conf import settings
+from django.core.cache import cache
 from django.urls import path, include
 from django.http import JsonResponse
 
@@ -10,7 +12,23 @@ from rest_framework_simplejwt.views import (
 
 
 def ping_view(request):
-    return JsonResponse({"status": "ok"})
+    cache_status = "disabled"
+
+    try:
+        cache.set("__ping__", "ok", timeout=5)
+        cache_status = "ok" if cache.get("__ping__") == "ok" else "degraded"
+    except Exception:
+        cache_status = "error"
+
+    return JsonResponse(
+        {
+            "status": "ok",
+            "cache": {
+                "backend": getattr(settings, "CACHE_BACKEND_LABEL", "unknown"),
+                "status": cache_status,
+            },
+        }
+    )
 
 
 @api_view(["GET"])

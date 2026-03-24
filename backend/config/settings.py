@@ -152,6 +152,35 @@ SIMPLE_JWT = {
 
 GOOGLE_OAUTH_CLIENT_ID = os.getenv("GOOGLE_OAUTH_CLIENT_ID", "")
 
+# Redis / Django cache
+REDIS_CACHE_URL = os.getenv("REDIS_CACHE_URL", "").strip()
+REDIS_CACHE_DEFAULT_TIMEOUT = int(os.getenv("REDIS_CACHE_DEFAULT_TIMEOUT", "300"))
+REDIS_CACHE_KEY_PREFIX = os.getenv("REDIS_CACHE_KEY_PREFIX", "enroll")
+
+if REDIS_CACHE_URL:
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": REDIS_CACHE_URL,
+            "TIMEOUT": REDIS_CACHE_DEFAULT_TIMEOUT,
+            "KEY_PREFIX": REDIS_CACHE_KEY_PREFIX,
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+                "IGNORE_EXCEPTIONS": True,
+            },
+        }
+    }
+    CACHE_BACKEND_LABEL = "redis"
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "enroll-local-cache",
+            "TIMEOUT": REDIS_CACHE_DEFAULT_TIMEOUT,
+        }
+    }
+    CACHE_BACKEND_LABEL = "locmem"
+
 # Celery (queue for large-scale scraping/ingestion)
 CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://127.0.0.1:6379/0")
 CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", CELERY_BROKER_URL)

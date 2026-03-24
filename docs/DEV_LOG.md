@@ -182,4 +182,6 @@ pm run dev:clean for explicit cache resets. Verified with frontend lint/build.
 - 2026-03-24: Fixed an additional 360px Documents overflow case by forcing document grid columns and group cards to shrink with min-w-0, and trimmed the remaining mobile-only copy.
 
 - 2026-03-24: Reworked the Essays top section into a tighter intro block with one clear CTA, reducing the empty header feel and removing redundant workspace labeling.
+- 2026-03-24: Removed the user-facing UI Lab route and navigation entry while keeping the chosen Enroll UI system, tokens, and shared components intact as the active design source of truth.
+- 2026-03-24: Connected Redis as the standard Django cache backend with a safe local-memory fallback, and extended `/api/ping/` to report cache backend/status so Redis wiring is observable during local and production setup.
 
