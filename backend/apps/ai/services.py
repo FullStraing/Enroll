@@ -257,17 +257,29 @@ Return JSON only.
 Task:
 - Generate a SHORT starter draft for a student's essay.
 - It must reduce blank-page fear and provide a possible direction.
-- It must NOT sound final, polished, or admissions-ready.
-- Keep it intentionally incomplete and lightweight.
-- Aim for 120 to 220 words.
+- It must NOT sound final, polished, admissions-ready, or overly impressive.
+- Keep it intentionally incomplete, lightweight, and human.
+- Aim for 120 to 180 words unless the target word count is below that.
 - Follow the essay language implied by the prompt and existing draft.
+- If the essay already has a draft, preserve its core story and tone instead of inventing a new story.
+- Do not add meta commentary inside the draft.
+- Prefer a simple, concrete first-person voice.
+- Do not try to conclude the whole essay. Leave room for the student to continue.
 
 Output keys:
 - draft_title
 - draft_content
-- rationale
-- tone_notes
+- starting_angle
+- why_this_works
+- next_focus
 - word_count_estimate
+
+Formatting rules:
+- draft_title: max 5 words
+- starting_angle: one short sentence
+- why_this_works: one or two short sentences
+- next_focus: one short sentence telling the student what to add next
+- draft_content: plain text only
 """.strip()
     raw, meta = _call_ai_json(
         model=settings.AI_ESSAY_COMPLEX_MODEL,

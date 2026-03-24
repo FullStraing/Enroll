@@ -40,8 +40,9 @@ class EssayAiTests(APITestCase):
             {
                 "draft_title": "AI starter draft",
                 "draft_content": "This school fits my goals because of its academic culture.",
-                "rationale": "Provides a starting angle.",
-                "tone_notes": "Personal and direct.",
+                "starting_angle": "Lead with one academic fit angle.",
+                "why_this_works": "It gives the student a clear and believable direction.",
+                "next_focus": "Add one concrete Brown-specific detail next.",
                 "word_count_estimate": 150,
             },
             {"provider": "openai", "model": "gpt-5", "latency_ms": 321, "response_id": "resp_123"},

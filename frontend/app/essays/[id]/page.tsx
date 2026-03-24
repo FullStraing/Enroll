@@ -75,8 +75,9 @@ type EssayDetailCachePayload = {
 type StarterDraftResponse = {
   draft_title: string;
   draft_content: string;
-  rationale: string;
-  tone_notes: string;
+  starting_angle: string;
+  why_this_works: string;
+  next_focus: string;
   word_count_estimate: number;
   provider: string;
   model: string;
@@ -758,28 +759,16 @@ export default function EssayWorkspacePage() {
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
           <div className="flex items-center gap-2 text-sm text-black/70">
             <Sparkles className="h-4 w-4" />
-            Keep writing focus: tools open on demand.
+            Essay Coach opens on demand and keeps AI guidance in one place.
           </div>
           <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-end">
-            <Button size="sm" onClick={() => void runStarterDraft()} disabled={aiActionLoading !== null} className="w-full sm:w-auto">
-              {aiActionLoading === "starter" ? <Spinner size="sm" /> : <Sparkles className="h-4 w-4" />}
-              <span>Generate starter draft</span>
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => void runExplainPrompt()} disabled={aiActionLoading !== null} className="w-full sm:w-auto">
-              {aiActionLoading === "explain" ? <Spinner size="sm" /> : <Bot className="h-4 w-4" />}
-              <span>Explain prompt</span>
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => void runOutline()} disabled={aiActionLoading !== null} className="w-full sm:w-auto">
-              {aiActionLoading === "outline" ? <Spinner size="sm" /> : <Sparkles className="h-4 w-4" />}
-              <span>Generate outline</span>
-            </Button>
             <Button variant="outline" size="sm" onClick={() => setCompareOpen(true)} disabled={versions.length < 2} className="w-full sm:w-auto">
               <GitCompare className="h-4 w-4" />
               <span>Compare versions</span>
             </Button>
-            <Button variant="outline" size="sm" onClick={toggleAiPanel} className="w-full sm:w-auto">
+            <Button variant={aiPanelVisible ? "primary" : "outline"} size="sm" onClick={toggleAiPanel} className="w-full sm:w-auto">
               <Bot className="h-4 w-4" />
-              <span>AI Assistant</span>
+              <span>{aiPanelVisible ? "Hide coach" : "Essay Coach"}</span>
             </Button>
             <Button variant="outline" size="sm" onClick={() => setFocusMode((prev) => !prev)} className="w-full sm:w-auto">
               <Focus className="h-4 w-4" />
@@ -901,28 +890,12 @@ export default function EssayWorkspacePage() {
                       <p className="mt-1 line-clamp-2 text-sm text-black/75">{selectedTextRange.text}</p>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      <Button size="sm" variant="outline" onClick={() => void runSelectionAction("improve_clarity")} disabled={aiActionLoading !== null}>
-                        {aiActionLoading === "improve_clarity" ? <Spinner size="sm" /> : null}
-                        <span>Improve</span>
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => void runSelectionAction("make_more_specific")} disabled={aiActionLoading !== null}>
-                        {aiActionLoading === "make_more_specific" ? <Spinner size="sm" /> : null}
-                        <span>More specific</span>
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => void runSelectionAction("make_less_generic")} disabled={aiActionLoading !== null}>
-                        {aiActionLoading === "make_less_generic" ? <Spinner size="sm" /> : null}
-                        <span>Less generic</span>
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => void runSelectionAction("fix_grammar")} disabled={aiActionLoading !== null}>
-                        {aiActionLoading === "fix_grammar" ? <Spinner size="sm" /> : null}
-                        <span>Fix grammar</span>
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => void runSelectionAction("shorten")} disabled={aiActionLoading !== null}>
-                        {aiActionLoading === "shorten" ? <Spinner size="sm" /> : null}
-                        <span>Shorten</span>
+                      <Button size="sm" variant="outline" onClick={() => setAiPanelVisible(true)}>
+                        <Bot className="h-4 w-4" />
+                        <span>Open coach for selection</span>
                       </Button>
                       <Button size="sm" variant="outline" onClick={() => dismissSelectionActions()}>
-                        <span>Keep as is</span>
+                        <span>Clear selection</span>
                       </Button>
                     </div>
                   </div>
@@ -972,8 +945,8 @@ export default function EssayWorkspacePage() {
         )}
 
         {aiPanelVisible && !loading && essay ? (
-          <div className="fixed inset-x-3 bottom-3 z-40 rounded-2xl border-2 border-black bg-white p-4 shadow-[0_8px_0_#000] sm:inset-y-20 sm:right-4 sm:left-auto sm:bottom-auto sm:w-[min(380px,92vw)]">
-            <div className="flex items-center justify-between gap-2">
+          <div className="fixed inset-x-3 bottom-3 top-24 z-40 flex max-h-[calc(100dvh-112px)] flex-col overflow-hidden rounded-2xl border-2 border-black bg-white shadow-[0_8px_0_#000] sm:inset-y-20 sm:right-4 sm:left-auto sm:bottom-auto sm:top-20 sm:w-[min(400px,92vw)] sm:max-h-[calc(100dvh-96px)]">
+            <div className="flex items-center justify-between gap-2 border-b border-black/10 px-4 py-4">
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Bot className="h-4 w-4" />
                 Essay Coach
@@ -982,6 +955,63 @@ export default function EssayWorkspacePage() {
                 <X className="h-4 w-4" />
               </Button>
             </div>
+            <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
+            <div className="rounded-xl border border-black/10 bg-white p-3">
+              <p className="text-xs font-black uppercase tracking-[0.12em] text-black/45">Coach actions</p>
+              <div className="mt-3 grid gap-2">
+                <Button size="sm" onClick={() => void runStarterDraft()} disabled={aiActionLoading !== null} className="w-full justify-start">
+                  {aiActionLoading === "starter" ? <Spinner size="sm" /> : <Sparkles className="h-4 w-4" />}
+                  <span>Generate starter draft</span>
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => void runExplainPrompt()} disabled={aiActionLoading !== null} className="w-full justify-start">
+                  {aiActionLoading === "explain" ? <Spinner size="sm" /> : <Bot className="h-4 w-4" />}
+                  <span>Explain prompt</span>
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => void runOutline()} disabled={aiActionLoading !== null} className="w-full justify-start">
+                  {aiActionLoading === "outline" ? <Spinner size="sm" /> : <Sparkles className="h-4 w-4" />}
+                  <span>Generate outline</span>
+                </Button>
+              </div>
+            </div>
+
+            {selectedTextRange ? (
+              <div className="mt-3 rounded-xl border border-black/10 bg-[#FFF9E8] p-3">
+                <div className="min-w-0">
+                  <p className="text-xs font-black uppercase tracking-[0.12em] text-black/45">Selected text</p>
+                  <p className="mt-1 line-clamp-3 text-sm text-black/75">{selectedTextRange.text}</p>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button size="sm" variant="outline" onClick={() => void runSelectionAction("improve_clarity")} disabled={aiActionLoading !== null}>
+                    {aiActionLoading === "improve_clarity" ? <Spinner size="sm" /> : null}
+                    <span>Improve</span>
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => void runSelectionAction("make_more_specific")} disabled={aiActionLoading !== null}>
+                    {aiActionLoading === "make_more_specific" ? <Spinner size="sm" /> : null}
+                    <span>More specific</span>
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => void runSelectionAction("make_less_generic")} disabled={aiActionLoading !== null}>
+                    {aiActionLoading === "make_less_generic" ? <Spinner size="sm" /> : null}
+                    <span>Less generic</span>
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => void runSelectionAction("fix_grammar")} disabled={aiActionLoading !== null}>
+                    {aiActionLoading === "fix_grammar" ? <Spinner size="sm" /> : null}
+                    <span>Fix grammar</span>
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => void runSelectionAction("shorten")} disabled={aiActionLoading !== null}>
+                    {aiActionLoading === "shorten" ? <Spinner size="sm" /> : null}
+                    <span>Shorten</span>
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => dismissSelectionActions()}>
+                    <span>Keep as is</span>
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="mt-3 rounded-xl border border-black/10 bg-[#DAF5F0]/30 p-3 text-sm text-black/70">
+                Highlight a sentence or paragraph to get targeted AI feedback here instead of juggling more top-level buttons.
+              </div>
+            )}
+
             {aiPanelState.kind === "idle" ? (
               <div className="mt-3 rounded-xl border border-black/15 bg-[#DAF5F0]/40 p-3 text-sm text-black/75">
                 Use AI for guided help, not full essay replacement.
@@ -1001,11 +1031,21 @@ export default function EssayWorkspacePage() {
                   <span className="text-xs text-black/55">{aiPanelState.data.word_count_estimate} words</span>
                 </div>
                 <p className="text-sm font-semibold text-black/85">{aiPanelState.data.draft_title}</p>
-                <p className="text-sm leading-6 text-black/75">{aiPanelState.data.rationale}</p>
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.12em] text-black/45">Starting angle</p>
+                  <p className="mt-1 text-sm leading-6 text-black/78">{aiPanelState.data.starting_angle}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.12em] text-black/45">Why this works</p>
+                  <p className="mt-1 text-sm leading-6 text-black/78">{aiPanelState.data.why_this_works}</p>
+                </div>
                 <div className="rounded-xl border border-black/10 bg-white p-3 text-sm leading-6 text-black/80">
                   {aiPanelState.data.draft_content}
                 </div>
-                <p className="text-xs text-black/55">Tone notes: {aiPanelState.data.tone_notes}</p>
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.12em] text-black/45">What to write next</p>
+                  <p className="mt-1 text-sm leading-6 text-black/78">{aiPanelState.data.next_focus}</p>
+                </div>
               </div>
             ) : null}
 
@@ -1098,6 +1138,7 @@ export default function EssayWorkspacePage() {
                 </div>
               </div>
             ) : null}
+            </div>
           </div>
         ) : null}
 

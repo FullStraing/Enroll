@@ -49,8 +49,9 @@ class EssayOutlineRequestSerializer(EssayAiBaseSerializer):
 class EssayStarterDraftResponseSerializer(serializers.Serializer):
     draft_title = serializers.CharField()
     draft_content = serializers.CharField()
-    rationale = serializers.CharField()
-    tone_notes = serializers.CharField()
+    starting_angle = serializers.CharField()
+    why_this_works = serializers.CharField()
+    next_focus = serializers.CharField()
     word_count_estimate = serializers.IntegerField(min_value=0)
 
 
