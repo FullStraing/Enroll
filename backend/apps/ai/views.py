@@ -1,4 +1,6 @@
 import json
+import re
+from html import unescape
 
 from django.conf import settings
 from django.utils import timezone
@@ -81,6 +83,12 @@ def _enforce_daily_limit(*, user, context_type: str, limit: int):
 
 
 def _essay_context(essay: Essay, latest: EssayVersion | None):
+    current_draft = latest.content if latest else ""
+    current_draft = re.sub(r"<br\s*/?>", "\n", current_draft, flags=re.IGNORECASE)
+    current_draft = re.sub(r"</p>", "\n", current_draft, flags=re.IGNORECASE)
+    current_draft = re.sub(r"<[^>]+>", " ", current_draft)
+    current_draft = unescape(current_draft).replace("\u00a0", " ")
+    current_draft = re.sub(r"\n{3,}", "\n\n", current_draft).strip()
     return {
         "essay_id": essay.id,
         "essay_type": essay.essay_type,
@@ -89,7 +97,7 @@ def _essay_context(essay: Essay, latest: EssayVersion | None):
         "prompt_text": essay.prompt_text,
         "target_word_count": essay.target_word_count,
         "university_name": essay.university.name if essay.university else "",
-        "current_draft": latest.content if latest else "",
+        "current_draft": current_draft,
     }
 
 
@@ -132,7 +140,14 @@ class EssayStarterDraftAiView(APIView):
             limit=settings.AI_ESSAY_STARTER_DRAFT_DAILY_LIMIT,
         )
         latest = _latest_essay_version(essay)
-        payload = _essay_context(essay, latest)
+        payload = {
+            **_essay_context(essay, latest),
+            "generation_mode": serializer.validated_data["generation_mode"],
+            "tone": serializer.validated_data["tone"],
+            "focus": serializer.validated_data["focus"],
+            "revision_goal": serializer.validated_data["revision_goal"],
+            "context_note": serializer.validated_data["context_note"],
+        }
 
         try:
             result, meta = generate_starter_draft(context=payload)

@@ -261,24 +261,43 @@ Task:
 - Keep it intentionally incomplete, lightweight, and human.
 - Aim for 120 to 180 words unless the target word count is below that.
 - Follow the essay language implied by the prompt and existing draft.
-- If the essay already has a draft, preserve its core story and tone instead of inventing a new story.
+- Read generation_mode carefully:
+  - fresh_angle: ignore the structure of current_draft and produce a different plausible starting direction
+  - build_on_my_draft: use the strongest idea already present in current_draft and REWRITE it into a cleaner short starter draft
+- If generation_mode is build_on_my_draft, do not append a new paragraph to the end. Produce a compact rewritten starter version instead.
+- If there is no meaningful current_draft, fresh_angle is the fallback behavior.
+- Respect user preferences when they are present:
+  - tone: reflective, direct, warm, or confident
+  - focus: auto, challenge, growth, leadership, community_impact, academic_fit
+  - revision_goal: clarity, specificity, stronger_opening, deeper_reflection
+  - context_note: short user note about what to preserve or emphasize
+- For fresh_angle, use tone + focus + context_note to choose the direction.
+- For build_on_my_draft, use tone + revision_goal + context_note to improve the student's existing material.
+- If context_note includes a concrete detail, topic, activity, or theme, explicitly use it.
+- Never invent a completely new central story, person, or event unless it already exists in current_draft or context_note.
+- In build_on_my_draft mode, the new draft must still feel anchored to the user's real material.
 - Do not add meta commentary inside the draft.
 - Prefer a simple, concrete first-person voice.
 - Do not try to conclude the whole essay. Leave room for the student to continue.
+- Keep the draft to one or two short paragraphs.
 
 Output keys:
 - draft_title
 - draft_content
-- starting_angle
-- why_this_works
-- next_focus
+- summary
+- why_it_works
+- what_admissions_reads_for
+- next_steps
+- generation_mode
 - word_count_estimate
 
 Formatting rules:
 - draft_title: max 5 words
-- starting_angle: one short sentence
-- why_this_works: one or two short sentences
-- next_focus: one short sentence telling the student what to add next
+- summary: max 18 words, one compact sentence
+- why_it_works: max 30 words, one compact sentence
+- what_admissions_reads_for: 2 to 3 short bullet-ready phrases
+- next_steps: 2 to 3 short bullet-ready actions
+- generation_mode: echo either fresh_angle or build_on_my_draft
 - draft_content: plain text only
 """.strip()
     raw, meta = _call_ai_json(
@@ -305,7 +324,9 @@ Output keys:
 - verdict (keep or revise)
 - message
 - suggested_text
-- why
+- what_changed
+- why_it_helps
+- reviewer_expectation
 - confidence
 """.strip()
     raw, meta = _call_ai_json(

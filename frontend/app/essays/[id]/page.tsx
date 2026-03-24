@@ -75,9 +75,11 @@ type EssayDetailCachePayload = {
 type StarterDraftResponse = {
   draft_title: string;
   draft_content: string;
-  starting_angle: string;
-  why_this_works: string;
-  next_focus: string;
+  summary: string;
+  why_it_works: string;
+  what_admissions_reads_for: string[];
+  next_steps: string[];
+  generation_mode: "fresh_angle" | "build_on_my_draft";
   word_count_estimate: number;
   provider: string;
   model: string;
@@ -90,7 +92,9 @@ type SelectionFeedbackResponse = {
   verdict: "keep" | "revise";
   message: string;
   suggested_text?: string | null;
-  why: string;
+  what_changed: string;
+  why_it_helps: string;
+  reviewer_expectation: string;
   confidence: number;
   action: string;
   selection_start: number;
@@ -297,6 +301,29 @@ const selectionActionLabels: Record<string, string> = {
   review_only: "Review only",
 };
 
+const starterDraftToneOptions = [
+  { value: "reflective", label: "Reflective" },
+  { value: "direct", label: "Direct" },
+  { value: "warm", label: "Warm" },
+  { value: "confident", label: "Confident" },
+];
+
+const starterDraftFocusOptions = [
+  { value: "auto", label: "Any strong angle" },
+  { value: "challenge", label: "Challenge" },
+  { value: "growth", label: "Growth" },
+  { value: "leadership", label: "Leadership" },
+  { value: "community_impact", label: "Community impact" },
+  { value: "academic_fit", label: "Academic fit" },
+];
+
+const starterDraftRevisionGoalOptions = [
+  { value: "clarity", label: "Clearer structure" },
+  { value: "specificity", label: "More specific details" },
+  { value: "stronger_opening", label: "Stronger opening" },
+  { value: "deeper_reflection", label: "Deeper reflection" },
+];
+
 export default function EssayWorkspacePage() {
   const params = useParams<{ id: string }>();
   const essayId = Number(params.id);
@@ -335,6 +362,11 @@ export default function EssayWorkspacePage() {
   const [selectedTextRange, setSelectedTextRange] = useState<EssaySelectionSnapshot | null>(null);
   const [aiPanelState, setAiPanelState] = useState<AiPanelState>({ kind: "idle" });
   const [aiActionLoading, setAiActionLoading] = useState<string | null>(null);
+  const [starterDraftMode, setStarterDraftMode] = useState<"fresh_angle" | "build_on_my_draft">("fresh_angle");
+  const [starterDraftTone, setStarterDraftTone] = useState("reflective");
+  const [starterDraftFocus, setStarterDraftFocus] = useState("auto");
+  const [starterDraftRevisionGoal, setStarterDraftRevisionGoal] = useState("clarity");
+  const [starterDraftContextNote, setStarterDraftContextNote] = useState("");
 
   const applyWorkspaceState = useCallback((essayData: Essay, versionData: EssayVersion[]) => {
     setEssay(essayData);
@@ -570,6 +602,11 @@ export default function EssayWorkspacePage() {
           body: JSON.stringify({
             essay_id: essay.id,
             mode: "starter_draft",
+            generation_mode: starterDraftMode,
+            tone: starterDraftTone,
+            focus: starterDraftFocus,
+            revision_goal: starterDraftRevisionGoal,
+            context_note: starterDraftContextNote.trim(),
           }),
         },
         token,
@@ -959,9 +996,81 @@ export default function EssayWorkspacePage() {
             <div className="rounded-xl border border-black/10 bg-white p-3">
               <p className="text-xs font-black uppercase tracking-[0.12em] text-black/45">Coach actions</p>
               <div className="mt-3 grid gap-2">
+                <div className="rounded-xl border border-black/10 bg-[#FFF9E8] p-3">
+                  <p className="text-xs font-black uppercase tracking-[0.12em] text-black/45">Starter draft mode</p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <Button
+                      size="sm"
+                      variant={starterDraftMode === "fresh_angle" ? "primary" : "outline"}
+                      onClick={() => setStarterDraftMode("fresh_angle")}
+                    >
+                      Fresh angle
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={starterDraftMode === "build_on_my_draft" ? "primary" : "outline"}
+                      onClick={() => setStarterDraftMode("build_on_my_draft")}
+                    >
+                      Build on my draft
+                    </Button>
+                  </div>
+                  <p className="mt-2 text-xs text-black/60">
+                    {starterDraftMode === "fresh_angle"
+                      ? "Creates an idea draft for inspiration instead of following your current wording."
+                      : "Uses your current draft as source material and rewrites it into a cleaner short starter."}
+                  </p>
+                  <div className="mt-3 grid gap-3">
+                    <div>
+                      <p className="mb-2 text-xs font-black uppercase tracking-[0.12em] text-black/45">Tone</p>
+                      <Select
+                        value={starterDraftTone}
+                        onChange={setStarterDraftTone}
+                        options={starterDraftToneOptions}
+                        ariaLabel="Starter draft tone"
+                      />
+                    </div>
+                    {starterDraftMode === "fresh_angle" ? (
+                      <div>
+                        <p className="mb-2 text-xs font-black uppercase tracking-[0.12em] text-black/45">Focus</p>
+                        <Select
+                          value={starterDraftFocus}
+                          onChange={setStarterDraftFocus}
+                          options={starterDraftFocusOptions}
+                          ariaLabel="Starter draft focus"
+                        />
+                      </div>
+                    ) : (
+                      <div>
+                        <p className="mb-2 text-xs font-black uppercase tracking-[0.12em] text-black/45">What to improve</p>
+                        <Select
+                          value={starterDraftRevisionGoal}
+                          onChange={setStarterDraftRevisionGoal}
+                          options={starterDraftRevisionGoalOptions}
+                          ariaLabel="Starter draft revision goal"
+                        />
+                      </div>
+                    )}
+                    <div>
+                      <p className="mb-2 text-xs font-black uppercase tracking-[0.12em] text-black/45">
+                        {starterDraftMode === "fresh_angle" ? "Optional context" : "What should AI keep in mind?"}
+                      </p>
+                      <input
+                        value={starterDraftContextNote}
+                        onChange={(event) => setStarterDraftContextNote(event.target.value)}
+                        maxLength={240}
+                        placeholder={
+                          starterDraftMode === "fresh_angle"
+                            ? "Example: make it feel more personal, less academic"
+                            : "Example: keep the robotics story and make the reflection stronger"
+                        }
+                        className="h-12 w-full rounded-2xl border-2 border-black/15 bg-white px-4 text-sm font-medium text-black outline-none transition placeholder:text-black/35 focus-visible:border-black"
+                      />
+                    </div>
+                  </div>
+                </div>
                 <Button size="sm" onClick={() => void runStarterDraft()} disabled={aiActionLoading !== null} className="w-full justify-start">
                   {aiActionLoading === "starter" ? <Spinner size="sm" /> : <Sparkles className="h-4 w-4" />}
-                  <span>Generate starter draft</span>
+                  <span>{starterDraftMode === "fresh_angle" ? "Generate idea draft" : "Build from my draft"}</span>
                 </Button>
                 <Button variant="outline" size="sm" onClick={() => void runExplainPrompt()} disabled={aiActionLoading !== null} className="w-full justify-start">
                   {aiActionLoading === "explain" ? <Spinner size="sm" /> : <Bot className="h-4 w-4" />}
@@ -1027,25 +1136,36 @@ export default function EssayWorkspacePage() {
             {aiPanelState.kind === "starter" ? (
               <div className="mt-3 space-y-3 rounded-xl border border-black/15 bg-[#FFF9E8] p-3">
                 <div className="flex items-center justify-between gap-2">
-                  <Badge variant="primary">Starter draft</Badge>
+                  <Badge variant="primary">
+                    {aiPanelState.data.generation_mode === "fresh_angle" ? "Fresh starter draft" : "Starter draft from your draft"}
+                  </Badge>
                   <span className="text-xs text-black/55">{aiPanelState.data.word_count_estimate} words</span>
                 </div>
                 <p className="text-sm font-semibold text-black/85">{aiPanelState.data.draft_title}</p>
-                <div>
-                  <p className="text-xs font-black uppercase tracking-[0.12em] text-black/45">Starting angle</p>
-                  <p className="mt-1 text-sm leading-6 text-black/78">{aiPanelState.data.starting_angle}</p>
+                <div className="rounded-xl border border-black/10 bg-[#DAF5F0]/40 px-3 py-2 text-sm leading-6 text-black/80">
+                  {aiPanelState.data.summary}
                 </div>
                 <div>
-                  <p className="text-xs font-black uppercase tracking-[0.12em] text-black/45">Why this works</p>
-                  <p className="mt-1 text-sm leading-6 text-black/78">{aiPanelState.data.why_this_works}</p>
-                </div>
-                <div className="rounded-xl border border-black/10 bg-white p-3 text-sm leading-6 text-black/80">
-                  {aiPanelState.data.draft_content}
+                  <p className="text-xs font-black uppercase tracking-[0.12em] text-black/45">Why this draft is useful</p>
+                  <p className="mt-1 text-sm leading-6 text-black/78">{aiPanelState.data.why_it_works}</p>
                 </div>
                 <div>
-                  <p className="text-xs font-black uppercase tracking-[0.12em] text-black/45">What to write next</p>
-                  <p className="mt-1 text-sm leading-6 text-black/78">{aiPanelState.data.next_focus}</p>
+                  <p className="text-xs font-black uppercase tracking-[0.12em] text-black/45">What admissions readers want to see</p>
+                  <ul className="mt-1 list-disc pl-5 text-sm leading-6 text-black/78">
+                    {aiPanelState.data.what_admissions_reads_for.map((item, index) => (
+                      <li key={`starter-reader-${index}`}>{item}</li>
+                    ))}
+                  </ul>
                 </div>
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.12em] text-black/45">What to do next</p>
+                  <ul className="mt-1 list-disc pl-5 text-sm leading-6 text-black/78">
+                    {aiPanelState.data.next_steps.map((item, index) => (
+                      <li key={`starter-next-${index}`}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+                <p className="text-xs text-black/55">Draft created as a new version on the left. Open that version to read or edit the full text.</p>
               </div>
             ) : null}
 
@@ -1058,7 +1178,18 @@ export default function EssayWorkspacePage() {
                   <span className="text-xs text-black/55">{selectionActionLabels[aiPanelState.data.action] || "Selection feedback"}</span>
                 </div>
                 <p className="text-sm font-semibold text-black/85">{aiPanelState.data.message}</p>
-                <p className="text-sm leading-6 text-black/75">{aiPanelState.data.why}</p>
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.12em] text-black/45">What changed</p>
+                  <p className="mt-1 text-sm leading-6 text-black/78">{aiPanelState.data.what_changed}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.12em] text-black/45">Why this helps</p>
+                  <p className="mt-1 text-sm leading-6 text-black/78">{aiPanelState.data.why_it_helps}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.12em] text-black/45">What reviewers are looking for</p>
+                  <p className="mt-1 text-sm leading-6 text-black/78">{aiPanelState.data.reviewer_expectation}</p>
+                </div>
                 <div className="rounded-xl border border-black/10 bg-white p-3 text-sm leading-6 text-black/80">
                   {aiPanelState.data.suggested_text || "This is already strong. No changes needed."}
                 </div>

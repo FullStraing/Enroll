@@ -10,6 +10,34 @@ SELECTION_ACTION_CHOICES = [
     "review_only",
 ]
 
+STARTER_DRAFT_GENERATION_MODE_CHOICES = [
+    "fresh_angle",
+    "build_on_my_draft",
+]
+
+STARTER_DRAFT_TONE_CHOICES = [
+    "reflective",
+    "direct",
+    "warm",
+    "confident",
+]
+
+STARTER_DRAFT_FOCUS_CHOICES = [
+    "auto",
+    "challenge",
+    "growth",
+    "leadership",
+    "community_impact",
+    "academic_fit",
+]
+
+STARTER_DRAFT_REVISION_GOAL_CHOICES = [
+    "clarity",
+    "specificity",
+    "stronger_opening",
+    "deeper_reflection",
+]
+
 
 class EssayAiBaseSerializer(serializers.Serializer):
     essay_id = serializers.IntegerField(min_value=1)
@@ -17,6 +45,11 @@ class EssayAiBaseSerializer(serializers.Serializer):
 
 class EssayStarterDraftRequestSerializer(EssayAiBaseSerializer):
     mode = serializers.CharField(required=False, default="starter_draft")
+    generation_mode = serializers.ChoiceField(choices=STARTER_DRAFT_GENERATION_MODE_CHOICES, required=False, default="fresh_angle")
+    tone = serializers.ChoiceField(choices=STARTER_DRAFT_TONE_CHOICES, required=False, default="reflective")
+    focus = serializers.ChoiceField(choices=STARTER_DRAFT_FOCUS_CHOICES, required=False, default="auto")
+    revision_goal = serializers.ChoiceField(choices=STARTER_DRAFT_REVISION_GOAL_CHOICES, required=False, default="clarity")
+    context_note = serializers.CharField(required=False, allow_blank=True, max_length=240, default="")
 
     def validate_mode(self, value: str):
         if value != "starter_draft":
@@ -49,9 +82,11 @@ class EssayOutlineRequestSerializer(EssayAiBaseSerializer):
 class EssayStarterDraftResponseSerializer(serializers.Serializer):
     draft_title = serializers.CharField()
     draft_content = serializers.CharField()
-    starting_angle = serializers.CharField()
-    why_this_works = serializers.CharField()
-    next_focus = serializers.CharField()
+    summary = serializers.CharField()
+    why_it_works = serializers.CharField()
+    what_admissions_reads_for = serializers.ListField(child=serializers.CharField(), allow_empty=True)
+    next_steps = serializers.ListField(child=serializers.CharField(), allow_empty=True)
+    generation_mode = serializers.ChoiceField(choices=STARTER_DRAFT_GENERATION_MODE_CHOICES)
     word_count_estimate = serializers.IntegerField(min_value=0)
 
 
@@ -59,7 +94,9 @@ class EssaySelectionFeedbackResponseSerializer(serializers.Serializer):
     verdict = serializers.ChoiceField(choices=["keep", "revise"])
     message = serializers.CharField()
     suggested_text = serializers.CharField(allow_blank=True, allow_null=True, required=False)
-    why = serializers.CharField()
+    what_changed = serializers.CharField()
+    why_it_helps = serializers.CharField()
+    reviewer_expectation = serializers.CharField()
     confidence = serializers.FloatField(min_value=0, max_value=1)
 
 
