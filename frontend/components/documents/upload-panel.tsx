@@ -87,8 +87,8 @@ export function UploadPanel({
   return (
     <Card className="shadow-none">
       <CardTitle className="text-lg">Upload document</CardTitle>
-      <CardDescription className="mt-2">
-        Keep admissions files in one place. Drag and drop works here, and one upload can include multiple files of the same type.
+      <CardDescription className="mt-2 text-sm">
+        Add files for your applications.
       </CardDescription>
 
       <form onSubmit={submit} className="mt-4 grid gap-3">
@@ -194,7 +194,7 @@ export function UploadPanel({
           </div>
         ) : null}
 
-        <Button type="submit" disabled={uploading || remainingSlots === 0} className="mt-1 gap-2">
+        <Button type="submit" disabled={uploading || remainingSlots === 0} className="mt-1 w-full gap-2 sm:w-auto">
           {uploading ? <Loader size="sm" /> : <Upload className="h-4 w-4" />}
           {uploading ? "Uploading..." : "Upload document"}
         </Button>

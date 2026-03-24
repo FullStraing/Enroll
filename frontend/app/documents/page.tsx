@@ -183,9 +183,9 @@ function DocumentsPageContent() {
 
   return (
     <ProtectedPage>
-      <AppShell title="Documents" subtitle="Store the files you need for applications and keep document readiness clear.">
+      <AppShell title="Documents" subtitle="Application files in one place.">
         <div className="grid gap-5 xl:grid-cols-[360px_1fr]">
-          <div className="space-y-5">
+          <div className="min-w-0 space-y-5">
             <UploadPanel
               documentTypes={DOCUMENT_TYPES}
               studentUniversities={studentUniversities}
@@ -198,8 +198,8 @@ function DocumentsPageContent() {
 
             <Card className="shadow-none">
               <CardTitle className="text-lg">Readiness</CardTitle>
-              <CardDescription className="mt-2">
-                Quick view of which standard admissions document groups are already covered.
+              <CardDescription className="mt-2 hidden text-sm sm:block">
+                Quick view of what is already covered.
               </CardDescription>
 
               {loading ? (
@@ -215,7 +215,7 @@ function DocumentsPageContent() {
                       <p className="mt-2 text-2xl font-black text-black">
                         {readyCount} / {DOCUMENT_TYPES.length}
                       </p>
-                      <p className="mt-1 text-xs text-black/55">Standard document groups already have at least one file.</p>
+                      <p className="mt-1 text-xs text-black/55">Document groups with at least one file.</p>
                     </div>
                     <div className="rounded-2xl border border-black/15 bg-[#FFF4CC] px-4 py-4">
                       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-black/55">Still missing</p>
@@ -237,7 +237,7 @@ function DocumentsPageContent() {
             </Card>
           </div>
 
-          <div className="space-y-5">
+          <div className="min-w-0 space-y-5">
             {loading ? (
               <div className="grid gap-4">
                 <Skeleton className="h-40 rounded-2xl" />

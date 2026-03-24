@@ -22,7 +22,7 @@ export function DocumentGroupSection({ group, items, deletingId, onDelete, onRen
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <CardTitle className="text-lg">{group.label}</CardTitle>
-          <CardDescription className="mt-1">{group.description}</CardDescription>
+          <CardDescription className="mt-1 hidden sm:block">{group.description}</CardDescription>
         </div>
         <span
           className={`rounded-full border px-3 py-1 text-xs font-semibold ${
@@ -36,7 +36,7 @@ export function DocumentGroupSection({ group, items, deletingId, onDelete, onRen
       {items.length ? (
         <div className="mt-4 grid gap-3">
           {items.map((item) => (
-            <div key={item.id} className="rounded-2xl border border-black/15 bg-white px-4 py-4">
+            <div key={item.id} className="min-w-0 rounded-2xl border border-black/15 bg-white px-4 py-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
@@ -57,13 +57,13 @@ export function DocumentGroupSection({ group, items, deletingId, onDelete, onRen
                   </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2">
-                  <Button size="sm" variant="outline" className="gap-2" onClick={() => onRename(item)}>
+                <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
+                  <Button size="sm" variant="outline" className="w-full gap-2 sm:w-auto" onClick={() => onRename(item)}>
                     <Pencil className="h-4 w-4" />
                     Rename
                   </Button>
-                  <a href={item.download_url} target="_blank" rel="noreferrer">
-                    <Button size="sm" variant="outline" className="gap-2">
+                  <a href={item.download_url} target="_blank" rel="noreferrer" className="w-full sm:w-auto">
+                    <Button size="sm" variant="outline" className="w-full gap-2 sm:w-auto">
                       <Download className="h-4 w-4" />
                       Download
                     </Button>
@@ -71,7 +71,7 @@ export function DocumentGroupSection({ group, items, deletingId, onDelete, onRen
                   <Button
                     size="sm"
                     variant="outline"
-                    className="gap-2 text-rose-700 hover:bg-rose-50"
+                    className="w-full gap-2 text-rose-700 hover:bg-rose-50 sm:w-auto"
                     onClick={() => void onDelete(item.id)}
                     disabled={deletingId === item.id}
                   >
@@ -85,7 +85,7 @@ export function DocumentGroupSection({ group, items, deletingId, onDelete, onRen
         </div>
       ) : (
         <div className="mt-4 rounded-2xl border border-dashed border-black/15 bg-black/[0.02] px-4 py-4 text-sm text-black/60">
-          No files uploaded in this group yet. Use the upload form to add one.
+          No files uploaded in this group yet.
         </div>
       )}
     </Card>

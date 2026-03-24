@@ -176,3 +176,7 @@ pm run dev:clean for explicit cache resets. Verified with frontend lint/build.
 - 2026-03-24: Reworked the mobile app shell into a proper left drawer. Navigation now opens as a slide-over panel with dimmed backdrop, while mobile header clutter (time, profile, logout) was moved into the drawer to keep page content clear.
 
 - 2026-03-24: Fixed the mobile drawer regression by removing the duplicated desktop brand/toggle row from the slide-over, restoring proper drawer-only scrolling, and locking the page scroll while the drawer is open.
+
+- 2026-03-24: Cleaned up the Documents mobile layout by restoring safe header spacing under the drawer button, shortening page/upload/readiness copy, and stacking document actions into a phone-friendly layout.
+
+- 2026-03-24: Fixed an additional 360px Documents overflow case by forcing document grid columns and group cards to shrink with min-w-0, and trimmed the remaining mobile-only copy.

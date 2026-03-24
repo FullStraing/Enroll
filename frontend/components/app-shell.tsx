@@ -273,8 +273,8 @@ export function AppShell({
           </div>
       </aside>
 
-      <section className="glass glass-soft rounded-3xl p-4 sm:p-6">
-        <header className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b-2 border-black/80 pb-4">
+      <section className="glass glass-soft rounded-3xl p-4 pt-14 sm:p-6">
+        <header className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b-2 border-black/80 pb-4 pl-10 sm:pl-0">
           <div>
             <h1 className="text-2xl font-black">{title}</h1>
             <p className="text-sm text-black/65">{subtitle}</p>
