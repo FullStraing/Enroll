@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -34,18 +34,6 @@ const nav = [
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 const sidebarStorageKey = "enroll_sidebar_collapsed";
-const landingItem = { href: "/", label: "Landing", icon: Home };
-
-function isActivePath(pathname: string, href: string) {
-  if (href === "/") return pathname === "/";
-  return pathname === href || pathname.startsWith(`${href}/`);
-}
-
-function resolveActiveHref(pathname: string) {
-  const matched = nav.find((item) => isActivePath(pathname, item.href));
-  if (matched) return matched.href;
-  return isActivePath(pathname, landingItem.href) ? landingItem.href : null;
-}
 
 function buildLocalDateTime(now: Date) {
   const locale = typeof navigator !== "undefined" ? navigator.language : "en-US";
@@ -86,18 +74,8 @@ export function AppShell({
   const [localDateTime, setLocalDateTime] = useState(() => buildLocalDateTime(new Date()));
   const [navigatingTo, setNavigatingTo] = useState<string | null>(null);
   const navTimerRef = useRef<number | null>(null);
-  const navRef = useRef<HTMLElement | null>(null);
-  const navItemRefs = useRef<Record<string, HTMLAnchorElement | null>>({});
-  const indicatorEnableFrameRef = useRef<number | null>(null);
-  const [activeIndicator, setActiveIndicator] = useState<{ top: number; height: number; visible: boolean }>({
-    top: 0,
-    height: 0,
-    visible: false,
-  });
-  const [indicatorTransitionEnabled, setIndicatorTransitionEnabled] = useState(false);
 
   const name = profile?.full_name || profile?.username || profile?.email || "User";
-  const activeNavHref = navigatingTo ?? resolveActiveHref(pathname);
 
   function toggleSidebar() {
     setCollapsed((prev) => {
@@ -110,7 +88,6 @@ export function AppShell({
   useEffect(() => {
     setMobileMenuOpen(false);
     setNavigatingTo(null);
-    setIndicatorTransitionEnabled(false);
     if (navTimerRef.current) {
       window.clearTimeout(navTimerRef.current);
       navTimerRef.current = null;
@@ -121,9 +98,6 @@ export function AppShell({
     return () => {
       if (navTimerRef.current) {
         window.clearTimeout(navTimerRef.current);
-      }
-      if (indicatorEnableFrameRef.current) {
-        window.cancelAnimationFrame(indicatorEnableFrameRef.current);
       }
     };
   }, []);
@@ -148,58 +122,6 @@ export function AppShell({
     const timer = window.setInterval(update, 60_000);
     return () => window.clearInterval(timer);
   }, []);
-
-  useEffect(() => {
-    const updateIndicator = () => {
-      if (!activeNavHref || !navRef.current) {
-        setActiveIndicator((prev) =>
-          prev.visible ? { top: prev.top, height: prev.height, visible: false } : prev,
-        );
-        return;
-      }
-
-      const activeItem = navItemRefs.current[activeNavHref];
-      if (!activeItem) return;
-
-      const navRect = navRef.current.getBoundingClientRect();
-      const itemRect = activeItem.getBoundingClientRect();
-      const nextTop = activeItem.offsetTop;
-      const nextHeight = itemRect.height;
-
-      setActiveIndicator((prev) => {
-        if (
-          prev.visible &&
-          Math.abs(prev.top - nextTop) < 1 &&
-          Math.abs(prev.height - nextHeight) < 1
-        ) {
-          return prev;
-        }
-
-        return { top: nextTop, height: nextHeight, visible: true };
-      });
-
-      if (!indicatorTransitionEnabled) {
-        if (indicatorEnableFrameRef.current) {
-          window.cancelAnimationFrame(indicatorEnableFrameRef.current);
-        }
-        indicatorEnableFrameRef.current = window.requestAnimationFrame(() => {
-          setIndicatorTransitionEnabled(true);
-          indicatorEnableFrameRef.current = null;
-        });
-      }
-    };
-
-    const frame = window.requestAnimationFrame(updateIndicator);
-    window.addEventListener("resize", updateIndicator);
-    return () => {
-      window.cancelAnimationFrame(frame);
-      if (indicatorEnableFrameRef.current) {
-        window.cancelAnimationFrame(indicatorEnableFrameRef.current);
-        indicatorEnableFrameRef.current = null;
-      }
-      window.removeEventListener("resize", updateIndicator);
-    };
-  }, [activeNavHref, collapsed, mobileMenuOpen, indicatorTransitionEnabled]);
 
   function navigateWithTransition(
     event: React.MouseEvent<HTMLAnchorElement>,
@@ -272,73 +194,73 @@ export function AppShell({
             : "hidden"
         } lg:sticky lg:top-6 lg:block lg:h-fit lg:w-auto`}
       >
-          <div className="mb-4 grid gap-3 lg:hidden">
-            <div className="flex items-center justify-between gap-3 rounded-2xl border border-black/10 bg-white px-3 py-3">
-              <div className="flex min-w-0 items-center gap-2">
-                <Image src="/brand/logo-mark.svg" alt="Enroll" width={20} height={20} className="h-6 w-6 shrink-0" />
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-black text-black">Enroll</p>
-                  <p className="truncate text-[11px] uppercase tracking-[0.16em] text-black/45">Admissions OS</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setMobileMenuOpen(false)}
-                className="rounded-xl border-2 border-black bg-white p-2"
-                aria-label="Close menu"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            <div className="rounded-2xl border border-black/10 bg-white px-3 py-3">
-              <div className="flex items-center gap-3">
-                <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#DAF5F0] text-sm font-bold text-black">
-                  {name.charAt(0).toUpperCase()}
-                </span>
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-black">{name}</p>
-                  <p className="truncate text-xs text-black/45">{profile?.email || "Enroll workspace"}</p>
-                </div>
-              </div>
-
-              <div className="mt-3 rounded-2xl border border-black/10 bg-[#FFF4CC] px-3 py-2">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-black/45">{localDateTime.dateLabel}</p>
-                <p className="mt-1 text-sm font-semibold text-black">{localDateTime.timeLabel}</p>
+        <div className="mb-4 grid gap-3 lg:hidden">
+          <div className="flex items-center justify-between gap-3 rounded-2xl border border-black/10 bg-white px-3 py-3">
+            <div className="flex min-w-0 items-center gap-2">
+              <Image src="/brand/logo-mark.svg" alt="Enroll" width={20} height={20} className="h-6 w-6 shrink-0" />
+              <div className="min-w-0">
+                <p className="truncate text-sm font-black text-black">Enroll</p>
+                <p className="truncate text-[11px] uppercase tracking-[0.16em] text-black/45">Admissions OS</p>
               </div>
             </div>
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(false)}
+              className="rounded-xl border-2 border-black bg-white p-2"
+              aria-label="Close menu"
+            >
+              <X className="h-4 w-4" />
+            </button>
           </div>
 
-          <div className={`mb-4 hidden items-center gap-2 lg:flex ${collapsed ? "justify-center" : "justify-between"}`}>
-            {collapsed ? (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={toggleSidebar}
-                className="relative h-9 w-9 overflow-hidden px-0"
-                aria-label="Expand menu"
-                title="Expand menu"
-              >
-                <Menu
-                  className={`absolute h-4 w-4 transition-all duration-200 ${
-                    collapsed ? "rotate-0 scale-100 opacity-100" : "rotate-90 scale-0 opacity-0"
-                  }`}
-                />
-                <X
-                  className={`absolute h-4 w-4 transition-all duration-200 ${
-                    collapsed ? "-rotate-90 scale-0 opacity-0" : "rotate-0 scale-100 opacity-100"
-                  }`}
-                />
-              </Button>
-            ) : (
-              <>
-                <Link href="/" className="block">
-                  <div className="flex h-12 w-36 items-center gap-2 rounded-lg border-2 border-black bg-white px-3 transition-all duration-300 ease-in-out">
-                    <Image src="/brand/logo-mark.svg" alt="Enroll" width={20} height={20} className="h-5 w-5 shrink-0" />
-                    <span className="text-sm font-bold">Enroll</span>
-                  </div>
-                </Link>
+          <div className="rounded-2xl border border-black/10 bg-white px-3 py-3">
+            <div className="flex items-center gap-3">
+              <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#DAF5F0] text-sm font-bold text-black">
+                {name.charAt(0).toUpperCase()}
+              </span>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-black">{name}</p>
+                <p className="truncate text-xs text-black/45">{profile?.email || "Enroll workspace"}</p>
+              </div>
+            </div>
+
+            <div className="mt-3 rounded-2xl border border-black/10 bg-[#FFF4CC] px-3 py-2">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-black/45">{localDateTime.dateLabel}</p>
+              <p className="mt-1 text-sm font-semibold text-black">{localDateTime.timeLabel}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className={`mb-4 hidden items-center gap-2 lg:flex ${collapsed ? "justify-center" : "justify-between"}`}>
+          {collapsed ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={toggleSidebar}
+              className="relative h-9 w-9 overflow-hidden px-0"
+              aria-label="Expand menu"
+              title="Expand menu"
+            >
+              <Menu
+                className={`absolute h-4 w-4 transition-all duration-200 ${
+                  collapsed ? "rotate-0 scale-100 opacity-100" : "rotate-90 scale-0 opacity-0"
+                }`}
+              />
+              <X
+                className={`absolute h-4 w-4 transition-all duration-200 ${
+                  collapsed ? "-rotate-90 scale-0 opacity-0" : "rotate-0 scale-100 opacity-100"
+                }`}
+              />
+            </Button>
+          ) : (
+            <>
+              <Link href="/" className="block">
+                <div className="flex h-12 w-36 items-center gap-2 rounded-lg border-2 border-black bg-white px-3 transition-all duration-300 ease-in-out">
+                  <Image src="/brand/logo-mark.svg" alt="Enroll" width={20} height={20} className="h-5 w-5 shrink-0" />
+                  <span className="text-sm font-bold">Enroll</span>
+                </div>
+              </Link>
               <Button
                 type="button"
                 variant="outline"
@@ -359,82 +281,62 @@ export function AppShell({
                   }`}
                 />
               </Button>
-              </>
-            )}
-          </div>
+            </>
+          )}
+        </div>
 
-          <nav ref={navRef} className="relative grid gap-2">
-            <div
-              aria-hidden="true"
-              className={`pointer-events-none absolute left-0 right-0 rounded-xl border-2 border-black bg-[#FFDB58] shadow-[0_2px_0_rgba(0,0,0,0.08)] ${
-                indicatorTransitionEnabled
-                  ? "transition-[transform,height,opacity] duration-200 ease-out"
-                  : "transition-none"
-              } ${
-                activeIndicator.visible ? "opacity-100" : "opacity-0"
-              }`}
-              style={{
-                transform: `translateY(${activeIndicator.top}px)`,
-                height: activeIndicator.height,
-              }}
-            />
-            {nav.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={(event) => navigateWithTransition(event, item.href)}
-                ref={(node) => {
-                  navItemRefs.current[item.href] = node;
-                }}
-                title={item.label}
-                className={`relative z-10 rounded-xl border-2 border-transparent px-3 py-2 text-sm font-semibold transition-colors duration-200 ${
-                  activeNavHref === item.href
-                    ? "text-black"
-                    : navigatingTo === item.href
-                      ? "text-black"
-                      : "text-black/75 hover:bg-black/5 hover:text-black"
-                } ${collapsed ? "flex items-center justify-center px-0" : "flex items-center gap-2"}`}
-              >
-                <item.icon className="h-4 w-4 shrink-0" />
-                {!collapsed ? (
-                  <span className="inline-block transition-all duration-200 ease-out">{item.label}</span>
-                ) : null}
-              </Link>
-            ))}
+        <nav className="grid gap-2">
+          {nav.map((item) => (
             <Link
-              href="/"
-              onClick={(event) => navigateWithTransition(event, "/")}
-              ref={(node) => {
-                navItemRefs.current[landingItem.href] = node;
-              }}
-              title="Landing"
-              className={`relative z-10 mt-3 rounded-xl border-2 px-3 py-2 text-sm font-semibold transition-colors duration-200 ${
-                activeNavHref === landingItem.href
-                  ? "border-transparent text-black"
-                  : "border-2 border-black text-black/75 hover:bg-black/5 hover:text-black"
-              } ${
-                collapsed ? "flex items-center justify-center px-0" : "flex items-center gap-2"
-              }`}
+              key={item.href}
+              href={item.href}
+              onClick={(event) => navigateWithTransition(event, item.href)}
+              title={item.label}
+              className={`rounded-xl px-3 py-2 text-sm font-semibold transition ${
+                pathname === item.href
+                  ? "bg-[#FFDB58] text-black border-2 border-black"
+                  : navigatingTo === item.href
+                    ? "border-2 border-black/70 bg-[#DAF5F0] text-black"
+                    : "text-black/75 hover:bg-black/5 hover:text-black"
+              } ${collapsed ? "flex items-center justify-center px-0" : "flex items-center gap-2"}`}
             >
-              <Home className="h-4 w-4 shrink-0" />
-              {!collapsed ? "Landing" : null}
+              <item.icon className="h-4 w-4 shrink-0" />
+              {!collapsed ? (
+                <span className="inline-block transition-all duration-200 ease-out">{item.label}</span>
+              ) : null}
             </Link>
-          </nav>
+          ))}
+          <Link
+            href="/"
+            onClick={(event) => navigateWithTransition(event, "/")}
+            title="Landing"
+            className={`mt-3 rounded-xl border-2 border-black px-3 py-2 text-sm font-semibold text-black/75 hover:bg-black/5 hover:text-black ${
+              collapsed ? "flex items-center justify-center px-0" : "flex items-center gap-2"
+            }`}
+          >
+            <Home className="h-4 w-4 shrink-0" />
+            {!collapsed ? "Landing" : null}
+          </Link>
+        </nav>
 
-          <div className="mt-4 lg:hidden">
-            <button
-              onClick={() => {
-                logout();
-                router.push("/");
-              }}
-              className="w-full rounded-xl border-2 border-black bg-[#FFDB58] px-3 py-2 text-sm font-semibold hover:-translate-y-0.5"
-            >
-              Выйти
-            </button>
-          </div>
+        <div className="mt-4 lg:hidden">
+          <button
+            onClick={() => {
+              logout();
+              router.push("/");
+            }}
+            className="w-full rounded-xl border-2 border-black bg-[#FFDB58] px-3 py-2 text-sm font-semibold hover:-translate-y-0.5"
+          >
+            Выйти
+          </button>
+        </div>
       </aside>
 
-      <section className="glass glass-soft rounded-3xl p-4 pt-14 sm:p-6">
+      <section
+        className={`glass glass-soft rounded-3xl p-4 pt-14 transition-[opacity,transform,filter] duration-200 ease-out sm:p-6 ${
+          navigatingTo ? "translate-y-1 scale-[0.995] opacity-80 blur-[1px]" : "translate-y-0 scale-100 opacity-100 blur-0"
+        }`}
+      >
         <header className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b-2 border-black/80 pb-4 pl-10 sm:pl-0">
           <div>
             <h1 className="text-2xl font-black">{title}</h1>

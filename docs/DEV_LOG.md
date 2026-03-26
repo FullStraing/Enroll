@@ -198,4 +198,5 @@ pm run dev:clean for explicit cache resets. Verified with frontend lint/build.
 - 2026-03-26: Added a subtle shared nav transition in the app shell. Workspace navigation now uses a short fade/translate transition before route changes, respects reduced-motion settings, and visually highlights the clicked destination without introducing heavy animation or extra loaders.
 - 2026-03-26: Upgraded the shared app nav to use one moving active indicator instead of a static active fill. The highlighted nav pill now slides between destinations at a moderate speed, including nested routes like community groups and essay detail pages, while keeping the rest of the shell motion subtle.
 - 2026-03-26: Removed the page-level shell fade/blur during navigation and kept only the nav indicator animation. This fixes the visible whole-page flash after route changes while preserving the smoother moving highlight between nav items.
+- 2026-03-26: Reverted the shell navigation back to the first transition style on request. The page-level fade/blur is restored, and nav items again use the earlier per-button active and pressed-state styling instead of the moving shared indicator.
 
