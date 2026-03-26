@@ -1,6 +1,6 @@
-﻿"use client";
+"use client";
 
-import { FormEvent, useCallback, useState } from "react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { apiFetch } from "@/lib/api";
 import { Loader } from "@/components/loader";
@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { GoogleAuthButton } from "@/components/google-auth-button";
 import { hasPendingStoredIntroQuiz, syncStoredIntroQuizToProfile } from "@/lib/intro-quiz";
 import { RequiredMark } from "@/components/ui/required-mark";
+import { RuntimeNotice } from "@/components/runtime-notice";
+import { fetchRuntimeConfig, type RuntimeConfig } from "@/lib/runtime-config";
 
 export default function RegisterPage() {
   const { setSession } = useAuth();
@@ -17,9 +19,28 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
+  const [runtimeConfig, setRuntimeConfig] = useState<RuntimeConfig | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetchRuntimeConfig()
+      .then((config) => {
+        if (!cancelled) setRuntimeConfig(config);
+      })
+      .catch(() => {
+        if (!cancelled) setRuntimeConfig(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
+    if (runtimeConfig?.features.registration_enabled === false) {
+      setError("Registration is temporarily unavailable.");
+      return;
+    }
     setPending(true);
     setError("");
     try {
@@ -65,43 +86,63 @@ export default function RegisterPage() {
     setError(message);
   }, []);
 
+  const registrationDisabled = runtimeConfig?.features.registration_enabled === false;
+  const googleUnavailableMessage = registrationDisabled
+    ? "Google account creation is temporarily unavailable."
+    : runtimeConfig?.features.google_auth_enabled === false
+      ? "Google sign-in is temporarily unavailable."
+      : undefined;
+
   return (
     <main className="theme-home mx-auto flex min-h-screen max-w-md items-center px-6 py-16">
       <form onSubmit={onSubmit} className="glass w-full rounded-3xl p-6">
         <h1 className="text-2xl font-semibold">Регистрация</h1>
+        {registrationDisabled ? (
+          <div className="mt-4">
+            <RuntimeNotice message="Registration is temporarily unavailable. Existing users can still sign in." />
+          </div>
+        ) : runtimeConfig?.features.maintenance_mode ? (
+          <div className="mt-4">
+            <RuntimeNotice tone="info" message="Maintenance mode is active. New account creation may be temporarily limited." />
+          </div>
+        ) : null}
         <label className="mt-4 block text-sm text-black/70">Username<RequiredMark /></label>
         <input
-          className="mt-1 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-black placeholder:text-black/45"
+          className="mt-1 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-black placeholder:text-black/45 disabled:cursor-not-allowed disabled:bg-black/[0.03]"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           placeholder="Введите username"
           required
+          disabled={pending || registrationDisabled}
         />
         <label className="mt-4 block text-sm text-black/70">Email<RequiredMark /></label>
         <input
           type="email"
-          className="mt-1 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-black placeholder:text-black/45"
+          className="mt-1 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-black placeholder:text-black/45 disabled:cursor-not-allowed disabled:bg-black/[0.03]"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="Введите email"
           required
+          disabled={pending || registrationDisabled}
         />
         <label className="mt-4 block text-sm text-black/70">Password<RequiredMark /></label>
         <input
           type="password"
-          className="mt-1 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-black placeholder:text-black/45"
+          className="mt-1 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-black placeholder:text-black/45 disabled:cursor-not-allowed disabled:bg-black/[0.03]"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Введите пароль"
           required
+          disabled={pending || registrationDisabled}
         />
-        <Button disabled={pending} className="mt-6 w-full">
+        <Button disabled={pending || registrationDisabled} className="mt-6 w-full">
           {pending ? <Loader size="sm" /> : "Создать аккаунт"}
         </Button>
         <GoogleAuthButton
-          disabled={pending}
+          disabled={pending || registrationDisabled}
           onTokens={handleGoogleTokens}
           onError={handleGoogleError}
+          unavailableMessage={googleUnavailableMessage}
         />
         {error ? <p className="mt-3 text-sm text-red-600">{error}</p> : null}
         <p className="mt-4 text-sm text-black/70">

@@ -264,9 +264,20 @@ export default function LandingPage() {
                 <span>Это не гарантия поступления. Решение принимает университет.</span>
               </div>
               <div className="mt-3">
-                <Link href="/privacy-policy" className="text-sm font-semibold underline underline-offset-2">
-                  Privacy Policy
-                </Link>
+                <div className="flex flex-wrap items-center justify-center gap-3 text-sm font-semibold">
+                  <Link href="/pricing" className="underline underline-offset-2">
+                    Pricing
+                  </Link>
+                  <Link href="/terms" className="underline underline-offset-2">
+                    Terms
+                  </Link>
+                  <Link href="/privacy-policy" className="underline underline-offset-2">
+                    Privacy
+                  </Link>
+                  <Link href="/refund-policy" className="underline underline-offset-2">
+                    Refunds
+                  </Link>
+                </div>
               </div>
             </div>
           </div>

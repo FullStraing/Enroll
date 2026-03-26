@@ -8,6 +8,7 @@ type GoogleAuthButtonProps = {
   onTokens: (access: string, refresh: string) => Promise<void>;
   onError: (message: string) => void;
   disabled?: boolean;
+  unavailableMessage?: string;
 };
 
 declare global {
@@ -36,14 +37,19 @@ declare global {
   }
 }
 
-export function GoogleAuthButton({ onTokens, onError, disabled = false }: GoogleAuthButtonProps) {
+export function GoogleAuthButton({
+  onTokens,
+  onError,
+  disabled = false,
+  unavailableMessage,
+}: GoogleAuthButtonProps) {
   const [loading, setLoading] = useState(false);
   const [scriptFailed, setScriptFailed] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
   useEffect(() => {
-    if (!clientId || !containerRef.current) {
+    if (unavailableMessage || !clientId || !containerRef.current) {
       return;
     }
 
@@ -108,24 +114,24 @@ export function GoogleAuthButton({ onTokens, onError, disabled = false }: Google
     return () => {
       cancelled = true;
     };
-  }, [clientId, onError, onTokens]);
+  }, [clientId, onError, onTokens, unavailableMessage]);
 
   return (
     <div className="mt-4">
-      {clientId ? (
+      {unavailableMessage ? (
+        <div className="rounded-xl border border-black/20 bg-white px-4 py-3 text-sm text-black/70">{unavailableMessage}</div>
+      ) : clientId ? (
         <div className={disabled || loading ? "pointer-events-none opacity-70" : ""} ref={containerRef} />
       ) : (
         <div className="rounded-xl border border-black/20 bg-white px-4 py-3 text-sm text-black/70">
-          Google Sign-In не настроен: добавьте `NEXT_PUBLIC_GOOGLE_CLIENT_ID` в корневой `.env`
+          Google Sign-In is not configured. Add `NEXT_PUBLIC_GOOGLE_CLIENT_ID` to the root `.env`.
         </div>
       )}
-      {scriptFailed ? (
-        <p className="mt-2 text-sm text-red-600">Не удалось загрузить Google Sign-In скрипт.</p>
-      ) : null}
+      {scriptFailed ? <p className="mt-2 text-sm text-red-600">Failed to load the Google Sign-In script.</p> : null}
       {loading ? (
         <div className="mt-2 flex items-center gap-2 text-sm text-black/70">
           <Loader size="sm" />
-          <span>Проверяем Google аккаунт...</span>
+          <span>Checking your Google account...</span>
         </div>
       ) : null}
     </div>

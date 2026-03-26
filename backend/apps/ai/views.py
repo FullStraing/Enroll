@@ -9,6 +9,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.core.runtime import feature_disabled_response
 from apps.essays.models import Essay, EssayVersion
 from .models import AIInteraction
 from .serializers import (
@@ -35,6 +36,8 @@ class AiStubView(APIView):
     response_type = "generic"
 
     def post(self, request):
+        if not settings.AI_ENABLED:
+            return feature_disabled_response("AI features are temporarily unavailable.")
         payload = request.data if isinstance(request.data, dict) else {}
         response_data = {
             "type": self.response_type,
@@ -131,6 +134,8 @@ class EssayStarterDraftAiView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
+        if not settings.AI_ENABLED:
+            return feature_disabled_response("Essay Coach is temporarily unavailable.")
         serializer = EssayStarterDraftRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         essay = _get_user_essay(request.user, serializer.validated_data["essay_id"])
@@ -181,6 +186,8 @@ class EssaySelectionFeedbackAiView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
+        if not settings.AI_ENABLED:
+            return feature_disabled_response("Essay Coach is temporarily unavailable.")
         serializer = EssaySelectionFeedbackRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         essay = _get_user_essay(request.user, serializer.validated_data["essay_id"])
@@ -220,6 +227,8 @@ class EssayExplainPromptAiView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
+        if not settings.AI_ENABLED:
+            return feature_disabled_response("Essay Coach is temporarily unavailable.")
         serializer = EssayExplainPromptRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         essay = _get_user_essay(request.user, serializer.validated_data["essay_id"])
@@ -247,6 +256,8 @@ class EssayOutlineAiView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
+        if not settings.AI_ENABLED:
+            return feature_disabled_response("Essay Coach is temporarily unavailable.")
         serializer = EssayOutlineRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         essay = _get_user_essay(request.user, serializer.validated_data["essay_id"])

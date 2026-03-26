@@ -8,6 +8,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getToken } from "@/lib/auth";
 import { apiFetch } from "@/lib/api";
 import type { CommunityGroupSummary, CommunityPost } from "@/app/community/types";
+import { RuntimeNotice } from "@/components/runtime-notice";
+import { fetchRuntimeConfig, type RuntimeConfig } from "@/lib/runtime-config";
 
 const TAGS = [
   { value: "", label: "General" },
@@ -79,6 +81,7 @@ export default function CommunityPage() {
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [sending, setSending] = useState(false);
   const [statusText, setStatusText] = useState("");
+  const [runtimeConfig, setRuntimeConfig] = useState<RuntimeConfig | null>(null);
 
   const activeRoom = useMemo(
     () => rooms.find((room) => room.slug === activeRoomSlug) ?? null,
@@ -125,6 +128,20 @@ export default function CommunityPage() {
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
+    void fetchRuntimeConfig()
+      .then((config) => {
+        if (!cancelled) setRuntimeConfig(config);
+      })
+      .catch(() => {
+        if (!cancelled) setRuntimeConfig(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
     if (activeRoomSlug) {
       void loadMessages(activeRoomSlug);
     }
@@ -146,6 +163,10 @@ export default function CommunityPage() {
   }
 
   async function sendMessage() {
+    if (runtimeConfig?.features.community_posting_enabled === false) {
+      setStatusText("Community posting is temporarily unavailable.");
+      return;
+    }
     const token = getToken();
     if (!token || !activeRoomSlug) return;
     const body = draft.trim();
@@ -184,6 +205,11 @@ export default function CommunityPage() {
   return (
     <ProtectedPage>
       <AppShell title="Applicants Chat" subtitle="One live space to ask, update, and help each other.">
+        {runtimeConfig?.features.community_posting_enabled === false ? (
+          <div className="mb-4">
+            <RuntimeNotice message="Community posting is temporarily unavailable. You can still read the room while we stabilize moderation or infrastructure." />
+          </div>
+        ) : null}
         {loadingRooms ? (
           <RoomSkeleton />
         ) : (
@@ -298,11 +324,12 @@ export default function CommunityPage() {
                             key={tag.value || "general"}
                             type="button"
                             onClick={() => setSelectedTag(tag.value)}
+                            disabled={runtimeConfig?.features.community_posting_enabled === false}
                             className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
                               active
                                 ? "border-black bg-[#FFDB58] text-black"
                                 : "border-black/10 bg-white text-black/65 hover:border-black/30 hover:text-black"
-                            }`}
+                            } disabled:cursor-not-allowed disabled:opacity-60`}
                           >
                             {tag.label}
                           </button>
@@ -315,12 +342,13 @@ export default function CommunityPage() {
                         onChange={(event) => setDraft(event.target.value)}
                         placeholder="Write one useful message. Ask, update, or help someone."
                         rows={3}
-                        className="min-h-[104px] flex-1 rounded-2xl border border-black/10 bg-[#FFFDFC] px-4 py-3 text-sm text-black outline-none transition placeholder:text-black/35 focus:border-black/30"
+                        className="min-h-[104px] flex-1 rounded-2xl border border-black/10 bg-[#FFFDFC] px-4 py-3 text-sm text-black outline-none transition placeholder:text-black/35 focus:border-black/30 disabled:cursor-not-allowed disabled:bg-black/[0.03]"
+                        disabled={runtimeConfig?.features.community_posting_enabled === false || sending}
                       />
                       <button
                         type="button"
                         onClick={() => void sendMessage()}
-                        disabled={sending || !draft.trim()}
+                        disabled={runtimeConfig?.features.community_posting_enabled === false || sending || !draft.trim()}
                         className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border-2 border-black bg-[#FFDB58] px-5 text-sm font-semibold text-black transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 sm:self-end"
                       >
                         <Send className="h-4 w-4" />

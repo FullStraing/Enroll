@@ -9,6 +9,21 @@ Base prefix: `/api/`
 - `GET /api/ping/`
 - `GET /api/me/`
 
+`GET /api/ping/` now returns:
+
+- overall status
+- environment label
+- database status
+- cache backend/status
+- storage backend label
+- runtime feature flags:
+  - `ai_enabled`
+  - `file_uploads_enabled`
+  - `community_posting_enabled`
+  - `registration_enabled`
+  - `google_auth_enabled`
+  - `maintenance_mode`
+
 ### Auth
 
 - `POST /api/auth/register/`
@@ -27,6 +42,8 @@ Notes:
 - `google` is public and exchanges Google `id_token` -> local JWT (`access`, `refresh`).
 - `token` / `token/refresh` are JWT endpoints.
 - `profile`, `change-password`, and `common-app-progress` require auth.
+- `register` respects `REGISTRATION_ENABLED`.
+- `google` respects both `GOOGLE_AUTH_ENABLED` and `REGISTRATION_ENABLED` for new-user creation.
 
 ## Universities
 
@@ -113,6 +130,7 @@ Current behavior:
 - one upload flow in the frontend can send multiple files, but each file is stored as its own `Document`
 - response includes file metadata and `download_url`
 - this is a simple admissions document vault, not a versioned text editor
+- new uploads respect `FILE_UPLOADS_ENABLED`; reads/rename/delete remain available when uploads are disabled
 
 ## Essays
 
@@ -160,6 +178,7 @@ Current behavior:
 - `openai` remains supported as an optional fallback provider
 - per-action daily limits are enforced server-side before provider calls
 - frontend never calls the model provider directly
+- all AI endpoints respect `AI_ENABLED`
 
 ## Community
 
@@ -186,7 +205,7 @@ Current behavior:
 - groups are seeded by Enroll and typed as `country`, `university`, `intake`, or `topic`
 - posts use structured post types instead of a generic social feed
 - saving posts and report flow are both built in from day one
-- posting and commenting are rate-limited server-side
+- write actions respect `COMMUNITY_POSTING_ENABLED`
 
 ## Common App progress payload
 

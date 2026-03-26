@@ -19,7 +19,9 @@ import {
   X,
 } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
+import { RuntimeNotice } from "@/components/runtime-notice";
 import { Button } from "@/components/ui/button";
+import { fetchRuntimeConfig, type RuntimeConfig } from "@/lib/runtime-config";
 
 const nav = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -72,6 +74,7 @@ export function AppShell({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [localDateTime, setLocalDateTime] = useState(() => buildLocalDateTime(new Date()));
   const [navigatingTo, setNavigatingTo] = useState<string | null>(null);
+  const [runtimeConfig, setRuntimeConfig] = useState<RuntimeConfig | null>(null);
   const navTimerRef = useRef<number | null>(null);
 
   const name = profile?.full_name || profile?.username || profile?.email || "User";
@@ -120,6 +123,20 @@ export function AppShell({
     update();
     const timer = window.setInterval(update, 60_000);
     return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetchRuntimeConfig()
+      .then((config) => {
+        if (!cancelled) setRuntimeConfig(config);
+      })
+      .catch(() => {
+        if (!cancelled) setRuntimeConfig(null);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   function navigateWithTransition(
@@ -372,6 +389,11 @@ export function AppShell({
             </span>
           </div>
         </header>
+        {runtimeConfig?.features.maintenance_mode ? (
+          <div className="mb-4">
+            <RuntimeNotice tone="info" message="Maintenance mode is enabled. Some features may be temporarily limited while we stabilize the launch." />
+          </div>
+        ) : null}
         {children}
       </section>
     </div>

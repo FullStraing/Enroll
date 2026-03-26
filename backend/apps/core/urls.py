@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.core.cache import cache
+from django.db import connection
 from django.urls import path, include
 from django.http import JsonResponse
 
@@ -9,10 +10,12 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
+from .runtime import runtime_flags
 
 
 def ping_view(request):
     cache_status = "disabled"
+    database_status = "unknown"
 
     try:
         cache.set("__ping__", "ok", timeout=5)
@@ -20,13 +23,27 @@ def ping_view(request):
     except Exception:
         cache_status = "error"
 
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT 1")
+            cursor.fetchone()
+        database_status = "ok"
+    except Exception:
+        database_status = "error"
+
     return JsonResponse(
         {
             "status": "ok",
+            "environment": getattr(settings, "DJANGO_ENV", "unknown"),
+            "database": database_status,
             "cache": {
                 "backend": getattr(settings, "CACHE_BACKEND_LABEL", "unknown"),
                 "status": cache_status,
             },
+            "storage": {
+                "backend": getattr(settings, "STORAGE_BACKEND_LABEL", "unknown"),
+            },
+            "features": runtime_flags(),
         }
     )
 

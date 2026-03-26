@@ -5,8 +5,11 @@ const protectedPrefixes = [
   "/dashboard",
   "/onboarding",
   "/applications",
+  "/universities",
+  "/activities",
   "/calendar",
   "/tasks",
+  "/community",
   "/documents",
   "/essays",
   "/common-app",
@@ -28,5 +31,18 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/onboarding/:path*", "/applications/:path*", "/calendar/:path*", "/tasks/:path*", "/documents/:path*", "/essays/:path*", "/common-app/:path*", "/settings/:path*"],
+  matcher: [
+    "/dashboard/:path*",
+    "/onboarding/:path*",
+    "/applications/:path*",
+    "/universities/:path*",
+    "/activities/:path*",
+    "/calendar/:path*",
+    "/tasks/:path*",
+    "/community/:path*",
+    "/documents/:path*",
+    "/essays/:path*",
+    "/common-app/:path*",
+    "/settings/:path*",
+  ],
 };

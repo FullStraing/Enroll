@@ -11,6 +11,7 @@ from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.core.runtime import feature_disabled_response
 from apps.universities.models import StudentUniversity
 from apps.users.models import StudentProfile
 
@@ -91,6 +92,10 @@ def _rate_limit(user_id: int, action: str, limit: int, window_seconds: int = 600
         return False
     cache.set(key, current + 1, timeout=window_seconds)
     return True
+
+
+def _posting_disabled():
+    return feature_disabled_response("Community posting is temporarily unavailable.")
 
 
 def _serialize_posts(posts, request):
@@ -279,6 +284,8 @@ class CommunityGroupPostsView(APIView):
         return Response(_serialize_posts(posts, request))
 
     def post(self, request, slug: str):
+        if not settings.COMMUNITY_POSTING_ENABLED:
+            return _posting_disabled()
         group = self._get_group(slug)
         if not group:
             return Response({"detail": "Group not found."}, status=status.HTTP_404_NOT_FOUND)
@@ -312,6 +319,8 @@ class CommunityPostDetailView(APIView):
         return Response(CommunityPostSerializer(post, context={"request": request}).data)
 
     def patch(self, request, post_id: int):
+        if not settings.COMMUNITY_POSTING_ENABLED:
+            return _posting_disabled()
         post = self._get_post(request, post_id)
         if not post:
             return Response({"detail": "Post not found."}, status=status.HTTP_404_NOT_FOUND)
@@ -328,6 +337,8 @@ class CommunityPostDetailView(APIView):
         return Response(CommunityPostSerializer(post, context={"request": request}).data)
 
     def delete(self, request, post_id: int):
+        if not settings.COMMUNITY_POSTING_ENABLED:
+            return _posting_disabled()
         post = self._get_post(request, post_id)
         if not post:
             return Response({"detail": "Post not found."}, status=status.HTTP_404_NOT_FOUND)
@@ -343,6 +354,8 @@ class CommunityPostCommentCreateView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, post_id: int):
+        if not settings.COMMUNITY_POSTING_ENABLED:
+            return _posting_disabled()
         post = CommunityPost.objects.select_related("group").filter(pk=post_id, status__in=["active", "locked"]).first()
         if not post:
             return Response({"detail": "Post not found."}, status=status.HTTP_404_NOT_FOUND)
@@ -368,6 +381,8 @@ class CommunityCommentDetailView(APIView):
         )
 
     def patch(self, request, comment_id: int):
+        if not settings.COMMUNITY_POSTING_ENABLED:
+            return _posting_disabled()
         comment = self._get_comment(comment_id)
         if not comment:
             return Response({"detail": "Comment not found."}, status=status.HTTP_404_NOT_FOUND)
@@ -385,6 +400,8 @@ class CommunityCommentDetailView(APIView):
         return Response(CommunityCommentSerializer(comment, context={"request": request, "group": comment.post.group}).data)
 
     def delete(self, request, comment_id: int):
+        if not settings.COMMUNITY_POSTING_ENABLED:
+            return _posting_disabled()
         comment = self._get_comment(comment_id)
         if not comment:
             return Response({"detail": "Comment not found."}, status=status.HTTP_404_NOT_FOUND)

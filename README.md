@@ -29,6 +29,7 @@ Implemented now:
 - essays manager + essay workspace + versions + autosave baseline
 - Common App draft flow with backend-driven progress
 - privacy policy page
+- pricing / terms / refund policy public pages
 
 Still in progress:
 - full Common App parity across all sections
@@ -88,7 +89,10 @@ Public:
 - `/intro-quiz`
 - `/login`
 - `/register`
+- `/pricing`
+- `/terms`
 - `/privacy-policy`
+- `/refund-policy`
 - `/pilot`
 
 Protected workspace:
@@ -133,6 +137,7 @@ See:
 - `docs/API.md` - current API surface used by the frontend
 - `docs/DEVELOPMENT_HISTORY.md` - how the project evolved to the current state
 - `docs/UI_SYSTEM_RULES.md` - source of truth for UI and interaction decisions
+- `docs/PRODUCTION_LAUNCH.md` - deploy topology, env setup, and launch checklist
 - `docs/sales/*` - go-to-market and pilot sales materials
 
 ## Current recommended focus

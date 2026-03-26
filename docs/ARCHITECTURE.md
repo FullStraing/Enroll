@@ -162,7 +162,10 @@ The Django cache layer is configured to:
 Current public/legal surfaces include:
 - landing page
 - intro quiz
+- pricing page
+- terms of service
 - privacy policy
+- refund policy
 
 The intro quiz is intentionally outside auth to reduce initial friction and improve activation.
 

@@ -13,6 +13,7 @@ import type { DocumentItem, DocumentType, StudentUniversityOption } from "@/app/
 import { DocumentGroupSection } from "@/components/documents/document-group-section";
 import { RenameDocumentDialog } from "@/components/documents/rename-document-dialog";
 import { UploadPanel } from "@/components/documents/upload-panel";
+import { RuntimeNotice } from "@/components/runtime-notice";
 import {
   clearSessionCaches,
   readSessionCache,
@@ -20,6 +21,7 @@ import {
   SESSION_CACHE_TTLS,
   writeSessionCache,
 } from "@/lib/session-cache";
+import { fetchRuntimeConfig, type RuntimeConfig } from "@/lib/runtime-config";
 
 type DocumentsCachePayload = {
   documents: DocumentItem[];
@@ -38,6 +40,7 @@ function DocumentsPageContent() {
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [renamingDocument, setRenamingDocument] = useState<DocumentItem | null>(null);
   const [statusText, setStatusText] = useState("");
+  const [runtimeConfig, setRuntimeConfig] = useState<RuntimeConfig | null>(null);
 
   const requestedDocumentType = useMemo(() => {
     const value = searchParams.get("type");
@@ -113,6 +116,20 @@ function DocumentsPageContent() {
   }, [loadData]);
 
   useEffect(() => {
+    let cancelled = false;
+    void fetchRuntimeConfig()
+      .then((config) => {
+        if (!cancelled) setRuntimeConfig(config);
+      })
+      .catch(() => {
+        if (!cancelled) setRuntimeConfig(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
     const token = getToken();
     if (!token || loading || !hydrated || !cacheReady) return;
     writeSessionCache(SESSION_CACHE_KEYS.documents, {
@@ -127,6 +144,10 @@ function DocumentsPageContent() {
     studentUniversityId: string;
     files: File[];
   }) {
+    if (runtimeConfig?.features.file_uploads_enabled === false) {
+      setStatusText("Document uploads are temporarily unavailable.");
+      return;
+    }
     const token = getToken();
     if (!token) return;
 
@@ -226,6 +247,11 @@ function DocumentsPageContent() {
   return (
     <ProtectedPage>
       <AppShell title="Documents" subtitle="Application files in one place.">
+        {runtimeConfig?.features.file_uploads_enabled === false ? (
+          <div className="mb-5">
+            <RuntimeNotice message="Document uploads are temporarily unavailable. Existing files stay available for viewing, renaming, and deleting." />
+          </div>
+        ) : null}
         <div className="grid gap-5 xl:grid-cols-[360px_1fr]">
           <div className="min-w-0 space-y-5">
             <UploadPanel
@@ -234,6 +260,8 @@ function DocumentsPageContent() {
               currentDocumentCount={documents.length}
               initialType={requestedDocumentType}
               uploading={uploading}
+              uploadsEnabled={runtimeConfig?.features.file_uploads_enabled !== false}
+              uploadUnavailableMessage="Uploads are temporarily disabled while we stabilize storage."
               onUpload={handleUpload}
               onError={setStatusText}
             />

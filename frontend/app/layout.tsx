@@ -4,8 +4,8 @@ import { AuthProvider } from "@/components/auth-provider";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Enroll Frontend",
-  description: "Next.js frontend for Enroll",
+  title: "Enroll",
+  description: "Admissions planning workspace for students applying abroad.",
 };
 
 const manrope = Manrope({

@@ -7,6 +7,7 @@ const nextBin = resolve(process.cwd(), "node_modules", "next", "dist", "bin", "n
 const args = process.argv.slice(2);
 const command = args[0];
 const shouldCleanNext = process.env.ENROLL_CLEAN_NEXT === "1";
+const envArgs = existsSync(projectRootEnv) ? ["--env-file", projectRootEnv] : [];
 
 if (command === "dev" && shouldCleanNext) {
   const nextDir = resolve(process.cwd(), ".next");
@@ -21,7 +22,7 @@ if (command === "dev" && shouldCleanNext) {
   }
 }
 
-const child = spawn(process.execPath, ["--env-file", projectRootEnv, nextBin, ...args], {
+const child = spawn(process.execPath, [...envArgs, nextBin, ...args], {
   stdio: "inherit",
   env: process.env,
 });

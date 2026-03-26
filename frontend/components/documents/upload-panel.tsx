@@ -10,6 +10,7 @@ import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { Loader } from "@/components/loader";
 import { RequiredMark } from "@/components/ui/required-mark";
 import { Select } from "@/components/ui/select";
+import { RuntimeNotice } from "@/components/runtime-notice";
 
 type UploadPanelProps = {
   documentTypes: readonly DocumentTypeMeta[];
@@ -17,6 +18,8 @@ type UploadPanelProps = {
   currentDocumentCount: number;
   initialType?: DocumentType;
   uploading: boolean;
+  uploadsEnabled?: boolean;
+  uploadUnavailableMessage?: string;
   onUpload: (payload: { title: string; type: DocumentType; studentUniversityId: string; files: File[] }) => Promise<void>;
   onError: (message: string) => void;
 };
@@ -27,6 +30,8 @@ export function UploadPanel({
   currentDocumentCount,
   initialType = "transcript",
   uploading,
+  uploadsEnabled = true,
+  uploadUnavailableMessage,
   onUpload,
   onError,
 }: UploadPanelProps) {
@@ -64,11 +69,16 @@ export function UploadPanel({
   function onDrop(event: DragEvent<HTMLLabelElement>) {
     event.preventDefault();
     setDragActive(false);
+    if (!uploadsEnabled) return;
     applyFiles(Array.from(event.dataTransfer.files));
   }
 
   async function submit(event: FormEvent) {
     event.preventDefault();
+    if (!uploadsEnabled) {
+      onError(uploadUnavailableMessage || "Document uploads are temporarily unavailable.");
+      return;
+    }
     if (!files.length) {
       onError("Choose at least one file.");
       return;
@@ -90,6 +100,11 @@ export function UploadPanel({
       <CardDescription className="mt-2 text-sm">
         Add files for your applications.
       </CardDescription>
+      {!uploadsEnabled && uploadUnavailableMessage ? (
+        <div className="mt-4">
+          <RuntimeNotice message={uploadUnavailableMessage} />
+        </div>
+      ) : null}
 
       <form onSubmit={submit} className="mt-4 grid gap-3">
         <label className="text-sm text-black/70">
@@ -98,7 +113,8 @@ export function UploadPanel({
             value={title}
             onChange={(event) => setTitle(event.target.value)}
             placeholder="Used only for a single-file upload"
-            className="mt-1 w-full rounded-xl border border-black/15 bg-white px-3 py-2"
+            className="mt-1 w-full rounded-xl border border-black/15 bg-white px-3 py-2 disabled:cursor-not-allowed disabled:bg-black/[0.03]"
+            disabled={!uploadsEnabled || uploading}
           />
         </label>
 
@@ -110,6 +126,7 @@ export function UploadPanel({
             options={documentTypes.map((item) => ({ value: item.id, label: item.label }))}
             className="mt-1 w-full border border-black/15"
             ariaLabel="Document type"
+            disabled={!uploadsEnabled || uploading}
           />
         </label>
 
@@ -124,18 +141,24 @@ export function UploadPanel({
             ]}
             className="mt-1 w-full border border-black/15"
             ariaLabel="Link document to university"
+            disabled={!uploadsEnabled || uploading}
           />
         </label>
 
         <label
           onDragOver={(event) => {
             event.preventDefault();
+            if (!uploadsEnabled) return;
             setDragActive(true);
           }}
           onDragLeave={() => setDragActive(false)}
           onDrop={onDrop}
           className={`rounded-2xl border-2 border-dashed px-4 py-6 text-center transition ${
-            dragActive ? "border-black bg-[#DAF5F0]/50" : "border-black/20 bg-black/[0.02]"
+            !uploadsEnabled
+              ? "border-black/10 bg-black/[0.02] opacity-70"
+              : dragActive
+                ? "border-black bg-[#DAF5F0]/50"
+                : "border-black/20 bg-black/[0.02]"
           }`}
         >
           <Upload className="mx-auto h-5 w-5 text-black/55" />
@@ -149,6 +172,7 @@ export function UploadPanel({
             multiple
             onChange={(event) => applyFiles(Array.from(event.target.files || []))}
             className="sr-only"
+            disabled={!uploadsEnabled || uploading}
           />
           <Button
             type="button"
@@ -156,6 +180,7 @@ export function UploadPanel({
             variant="outline"
             className="mt-3"
             onClick={() => inputRef.current?.click()}
+            disabled={!uploadsEnabled || uploading}
           >
             Choose files
           </Button>
@@ -194,7 +219,7 @@ export function UploadPanel({
           </div>
         ) : null}
 
-        <Button type="submit" disabled={uploading || remainingSlots === 0} className="mt-1 w-full gap-2 sm:w-auto">
+        <Button type="submit" disabled={!uploadsEnabled || uploading || remainingSlots === 0} className="mt-1 w-full gap-2 sm:w-auto">
           {uploading ? <Loader size="sm" /> : <Upload className="h-4 w-4" />}
           {uploading ? "Uploading..." : "Upload document"}
         </Button>

@@ -20,6 +20,8 @@ import { useBodyScrollLock } from "@/components/ui/use-body-scroll-lock";
 import { Select } from "@/components/ui/select";
 import { formatDateTimeShort } from "@/lib/date-format";
 import { clearSessionCaches, getEssayDetailCacheKey, readSessionCache, SESSION_CACHE_KEYS, SESSION_CACHE_TTLS, writeSessionCache } from "@/lib/session-cache";
+import { RuntimeNotice } from "@/components/runtime-notice";
+import { fetchRuntimeConfig, type RuntimeConfig } from "@/lib/runtime-config";
 
 type Essay = {
   id: number;
@@ -367,6 +369,7 @@ export default function EssayWorkspacePage() {
   const [starterDraftFocus, setStarterDraftFocus] = useState("auto");
   const [starterDraftRevisionGoal, setStarterDraftRevisionGoal] = useState("clarity");
   const [starterDraftContextNote, setStarterDraftContextNote] = useState("");
+  const [runtimeConfig, setRuntimeConfig] = useState<RuntimeConfig | null>(null);
 
   const applyWorkspaceState = useCallback((essayData: Essay, versionData: EssayVersion[]) => {
     setEssay(essayData);
@@ -418,6 +421,27 @@ export default function EssayWorkspacePage() {
   useEffect(() => {
     void loadWorkspace();
   }, [loadWorkspace]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetchRuntimeConfig()
+      .then((config) => {
+        if (!cancelled) setRuntimeConfig(config);
+      })
+      .catch(() => {
+        if (!cancelled) setRuntimeConfig(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (runtimeConfig?.features.ai_enabled === false) {
+      setAiPanelVisible(false);
+      setAiPanelState({ kind: "idle" });
+    }
+  }, [runtimeConfig?.features.ai_enabled]);
 
   useEffect(() => {
     if (!cacheKey || !essay || versions.length === 0) return;
@@ -590,6 +614,10 @@ export default function EssayWorkspacePage() {
   }
 
   async function runStarterDraft() {
+    if (runtimeConfig?.features.ai_enabled === false) {
+      setStatusText("Essay Coach is temporarily unavailable.");
+      return;
+    }
     const token = getToken();
     if (!token || !essay) return;
     setAiActionLoading("starter");
@@ -626,6 +654,10 @@ export default function EssayWorkspacePage() {
   }
 
   async function runExplainPrompt() {
+    if (runtimeConfig?.features.ai_enabled === false) {
+      setStatusText("Essay Coach is temporarily unavailable.");
+      return;
+    }
     const token = getToken();
     if (!token || !essay) return;
     setAiActionLoading("explain");
@@ -651,6 +683,10 @@ export default function EssayWorkspacePage() {
   }
 
   async function runOutline() {
+    if (runtimeConfig?.features.ai_enabled === false) {
+      setStatusText("Essay Coach is temporarily unavailable.");
+      return;
+    }
     const token = getToken();
     if (!token || !essay) return;
     setAiActionLoading("outline");
@@ -676,6 +712,10 @@ export default function EssayWorkspacePage() {
   }
 
   async function runSelectionAction(action: keyof typeof selectionActionLabels) {
+    if (runtimeConfig?.features.ai_enabled === false) {
+      setStatusText("Essay Coach is temporarily unavailable.");
+      return;
+    }
     const token = getToken();
     if (!token || !essay || !selectedTextRange) return;
     setAiActionLoading(action);
@@ -763,6 +803,10 @@ export default function EssayWorkspacePage() {
   );
 
   function toggleAiPanel() {
+    if (runtimeConfig?.features.ai_enabled === false) {
+      setStatusText("Essay Coach is temporarily unavailable.");
+      return;
+    }
     setAiPanelVisible((prev) => {
       const next = !prev;
       window.localStorage.setItem("essay_ai_panel_visible", next ? "1" : "0");
@@ -782,6 +826,7 @@ export default function EssayWorkspacePage() {
     () => versions.find((item) => item.id === compareRightId) || null,
     [versions, compareRightId],
   );
+  const aiEnabled = runtimeConfig?.features.ai_enabled !== false;
   const deleteConfirmVersion = useMemo(
     () => versions.find((item) => item.id === deleteConfirmVersionId) || null,
     [versions, deleteConfirmVersionId],
@@ -803,7 +848,7 @@ export default function EssayWorkspacePage() {
               <GitCompare className="h-4 w-4" />
               <span>Compare versions</span>
             </Button>
-            <Button variant={aiPanelVisible ? "primary" : "outline"} size="sm" onClick={toggleAiPanel} className="w-full sm:w-auto">
+            <Button variant={aiPanelVisible ? "primary" : "outline"} size="sm" onClick={toggleAiPanel} disabled={!aiEnabled} className="w-full sm:w-auto">
               <Bot className="h-4 w-4" />
               <span>{aiPanelVisible ? "Hide coach" : "Essay Coach"}</span>
             </Button>
@@ -813,6 +858,11 @@ export default function EssayWorkspacePage() {
             </Button>
           </div>
         </div>
+        {!aiEnabled ? (
+          <div className="mb-4">
+            <RuntimeNotice message="Essay Coach is temporarily unavailable. Your drafts, autosave, and version history still work normally." />
+          </div>
+        ) : null}
 
         {loading ? (
           <div className={workspaceGridClass}>
@@ -927,7 +977,7 @@ export default function EssayWorkspacePage() {
                       <p className="mt-1 line-clamp-2 text-sm text-black/75">{selectedTextRange.text}</p>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      <Button size="sm" variant="outline" onClick={() => setAiPanelVisible(true)}>
+                      <Button size="sm" variant="outline" onClick={() => setAiPanelVisible(true)} disabled={!aiEnabled}>
                         <Bot className="h-4 w-4" />
                         <span>Open coach for selection</span>
                       </Button>
@@ -1068,15 +1118,15 @@ export default function EssayWorkspacePage() {
                     </div>
                   </div>
                 </div>
-                <Button size="sm" onClick={() => void runStarterDraft()} disabled={aiActionLoading !== null} className="w-full justify-start">
+                <Button size="sm" onClick={() => void runStarterDraft()} disabled={!aiEnabled || aiActionLoading !== null} className="w-full justify-start">
                   {aiActionLoading === "starter" ? <Spinner size="sm" /> : <Sparkles className="h-4 w-4" />}
                   <span>{starterDraftMode === "fresh_angle" ? "Generate idea draft" : "Build from my draft"}</span>
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => void runExplainPrompt()} disabled={aiActionLoading !== null} className="w-full justify-start">
+                <Button variant="outline" size="sm" onClick={() => void runExplainPrompt()} disabled={!aiEnabled || aiActionLoading !== null} className="w-full justify-start">
                   {aiActionLoading === "explain" ? <Spinner size="sm" /> : <Bot className="h-4 w-4" />}
                   <span>Explain prompt</span>
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => void runOutline()} disabled={aiActionLoading !== null} className="w-full justify-start">
+                <Button variant="outline" size="sm" onClick={() => void runOutline()} disabled={!aiEnabled || aiActionLoading !== null} className="w-full justify-start">
                   {aiActionLoading === "outline" ? <Spinner size="sm" /> : <Sparkles className="h-4 w-4" />}
                   <span>Generate outline</span>
                 </Button>
@@ -1090,23 +1140,23 @@ export default function EssayWorkspacePage() {
                   <p className="mt-1 line-clamp-3 text-sm text-black/75">{selectedTextRange.text}</p>
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <Button size="sm" variant="outline" onClick={() => void runSelectionAction("improve_clarity")} disabled={aiActionLoading !== null}>
+                  <Button size="sm" variant="outline" onClick={() => void runSelectionAction("improve_clarity")} disabled={!aiEnabled || aiActionLoading !== null}>
                     {aiActionLoading === "improve_clarity" ? <Spinner size="sm" /> : null}
                     <span>Improve</span>
                   </Button>
-                  <Button size="sm" variant="outline" onClick={() => void runSelectionAction("make_more_specific")} disabled={aiActionLoading !== null}>
+                  <Button size="sm" variant="outline" onClick={() => void runSelectionAction("make_more_specific")} disabled={!aiEnabled || aiActionLoading !== null}>
                     {aiActionLoading === "make_more_specific" ? <Spinner size="sm" /> : null}
                     <span>More specific</span>
                   </Button>
-                  <Button size="sm" variant="outline" onClick={() => void runSelectionAction("make_less_generic")} disabled={aiActionLoading !== null}>
+                  <Button size="sm" variant="outline" onClick={() => void runSelectionAction("make_less_generic")} disabled={!aiEnabled || aiActionLoading !== null}>
                     {aiActionLoading === "make_less_generic" ? <Spinner size="sm" /> : null}
                     <span>Less generic</span>
                   </Button>
-                  <Button size="sm" variant="outline" onClick={() => void runSelectionAction("fix_grammar")} disabled={aiActionLoading !== null}>
+                  <Button size="sm" variant="outline" onClick={() => void runSelectionAction("fix_grammar")} disabled={!aiEnabled || aiActionLoading !== null}>
                     {aiActionLoading === "fix_grammar" ? <Spinner size="sm" /> : null}
                     <span>Fix grammar</span>
                   </Button>
-                  <Button size="sm" variant="outline" onClick={() => void runSelectionAction("shorten")} disabled={aiActionLoading !== null}>
+                  <Button size="sm" variant="outline" onClick={() => void runSelectionAction("shorten")} disabled={!aiEnabled || aiActionLoading !== null}>
                     {aiActionLoading === "shorten" ? <Spinner size="sm" /> : null}
                     <span>Shorten</span>
                   </Button>

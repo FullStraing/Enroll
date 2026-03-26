@@ -9,6 +9,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from apps.core.runtime import feature_disabled_response
 from .common_app import build_common_app_progress
 from .google_auth import GoogleTokenVerificationError, verify_google_id_token
 from .models import StudentProfile
@@ -35,6 +36,11 @@ class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = RegisterSerializer
     permission_classes = [permissions.AllowAny]
+
+    def create(self, request, *args, **kwargs):
+        if not settings.REGISTRATION_ENABLED:
+            return feature_disabled_response("Registration is temporarily unavailable.")
+        return super().create(request, *args, **kwargs)
 
 
 class StudentProfileView(generics.RetrieveUpdateAPIView):
@@ -92,6 +98,8 @@ class GoogleAuthView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def post(self, request):
+        if not settings.GOOGLE_AUTH_ENABLED:
+            return feature_disabled_response("Google sign-in is temporarily unavailable.")
         id_token = request.data.get("id_token", "")
         if not id_token:
             return Response({"detail": "id_token is required."}, status=status.HTTP_400_BAD_REQUEST)
@@ -104,6 +112,8 @@ class GoogleAuthView(APIView):
         user = User.objects.filter(email__iexact=identity.email).first()
         created = False
         if not user:
+            if not settings.REGISTRATION_ENABLED:
+                return feature_disabled_response("Registration is temporarily unavailable.")
             user = User.objects.create(
                 username=_build_unique_username(identity.email),
                 email=identity.email,
