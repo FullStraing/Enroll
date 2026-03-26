@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   LayoutDashboard,
   UserRoundCheck,
@@ -72,6 +72,8 @@ export function AppShell({
   });
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [localDateTime, setLocalDateTime] = useState(() => buildLocalDateTime(new Date()));
+  const [navigatingTo, setNavigatingTo] = useState<string | null>(null);
+  const navTimerRef = useRef<number | null>(null);
 
   const name = profile?.full_name || profile?.username || profile?.email || "User";
 
@@ -85,7 +87,20 @@ export function AppShell({
 
   useEffect(() => {
     setMobileMenuOpen(false);
+    setNavigatingTo(null);
+    if (navTimerRef.current) {
+      window.clearTimeout(navTimerRef.current);
+      navTimerRef.current = null;
+    }
   }, [pathname]);
+
+  useEffect(() => {
+    return () => {
+      if (navTimerRef.current) {
+        window.clearTimeout(navTimerRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (mobileMenuOpen) {
@@ -107,6 +122,46 @@ export function AppShell({
     const timer = window.setInterval(update, 60_000);
     return () => window.clearInterval(timer);
   }, []);
+
+  function navigateWithTransition(
+    event: React.MouseEvent<HTMLAnchorElement>,
+    href: string,
+  ) {
+    if (
+      event.defaultPrevented ||
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+
+    if (pathname === href) {
+      setMobileMenuOpen(false);
+      return;
+    }
+
+    if (navTimerRef.current) {
+      window.clearTimeout(navTimerRef.current);
+    }
+
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    setMobileMenuOpen(false);
+
+    if (prefersReducedMotion) {
+      router.push(href);
+      return;
+    }
+
+    setNavigatingTo(href);
+    navTimerRef.current = window.setTimeout(() => {
+      router.push(href);
+    }, 150);
+  }
 
   return (
     <div
@@ -235,11 +290,14 @@ export function AppShell({
               <Link
                 key={item.href}
                 href={item.href}
+                onClick={(event) => navigateWithTransition(event, item.href)}
                 title={item.label}
                 className={`rounded-xl px-3 py-2 text-sm font-semibold transition ${
                   pathname === item.href
                     ? "bg-[#FFDB58] text-black border-2 border-black"
-                    : "text-black/75 hover:bg-black/5 hover:text-black"
+                    : navigatingTo === item.href
+                      ? "border-2 border-black/70 bg-[#DAF5F0] text-black"
+                      : "text-black/75 hover:bg-black/5 hover:text-black"
                 } ${collapsed ? "flex items-center justify-center px-0" : "flex items-center gap-2"}`}
               >
                 <item.icon className="h-4 w-4 shrink-0" />
@@ -250,6 +308,7 @@ export function AppShell({
             ))}
             <Link
               href="/"
+              onClick={(event) => navigateWithTransition(event, "/")}
               title="Landing"
               className={`mt-3 rounded-xl border-2 border-black px-3 py-2 text-sm font-semibold text-black/75 hover:bg-black/5 hover:text-black ${
                 collapsed ? "flex items-center justify-center px-0" : "flex items-center gap-2"
@@ -273,7 +332,11 @@ export function AppShell({
           </div>
       </aside>
 
-      <section className="glass glass-soft rounded-3xl p-4 pt-14 sm:p-6">
+      <section
+        className={`glass glass-soft rounded-3xl p-4 pt-14 transition-[opacity,transform,filter] duration-200 ease-out sm:p-6 ${
+          navigatingTo ? "translate-y-1 scale-[0.995] opacity-80 blur-[1px]" : "translate-y-0 scale-100 opacity-100 blur-0"
+        }`}
+      >
         <header className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b-2 border-black/80 pb-4 pl-10 sm:pl-0">
           <div>
             <h1 className="text-2xl font-black">{title}</h1>
