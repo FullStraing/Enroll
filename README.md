@@ -67,6 +67,11 @@ Frontend is available at:
 
 All local environment variables now live in the single root-level `.env`.
 
+Important:
+- the root `.env` is for local development only
+- production secrets must be copied into Vercel / Railway / Render env panels instead of deploying the file itself
+- `.env.example` is the template of required keys
+
 Important backend variables:
 - `POSTGRES_DB`
 - `POSTGRES_USER`

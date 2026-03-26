@@ -9,6 +9,35 @@
 - File uploads: S3-compatible storage (Cloudflare R2 or AWS S3)
 - Billing later: Paddle
 
+## Local `.env` vs production env panels
+
+Local development:
+
+- keep one real `.env` in the repo root
+- backend already reads it through `backend/config/settings.py`
+- frontend local commands already read it through `frontend/scripts/run-next.mjs`
+
+Production:
+
+- do **not** upload the root `.env` file to Vercel / Railway / Render
+- instead, copy the same values into each platform's environment variable UI
+- keep `.env.example` as the source-of-truth template for required keys
+
+Recommended split:
+
+- Vercel gets frontend-safe values such as:
+  - `NEXT_PUBLIC_API_BASE_URL`
+  - `NEXT_PUBLIC_GOOGLE_CLIENT_ID`
+- Railway/Render gets backend/runtime secrets such as:
+  - `DJANGO_*`
+  - `POSTGRES_*`
+  - `REDIS_*`
+  - `CELERY_*`
+  - AI keys
+  - storage keys
+  - Sentry DSN
+  - future Paddle keys
+
 ## 1. Public domains
 
 Recommended:
@@ -28,6 +57,13 @@ These same public URLs should be used in:
 
 Deploy `frontend/` as the Vercel project root.
 
+Exact order:
+
+1. Create a new Vercel project.
+2. Set the root directory to `frontend/`.
+3. Add frontend env vars from the root `.env`.
+4. Deploy once to a preview URL before attaching the real domain.
+
 Required env:
 
 - `NEXT_PUBLIC_API_BASE_URL=https://api.yourdomain.com`
@@ -38,6 +74,7 @@ Checks:
 - build succeeds
 - protected routes redirect correctly when no `enroll_token` cookie is present
 - auth works over HTTPS
+- app can reach `NEXT_PUBLIC_API_BASE_URL` without localhost fallbacks
 
 ## 3. Backend deploy (Railway / Render)
 
@@ -52,6 +89,17 @@ Optional worker:
 ```bash
 celery -A config worker --workdir backend -l info
 ```
+
+Exact order:
+
+1. Create the backend service from this repo.
+2. Attach managed PostgreSQL.
+3. Attach managed Redis.
+4. Copy backend/runtime env vars from the root `.env` into the service env panel.
+5. Deploy the web service first.
+6. Run migrations and `collectstatic`.
+7. Verify `/api/ping/`.
+8. Only then point Vercel at the backend URL.
 
 Required env:
 
@@ -186,6 +234,7 @@ Soft launch does not depend on billing being live.
 - frontend build passes
 - `python manage.py check` passes
 - `python manage.py check --deploy` passes with production-like env
+- root `.env` stays local only; production uses platform env panels
 - uploads are stored in object storage
 - `/api/ping/` is healthy in production
 - dashboard, edit profile, tasks, essays, documents, and community are tested manually
