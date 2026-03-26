@@ -1,0 +1,16 @@
+.git
+.github
+.serena
+.venv
+venv
+backend/venv
+frontend/node_modules
+frontend/.next
+frontend/.turbo
+node_modules
+.next
+media
+tmp
+*.log
+.env
+frontend/.vercel

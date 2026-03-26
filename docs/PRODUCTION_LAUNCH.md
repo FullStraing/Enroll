@@ -84,6 +84,8 @@ Deploy from repo root using the included `Procfile`, or set the start command ma
 gunicorn config.wsgi:application --chdir backend --bind 0.0.0.0:$PORT
 ```
 
+For monorepo-safe Railway deploys, this repo also includes a root `Dockerfile` and `.dockerignore` so Railway can build the Django backend deterministically without trying to infer both frontend and backend stacks from the same root.
+
 Optional worker:
 
 ```bash

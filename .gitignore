@@ -30,6 +30,7 @@ media/
 # Next.js / Node
 frontend/node_modules/
 frontend/.next/
+frontend/.vercel/
 frontend/out/
 frontend/.turbo/
 frontend/coverage/
