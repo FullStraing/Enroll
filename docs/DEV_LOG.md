@@ -222,4 +222,5 @@ pm run dev:clean for explicit cache resets. Verified with frontend lint/build.
 - 2026-03-26: Enabled Cloudflare R2 for the live Railway backend. Production storage now reports `backend = s3` with writes enabled, so document uploads no longer depend on Railway's ephemeral filesystem.
 - 2026-03-26: Ran live production smoke tests against the Railway backend after R2 enablement. Verified `register -> token login` succeeds and a real multipart document upload persists with a non-empty `download_url`, confirming the document flow now writes through Cloudflare R2 in production.
 - 2026-03-26: Rotated the live Cloudflare R2 credentials by updating Railway from the refreshed root `.env` values, then verified a new production upload still succeeds with a non-empty `download_url`.
+- 2026-03-26: Updated the Railway backend to use the refreshed Gemini API key from the root `.env` and verified it against the live essay starter-draft endpoint. Production Essay AI returned `200` with a new AI version and structured summary fields, confirming the new key works.
 
