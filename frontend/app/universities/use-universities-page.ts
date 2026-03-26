@@ -15,6 +15,7 @@ import type { ActionMenuState, DiscoverFilters, PaginatedResponse, StudentUniver
 import { buildQuery, chanceBandToStudentCategory, filtersHash } from "@/app/universities/utils";
 import { apiFetch } from "@/lib/api";
 import { getToken } from "@/lib/auth";
+import { getUserScopedSessionCacheKey } from "@/lib/session-cache";
 
 type StatusAction = { label: string; onClick: () => void } | null;
 
@@ -45,7 +46,10 @@ export function useUniversitiesPage() {
   const restoredScrollRef = useRef(false);
   const dragCleanupRef = useRef<(() => void) | null>(null);
   const dropTargetRef = useRef<number | null>(null);
+  const scrollFrameRef = useRef<number | null>(null);
   const [uiStateReady, setUiStateReady] = useState(false);
+
+  const scopedUiKey = useCallback((key: string) => getUserScopedSessionCacheKey(key), []);
 
   const myUniversityIds = useMemo(() => new Set(myItems.map((item) => item.university.id)), [myItems]);
   const activeFiltersCount = useMemo(
@@ -68,7 +72,7 @@ export function useUniversitiesPage() {
       const items = await apiFetch<StudentUniversity[]>("/api/my-universities/", { method: "GET" }, token);
       setMyItems(items);
       if (typeof window !== "undefined") {
-        window.sessionStorage.setItem(MY_UNIVERSITIES_CACHE_KEY, JSON.stringify({ items }));
+        window.sessionStorage.setItem(scopedUiKey(MY_UNIVERSITIES_CACHE_KEY), JSON.stringify({ items }));
       }
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Failed to load your universities.");
@@ -99,7 +103,7 @@ export function useUniversitiesPage() {
       setDiscoverTotalPages(Math.max(1, Math.ceil(payload.count / nextPageSize)));
       if (typeof window !== "undefined") {
         window.sessionStorage.setItem(
-          DISCOVER_CACHE_KEY,
+          scopedUiKey(DISCOVER_CACHE_KEY),
           JSON.stringify({
             page,
             pageSize: nextPageSize,
@@ -114,7 +118,7 @@ export function useUniversitiesPage() {
     } finally {
       if (!silent) setLoadingDiscover(false);
     }
-  }, [discoverPage, filters, pageSize]);
+  }, [discoverPage, filters, pageSize, scopedUiKey]);
 
   async function patchMyUniversity(itemId: number, payload: Partial<Pick<StudentUniversity, "category" | "status" | "sort_order">>) {
     const token = getToken();
@@ -334,7 +338,7 @@ export function useUniversitiesPage() {
         initialPageSize = saved;
       }
 
-      const rawUiState = window.sessionStorage.getItem(PAGE_UI_STATE_KEY);
+      const rawUiState = window.sessionStorage.getItem(scopedUiKey(PAGE_UI_STATE_KEY));
       if (rawUiState) {
         try {
           const parsed = JSON.parse(rawUiState) as {
@@ -370,7 +374,7 @@ export function useUniversitiesPage() {
     let hasMyCache = false;
     let hasDiscoverCache = false;
     if (typeof window !== "undefined") {
-      const rawMyCache = window.sessionStorage.getItem(MY_UNIVERSITIES_CACHE_KEY);
+      const rawMyCache = window.sessionStorage.getItem(scopedUiKey(MY_UNIVERSITIES_CACHE_KEY));
       if (rawMyCache) {
         try {
           const parsed = JSON.parse(rawMyCache) as { items?: StudentUniversity[] };
@@ -383,7 +387,7 @@ export function useUniversitiesPage() {
         }
       }
 
-      const rawDiscoverCache = window.sessionStorage.getItem(DISCOVER_CACHE_KEY);
+      const rawDiscoverCache = window.sessionStorage.getItem(scopedUiKey(DISCOVER_CACHE_KEY));
       if (rawDiscoverCache) {
         try {
           const parsed = JSON.parse(rawDiscoverCache) as {
@@ -422,12 +426,12 @@ export function useUniversitiesPage() {
     void loadDiscover(initialDiscoverPage, initialFilters, initialPageSize, { silent: hasDiscoverCache });
     setUiStateReady(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [scopedUiKey]);
 
   useEffect(() => {
     if (typeof window === "undefined" || !uiStateReady) return;
     window.sessionStorage.setItem(
-      PAGE_UI_STATE_KEY,
+      scopedUiKey(PAGE_UI_STATE_KEY),
       JSON.stringify({
         activeTab,
         filters,
@@ -436,7 +440,7 @@ export function useUniversitiesPage() {
         filtersOpen,
       }),
     );
-  }, [activeTab, filters, filtersDraft, discoverPage, filtersOpen, uiStateReady]);
+  }, [activeTab, filters, filtersDraft, discoverPage, filtersOpen, scopedUiKey, uiStateReady]);
 
   useEffect(() => {
     if (!uiStateReady) return;
@@ -458,23 +462,31 @@ export function useUniversitiesPage() {
     if (typeof window === "undefined") return;
 
     const saveScroll = () => {
-      window.sessionStorage.setItem(PAGE_SCROLL_Y_KEY, String(window.scrollY));
+      if (scrollFrameRef.current !== null) return;
+      scrollFrameRef.current = window.requestAnimationFrame(() => {
+        window.sessionStorage.setItem(scopedUiKey(PAGE_SCROLL_Y_KEY), String(window.scrollY));
+        scrollFrameRef.current = null;
+      });
     };
 
     window.addEventListener("beforeunload", saveScroll);
     window.addEventListener("scroll", saveScroll, { passive: true });
     return () => {
+      if (scrollFrameRef.current !== null) {
+        window.cancelAnimationFrame(scrollFrameRef.current);
+        scrollFrameRef.current = null;
+      }
       window.removeEventListener("beforeunload", saveScroll);
       window.removeEventListener("scroll", saveScroll);
     };
-  }, []);
+  }, [scopedUiKey]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (restoredScrollRef.current) return;
     if (loadingMy || loadingDiscover) return;
 
-    const rawScrollY = window.sessionStorage.getItem(PAGE_SCROLL_Y_KEY);
+    const rawScrollY = window.sessionStorage.getItem(scopedUiKey(PAGE_SCROLL_Y_KEY));
     const scrollY = rawScrollY ? Number(rawScrollY) : 0;
     if (Number.isFinite(scrollY) && scrollY > 0) {
       window.requestAnimationFrame(() => {
@@ -482,7 +494,7 @@ export function useUniversitiesPage() {
       });
     }
     restoredScrollRef.current = true;
-  }, [loadingMy, loadingDiscover]);
+  }, [loadingMy, loadingDiscover, scopedUiKey]);
 
   return {
     activeTab,

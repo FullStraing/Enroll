@@ -396,7 +396,7 @@ export function MyUniversitiesTable({
 
   if (items.length === 0) {
     return (
-      <Card className="shadow-none">
+      <Card>
         <CardTitle className="text-lg">My list is empty</CardTitle>
         <CardDescription className="mt-2">Find universities in the Discover tab and add them to your list.</CardDescription>
         <div className="mt-3">
@@ -425,7 +425,7 @@ export function MyUniversitiesTable({
           </Button>
 
           {tableSettingsOpen ? (
-            <div className="absolute right-0 top-[calc(100%+12px)] z-20 w-[320px] rounded-2xl border-2 border-black bg-white p-3 shadow-[0_6px_0_#000]">
+            <div className="surface-panel absolute right-0 top-[calc(100%+12px)] z-20 w-[320px] rounded-2xl p-3">
               <div className="flex items-center justify-between gap-2 border-b border-black/10 pb-3">
                 <div>
                   <p className="text-sm font-semibold text-black">Edit table</p>
@@ -672,7 +672,7 @@ export function MyUniversitiesTable({
       </table>
 
       <div className="grid gap-3 md:grid-cols-1">
-        <div className="rounded-2xl border border-black/15 bg-white px-4 py-4">
+        <div className="surface-card rounded-2xl px-4 py-4">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-black/55">Application Fees</p>
           <p className="mt-2 text-2xl font-black text-black">{money(appFeeSummary.total)}</p>
           <p className="mt-1 text-xs text-black/55">

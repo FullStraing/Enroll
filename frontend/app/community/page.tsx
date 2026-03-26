@@ -1,177 +1,343 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+import { MessageSquare, Send, Users2 } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { ProtectedPage } from "@/components/protected-page";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getToken } from "@/lib/auth";
 import { apiFetch } from "@/lib/api";
-import type { CommunityHomePayload } from "@/app/community/types";
-import { CommunityGroupCard } from "@/components/community/group-card";
-import { CommunityPostCard } from "@/components/community/post-card";
+import type { CommunityGroupSummary, CommunityPost } from "@/app/community/types";
 
-function Section({
-  title,
-  subtitle,
-  children,
-}: {
-  title: string;
-  subtitle: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="rounded-2xl border border-black/10 bg-white p-5">
-      <div className="mb-4">
-        <h2 className="text-xl font-black text-black">{title}</h2>
-        <p className="mt-1 text-sm text-black/60">{subtitle}</p>
-      </div>
-      {children}
-    </section>
-  );
+const TAGS = [
+  { value: "", label: "General" },
+  { value: "essay", label: "Essay" },
+  { value: "visa", label: "Visa" },
+  { value: "financial_aid", label: "Financial Aid" },
+  { value: "documents", label: "Documents" },
+  { value: "deadlines", label: "Deadlines" },
+] as const;
+
+const TAG_STYLES: Record<string, string> = {
+  "": "bg-white text-black/60 border-black/10",
+  essay: "bg-[#FFF4CC] text-black border-black/10",
+  visa: "bg-[#DAF5F0] text-black border-black/10",
+  financial_aid: "bg-[#F8D6B3] text-black border-black/10",
+  documents: "bg-[#FFF9E8] text-black border-black/10",
+  deadlines: "bg-white text-black/70 border-black/10",
+};
+
+function formatMessageTime(value: string) {
+  const date = new Date(value);
+  return new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(date);
 }
 
-function LoadingState() {
+function RoomSkeleton() {
   return (
-    <div className="grid gap-4">
-      {Array.from({ length: 4 }).map((_, index) => (
-        <div key={index} className="rounded-2xl border border-black/10 bg-white p-5">
-          <Skeleton className="h-6 w-40" />
-          <Skeleton className="mt-2 h-4 w-64" />
-          <div className="mt-4 grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
-            {Array.from({ length: 3 }).map((__, innerIndex) => (
-              <div key={innerIndex} className="rounded-2xl border border-black/10 p-4">
-                <Skeleton className="h-5 w-28" />
-                <Skeleton className="mt-2 h-4 w-full" />
-                <Skeleton className="mt-4 h-9 w-24" />
-              </div>
-            ))}
-          </div>
+    <div className="grid gap-4 xl:grid-cols-[260px_minmax(0,1fr)]">
+      <div className="rounded-2xl border border-black/10 bg-white p-4">
+        <Skeleton className="h-5 w-32" />
+        <div className="mt-4 grid gap-3">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <div key={index} className="rounded-2xl border border-black/10 p-4">
+              <Skeleton className="h-5 w-36" />
+              <Skeleton className="mt-2 h-4 w-full" />
+            </div>
+          ))}
         </div>
-      ))}
+      </div>
+      <div className="rounded-2xl border border-black/10 bg-white p-4">
+        <Skeleton className="h-6 w-48" />
+        <Skeleton className="mt-2 h-4 w-64" />
+        <Skeleton className="mt-4 h-24 w-full rounded-2xl" />
+        <div className="mt-4 grid gap-3">
+          {Array.from({ length: 5 }).map((_, index) => (
+            <div key={index} className="rounded-2xl border border-black/10 p-4">
+              <Skeleton className="h-4 w-40" />
+              <Skeleton className="mt-2 h-4 w-full" />
+              <Skeleton className="mt-2 h-4 w-4/5" />
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
 
 export default function CommunityPage() {
-  const [payload, setPayload] = useState<CommunityHomePayload | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [rooms, setRooms] = useState<CommunityGroupSummary[]>([]);
+  const [activeRoomSlug, setActiveRoomSlug] = useState<string>("");
+  const [messages, setMessages] = useState<CommunityPost[]>([]);
+  const [draft, setDraft] = useState("");
+  const [selectedTag, setSelectedTag] = useState<(typeof TAGS)[number]["value"]>("");
+  const [loadingRooms, setLoadingRooms] = useState(true);
+  const [loadingMessages, setLoadingMessages] = useState(false);
+  const [sending, setSending] = useState(false);
   const [statusText, setStatusText] = useState("");
 
-  async function loadCommunity() {
+  const activeRoom = useMemo(
+    () => rooms.find((room) => room.slug === activeRoomSlug) ?? null,
+    [rooms, activeRoomSlug],
+  );
+
+  async function loadRooms() {
     const token = getToken();
     if (!token) return;
-    setLoading(true);
+    setLoadingRooms(true);
     try {
-      const data = await apiFetch<CommunityHomePayload>("/api/community/home/", { method: "GET" }, token);
-      setPayload(data);
+      const data = await apiFetch<CommunityGroupSummary[]>(
+        "/api/community/groups/?group_type=country&chat_only=1",
+        { method: "GET" },
+        token,
+      );
+      setRooms(data);
+      setActiveRoomSlug((current) => current || data.find((room) => room.slug === "central-asia-applicants")?.slug || data[0]?.slug || "");
       setStatusText("");
     } catch (error) {
-      setStatusText(error instanceof Error ? error.message : "Could not load Community.");
+      setStatusText(error instanceof Error ? error.message : "Could not load chat rooms.");
     } finally {
-      setLoading(false);
+      setLoadingRooms(false);
+    }
+  }
+
+  async function loadMessages(slug: string) {
+    const token = getToken();
+    if (!token || !slug) return;
+    setLoadingMessages(true);
+    try {
+      const data = await apiFetch<CommunityPost[]>(`/api/community/groups/${slug}/posts/`, { method: "GET" }, token);
+      setMessages([...data].reverse());
+      setStatusText("");
+    } catch (error) {
+      setStatusText(error instanceof Error ? error.message : "Could not load room messages.");
+    } finally {
+      setLoadingMessages(false);
     }
   }
 
   useEffect(() => {
-    void loadCommunity();
+    void loadRooms();
   }, []);
+
+  useEffect(() => {
+    if (activeRoomSlug) {
+      void loadMessages(activeRoomSlug);
+    }
+  }, [activeRoomSlug]);
+
+  async function ensureMembership(slug: string) {
+    const token = getToken();
+    if (!token) return;
+    const room = rooms.find((item) => item.slug === slug);
+    if (!room || room.is_member) return;
+    await apiFetch(`/api/community/groups/${slug}/join/`, { method: "POST" }, token);
+    setRooms((current) =>
+      current.map((item) =>
+        item.slug === slug
+          ? { ...item, is_member: true, member_count: item.member_count + 1 }
+          : item,
+      ),
+    );
+  }
+
+  async function sendMessage() {
+    const token = getToken();
+    if (!token || !activeRoomSlug) return;
+    const body = draft.trim();
+    if (!body) return;
+    setSending(true);
+    try {
+      await ensureMembership(activeRoomSlug);
+      const created = await apiFetch<CommunityPost>(
+        `/api/community/groups/${activeRoomSlug}/posts/`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            body,
+            tag: selectedTag,
+            post_type: "question",
+          }),
+        },
+        token,
+      );
+      setMessages((current) => [...current, created]);
+      setRooms((current) =>
+        current.map((room) =>
+          room.slug === activeRoomSlug ? { ...room, post_count: room.post_count + 1 } : room,
+        ),
+      );
+      setDraft("");
+      setSelectedTag("");
+      setStatusText("");
+    } catch (error) {
+      setStatusText(error instanceof Error ? error.message : "Could not send message.");
+    } finally {
+      setSending(false);
+    }
+  }
 
   return (
     <ProtectedPage>
-      <AppShell title="Community" subtitle="Learn from students on the same admissions path.">
-        {loading ? (
-          <LoadingState />
+      <AppShell title="Applicants Chat" subtitle="One live space to ask, update, and help each other.">
+        {loadingRooms ? (
+          <RoomSkeleton />
         ) : (
-          <div className="grid gap-4">
-            <Section title="For your country" subtitle="Start with advice from applicants who share your context.">
-              <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
-                {(payload?.recommendations.country || []).map((group) => (
-                  <CommunityGroupCard key={group.slug} group={group} />
-                ))}
+          <div className="grid gap-4 xl:grid-cols-[260px_minmax(0,1fr)]">
+            <aside className="rounded-2xl border border-black/10 bg-white p-4">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-[#FFF4CC]">
+                  <Users2 className="h-4 w-4 text-black" />
+                </span>
+                <div>
+                  <h2 className="text-lg font-black text-black">Rooms</h2>
+                  <p className="text-sm text-black/55">Start simple. Keep it active.</p>
+                </div>
               </div>
-            </Section>
 
-            <div className="grid gap-4 xl:grid-cols-2">
-              <Section title="For your universities" subtitle="University-specific groups connected to your shortlist.">
-                <div className="grid gap-3">
-                  {(payload?.recommendations.universities || []).length ? (
-                    payload?.recommendations.universities.map((group) => <CommunityGroupCard key={group.slug} group={group} />)
-                  ) : (
-                    <div className="rounded-2xl border border-dashed border-black/15 bg-[#FFF9E8] p-4 text-sm text-black/60">
-                      Add more universities to your shortlist to unlock better university-specific groups.
-                    </div>
-                  )}
-                </div>
-              </Section>
-
-              <Section title="For your intake" subtitle="Cycle-specific planning, pacing, and deadline context.">
-                <div className="grid gap-3">
-                  {(payload?.recommendations.intake || []).map((group) => (
-                    <CommunityGroupCard key={group.slug} group={group} />
-                  ))}
-                </div>
-              </Section>
-            </div>
-
-            <Section title="Essay / documents / visa topics" subtitle="Jump into the tactical groups most students need.">
-              <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-4">
-                {(payload?.recommendations.topics || []).map((group) => (
-                  <CommunityGroupCard key={group.slug} group={group} actionLabel="Open topic" />
-                ))}
+              <div className="mt-4 grid gap-3">
+                {rooms.map((room) => {
+                  const isActive = room.slug === activeRoomSlug;
+                  return (
+                    <button
+                      key={room.slug}
+                      type="button"
+                      onClick={() => setActiveRoomSlug(room.slug)}
+                      className={`rounded-2xl border px-4 py-3 text-left transition ${
+                        isActive
+                          ? "border-black bg-[#FFDB58] shadow-[0_4px_0_rgba(0,0,0,0.08)]"
+                          : "border-black/10 bg-white hover:-translate-y-0.5 hover:border-black/30"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-bold text-black">{room.title}</p>
+                          <p className="mt-1 text-xs text-black/60">{room.description}</p>
+                        </div>
+                        <span className="rounded-full border border-black/10 bg-white px-2 py-0.5 text-xs font-semibold text-black/65">
+                          {room.member_count}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
-            </Section>
+            </aside>
 
-            <div className="grid gap-4 xl:grid-cols-2">
-              <Section title="Questions from your path" subtitle="Recent questions from the groups most relevant to you.">
-                <div className="grid gap-3">
-                  {(payload?.questions_from_path || []).length ? (
-                    payload?.questions_from_path.map((post) => <CommunityPostCard key={post.id} post={post} />)
-                  ) : (
-                    <div className="rounded-2xl border border-dashed border-black/15 bg-[#DAF5F0]/20 p-4 text-sm text-black/60">
-                      No questions yet. Join a group and be the first one to ask.
+            <section className="rounded-2xl border border-black/10 bg-white p-4">
+              {activeRoom ? (
+                <div className="flex h-full min-h-[72vh] flex-col">
+                  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-black/10 pb-4">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <MessageSquare className="h-5 w-5 text-black" />
+                        <h2 className="text-2xl font-black text-black">{activeRoom.title}</h2>
+                      </div>
+                      <p className="mt-1 text-sm text-black/60">{activeRoom.member_count} participants</p>
                     </div>
-                  )}
-                </div>
-              </Section>
-
-              <Section title="Accepted student insights" subtitle="Experience and guide posts worth reading before you copy anyone’s path blindly.">
-                <div className="grid gap-3">
-                  {(payload?.accepted_insights || []).length ? (
-                    payload?.accepted_insights.map((post) => <CommunityPostCard key={post.id} post={post} />)
-                  ) : (
-                    <div className="rounded-2xl border border-dashed border-black/15 bg-[#FFF9E8] p-4 text-sm text-black/60">
-                      No insight posts yet. This section will fill as students share what actually worked.
+                    <div className="rounded-full border border-black/10 bg-[#DAF5F0] px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-black/70">
+                      Applicants chat
                     </div>
-                  )}
-                </div>
-              </Section>
-            </div>
+                  </div>
 
-            <Section title="Saved posts" subtitle="Keep the advice you want to revisit without turning Community into a noisy feed.">
-              {(payload?.saved_posts || []).length ? (
-                <div className="grid gap-3">
-                  {payload?.saved_posts.map((post) => <CommunityPostCard key={post.id} post={post} />)}
+                  <div className="mt-4 rounded-2xl border border-black/10 bg-[#DAF5F0]/20 px-4 py-3 text-sm text-black/70">
+                    <span className="font-semibold text-black">Pinned:</span>{" "}
+                    {activeRoom.pinned_prompt || "Представьтесь и напишите, на какой вы стадии поступления."}
+                  </div>
+
+                  <div className="mt-4 min-h-0 flex-1 overflow-y-auto rounded-2xl border border-black/10 bg-[#FFFDFC] p-3">
+                    {loadingMessages ? (
+                      <div className="grid gap-3">
+                        {Array.from({ length: 5 }).map((_, index) => (
+                          <div key={index} className="rounded-2xl border border-black/10 bg-white p-4">
+                            <Skeleton className="h-4 w-40" />
+                            <Skeleton className="mt-2 h-4 w-full" />
+                            <Skeleton className="mt-2 h-4 w-3/4" />
+                          </div>
+                        ))}
+                      </div>
+                    ) : messages.length ? (
+                      <div className="grid gap-3">
+                        {messages.map((message) => (
+                          <article key={message.id} className="rounded-2xl border border-black/10 bg-white px-4 py-3">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="text-sm font-bold text-black">{message.author.display_name}</span>
+                              <span className="rounded-full border border-black/10 bg-white px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-black/55">
+                                {message.author.status_badge}
+                              </span>
+                              {message.tag ? (
+                                <span
+                                  className={`rounded-full border px-2 py-0.5 text-[11px] font-semibold ${TAG_STYLES[message.tag]}`}
+                                >
+                                  {TAGS.find((tag) => tag.value === message.tag)?.label || message.tag}
+                                </span>
+                              ) : null}
+                              <span className="ml-auto text-[11px] text-black/45">{formatMessageTime(message.created_at)}</span>
+                            </div>
+                            <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-black/80">{message.body}</p>
+                          </article>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="rounded-2xl border border-dashed border-black/15 bg-white p-6 text-sm text-black/60">
+                        No messages yet. Start the room with a quick intro or one real admissions question.
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="mt-4 rounded-2xl border border-black/10 bg-white p-4">
+                    <div className="flex flex-wrap gap-2">
+                      {TAGS.map((tag) => {
+                        const active = selectedTag === tag.value;
+                        return (
+                          <button
+                            key={tag.value || "general"}
+                            type="button"
+                            onClick={() => setSelectedTag(tag.value)}
+                            className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                              active
+                                ? "border-black bg-[#FFDB58] text-black"
+                                : "border-black/10 bg-white text-black/65 hover:border-black/30 hover:text-black"
+                            }`}
+                          >
+                            {tag.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <div className="mt-3 flex flex-col gap-3 sm:flex-row">
+                      <textarea
+                        value={draft}
+                        onChange={(event) => setDraft(event.target.value)}
+                        placeholder="Write one useful message. Ask, update, or help someone."
+                        rows={3}
+                        className="min-h-[104px] flex-1 rounded-2xl border border-black/10 bg-[#FFFDFC] px-4 py-3 text-sm text-black outline-none transition placeholder:text-black/35 focus:border-black/30"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => void sendMessage()}
+                        disabled={sending || !draft.trim()}
+                        className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border-2 border-black bg-[#FFDB58] px-5 text-sm font-semibold text-black transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 sm:self-end"
+                      >
+                        <Send className="h-4 w-4" />
+                        {sending ? "Sending..." : "Send"}
+                      </button>
+                    </div>
+                    {statusText ? (
+                      <p className="mt-3 text-sm text-black/55">{statusText}</p>
+                    ) : null}
+                  </div>
                 </div>
               ) : (
-                <div className="rounded-2xl border border-dashed border-black/15 bg-white p-4 text-sm text-black/60">
-                  You have not saved any posts yet. Use Save inside a group to keep useful threads here.
+                <div className="rounded-2xl border border-dashed border-black/15 bg-white p-6 text-sm text-black/60">
+                  No chat rooms available yet.
                 </div>
               )}
-            </Section>
-
-            {statusText ? (
-              <div className="rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm text-black/60">{statusText}</div>
-            ) : null}
-
-            <div className="flex justify-end">
-              <Link
-                href="/community/groups/essay-help"
-                className="inline-flex h-10 items-center justify-center rounded-xl border-2 border-black bg-[#DAF5F0] px-4 text-sm font-semibold text-black transition hover:-translate-y-0.5"
-              >
-                Open Essay Help
-              </Link>
-            </div>
+            </section>
           </div>
         )}
       </AppShell>

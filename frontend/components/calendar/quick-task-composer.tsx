@@ -108,7 +108,7 @@ export function QuickTaskComposer({
         event.preventDefault();
         onSubmit();
       }}
-      className="rounded-[28px] border-2 border-black bg-white p-4 shadow-[0_8px_0_rgba(0,0,0,0.06)] sm:p-5"
+      className="surface-panel rounded-[28px] p-4 sm:p-5"
     >
       <div className="flex flex-col gap-4">
         <div className="flex items-start gap-3">

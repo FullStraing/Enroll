@@ -13,7 +13,13 @@ import type { DocumentItem, DocumentType, StudentUniversityOption } from "@/app/
 import { DocumentGroupSection } from "@/components/documents/document-group-section";
 import { RenameDocumentDialog } from "@/components/documents/rename-document-dialog";
 import { UploadPanel } from "@/components/documents/upload-panel";
-import { clearSessionCaches, readSessionCache, SESSION_CACHE_KEYS, SESSION_CACHE_TTLS, writeSessionCache } from "@/lib/session-cache";
+import {
+  clearSessionCaches,
+  readSessionCache,
+  SESSION_CACHE_KEYS,
+  SESSION_CACHE_TTLS,
+  writeSessionCache,
+} from "@/lib/session-cache";
 
 type DocumentsCachePayload = {
   documents: DocumentItem[];
@@ -25,6 +31,8 @@ function DocumentsPageContent() {
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
   const [studentUniversities, setStudentUniversities] = useState<StudentUniversityOption[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hydrated, setHydrated] = useState(false);
+  const [cacheReady, setCacheReady] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [renaming, setRenaming] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
@@ -61,11 +69,13 @@ function DocumentsPageContent() {
     const token = getToken();
     if (!token) return;
 
-    const { payload: cached, isFresh } = readSessionCache<DocumentsCachePayload>(SESSION_CACHE_KEYS.documents, SESSION_CACHE_TTLS.documents);
+    const { payload: cached, isFresh } = readSessionCache<DocumentsCachePayload>(SESSION_CACHE_KEYS.documents, SESSION_CACHE_TTLS.documents, token);
     if (cached) {
       setDocuments(cached.documents);
       setStudentUniversities(cached.studentUniversities);
       setLoading(false);
+      setHydrated(true);
+      setCacheReady(true);
     } else {
       setLoading(true);
     }
@@ -86,13 +96,15 @@ function DocumentsPageContent() {
       writeSessionCache(SESSION_CACHE_KEYS.documents, {
         documents: documentsResp,
         studentUniversities: universitiesResp,
-      });
+      }, token);
+      setCacheReady(true);
     } catch (error) {
       if (!cached) {
         setStatusText(error instanceof Error ? error.message : "Failed to load documents.");
       }
     } finally {
       setLoading(false);
+      setHydrated(true);
     }
   }, []);
 
@@ -101,12 +113,13 @@ function DocumentsPageContent() {
   }, [loadData]);
 
   useEffect(() => {
-    if (loading) return;
+    const token = getToken();
+    if (!token || loading || !hydrated || !cacheReady) return;
     writeSessionCache(SESSION_CACHE_KEYS.documents, {
       documents,
       studentUniversities,
-    });
-  }, [loading, documents, studentUniversities]);
+    }, token);
+  }, [cacheReady, hydrated, loading, documents, studentUniversities]);
 
   async function handleUpload(payload: {
     title: string;
@@ -119,6 +132,7 @@ function DocumentsPageContent() {
 
     setUploading(true);
     try {
+      const createdDocuments: DocumentItem[] = [];
       for (let index = 0; index < payload.files.length; index += 1) {
         const file = payload.files[index];
         const body = new FormData();
@@ -129,10 +143,20 @@ function DocumentsPageContent() {
         if (payload.studentUniversityId) {
           body.append("student_university_id", payload.studentUniversityId);
         }
-        await apiFetch("/api/documents/", { method: "POST", body }, token);
+        const created = await apiFetch<DocumentItem>("/api/documents/", { method: "POST", body }, token);
+        createdDocuments.push(created);
       }
 
-      await loadData();
+      setDocuments((prev) => {
+        const nextDocuments = [...createdDocuments, ...prev];
+        writeSessionCache(SESSION_CACHE_KEYS.documents, {
+          documents: nextDocuments,
+          studentUniversities,
+        }, token);
+        return nextDocuments;
+      });
+      setHydrated(true);
+      setCacheReady(true);
       clearSessionCaches([SESSION_CACHE_KEYS.dashboard]);
       setStatusText(payload.files.length === 1 ? "Document uploaded." : `${payload.files.length} documents uploaded.`);
     } catch (error) {
@@ -149,7 +173,16 @@ function DocumentsPageContent() {
     setDeletingId(documentId);
     try {
       await apiFetch(`/api/documents/${documentId}/`, { method: "DELETE" }, token);
-      await loadData();
+      setDocuments((prev) => {
+        const nextDocuments = prev.filter((item) => item.id !== documentId);
+        writeSessionCache(SESSION_CACHE_KEYS.documents, {
+          documents: nextDocuments,
+          studentUniversities,
+        }, token);
+        return nextDocuments;
+      });
+      setHydrated(true);
+      setCacheReady(true);
       clearSessionCaches([SESSION_CACHE_KEYS.dashboard]);
       setStatusText("Document deleted.");
     } catch (error) {
@@ -165,12 +198,21 @@ function DocumentsPageContent() {
 
     setRenaming(true);
     try {
-      await apiFetch(
+      const renamed = await apiFetch<DocumentItem>(
         `/api/documents/${renamingDocument.id}/`,
         { method: "PATCH", body: JSON.stringify({ title: title.trim() }) },
         token,
       );
-      await loadData();
+      setDocuments((prev) => {
+        const nextDocuments = prev.map((item) => (item.id === renamed.id ? renamed : item));
+        writeSessionCache(SESSION_CACHE_KEYS.documents, {
+          documents: nextDocuments,
+          studentUniversities,
+        }, token);
+        return nextDocuments;
+      });
+      setHydrated(true);
+      setCacheReady(true);
       clearSessionCaches([SESSION_CACHE_KEYS.dashboard]);
       setRenamingDocument(null);
       setStatusText("Document renamed.");

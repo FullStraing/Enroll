@@ -23,7 +23,7 @@ import { Button } from "@/components/ui/button";
 
 const nav = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/onboarding", label: "Onboarding", icon: UserRoundCheck },
+  { href: "/onboarding", label: "Edit Profile", icon: UserRoundCheck },
   { href: "/universities", label: "Universities", icon: GraduationCap },
   { href: "/activities", label: "Activities", icon: Medal },
   { href: "/calendar", label: "Tasks", icon: CalendarDays },
@@ -56,11 +56,10 @@ function buildLocalDateTime(now: Date) {
 
 export function AppShell({
   title,
-  subtitle,
   children,
 }: {
   title: string;
-  subtitle: string;
+  subtitle?: string;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -340,7 +339,6 @@ export function AppShell({
         <header className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b-2 border-black/80 pb-4 pl-10 sm:pl-0">
           <div>
             <h1 className="text-2xl font-black">{title}</h1>
-            <p className="text-sm text-black/65">{subtitle}</p>
           </div>
           <div className="hidden items-center gap-2 sm:flex">
             <span

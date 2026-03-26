@@ -90,12 +90,20 @@ class CommunityPost(models.Model):
         ("hidden", "Hidden"),
         ("locked", "Locked"),
     ]
+    TAG_CHOICES = [
+        ("essay", "Essay"),
+        ("visa", "Visa"),
+        ("financial_aid", "Financial Aid"),
+        ("documents", "Documents"),
+        ("deadlines", "Deadlines"),
+    ]
 
     group = models.ForeignKey(CommunityGroup, on_delete=models.CASCADE, related_name="posts")
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="community_posts")
     post_type = models.CharField(max_length=30, choices=POST_TYPE_CHOICES)
     title = models.CharField(max_length=180)
     body = models.TextField()
+    tag = models.CharField(max_length=30, choices=TAG_CHOICES, blank=True, default="")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="active")
     is_pinned = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)

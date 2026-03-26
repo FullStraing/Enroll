@@ -9,6 +9,23 @@ from .models import CommunityGroup, CommunityGroupLink
 
 SEED_GROUPS: list[dict[str, Any]] = [
     {
+        "slug": "central-asia-applicants",
+        "title": "Central Asia Applicants",
+        "description": "One shared room for applicants from Central Asia to ask, update, and help each other in real time.",
+        "group_type": "country",
+        "sort_order": 5,
+        "metadata": {
+            "audience": "Students from Central Asia applying to U.S. universities.",
+            "rules": [
+                "Keep messages admissions-specific.",
+                "Be concrete, kind, and useful.",
+            ],
+            "resources": ["Essays", "Visa", "Documents", "Deadlines"],
+            "pinned_prompt": "Представьтесь и напишите, на какой вы стадии поступления.",
+            "chat_room": True,
+        },
+    },
+    {
         "slug": "kyrgyzstan-applicants",
         "title": "Kyrgyzstan Applicants",
         "description": "Questions, timelines, and examples for students applying from Kyrgyzstan.",
@@ -22,6 +39,8 @@ SEED_GROUPS: list[dict[str, Any]] = [
             ],
             "resources": ["Visa prep", "Financial docs", "Common App tips"],
             "country_key": "kyrgyzstan",
+            "pinned_prompt": "Представьтесь и напишите, на какой вы стадии поступления.",
+            "chat_room": True,
         },
     },
     {
@@ -35,6 +54,8 @@ SEED_GROUPS: list[dict[str, Any]] = [
             "rules": ["Share useful deadlines and advice.", "Keep posts specific and actionable."],
             "resources": ["Testing plan", "Essay help", "Recommendation tips"],
             "country_key": "kazakhstan",
+            "pinned_prompt": "Представьтесь и напишите, на какой вы стадии поступления.",
+            "chat_room": True,
         },
     },
     {
@@ -48,6 +69,8 @@ SEED_GROUPS: list[dict[str, Any]] = [
             "rules": ["Keep it admissions-only.", "Share concrete examples over generic advice."],
             "resources": ["Transcript prep", "Financial aid questions", "Country-specific issues"],
             "country_key": "uzbekistan",
+            "pinned_prompt": "Представьтесь и напишите, на какой вы стадии поступления.",
+            "chat_room": True,
         },
     },
     {
@@ -161,19 +184,33 @@ def ensure_seeded_groups():
     for item in SEED_GROUPS:
         group, created = CommunityGroup.objects.get_or_create(
             slug=item["slug"],
-            defaults={
-                "title": item["title"],
-                "description": item["description"],
-                "group_type": item["group_type"],
-                "visibility": "members_only",
-                "metadata": item["metadata"],
-                "sort_order": item["sort_order"],
-                "is_active": True,
-            },
+            defaults={"visibility": "members_only"},
         )
 
-        if not created:
-            continue
+        changed_fields: list[str] = []
+        if group.title != item["title"]:
+            group.title = item["title"]
+            changed_fields.append("title")
+        if group.description != item["description"]:
+            group.description = item["description"]
+            changed_fields.append("description")
+        if group.group_type != item["group_type"]:
+            group.group_type = item["group_type"]
+            changed_fields.append("group_type")
+        if group.visibility != "members_only":
+            group.visibility = "members_only"
+            changed_fields.append("visibility")
+        if group.metadata != item["metadata"]:
+            group.metadata = item["metadata"]
+            changed_fields.append("metadata")
+        if group.sort_order != item["sort_order"]:
+            group.sort_order = item["sort_order"]
+            changed_fields.append("sort_order")
+        if not group.is_active:
+            group.is_active = True
+            changed_fields.append("is_active")
+        if changed_fields:
+            group.save(update_fields=changed_fields + ["updated_at"])
 
         metadata = item["metadata"]
         if country_key := metadata.get("country_key"):

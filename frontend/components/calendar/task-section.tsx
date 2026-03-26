@@ -10,6 +10,7 @@ type TaskSectionProps = {
   tasks: TaskItem[];
   emptyText: string;
   savingTaskId: number | null;
+  completingTaskId: number | null;
   onToggle: (task: TaskItem) => void;
   bodyClassName?: string;
 };
@@ -20,11 +21,12 @@ export function TaskSection({
   tasks,
   emptyText,
   savingTaskId,
+  completingTaskId,
   onToggle,
   bodyClassName,
 }: TaskSectionProps) {
   return (
-    <Card className="flex h-full flex-col shadow-none">
+    <Card className="flex h-full flex-col">
       <div className="flex items-start justify-between gap-3">
         <div>
           <CardTitle>{title}</CardTitle>
@@ -35,11 +37,18 @@ export function TaskSection({
         </div>
       </div>
 
-      <div className={`mt-4 min-h-0 flex-1 overflow-y-auto pr-1 ${bodyClassName ?? "max-h-[360px]"}`}>
+      <div className={`task-section-scroll mt-4 min-h-0 flex-1 overflow-y-auto pr-1 ${bodyClassName ?? "max-h-[360px]"}`}>
         {tasks.length ? (
           <div className="space-y-0">
             {tasks.map((task) => (
-              <TaskRow key={task.id} task={task} saving={savingTaskId === task.id} onToggle={onToggle} />
+              <TaskRow
+                key={task.id}
+                task={task}
+                saving={savingTaskId === task.id}
+                completing={completingTaskId === task.id}
+                completionLocked={completingTaskId !== null && completingTaskId !== task.id}
+                onToggle={onToggle}
+              />
             ))}
           </div>
         ) : (

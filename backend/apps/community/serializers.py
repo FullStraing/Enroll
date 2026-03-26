@@ -115,6 +115,8 @@ class CommunityGroupSummarySerializer(serializers.ModelSerializer):
     post_count = serializers.IntegerField(read_only=True)
     is_member = serializers.SerializerMethodField()
     audience = serializers.SerializerMethodField()
+    pinned_prompt = serializers.SerializerMethodField()
+    is_chat_room = serializers.SerializerMethodField()
 
     class Meta:
         model = CommunityGroup
@@ -127,6 +129,8 @@ class CommunityGroupSummarySerializer(serializers.ModelSerializer):
             "post_count",
             "is_member",
             "audience",
+            "pinned_prompt",
+            "is_chat_room",
         ]
 
     def get_is_member(self, obj: CommunityGroup):
@@ -140,6 +144,12 @@ class CommunityGroupSummarySerializer(serializers.ModelSerializer):
 
     def get_audience(self, obj: CommunityGroup):
         return str(obj.metadata.get("audience", "")).strip()
+
+    def get_pinned_prompt(self, obj: CommunityGroup):
+        return str(obj.metadata.get("pinned_prompt", "")).strip()
+
+    def get_is_chat_room(self, obj: CommunityGroup):
+        return bool(obj.metadata.get("chat_room"))
 
 
 class CommunityPostSerializer(serializers.ModelSerializer):
@@ -161,6 +171,7 @@ class CommunityPostSerializer(serializers.ModelSerializer):
             "post_type",
             "title",
             "body",
+            "tag",
             "status",
             "is_pinned",
             "created_at",
@@ -233,7 +244,12 @@ class CommunityGroupDetailSerializer(CommunityGroupSummarySerializer):
 class CommunityPostWriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = CommunityPost
-        fields = ["post_type", "title", "body", "status", "is_pinned"]
+        fields = ["post_type", "title", "body", "tag", "status", "is_pinned"]
+        extra_kwargs = {
+            "post_type": {"required": False},
+            "title": {"required": False, "allow_blank": True},
+            "tag": {"required": False, "allow_blank": True},
+        }
 
     def validate(self, attrs):
         request = self.context["request"]
@@ -244,6 +260,11 @@ class CommunityPostWriteSerializer(serializers.ModelSerializer):
         if "status" in attrs or "is_pinned" in attrs:
             if not membership or membership.role not in {"moderator", "staff"}:
                 raise serializers.ValidationError("Only moderators can change moderation fields.")
+        attrs["post_type"] = attrs.get("post_type") or "question"
+        body = str(attrs.get("body", "")).strip()
+        attrs["body"] = body
+        title = str(attrs.get("title", "")).strip()
+        attrs["title"] = title or (body[:72] if body else "Community message")
         return attrs
 
 

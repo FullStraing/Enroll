@@ -35,6 +35,8 @@ function CommonAppPageContent() {
   const STEP_STORAGE_KEY = "common_app.current_step_id";
   const SCROLL_STORAGE_KEY = "common_app.scroll_y";
   const [loading, setLoading] = useState(true);
+  const [hydrated, setHydrated] = useState(false);
+  const [cacheReady, setCacheReady] = useState(false);
   const [saving, setSaving] = useState(false);
   const [statusText, setStatusText] = useState("");
   const [progressData, setProgressData] = useState<CommonAppProgress | null>(null);
@@ -72,12 +74,15 @@ function CommonAppPageContent() {
     const { payload: cached, isFresh } = readSessionCache<CommonAppCachePayload>(
       SESSION_CACHE_KEYS.commonApp,
       SESSION_CACHE_TTLS.commonApp,
+      token,
     );
 
     if (cached) {
       setProgressData(cached.progressData);
       setDraftValues(cached.draftValues);
       setLoading(false);
+      setHydrated(true);
+      setCacheReady(true);
       lastAutosavedPayloadRef.current = JSON.stringify(cached.draftValues);
     } else {
       setLoading(true);
@@ -107,13 +112,15 @@ function CommonAppPageContent() {
       writeSessionCache(SESSION_CACHE_KEYS.commonApp, {
         progressData: progress,
         draftValues: nextDrafts,
-      });
+      }, token);
+      setCacheReady(true);
     } catch (error) {
       if (!cached) {
         setStatusText(error instanceof Error ? error.message : "Failed to load Common App sections.");
       }
     } finally {
       setLoading(false);
+      setHydrated(true);
     }
   }, []);
 
@@ -187,12 +194,13 @@ function CommonAppPageContent() {
   }, [currentStep, loading]);
 
   useEffect(() => {
-    if (loading || !progressData) return;
+    const token = getToken();
+    if (!token || loading || !hydrated || !cacheReady || !progressData) return;
     writeSessionCache(SESSION_CACHE_KEYS.commonApp, {
       progressData,
       draftValues,
-    });
-  }, [draftValues, loading, progressData]);
+    }, token);
+  }, [cacheReady, draftValues, hydrated, loading, progressData]);
 
   const saveStep = useCallback(
     async (silent = false) => {
@@ -227,6 +235,7 @@ function CommonAppPageContent() {
         );
 
         clearSessionCaches([SESSION_CACHE_KEYS.dashboard]);
+        setCacheReady(true);
         if (!silent) setStatusText(`Saved: ${currentStep.sectionTitle} / ${currentStep.subsectionTitle}`);
         return true;
       } catch (error) {

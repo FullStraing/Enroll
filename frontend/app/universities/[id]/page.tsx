@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
+import { CircleHelp } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { CircularProgress } from "@/components/ui/circular-progress";
@@ -91,6 +92,52 @@ function factorWeight(level?: string): number {
   if (l.includes("important")) return 78;
   if (l.includes("considered")) return 52;
   return 24;
+}
+
+function factorRank(level?: string): number {
+  const l = (level || "").toLowerCase();
+  if (l.includes("very")) return 4;
+  if (l.includes("important")) return 3;
+  if (l.includes("considered")) return 2;
+  return 1;
+}
+
+function factorLabel(level?: string): string {
+  const l = (level || "").toLowerCase();
+  if (l.includes("very")) return "Very important";
+  if (l.includes("important")) return "Important";
+  if (l.includes("considered")) return "Considered";
+  return "Lower weight";
+}
+
+function explainAdmissionFactor(factorName?: string): string {
+  const normalized = (factorName || "").toLowerCase().replaceAll("_", " ").trim();
+
+  const explanations: Record<string, string> = {
+    "rigor of secondary school record": "How challenging your high school coursework was and whether you took the strongest classes available to you.",
+    "class rank": "How you performed compared with other students in your graduating class.",
+    "academic gpa": "Your grades across school subjects, usually viewed as a summary of your academic performance.",
+    "standardized test scores": "Scores from tests like the SAT or ACT that help colleges compare applicants academically.",
+    "application essay": "Your personal written response that shows your story, reflection, values, and fit for the school.",
+    recommendations: "Letters from teachers or counselors explaining your strengths, character, and readiness for college.",
+    interview: "A conversation with the college used to understand your personality, motivation, and communication style.",
+    "extracurricular activities": "Activities outside class such as clubs, sports, volunteering, competitions, or leadership roles.",
+    "talent ability": "A special strength such as music, art, athletics, research, or another standout skill.",
+    "character personal qualities": "Traits like resilience, curiosity, kindness, maturity, leadership, and integrity.",
+    "first generation": "Whether you would be among the first in your family to attend college.",
+    "alumni relation": "Whether you have family ties to the university through alumni connections, sometimes called legacy.",
+    "geographical residence": "Where you live broadly, such as region or country, and how that affects geographic diversity.",
+    "state residence": "Your official state residency, which can matter for public universities and in-state priorities.",
+    "religious affiliation commitment": "How much a college values alignment with its religious mission or community.",
+    "volunteer work": "Your unpaid service work and how you contribute to your community.",
+    "work experience": "Jobs or professional experience that show responsibility, time management, and practical skills.",
+    "level of applicants interest": "How strongly the college believes you are likely to enroll, sometimes called demonstrated interest.",
+  };
+
+  return (
+    explanations[normalized] ||
+    "This factor is one of the signals the university may use when reviewing an application."
+  );
 }
 
 function extractNumbers(text: string): number[] {
@@ -357,7 +404,14 @@ export default function UniversityProfilePage() {
   const avgGpa = typeof snapshotGpa === "number" ? snapshotGpa : null;
   const inState = asNumber(m.get("net_price_in_state")) ?? asNumber(m.get("tuition_in_state"));
   const outState = asNumber(m.get("net_price_out_state")) ?? asNumber(m.get("tuition_out_state"));
-  const factors = snapshot?.raw_payload?.standard_profile?.important_factors || [];
+  const sortedFactors = useMemo(() => {
+    const factors = snapshot?.raw_payload?.standard_profile?.important_factors || [];
+    return [...factors].sort((a, b) => {
+        const rankDiff = factorRank(b.importance_level) - factorRank(a.importance_level);
+        if (rankDiff !== 0) return rankDiff;
+        return (a.factor_name || "").localeCompare(b.factor_name || "");
+      });
+  }, [snapshot?.raw_payload?.standard_profile?.important_factors]);
   const diversity = snapshot?.raw_payload?.standard_profile?.campus_diversity?.diversity_breakdown || [];
   const totalUndergrads = asNumber(m.get("total_undergraduates"));
   const femaleAdmissions = parseGenderAdmissions(m.get("female_admissions"));
@@ -541,12 +595,35 @@ export default function UniversityProfilePage() {
             </section>
 
             <section className="rounded-2xl border border-white/15 bg-white/5 p-5">
-              <h2 className="text-xl font-semibold">Important factors of admission</h2>
+              <div>
+                <h2 className="text-xl font-semibold">Important factors of admission</h2>
+                <p className="mt-1 text-sm text-white/70">Sorted from highest to lowest admissions weight.</p>
+              </div>
               <div className="mt-4 grid gap-2">
-                {factors.length ? (
-                  factors.map((f, idx) => (
-                    <div key={`${f.factor_name || "factor"}-${idx}`} className="grid gap-2 sm:grid-cols-[1fr_140px] sm:items-center sm:gap-3">
-                      <p className="truncate text-sm">{(f.factor_name || "-").replaceAll("_", " ")}</p>
+                {sortedFactors.length ? (
+                  sortedFactors.map((f, idx) => (
+                    <div key={`${f.factor_name || "factor"}-${idx}`} className="grid gap-2 sm:grid-cols-[1fr_160px] sm:items-center sm:gap-3">
+                      <div className="min-w-0">
+                        <div className="flex min-w-0 items-center gap-2">
+                          <p className="truncate text-sm">{(f.factor_name || "-").replaceAll("_", " ")}</p>
+                          <div className="group relative shrink-0">
+                            <button
+                              type="button"
+                              tabIndex={0}
+                              className="flex h-6 w-6 items-center justify-center rounded-full border border-white/20 bg-black/20 text-white/65 transition hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/30"
+                              aria-label={`What ${(f.factor_name || "this factor").replaceAll("_", " ")} means`}
+                            >
+                              <CircleHelp className="h-3.5 w-3.5" />
+                            </button>
+                            <div className="pointer-events-none absolute left-8 top-1/2 z-20 hidden w-72 -translate-y-1/2 rounded-2xl border border-black/10 bg-white p-3 text-sm text-black shadow-xl group-hover:block group-focus-within:block">
+                              <p className="font-semibold text-black">{(f.factor_name || "Factor").replaceAll("_", " ")}</p>
+                              <p className="mt-1 text-black/70">{explainAdmissionFactor(f.factor_name)}</p>
+                              <p className="mt-2 text-xs font-medium text-black/55">{factorLabel(f.importance_level)}</p>
+                            </div>
+                          </div>
+                        </div>
+                        <p className="mt-1 text-xs text-white/55">{factorLabel(f.importance_level)}</p>
+                      </div>
                       <Progress value={factorWeight(f.importance_level)} variant="primary" className="h-2" />
                     </div>
                   ))

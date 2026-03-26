@@ -31,7 +31,7 @@ export function DiscoverGrid({
     <div className="mt-4 grid gap-4 xl:grid-cols-2">
       {loading
         ? Array.from({ length: Math.min(pageSize, 6) }).map((_, index) => (
-            <Card key={`d-sk-${index}`} className="shadow-none">
+            <Card key={`d-sk-${index}`}>
               <Skeleton className="h-6 w-2/3" />
               <Skeleton className="mt-2 h-4 w-1/2" />
               <Skeleton className="mt-3 h-9 w-28" />
@@ -44,7 +44,7 @@ export function DiscoverGrid({
                 key={university.id}
                 role="button"
                 tabIndex={0}
-                className="cursor-pointer shadow-none transition hover:-translate-y-0.5"
+                className="cursor-pointer transition hover:-translate-y-0.5"
                 onClick={() => onOpen(university.id)}
                 onKeyDown={(event) => {
                   if (event.key === "Enter" || event.key === " ") {

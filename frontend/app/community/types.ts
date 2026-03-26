@@ -24,6 +24,7 @@ export type CommunityPost = {
   post_type: "question" | "experience" | "guide" | "accepted_profile" | "deadline_update";
   title: string;
   body: string;
+  tag: "" | "essay" | "visa" | "financial_aid" | "documents" | "deadlines";
   status: "active" | "hidden" | "locked";
   is_pinned: boolean;
   created_at: string;
@@ -45,6 +46,8 @@ export type CommunityGroupSummary = {
   post_count: number;
   is_member: boolean;
   audience: string;
+  pinned_prompt: string;
+  is_chat_room: boolean;
 };
 
 export type CommunityGroupDetail = CommunityGroupSummary & {

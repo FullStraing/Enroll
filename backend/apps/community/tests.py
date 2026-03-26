@@ -71,6 +71,29 @@ class CommunityApiTests(APITestCase):
         )
         self.assertEqual(report_response.status_code, 201)
 
+    def test_chat_only_groups_include_seeded_rooms(self):
+        response = self.client.get("/api/community/groups/?group_type=country&chat_only=1")
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        slugs = {group["slug"] for group in payload}
+        self.assertIn("central-asia-applicants", slugs)
+        self.assertIn("kyrgyzstan-applicants", slugs)
+
+    def test_member_can_post_chat_message_without_explicit_title(self):
+        self.client.post("/api/community/groups/central-asia-applicants/join/")
+        response = self.client.post(
+            "/api/community/groups/central-asia-applicants/posts/",
+            {
+                "body": "Anyone else working on football stories for personal statement brainstorming?",
+                "tag": "essay",
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, 201)
+        payload = response.json()
+        self.assertEqual(payload["tag"], "essay")
+        self.assertTrue(payload["title"])
+
     def test_non_member_cannot_post(self):
         response = self.client.post(
             "/api/community/groups/kyrgyzstan-applicants/posts/",

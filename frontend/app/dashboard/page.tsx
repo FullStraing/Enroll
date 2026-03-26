@@ -1,12 +1,11 @@
 ﻿"use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CalendarClock, CircleAlert, CircleCheck, FileText, GraduationCap, Target } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { DashboardExportCard, DashboardSnapshotCard } from "@/components/dashboard/dashboard-snapshot-card";
-import { EditProfileModal } from "@/components/dashboard/edit-profile-modal";
 import { ProgressBlockCard } from "@/components/dashboard/progress-block-card";
 import { SharePreviewToast } from "@/components/dashboard/share-preview-toast";
 import { ProtectedPage } from "@/components/protected-page";
@@ -15,65 +14,37 @@ import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { COUNTRY_FLAG_MAP, DASHBOARD_CACHE_KEY, DASHBOARD_CACHE_TTL_MS, TEST_SCORE_RULES } from "@/app/dashboard/constants";
+import { COUNTRY_FLAG_MAP } from "@/app/dashboard/constants";
 import { buildDashboardProgress } from "@/app/dashboard/progress";
 import { captureDashboardBlob, copyImageToClipboard, downloadImageBlob } from "@/app/dashboard/share-dashboard";
 import type {
-  AcademicTestType,
   ApplicationItem,
   CommonAppProgress,
   DashboardCachePayload,
   DocumentItem,
-  EditProfileForm,
-  EditableFieldKey,
   EssayItem,
   IntroAnswers,
   IntroStorage,
-  LanguageTestType,
   Profile,
   StudentUniversity,
   Task,
 } from "@/app/dashboard/types";
 import {
   admissionsScore,
-  buildEmptyEditForm,
   buildInitialAcademicTests,
-  buildInitialEditForm,
   buildInitialLanguageTests,
-  normalizeAcademicTestsForSave,
   normalizeGpaFromQuiz,
-  normalizeLanguageTestsForSave,
-  normalizeScoreOnCommit,
-  sanitizeScoreInput,
 } from "@/app/dashboard/utils";
 import { apiFetch } from "@/lib/api";
 import { getToken } from "@/lib/auth";
-import { readStoredIntroQuiz, writeStoredIntroQuiz } from "@/lib/intro-quiz";
+import { readStoredIntroQuiz } from "@/lib/intro-quiz";
 import { formatDateShort, formatDateShortNoYear } from "@/lib/date-format";
-
-function readDashboardCache(): DashboardCachePayload | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = window.sessionStorage.getItem(DASHBOARD_CACHE_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw) as DashboardCachePayload;
-  } catch {
-    return null;
-  }
-}
-
-function writeDashboardCache(payload: DashboardCachePayload) {
-  if (typeof window === "undefined") return;
-  window.sessionStorage.setItem(DASHBOARD_CACHE_KEY, JSON.stringify(payload));
-}
+import { readSessionCache, SESSION_CACHE_KEYS, SESSION_CACHE_TTLS, writeSessionCache } from "@/lib/session-cache";
 
 function DashboardPageContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const dashboardShareRef = useRef<HTMLDivElement>(null);
   const dashboardExportRef = useRef<HTMLDivElement>(null);
-  const editModalRef = useRef<HTMLDivElement>(null);
-  const lastSavedEditSignatureRef = useRef("");
 
   const [loading, setLoading] = useState(true);
   const [statusText, setStatusText] = useState("");
@@ -85,15 +56,10 @@ function DashboardPageContent() {
   const [essays, setEssays] = useState<EssayItem[]>([]);
   const [applications, setApplications] = useState<ApplicationItem[]>([]);
   const [quizAnswers, setQuizAnswers] = useState<IntroAnswers>({});
-  const [editOpen, setEditOpen] = useState(false);
-  const [savingEdit, setSavingEdit] = useState(false);
-  const [, setEditHint] = useState<EditableFieldKey | null>(null);
   const [sharingDashboard, setSharingDashboard] = useState(false);
   const [savingSnapshot, setSavingSnapshot] = useState(false);
   const [sharePreviewUrl, setSharePreviewUrl] = useState<string | null>(null);
   const [sharePreviewVisible, setSharePreviewVisible] = useState(false);
-  const [editForm, setEditForm] = useState<EditProfileForm>(buildEmptyEditForm());
-  const [autosaveStatus, setAutosaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
 
   const applyDashboardData = useCallback((payload: Omit<DashboardCachePayload, "cachedAt">) => {
     setProfile(payload.profile);
@@ -122,20 +88,14 @@ function DashboardPageContent() {
     }
 
     const run = async () => {
-      const cached = readDashboardCache();
-      const cacheAge = cached ? Date.now() - cached.cachedAt : Number.POSITIVE_INFINITY;
-      const isCacheFresh = Boolean(cached) && cacheAge < DASHBOARD_CACHE_TTL_MS;
+      const { payload: cached, isFresh: isCacheFresh } = readSessionCache<Omit<DashboardCachePayload, "cachedAt">>(
+        SESSION_CACHE_KEYS.dashboard,
+        SESSION_CACHE_TTLS.dashboard,
+        token,
+      );
 
       if (cached) {
-        applyDashboardData({
-          profile: cached.profile,
-          progressData: cached.progressData,
-          myUniversities: cached.myUniversities,
-          tasks: cached.tasks,
-          documents: cached.documents,
-          essays: cached.essays,
-          applications: cached.applications,
-        });
+        applyDashboardData(cached);
         setLoading(false);
       } else {
         setLoading(true);
@@ -167,8 +127,7 @@ function DashboardPageContent() {
           essays: essaysResp,
           applications: applicationsResp,
         });
-        writeDashboardCache({
-          cachedAt: Date.now(),
+        writeSessionCache(SESSION_CACHE_KEYS.dashboard, {
           profile: profileResp,
           progressData: progressResp,
           myUniversities: universitiesResp,
@@ -176,7 +135,7 @@ function DashboardPageContent() {
           documents: documentsResp,
           essays: essaysResp,
           applications: applicationsResp,
-        });
+        }, token);
       } catch (error) {
         if (!cached) {
           setStatusText(error instanceof Error ? error.message : "Failed to load dashboard.");
@@ -191,8 +150,7 @@ function DashboardPageContent() {
 
   useEffect(() => {
     if (loading || !profile || !progressData) return;
-    writeDashboardCache({
-      cachedAt: Date.now(),
+    writeSessionCache(SESSION_CACHE_KEYS.dashboard, {
       profile,
       progressData,
       myUniversities,
@@ -204,40 +162,9 @@ function DashboardPageContent() {
   }, [loading, profile, progressData, myUniversities, tasks, documents, essays, applications]);
 
   useEffect(() => {
-    if (editOpen) return;
-    const initialForm = buildInitialEditForm(profile, quizAnswers, myUniversities);
-    setEditForm(initialForm);
-    lastSavedEditSignatureRef.current = JSON.stringify(initialForm);
-    setAutosaveStatus("idle");
-  }, [profile, quizAnswers, myUniversities, editOpen]);
-
-  useEffect(() => {
-    const editParam = searchParams.get("edit");
-    if (!editParam) return;
-    const allowed = new Set<EditableFieldKey>(["major", "gpa", "tests", "intake", "country", "level"]);
-    if (!allowed.has(editParam as EditableFieldKey)) return;
-    setEditHint(editParam as EditableFieldKey);
-    setEditOpen(true);
-  }, [searchParams]);
-
-  useEffect(() => {
     if (!sharePreviewUrl) return;
     return () => URL.revokeObjectURL(sharePreviewUrl);
   }, [sharePreviewUrl]);
-
-  useEffect(() => {
-    if (!editOpen) return;
-
-    const handlePointerDown = (event: MouseEvent) => {
-      if (!editModalRef.current) return;
-      if (editModalRef.current.contains(event.target as Node)) return;
-      if (savingEdit) return;
-      setEditOpen(false);
-    };
-
-    document.addEventListener("mousedown", handlePointerDown);
-    return () => document.removeEventListener("mousedown", handlePointerDown);
-  }, [editOpen, savingEdit]);
 
   const profileMajor = profile?.intended_major || quizAnswers.major || "N/A";
   const profileCountry = profile?.country || quizAnswers.country || "N/A";
@@ -359,146 +286,6 @@ function DashboardPageContent() {
     .map((item) => `${item.exam.replace(/^AP\s+/u, "").replace(/\s+/g, " ")}\u00A0${item.score.trim().replace(/\s+/g, " ")}`)
     .slice(0, 8);
 
-  const gpaMax = editForm.gpaScale === "5.0" ? 5 : editForm.gpaScale === "Percent" ? 100 : 4;
-  const gpaStep = editForm.gpaScale === "Percent" ? "1" : "0.01";
-  const editFormSignature = useMemo(() => JSON.stringify(editForm), [editForm]);
-
-  function updateAcademicTestRow(index: number, patch: Partial<EditProfileForm["academicTests"][number]>) {
-    setEditForm((prev) => ({
-      ...prev,
-      academicTests: prev.academicTests.map((item, itemIndex) => (itemIndex === index ? { ...item, ...patch } : item)),
-    }));
-  }
-
-  function commitAcademicTestScore(index: number) {
-    setEditForm((prev) => ({
-      ...prev,
-      academicTests: prev.academicTests.map((item, itemIndex) =>
-        itemIndex === index ? { ...item, score: normalizeScoreOnCommit(item.score, TEST_SCORE_RULES[item.type]) } : item,
-      ),
-    }));
-  }
-
-  function addAcademicTestRow() {
-    setEditForm((prev) => {
-      if (prev.academicTests.length >= 2) return prev;
-      const usedTypes = new Set(prev.academicTests.map((item) => item.type));
-      const nextType: AcademicTestType = usedTypes.has("SAT") ? "ACT" : "SAT";
-      return {
-        ...prev,
-        academicTests: [...prev.academicTests, { type: nextType, score: "" }],
-      };
-    });
-  }
-
-  function removeAcademicTestRow(index: number) {
-    setEditForm((prev) => ({
-      ...prev,
-      academicTests: prev.academicTests.filter((_, itemIndex) => itemIndex !== index),
-    }));
-  }
-
-  function updateLanguageTestRow(index: number, patch: Partial<EditProfileForm["languageTests"][number]>) {
-    setEditForm((prev) => ({
-      ...prev,
-      languageTests: prev.languageTests.map((item, itemIndex) => (itemIndex === index ? { ...item, ...patch } : item)),
-    }));
-  }
-
-  function commitLanguageTestScore(index: number) {
-    setEditForm((prev) => ({
-      ...prev,
-      languageTests: prev.languageTests.map((item, itemIndex) =>
-        itemIndex === index ? { ...item, score: normalizeScoreOnCommit(item.score, TEST_SCORE_RULES[item.type]) } : item,
-      ),
-    }));
-  }
-
-  function addLanguageTestRow() {
-    setEditForm((prev) => {
-      if (prev.languageTests.length >= 5) return prev;
-      const usedTypes = new Set(prev.languageTests.map((item) => item.type));
-      const nextType = (["IELTS", "TOEFL", "DET", "PTE", "Cambridge"] as LanguageTestType[]).find((option) => !usedTypes.has(option)) || "IELTS";
-      return {
-        ...prev,
-        languageTests: [...prev.languageTests, { type: nextType, score: "" }],
-      };
-    });
-  }
-
-  function removeLanguageTestRow(index: number) {
-    setEditForm((prev) => ({
-      ...prev,
-      languageTests: prev.languageTests.filter((_, itemIndex) => itemIndex !== index),
-    }));
-  }
-
-  function updateApScoreRow(index: number, patch: Partial<EditProfileForm["apScores"][number]>) {
-    setEditForm((prev) => ({
-      ...prev,
-      apScores: prev.apScores.map((item, itemIndex) => (itemIndex === index ? { ...item, ...patch } : item)),
-    }));
-  }
-
-  function addApScoreRow() {
-    setEditForm((prev) => {
-      if (prev.apScores.length >= 8) return prev;
-      return {
-        ...prev,
-        apScores: [...prev.apScores, { exam: "AP Calculus AB", score: "5" }],
-      };
-    });
-  }
-
-  function removeApScoreRow(index: number) {
-    setEditForm((prev) => ({
-      ...prev,
-      apScores: prev.apScores.filter((_, itemIndex) => itemIndex !== index),
-    }));
-  }
-
-  function updateActivityRow(index: number, patch: Partial<EditProfileForm["activities"][number]>) {
-    setEditForm((prev) => ({
-      ...prev,
-      activities: prev.activities.map((item, itemIndex) => (itemIndex === index ? { ...item, ...patch } : item)),
-    }));
-  }
-
-  function addActivityRow() {
-    setEditForm((prev) => {
-      if (prev.activities.length >= 6) return prev;
-      return { ...prev, activities: [...prev.activities, { title: "", description: "" }] };
-    });
-  }
-
-  function removeActivityRow(index: number) {
-    setEditForm((prev) => ({
-      ...prev,
-      activities: prev.activities.filter((_, itemIndex) => itemIndex !== index),
-    }));
-  }
-
-  function updateHonorRow(index: number, value: string) {
-    setEditForm((prev) => ({
-      ...prev,
-      honors: prev.honors.map((item, itemIndex) => (itemIndex === index ? value : item)),
-    }));
-  }
-
-  function addHonorRow() {
-    setEditForm((prev) => {
-      if (prev.honors.length >= 4) return prev;
-      return { ...prev, honors: [...prev.honors, ""] };
-    });
-  }
-
-  function removeHonorRow(index: number) {
-    setEditForm((prev) => ({
-      ...prev,
-      honors: prev.honors.filter((_, itemIndex) => itemIndex !== index),
-    }));
-  }
-
   async function handleShareProfile() {
     const node = dashboardExportRef.current;
     if (!node) {
@@ -551,128 +338,8 @@ function DashboardPageContent() {
     }
   }
 
-  const saveEditableProfile = useCallback(async (options?: { closeOnSuccess?: boolean; autosave?: boolean; form?: EditProfileForm }) => {
-    const token = getToken();
-    if (!token) return;
-    const closeOnSuccess = options?.closeOnSuccess ?? true;
-    const autosave = options?.autosave ?? false;
-    const form = options?.form ?? editForm;
-
-    setSavingEdit(true);
-    setAutosaveStatus(autosave ? "saving" : "idle");
-    try {
-      const gpaNumber = form.gpaValue ? Number(form.gpaValue) : null;
-      const normalizedAcademicTests = normalizeAcademicTestsForSave(form.academicTests);
-      const normalizedLanguageTests = normalizeLanguageTestsForSave(form.languageTests);
-
-      const getAcademicScore = (type: AcademicTestType) => {
-        const match = normalizedAcademicTests.find((item) => item.type === type && item.score.trim());
-        if (!match) return null;
-        const numeric = Number(match.score);
-        return Number.isNaN(numeric) ? null : numeric;
-      };
-
-      const getLanguageScore = (type: LanguageTestType) => {
-        const match = normalizedLanguageTests.find((item) => item.type === type && item.score.trim());
-        if (!match) return null;
-        const numeric = Number(match.score);
-        return Number.isNaN(numeric) ? null : numeric;
-      };
-
-      const cleanActivities = form.activities
-        .map((item) => [item.title.trim(), item.description.trim()].filter(Boolean).join(" — "))
-        .filter(Boolean);
-      const cleanHonors = form.honors.map((item) => item.trim()).filter(Boolean);
-      const cleanAcademicTests = normalizedAcademicTests.map((item) => ({ type: item.type, score: item.score.trim() })).filter((item) => item.score);
-      const cleanLanguageTests = normalizedLanguageTests.map((item) => ({ type: item.type, score: item.score.trim() })).filter((item) => item.score);
-      const cleanApScores = form.apScores.map((item) => ({ exam: item.exam.trim(), score: item.score.trim() })).filter((item) => item.exam && item.score);
-
-      const payload: Partial<Profile> = {
-        full_name: form.fullName || "",
-        intended_major: form.major || "",
-        country: form.country || "",
-        gpa: gpaNumber == null || Number.isNaN(gpaNumber) ? null : gpaNumber,
-        sat_total: getAcademicScore("SAT"),
-        toefl_total: getLanguageScore("TOEFL"),
-        ielts_overall: getLanguageScore("IELTS"),
-        det_score: getLanguageScore("DET"),
-        activities: cleanActivities,
-        honors: cleanHonors,
-        common_app_profile: {
-          dashboard_snapshot: {
-            academic_tests: cleanAcademicTests,
-            language_tests: cleanLanguageTests,
-            ap_scores: cleanApScores,
-            displayed_university_ids: form.selectedUniversityIds.slice(0, 7),
-          },
-        },
-      };
-
-      const updatedProfile = await apiFetch<Profile>("/api/auth/profile/", { method: "PATCH", body: JSON.stringify(payload) }, token);
-      setProfile((prev) => ({ ...(prev || {}), ...updatedProfile }));
-      lastSavedEditSignatureRef.current = JSON.stringify(form);
-
-      const nextAnswers: IntroAnswers = {
-        ...quizAnswers,
-        major: form.major || undefined,
-        country: form.country || undefined,
-        intakeYear: form.intakeYear || undefined,
-        schoolLevel: form.schoolLevel || undefined,
-        gpaScale: form.gpaScale || undefined,
-        gpaValue: form.gpaValue || undefined,
-        tests: [...form.academicTests, ...form.languageTests].map((item) => item.type),
-      };
-      setQuizAnswers(nextAnswers);
-      writeStoredIntroQuiz({ step: 6, answers: nextAnswers });
-      if (autosave) {
-        setAutosaveStatus("saved");
-      } else {
-        setStatusText("Profile snapshot updated.");
-      }
-      if (closeOnSuccess) {
-        setEditOpen(false);
-        if (searchParams.get("edit")) router.replace("/dashboard");
-      }
-    } catch (error) {
-      if (autosave) {
-        setAutosaveStatus("error");
-      } else {
-        setStatusText(error instanceof Error ? error.message : "Unable to save profile changes.");
-      }
-    } finally {
-      setSavingEdit(false);
-    }
-  }, [editForm, quizAnswers, router, searchParams]);
-
-  useEffect(() => {
-    if (!editOpen) return;
-    if (savingEdit) return;
-    if (editFormSignature === lastSavedEditSignatureRef.current) return;
-
-    const timeoutId = window.setTimeout(() => {
-      void saveEditableProfile({ closeOnSuccess: false, autosave: true, form: editForm });
-    }, 1200);
-
-    return () => window.clearTimeout(timeoutId);
-  }, [editOpen, editForm, editFormSignature, saveEditableProfile, savingEdit]);
-
-  function handleCloseEdit() {
-    if (savingEdit) return;
-    setEditOpen(false);
-  }
-
   function handleOpenEdit() {
-    setEditHint(null);
-    const initialForm = buildInitialEditForm(profile, quizAnswers, myUniversities);
-    setEditForm(initialForm);
-    lastSavedEditSignatureRef.current = JSON.stringify(initialForm);
-    setAutosaveStatus("idle");
-    setEditOpen(true);
-  }
-
-  function handleEditUniversities() {
-    setEditOpen(false);
-    router.push("/universities");
+    router.push("/onboarding");
   }
 
   return (
@@ -887,40 +554,6 @@ function DashboardPageContent() {
         </div>
 
         <SharePreviewToast imageUrl={sharePreviewUrl} visible={sharePreviewVisible} />
-
-        {editOpen ? (
-          <EditProfileModal
-            editModalRef={editModalRef}
-            editForm={editForm}
-            savingEdit={savingEdit}
-            autosaveStatus={autosaveStatus}
-            gpaMax={gpaMax}
-            gpaStep={gpaStep}
-            onClose={handleCloseEdit}
-            onSave={() => void saveEditableProfile()}
-            setEditForm={setEditForm}
-            addAcademicTestRow={addAcademicTestRow}
-            updateAcademicTestRow={updateAcademicTestRow}
-            commitAcademicTestScore={commitAcademicTestScore}
-            removeAcademicTestRow={removeAcademicTestRow}
-            addLanguageTestRow={addLanguageTestRow}
-            updateLanguageTestRow={updateLanguageTestRow}
-            commitLanguageTestScore={commitLanguageTestScore}
-            removeLanguageTestRow={removeLanguageTestRow}
-            addApScoreRow={addApScoreRow}
-            updateApScoreRow={updateApScoreRow}
-            removeApScoreRow={removeApScoreRow}
-            addActivityRow={addActivityRow}
-            updateActivityRow={updateActivityRow}
-            removeActivityRow={removeActivityRow}
-            addHonorRow={addHonorRow}
-            updateHonorRow={updateHonorRow}
-            removeHonorRow={removeHonorRow}
-            sanitizeScoreInput={sanitizeScoreInput}
-            onEditUniversities={handleEditUniversities}
-            myUniversities={myUniversities}
-          />
-        ) : null}
       </AppShell>
     </ProtectedPage>
   );

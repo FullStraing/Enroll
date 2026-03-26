@@ -143,6 +143,7 @@ function EssaysPageContent() {
   const [universitySearch, setUniversitySearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [hydrated, setHydrated] = useState(false);
+  const [cacheReady, setCacheReady] = useState(false);
   const [saving, setSaving] = useState(false);
   const [savingOnboarding, setSavingOnboarding] = useState(false);
   const [statusText, setStatusText] = useState("");
@@ -167,16 +168,19 @@ function EssaysPageContent() {
   async function loadData() {
     const token = getToken();
     if (!token) return;
-    const { payload: cached, isFresh } = readSessionCache<EssaysCachePayload>(SESSION_CACHE_KEYS.essays, SESSION_CACHE_TTLS.essays);
+    const { payload: cached, isFresh } = readSessionCache<EssaysCachePayload>(SESSION_CACHE_KEYS.essays, SESSION_CACHE_TTLS.essays, token);
     if (cached) {
       setEssays(cached.essays);
       setLoading(false);
+      setHydrated(true);
+      setCacheReady(true);
     } else {
       setLoading(true);
     }
 
     if (isFresh) {
       setStatusText("");
+      setHydrated(true);
       return;
     }
 
@@ -184,7 +188,8 @@ function EssaysPageContent() {
       const essayData = await apiFetch<Essay[]>("/api/essays/", { method: "GET" }, token);
       setEssays(essayData);
       setStatusText("");
-      writeSessionCache(SESSION_CACHE_KEYS.essays, { essays: essayData });
+      writeSessionCache(SESSION_CACHE_KEYS.essays, { essays: essayData }, token);
+      setCacheReady(true);
     } catch (error) {
       if (!cached) {
         setStatusText(error instanceof Error ? error.message : "Failed to load essays.");
@@ -222,9 +227,10 @@ function EssaysPageContent() {
   }, []);
 
   useEffect(() => {
-    if (loading || !hydrated) return;
-    writeSessionCache(SESSION_CACHE_KEYS.essays, { essays });
-  }, [hydrated, loading, essays]);
+    const token = getToken();
+    if (!token || loading || !hydrated || !cacheReady) return;
+    writeSessionCache(SESSION_CACHE_KEYS.essays, { essays }, token);
+  }, [cacheReady, hydrated, loading, essays]);
 
   useEffect(() => {
     const action = searchParams.get("action");
@@ -331,13 +337,14 @@ function EssaysPageContent() {
       };
       const nextEssays = [nextEssay, ...essays.filter((essay) => essay.id !== nextEssay.id)];
       setEssays(nextEssays);
-      writeSessionCache(SESSION_CACHE_KEYS.essays, { essays: nextEssays });
+      writeSessionCache(SESSION_CACHE_KEYS.essays, { essays: nextEssays }, token);
       if (created.initial_version) {
         writeSessionCache(getEssayDetailCacheKey(created.id), {
           essay: nextEssay,
           versions: [created.initial_version],
-        });
+        }, token);
       }
+      setCacheReady(true);
       clearSessionCaches([SESSION_CACHE_KEYS.dashboard]);
       setShowCreate(false);
       const template = getEssayDraftTemplate("personal_statement");

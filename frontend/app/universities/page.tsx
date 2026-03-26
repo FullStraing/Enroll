@@ -19,18 +19,19 @@ function UniversitiesPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const state = useUniversitiesPage();
+  const { setActiveTab } = state;
 
   useEffect(() => {
     const tab = searchParams.get("tab");
     if (tab === "my" || tab === "discover") {
-      state.setActiveTab(tab);
+      setActiveTab(tab);
     }
-  }, [searchParams, state]);
+  }, [searchParams, setActiveTab]);
 
   return (
     <ProtectedPage>
       <AppShell title="Universities" subtitle="My list and discover flow in one screen.">
-        <section className="glass rounded-2xl p-5">
+        <section className="surface-panel rounded-[28px] p-5 sm:p-6">
           <UniversitiesTabs
             activeTab={state.activeTab}
             onTabChange={state.setActiveTab}
@@ -84,7 +85,7 @@ function UniversitiesPageContent() {
                       value={state.searchQuery}
                       onChange={(event) => state.setSearchQuery(event.target.value)}
                       placeholder="Search universities by name"
-                      className="w-full rounded-2xl border-2 border-black bg-white py-2.5 pl-10 pr-4 text-sm text-black outline-none transition placeholder:text-black/40 focus:bg-[#DAF5F0]/30"
+                      className="w-full rounded-2xl border border-black/15 bg-white py-2.5 pl-10 pr-4 text-sm text-black outline-none transition placeholder:text-black/40 focus:border-black/30 focus:bg-[#DAF5F0]/20"
                     />
                   </label>
                   <Select
@@ -101,7 +102,7 @@ function UniversitiesPageContent() {
                       { value: "reach", label: chanceLabel("reach") },
                       { value: "high_reach", label: chanceLabel("high_reach") },
                     ]}
-                    className="min-w-[190px] border-2 border-black bg-white px-4 py-2.5 text-sm font-semibold"
+                    className="min-w-[190px] border border-black/15 bg-white px-4 py-2.5 text-sm font-semibold"
                     ariaLabel="Chance band"
                   />
                 </div>

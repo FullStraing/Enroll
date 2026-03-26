@@ -177,6 +177,8 @@ class CommunityGroupListView(generics.ListAPIView):
         group_type = self.request.query_params.get("group_type")
         if group_type:
             queryset = queryset.filter(group_type=group_type)
+        if self.request.query_params.get("chat_only") == "1":
+            queryset = queryset.filter(metadata__chat_room=True)
         return queryset
 
     def get_serializer_context(self):
@@ -290,6 +292,7 @@ class CommunityGroupPostsView(APIView):
             post_type=serializer.validated_data["post_type"],
             title=serializer.validated_data["title"],
             body=serializer.validated_data["body"],
+            tag=serializer.validated_data.get("tag", ""),
             status="active",
         )
         post = _post_queryset_for_user(request.user).get(pk=post.pk)
