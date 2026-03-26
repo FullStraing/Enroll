@@ -10,6 +10,8 @@ export type RuntimeConfig = {
   };
   storage?: {
     backend?: string;
+    writes_enabled?: boolean;
+    writes_reason?: string;
   };
   features: {
     ai_enabled: boolean;

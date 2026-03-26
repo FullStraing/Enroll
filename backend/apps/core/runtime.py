@@ -14,5 +14,12 @@ def runtime_flags():
     }
 
 
+def file_uploads_runtime():
+    return {
+        "enabled": bool(getattr(settings, "FILE_UPLOADS_ENABLED", True)),
+        "reason": getattr(settings, "FILE_UPLOADS_DISABLED_REASON", ""),
+    }
+
+
 def feature_disabled_response(detail: str, status_code: int = status.HTTP_503_SERVICE_UNAVAILABLE):
     return Response({"detail": detail, "feature_disabled": True}, status=status_code)

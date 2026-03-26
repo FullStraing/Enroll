@@ -144,6 +144,18 @@ Enable:
 - `AWS_S3_REGION_NAME`
 - optional `AWS_S3_CUSTOM_DOMAIN`
 
+Cloudflare R2 example:
+
+- `AWS_STORAGE_BUCKET_NAME=enroll-documents`
+- `AWS_S3_ENDPOINT_URL=https://<account-id>.r2.cloudflarestorage.com`
+- `AWS_S3_REGION_NAME=auto`
+- keep `AWS_QUERYSTRING_AUTH=1` so document links stay signed/private by default
+
+Safety guard:
+
+- in `production`, document uploads stay disabled unless `USE_S3_STORAGE=1` is set with valid object-storage credentials
+- `FILE_UPLOADS_ENABLED=1` on its own is intentionally not enough to re-enable public uploads by mistake
+
 Recommended for private file URLs:
 
 - `AWS_QUERYSTRING_AUTH=1`

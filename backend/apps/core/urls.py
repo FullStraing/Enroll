@@ -10,7 +10,7 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
-from .runtime import runtime_flags
+from .runtime import runtime_flags, file_uploads_runtime
 
 
 def ping_view(request):
@@ -42,6 +42,8 @@ def ping_view(request):
             },
             "storage": {
                 "backend": getattr(settings, "STORAGE_BACKEND_LABEL", "unknown"),
+                "writes_enabled": file_uploads_runtime()["enabled"],
+                "writes_reason": file_uploads_runtime()["reason"],
             },
             "features": runtime_flags(),
         }
