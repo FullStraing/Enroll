@@ -86,6 +86,12 @@ gunicorn config.wsgi:application --chdir backend --bind 0.0.0.0:$PORT
 
 For monorepo-safe Railway deploys, this repo also includes a root `Dockerfile` and `.dockerignore` so Railway can build the Django backend deterministically without trying to infer both frontend and backend stacks from the same root.
 
+Current deploy policy (March 2026):
+
+- `frontend` should be treated as a controlled Vercel deploy unless and until a GitHub repo integration is explicitly connected in the Vercel project settings
+- `backend-api` is a controlled Railway deploy today; Railway status shows `source.repo = null`, so backend changes only reach production when we run a Railway CLI deploy/redeploy
+- practical rule: after backend changes, run Railway deploy manually; after frontend-only changes, do not assume auto-publish unless Vercel Git integration has been explicitly verified again
+
 Optional worker:
 
 ```bash
