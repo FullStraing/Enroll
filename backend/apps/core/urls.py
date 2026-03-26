@@ -48,4 +48,5 @@ urlpatterns = [
     path("", include("apps.documents.urls")),
     path("", include("apps.essays.urls")),
     path("", include("apps.ai.urls")),
+    path("community/", include("apps.community.urls")),
 ]

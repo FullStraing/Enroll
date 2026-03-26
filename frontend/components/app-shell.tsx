@@ -14,6 +14,7 @@ import {
   FileText,
   Settings,
   Home,
+  Users2,
   Menu,
   X,
 } from "lucide-react";
@@ -26,6 +27,7 @@ const nav = [
   { href: "/universities", label: "Universities", icon: GraduationCap },
   { href: "/activities", label: "Activities", icon: Medal },
   { href: "/calendar", label: "Tasks", icon: CalendarDays },
+  { href: "/community", label: "Community", icon: Users2 },
   { href: "/documents", label: "Documents", icon: FolderKanban },
   { href: "/essays", label: "Essays", icon: FileText },
   { href: "/common-app", label: "Common App", icon: FileText },

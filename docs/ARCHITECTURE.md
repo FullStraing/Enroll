@@ -30,6 +30,7 @@ Main apps:
 - `documents` - admissions document vault with file upload and university linkage
 - `essays` - essays, versions, compare logic
 - `ai` - baseline AI endpoints
+- `community` - curated groups, memberships, posts, comments, saved posts, reports
 
 ## Frontend structure
 
@@ -38,7 +39,7 @@ Location: `frontend/app/`
 Main route groups:
 - public marketing and acquisition: landing, intro quiz, legal pages
 - auth: login, register
-- workspace: dashboard, applications, calendar, documents, essays, common app, settings
+- workspace: dashboard, community, applications, calendar, documents, essays, common app, settings
 - support surfaces: pilot
 
 Shared UI entry points:

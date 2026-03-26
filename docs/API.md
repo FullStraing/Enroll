@@ -161,6 +161,33 @@ Current behavior:
 - per-action daily limits are enforced server-side before provider calls
 - frontend never calls the model provider directly
 
+## Community
+
+- `GET /api/community/home/`
+- `GET /api/community/groups/`
+- `GET /api/community/groups/{slug}/`
+- `POST /api/community/groups/{slug}/join/`
+- `POST /api/community/groups/{slug}/leave/`
+- `GET /api/community/groups/{slug}/posts/`
+- `POST /api/community/groups/{slug}/posts/`
+- `GET /api/community/posts/{id}/`
+- `PATCH /api/community/posts/{id}/`
+- `DELETE /api/community/posts/{id}/`
+- `POST /api/community/posts/{id}/comments/`
+- `PATCH /api/community/comments/{id}/`
+- `DELETE /api/community/comments/{id}/`
+- `POST /api/community/posts/{id}/save/`
+- `DELETE /api/community/posts/{id}/save/`
+- `POST /api/community/reports/`
+
+Current behavior:
+
+- Community is authenticated-only and scoped to Enroll-curated groups
+- groups are seeded by Enroll and typed as `country`, `university`, `intake`, or `topic`
+- posts use structured post types instead of a generic social feed
+- saving posts and report flow are both built in from day one
+- posting and commenting are rate-limited server-side
+
 ## Common App progress payload
 
 `GET /api/auth/common-app-progress/` returns:

@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     "apps.documents",
     "apps.essays",
     "apps.ai",
+    "apps.community",
 ]
 
 
