@@ -313,7 +313,6 @@ function DashboardPageContent() {
     setSharingDashboard(true);
     try {
       const blob = await captureDashboardBlob(node);
-      const copied = await copyImageToClipboard(blob);
       const previewUrl = URL.createObjectURL(blob);
 
       setSharePreviewUrl((previous) => {
@@ -323,11 +322,17 @@ function DashboardPageContent() {
       setSharePreviewVisible(true);
       window.setTimeout(() => setSharePreviewVisible(false), 2600);
 
-      if (copied) {
-        setStatusText("Dashboard snapshot copied to clipboard.");
-      } else {
+      try {
+        const copied = await copyImageToClipboard(blob);
+        if (copied) {
+          setStatusText("Dashboard snapshot copied to clipboard.");
+          return;
+        }
         downloadImageBlob(blob);
         setStatusText("Clipboard image is not supported here. Downloaded a dashboard snapshot instead.");
+      } catch {
+        downloadImageBlob(blob);
+        setStatusText("Clipboard access was blocked. Downloaded a dashboard snapshot instead.");
       }
     } catch {
       setStatusText("Unable to create a dashboard snapshot right now.");
