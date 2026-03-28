@@ -3,6 +3,7 @@ from django.urls import reverse
 from django.test import override_settings
 from rest_framework.test import APITestCase, APIClient
 from apps.analytics.models import ProductEvent
+from apps.universities.models import StudentUniversity, University
 from .models import StudentProfile
 
 
@@ -158,6 +159,8 @@ class GoogleAuthTests(APITestCase):
         from unittest.mock import patch
         from apps.users.google_auth import GoogleIdentity
 
+        University.objects.create(name="Stanford University", acceptance_rate=4, is_active=True)
+
         url = reverse("google_auth")
         mock_identity = GoogleIdentity(
             email="google.user@example.com",
@@ -177,7 +180,9 @@ class GoogleAuthTests(APITestCase):
         self.assertTrue(response.data["is_new_user"])
         self.assertTrue(User.objects.filter(email="google.user@example.com").exists())
         google_user = User.objects.get(email="google.user@example.com")
+        self.assertEqual(StudentUniversity.objects.filter(student=google_user).count(), 1)
         self.assertEqual(ProductEvent.objects.filter(user=google_user, name="signup_completed").count(), 1)
+        self.assertEqual(ProductEvent.objects.filter(user=google_user, name="first_university_added").count(), 0)
 
     @override_settings(GOOGLE_OAUTH_CLIENT_ID="test-client-id")
     def test_google_auth_returns_error_when_token_is_invalid(self):
@@ -197,6 +202,8 @@ class GoogleAuthTests(APITestCase):
 
 class RegisterAnalyticsTests(APITestCase):
     def test_register_records_signup_completed(self):
+        University.objects.create(name="Stanford University", acceptance_rate=4, is_active=True)
+
         response = self.client.post(
             reverse("register"),
             {
@@ -209,4 +216,6 @@ class RegisterAnalyticsTests(APITestCase):
 
         self.assertEqual(response.status_code, 201)
         user = User.objects.get(username="new-user")
+        self.assertEqual(StudentUniversity.objects.filter(student=user).count(), 1)
         self.assertEqual(ProductEvent.objects.filter(user=user, name="signup_completed").count(), 1)
+        self.assertEqual(ProductEvent.objects.filter(user=user, name="first_university_added").count(), 0)

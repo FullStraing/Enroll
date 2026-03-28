@@ -236,3 +236,11 @@ pm run dev:clean for explicit cache resets. Verified with frontend lint/build.
 ## 2026-03-28
 - Fixed production university profile degradation path in `frontend/app/universities/[id]/page.tsx` by making metrics/snapshot/deadlines fetches tolerant of partial failures instead of crashing the whole page on a missing snapshot.
 - Expanded Peterson enrichment commands to target all active universities, including the currently licensed top schools, so production backfill can populate snapshots and deadlines across the full catalog.
+- Deployed the university enrichment coverage fix, then ran live Railway backfills:
+  - `scrape_peterson_universities --limit 200`
+  - `ingest_university_deadlines --limit 200 --source petersons`
+  - targeted Peterson/deadline enrichment for `Harvard`, `Stanford`, `MIT`, `NYU`, and `University of Michigan - Ann Arbor`
+- Verified on production API:
+  - `Abilene Christian University`: snapshot present, `29` metrics, `4` deadlines
+  - `Harvard/Stanford/MIT/NYU/Michigan`: snapshots present, `31-33` metrics each, `3` deadlines each
+- Seeded one example university for newly created users at registration / Google sign-in on the backend, without firing the real `first_university_added` analytics event.

@@ -11,6 +11,8 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from apps.analytics.services import record_product_event
 from apps.core.runtime import feature_disabled_response
+from apps.universities.categorying import category_from_acceptance_rate
+from apps.universities.models import StudentUniversity, University
 from .common_app import build_common_app_progress
 from .google_auth import GoogleTokenVerificationError, verify_google_id_token
 from .models import StudentProfile
@@ -34,6 +36,34 @@ def _get_expected_google_client_ids() -> set[str]:
     return {value.strip() for value in raw.split(",") if value.strip()}
 
 
+def _seed_example_university(user: User) -> None:
+    if StudentUniversity.objects.filter(student=user).exists():
+        return
+
+    example_names = [
+        "Stanford University",
+        "Harvard University",
+        "New York University",
+        "University of Michigan - Ann Arbor",
+        "Abilene Christian University",
+    ]
+    university = University.objects.filter(is_active=True, name__in=example_names).order_by("name").first()
+    if not university:
+        university = University.objects.filter(is_active=True).order_by("name").first()
+    if not university:
+        return
+
+    StudentUniversity.objects.get_or_create(
+        student=user,
+        university=university,
+        defaults={
+            "sort_order": 1,
+            "category": category_from_acceptance_rate(university.acceptance_rate),
+            "status": "planning",
+        },
+    )
+
+
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = RegisterSerializer
@@ -41,6 +71,7 @@ class RegisterView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         user = serializer.save()
+        _seed_example_university(user)
         record_product_event("signup_completed", user=user, source="password")
 
     def create(self, request, *args, **kwargs):
@@ -152,6 +183,7 @@ class GoogleAuthView(APIView):
             profile.full_name = identity.full_name or f"{identity.given_name} {identity.family_name}".strip()
             profile.save(update_fields=["full_name"])
         if created:
+            _seed_example_university(user)
             record_product_event("signup_completed", user=user, source="google")
 
         refresh = RefreshToken.for_user(user)
