@@ -1,11 +1,53 @@
 "use client";
 
+import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
+import { getToken, hasStoredAccessToken } from "@/lib/auth";
 
 function accountLabel(name?: string, username?: string) {
   return (name || username || "Account").trim();
+}
+
+function useLandingAccountState(initialHasSession: boolean) {
+  const { status, profile } = useAuth();
+  const [hasStoredToken] = useState(() => hasStoredAccessToken());
+
+  useEffect(() => {
+    if (!hasStoredToken) return;
+    getToken();
+  }, [hasStoredToken]);
+
+  const hasAccount = status === "authenticated" || hasStoredToken || (status === "loading" && initialHasSession);
+
+  return { hasAccount, profile };
+}
+
+function resolveAppHref(hasAccount: boolean, fallbackHref: string) {
+  return hasAccount ? "/dashboard" : fallbackHref;
+}
+
+export function LandingPrimaryLink({
+  fallbackHref,
+  initialHasSession,
+  className,
+  style,
+  children,
+}: {
+  fallbackHref: string;
+  initialHasSession: boolean;
+  className: string;
+  style?: CSSProperties;
+  children: ReactNode;
+}) {
+  const { hasAccount } = useLandingAccountState(initialHasSession);
+
+  return (
+    <Link href={resolveAppHref(hasAccount, fallbackHref)} className={className} style={style}>
+      {children}
+    </Link>
+  );
 }
 
 export function LandingAuthActions({
@@ -15,8 +57,7 @@ export function LandingAuthActions({
   initialHasSession: boolean;
   primaryHref: string;
 }) {
-  const { status, profile } = useAuth();
-  const hasAccount = status === "authenticated" || (status === "loading" && initialHasSession);
+  const { hasAccount, profile } = useLandingAccountState(initialHasSession);
   const label = accountLabel(profile?.full_name, profile?.username);
   const initial = label.charAt(0).toUpperCase() || "A";
 
@@ -37,14 +78,15 @@ export function LandingAuthActions({
           Войти
         </Link>
       )}
-      <Link
-        href={primaryHref}
+      <LandingPrimaryLink
+        fallbackHref={primaryHref}
+        initialHasSession={initialHasSession}
         className="inline-flex items-center gap-2 rounded-xl border-2 border-black px-5 py-2 text-sm font-black transition hover:-translate-y-0.5 hover:shadow-[0_4px_0_#000]"
         style={{ backgroundColor: "#FFDB58" }}
       >
         Начать
         <ArrowRight className="h-4 w-4" />
-      </Link>
+      </LandingPrimaryLink>
     </div>
   );
 }

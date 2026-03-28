@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, CheckCircle2, CircleAlert, FileStack, GraduationCap, ListTodo } from "lucide-react";
 import { landingTheme, painPoints, productShowcase, proofPoints, storySections } from "@/app/landing-content";
-import { LandingAuthActions } from "@/components/landing/landing-auth-actions";
+import { LandingAuthActions, LandingPrimaryLink } from "@/components/landing/landing-auth-actions";
 import { ProductShot } from "@/components/landing/product-shot";
 import { INTRO_QUIZ_LINKED_COOKIE_KEY } from "@/lib/intro-quiz";
 
@@ -98,14 +98,15 @@ export default function LandingPage() {
             </p>
 
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link
-                href={primaryHref}
+              <LandingPrimaryLink
+                fallbackHref={primaryHref}
+                initialHasSession={Boolean(token)}
                 className="inline-flex items-center gap-2 rounded-xl border-2 border-black px-8 py-3 text-lg font-black transition hover:-translate-y-0.5 hover:shadow-[0_5px_0_#000]"
                 style={{ backgroundColor: landingTheme.primary }}
               >
                 Начать
                 <ArrowRight className="h-5 w-5" />
-              </Link>
+              </LandingPrimaryLink>
               <Link
                 href="/pilot"
                 className="rounded-xl border-2 border-black px-8 py-3 text-lg font-bold transition hover:-translate-y-0.5"
@@ -252,13 +253,14 @@ export default function LandingPage() {
               </p>
 
               <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-                <Link
-                  href={primaryHref}
+                <LandingPrimaryLink
+                  fallbackHref={primaryHref}
+                  initialHasSession={Boolean(token)}
                   className="rounded-xl border-2 border-black px-8 py-3 text-lg font-black transition hover:-translate-y-0.5 hover:shadow-[0_5px_0_#000]"
                   style={{ backgroundColor: landingTheme.primary }}
                 >
                   Начать сейчас
-                </Link>
+                </LandingPrimaryLink>
                 <Link href="/pilot" className="rounded-xl border-2 border-black bg-white px-8 py-3 text-lg font-bold transition hover:-translate-y-0.5">
                   Записаться в пилот
                 </Link>
