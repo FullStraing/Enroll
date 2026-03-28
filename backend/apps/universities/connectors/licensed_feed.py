@@ -15,12 +15,23 @@ class LicensedFeedConnector(BaseUniversityConnector):
 
     def __init__(self) -> None:
         self.mode = os.getenv("LICENSED_FEED_MODE", "mock").lower()
-        self.mock_path = Path(
-            os.getenv(
-                "LICENSED_FEED_MOCK_PATH",
-                "backend/apps/universities/fixtures/licensed_feed_mock.json",
-            )
-        )
+        default_mock_path = Path(__file__).resolve().parent.parent / "fixtures" / "licensed_feed_mock.json"
+        configured_mock_path = (os.getenv("LICENSED_FEED_MOCK_PATH") or "").strip()
+        if configured_mock_path:
+            candidate = Path(configured_mock_path)
+            if candidate.is_absolute():
+                self.mock_path = candidate
+            else:
+                cwd_candidate = (Path.cwd() / candidate).resolve()
+                repo_candidate = (Path(__file__).resolve().parents[4] / candidate).resolve()
+                if cwd_candidate.exists():
+                    self.mock_path = cwd_candidate
+                elif repo_candidate.exists():
+                    self.mock_path = repo_candidate
+                else:
+                    self.mock_path = default_mock_path
+        else:
+            self.mock_path = default_mock_path
         self.api_url = os.getenv("LICENSED_FEED_URL", "")
         self.api_token = os.getenv("LICENSED_FEED_TOKEN", "")
 
