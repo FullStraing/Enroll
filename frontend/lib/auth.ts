@@ -1,6 +1,13 @@
 export const tokenKey = "enroll_token";
 export const refreshKey = "enroll_refresh";
 
+function readCookie(name: string) {
+  if (typeof document === "undefined") return "";
+  const escaped = name.replace(/[-[\]/{}()*+?.\\^$|]/g, "\\$&");
+  const match = document.cookie.match(new RegExp(`(?:^|; )${escaped}=([^;]*)`));
+  return match ? decodeURIComponent(match[1]) : "";
+}
+
 function buildCookieAttributes(maxAgeSeconds: number) {
   const secure = typeof window !== "undefined" && window.location.protocol === "https:" ? "; Secure" : "";
   return `Path=/; Max-Age=${maxAgeSeconds}; SameSite=Lax${secure}`;
@@ -24,5 +31,5 @@ export function clearTokens() {
 
 export function getToken() {
   if (typeof window === "undefined") return "";
-  return localStorage.getItem(tokenKey) || "";
+  return localStorage.getItem(tokenKey) || readCookie(tokenKey) || "";
 }

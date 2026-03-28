@@ -2,20 +2,22 @@
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { apiFetch } from "@/lib/api";
 import { Loader } from "@/components/loader";
 import { useAuth } from "@/components/auth-provider";
 import { Button } from "@/components/ui/button";
 import { GoogleAuthButton } from "@/components/google-auth-button";
 import { hasPendingStoredIntroQuiz, syncStoredIntroQuizToProfile } from "@/lib/intro-quiz";
-import { resolvePostAuthDestination } from "@/lib/onboarding-gate";
+import { isProfileReadyForDashboard, resolvePostAuthDestination } from "@/lib/onboarding-gate";
 import { trackProductEvent } from "@/lib/product-analytics";
 import { RequiredMark } from "@/components/ui/required-mark";
 import { RuntimeNotice } from "@/components/runtime-notice";
 import { fetchRuntimeConfig, type RuntimeConfig } from "@/lib/runtime-config";
 
 export default function RegisterPage() {
-  const { setSession } = useAuth();
+  const router = useRouter();
+  const { setSession, status, profile } = useAuth();
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -36,6 +38,11 @@ export default function RegisterPage() {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (status !== "authenticated" || !profile) return;
+    router.replace(isProfileReadyForDashboard(profile) ? "/dashboard" : "/onboarding");
+  }, [profile, router, status]);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
