@@ -50,6 +50,11 @@ type ActionMenuPopupProps = {
   children: ReactNode;
 };
 
+type TableSettingsPopupProps = {
+  anchorRect: DOMRect;
+  children: ReactNode;
+};
+
 type TableSettingsSection = "columns" | "sort";
 type SortDirection = "asc" | "desc";
 type SortState = {
@@ -300,6 +305,60 @@ function ActionMenuPopup({ anchorRect, children }: ActionMenuPopupProps) {
   );
 }
 
+function TableSettingsPopup({ anchorRect, children }: TableSettingsPopupProps) {
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const [position, setPosition] = useState<CSSProperties>({
+    top: anchorRect.bottom + 12,
+    left: anchorRect.right,
+    visibility: "hidden",
+    width: "min(360px, calc(100vw - 24px))",
+  });
+
+  useLayoutEffect(() => {
+    const panel = panelRef.current;
+    if (!panel) return;
+
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const viewportPadding = 12;
+    const gap = 12;
+    const panelWidth = Math.min(360, viewportWidth - viewportPadding * 2);
+    const panelHeight = Math.min(panel.scrollHeight, Math.max(320, viewportHeight - viewportPadding * 2));
+
+    const left = Math.min(
+      Math.max(viewportPadding, anchorRect.right - panelWidth),
+      viewportWidth - panelWidth - viewportPadding,
+    );
+
+    const spaceBelow = viewportHeight - anchorRect.bottom - gap - viewportPadding;
+    const spaceAbove = anchorRect.top - gap - viewportPadding;
+    const fitsBelow = spaceBelow >= Math.min(panelHeight, 420);
+    const top = fitsBelow || spaceBelow >= spaceAbove
+      ? Math.max(viewportPadding, anchorRect.bottom + gap)
+      : Math.max(viewportPadding, anchorRect.top - panelHeight - gap);
+
+    setPosition({
+      top,
+      left,
+      width: panelWidth,
+      maxHeight: viewportHeight - viewportPadding * 2,
+      visibility: "visible",
+    });
+  }, [anchorRect]);
+
+  return createPortal(
+    <div
+      ref={panelRef}
+      data-table-settings-panel
+      className="surface-panel fixed z-50 flex flex-col overflow-hidden rounded-[24px] p-3 shadow-[0_18px_48px_rgba(0,0,0,0.12)]"
+      style={position}
+    >
+      {children}
+    </div>,
+    document.body,
+  );
+}
+
 export function MyUniversitiesTable({
   loading,
   items,
@@ -321,6 +380,8 @@ export function MyUniversitiesTable({
   const [visibleColumns, setVisibleColumns] = useState<MyUniversitiesColumnId[]>(loadStoredVisibleColumns);
   const [sortState, setSortState] = useState<SortState>(loadStoredSortState);
   const tableSettingsRef = useRef<HTMLDivElement | null>(null);
+  const tableSettingsAnchorRef = useRef<HTMLDivElement | null>(null);
+  const [tableSettingsAnchorRect, setTableSettingsAnchorRect] = useState<DOMRect | null>(null);
 
   const activeColumns = useMemo(() => {
     const visibleSet = new Set(visibleColumns);
@@ -355,9 +416,14 @@ export function MyUniversitiesTable({
   useEffect(() => {
     if (!tableSettingsOpen) return;
 
+    const syncAnchorRect = () => {
+      if (!tableSettingsAnchorRef.current) return;
+      setTableSettingsAnchorRect(tableSettingsAnchorRef.current.getBoundingClientRect());
+    };
+
     const handleOutsideClick = (event: MouseEvent) => {
       const target = event.target as HTMLElement | null;
-      if (tableSettingsRef.current?.contains(target)) return;
+      if (tableSettingsRef.current?.contains(target) || target?.closest("[data-table-settings-panel]")) return;
       setTableSettingsOpen(false);
     };
 
@@ -367,11 +433,16 @@ export function MyUniversitiesTable({
       }
     };
 
+    syncAnchorRect();
     window.addEventListener("mousedown", handleOutsideClick);
     window.addEventListener("keydown", handleEscape);
+    window.addEventListener("resize", syncAnchorRect);
+    window.addEventListener("scroll", syncAnchorRect, true);
     return () => {
       window.removeEventListener("mousedown", handleOutsideClick);
       window.removeEventListener("keydown", handleEscape);
+      window.removeEventListener("resize", syncAnchorRect);
+      window.removeEventListener("scroll", syncAnchorRect, true);
     };
   }, [tableSettingsOpen]);
 
@@ -412,10 +483,14 @@ export function MyUniversitiesTable({
     <div className="space-y-5">
       <div className="flex items-center justify-end">
         <div className="relative" data-table-settings-root ref={tableSettingsRef}>
+          <div className="relative inline-flex" ref={tableSettingsAnchorRef}>
           <Button
             size="sm"
             variant="outline"
-            onClick={() => setTableSettingsOpen((prev) => !prev)}
+            onClick={(event) => {
+              setTableSettingsAnchorRect(tableSettingsAnchorRef.current?.getBoundingClientRect() ?? event.currentTarget.getBoundingClientRect());
+              setTableSettingsOpen((prev) => !prev);
+            }}
             className="gap-2"
             aria-expanded={tableSettingsOpen}
             aria-haspopup="dialog"
@@ -423,9 +498,10 @@ export function MyUniversitiesTable({
             <SlidersHorizontal className="h-4 w-4" />
             Edit table
           </Button>
+          </div>
 
-          {tableSettingsOpen ? (
-            <div className="surface-panel absolute right-0 top-[calc(100%+12px)] z-20 w-[320px] rounded-2xl p-3">
+          {tableSettingsOpen && tableSettingsAnchorRect ? (
+            <TableSettingsPopup anchorRect={tableSettingsAnchorRect}>
               <div className="flex items-center justify-between gap-2 border-b border-black/10 pb-3">
                 <div>
                   <p className="text-sm font-semibold text-black">Edit table</p>
@@ -453,7 +529,7 @@ export function MyUniversitiesTable({
               </div>
 
               {tableSettingsSection === "columns" ? (
-                <div className="mt-3 space-y-2">
+                <div className="mt-3 flex min-h-0 flex-1 flex-col space-y-2">
                   <div className="flex items-center justify-between">
                     <p className="text-xs font-semibold uppercase tracking-[0.16em] text-black/45">Visible columns</p>
                     <button
@@ -465,7 +541,7 @@ export function MyUniversitiesTable({
                     </button>
                   </div>
 
-                  <div className="grid gap-2">
+                  <div className="grid min-h-0 gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
                     {COLUMN_DEFINITIONS.map((column) => {
                       const checked = visibleColumns.includes(column.id);
                       return (
@@ -495,7 +571,7 @@ export function MyUniversitiesTable({
               ) : null}
 
               {tableSettingsSection === "sort" ? (
-                <div className="mt-3 space-y-3">
+                <div className="mt-3 flex min-h-0 flex-1 flex-col space-y-3 overflow-y-auto pr-1">
                   <div className="flex items-center justify-between">
                     <p className="text-xs font-semibold uppercase tracking-[0.16em] text-black/45">Sort rows</p>
                     <button
@@ -553,7 +629,7 @@ export function MyUniversitiesTable({
                 </div>
               ) : null}
 
-            </div>
+            </TableSettingsPopup>
           ) : null}
         </div>
       </div>
