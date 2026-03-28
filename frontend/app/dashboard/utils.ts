@@ -123,9 +123,44 @@ export function admissionsScore(input: {
   hasMajor: boolean;
   hasIntake: boolean;
 }) {
-  const readiness = input.commonAppPercent;
-  const gpaScore = input.gpaNormalized4 == null ? 35 : toPercent((input.gpaNormalized4 / 4) * 100);
-  const testScore = (() => {
+  return buildAdmissionsScoreBreakdown(input).total;
+}
+
+export type AdmissionsScoreSegmentKey = "readiness" | "academics" | "tests" | "planning";
+
+export type AdmissionsScoreBreakdownSegment = {
+  key: AdmissionsScoreSegmentKey;
+  label: string;
+  weight: number;
+  score: number;
+  contribution: number;
+  status: "Complete" | "Needs work" | "Missing";
+  color: string;
+};
+
+export type AdmissionsScoreBreakdown = {
+  total: number;
+  segments: AdmissionsScoreBreakdownSegment[];
+};
+
+function getSegmentStatus(score: number): AdmissionsScoreBreakdownSegment["status"] {
+  if (score >= 85) return "Complete";
+  if (score <= 30) return "Missing";
+  return "Needs work";
+}
+
+export function buildAdmissionsScoreBreakdown(input: {
+  commonAppPercent: number;
+  gpaNormalized4: number | null;
+  satTotal?: number | null;
+  tests?: string[];
+  universitiesCount: number;
+  hasMajor: boolean;
+  hasIntake: boolean;
+}): AdmissionsScoreBreakdown {
+  const readiness = toPercent(input.commonAppPercent);
+  const academics = input.gpaNormalized4 == null ? 35 : toPercent((input.gpaNormalized4 / 4) * 100);
+  const tests = (() => {
     if (input.satTotal && input.satTotal > 0) {
       return toPercent(((input.satTotal - 900) / 700) * 100);
     }
@@ -134,12 +169,55 @@ export function admissionsScore(input: {
     }
     return 20;
   })();
-  const planningScore = toPercent(
+  const planning = toPercent(
     (input.universitiesCount >= 8 ? 100 : (input.universitiesCount / 8) * 100) * 0.6 +
       (input.hasMajor ? 100 : 0) * 0.2 +
       (input.hasIntake ? 100 : 0) * 0.2,
   );
-  return toPercent(readiness * 0.45 + gpaScore * 0.25 + testScore * 0.2 + planningScore * 0.1);
+
+  const segments: AdmissionsScoreBreakdownSegment[] = [
+    {
+      key: "readiness",
+      label: "Profile readiness",
+      weight: 45,
+      score: readiness,
+      contribution: toPercent(readiness * 0.45),
+      status: getSegmentStatus(readiness),
+      color: "#FFDB58",
+    },
+    {
+      key: "academics",
+      label: "Academics",
+      weight: 25,
+      score: academics,
+      contribution: toPercent(academics * 0.25),
+      status: getSegmentStatus(academics),
+      color: "#8AD7C9",
+    },
+    {
+      key: "tests",
+      label: "Tests",
+      weight: 20,
+      score: tests,
+      contribution: toPercent(tests * 0.2),
+      status: getSegmentStatus(tests),
+      color: "#FFB36A",
+    },
+    {
+      key: "planning",
+      label: "Planning",
+      weight: 10,
+      score: planning,
+      contribution: toPercent(planning * 0.1),
+      status: getSegmentStatus(planning),
+      color: "#A9B8FF",
+    },
+  ];
+
+  return {
+    total: toPercent(segments.reduce((sum, segment) => sum + segment.contribution, 0)),
+    segments,
+  };
 }
 
 export function buildEmptyEditForm(): EditProfileForm {

@@ -31,6 +31,7 @@ import type {
 } from "@/app/dashboard/types";
 import {
   admissionsScore,
+  buildAdmissionsScoreBreakdown,
   buildInitialAcademicTests,
   buildInitialLanguageTests,
   normalizeGpaFromQuiz,
@@ -194,6 +195,19 @@ function DashboardPageContent() {
   const admissions = useMemo(
     () =>
       admissionsScore({
+        commonAppPercent: progressData?.overall.percent || 0,
+        gpaNormalized4: normalizedGpa,
+        satTotal: profile?.sat_total,
+        tests: quizAnswers.tests,
+        universitiesCount: myUniversities.length,
+        hasMajor: profileMajor !== "N/A",
+        hasIntake: intake !== "N/A",
+      }),
+    [progressData?.overall.percent, normalizedGpa, profile?.sat_total, quizAnswers.tests, myUniversities.length, profileMajor, intake],
+  );
+  const admissionsBreakdown = useMemo(
+    () =>
+      buildAdmissionsScoreBreakdown({
         commonAppPercent: progressData?.overall.percent || 0,
         gpaNormalized4: normalizedGpa,
         satTotal: profile?.sat_total,
@@ -368,6 +382,7 @@ function DashboardPageContent() {
             targetUniversityEntries={targetUniversityEntries}
             loading={loading}
             admissions={admissions}
+            admissionsBreakdown={admissionsBreakdown}
             sharingDashboard={sharingDashboard}
             savingSnapshot={savingSnapshot}
             onShare={handleShareProfile}
@@ -411,6 +426,7 @@ function DashboardPageContent() {
               targetUniversityEntries={targetUniversityEntries}
               loading={loading}
               admissions={admissions}
+              admissionsBreakdown={admissionsBreakdown}
             />
           </div>
 

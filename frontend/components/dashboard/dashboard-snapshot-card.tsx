@@ -2,6 +2,7 @@ import Image from "next/image";
 import type { ReactNode, RefObject } from "react";
 import { Download, Share2, Trophy } from "lucide-react";
 import { statusSelectTone } from "@/app/universities/utils";
+import type { AdmissionsScoreBreakdown } from "@/app/dashboard/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { CircularProgress } from "@/components/ui/circular-progress";
@@ -32,6 +33,7 @@ export type DashboardSnapshotSurfaceProps = {
   targetUniversityEntries: SnapshotUniversity[];
   loading: boolean;
   admissions: number;
+  admissionsBreakdown: AdmissionsScoreBreakdown;
   actionsSlot?: ReactNode;
 };
 
@@ -62,9 +64,12 @@ function DashboardSnapshotSurface({
   targetUniversityEntries,
   loading,
   admissions,
+  admissionsBreakdown,
   actionsSlot,
 }: DashboardSnapshotSurfaceProps) {
   const showAllTests = allTestLabels.length > 0;
+  const visibleHonors = honors.slice(0, 4);
+  const hiddenHonorsCount = Math.max(0, honors.length - visibleHonors.length);
 
   return (
     <Card className="relative overflow-hidden border border-black/10 bg-white shadow-none">
@@ -192,27 +197,80 @@ function DashboardSnapshotSurface({
 
           </div>
 
-          <div className="flex h-full flex-col rounded-2xl bg-white p-4 ring-1 ring-black/8">
-            <div className="inline-flex items-center gap-2 rounded-xl border-2 border-black bg-[#FFDB58]/40 px-3 py-1 text-sm font-semibold">
-              <Trophy className="h-4 w-4" />
-              Admissions Score
-            </div>
-            <div className="mt-4 flex items-center justify-center">
+          <div className="flex h-full flex-col gap-4">
+            <div className="rounded-2xl bg-white p-4 ring-1 ring-black/8">
+              <div className="inline-flex items-center gap-2 rounded-xl border-2 border-black bg-[#FFDB58]/40 px-3 py-1 text-sm font-semibold">
+                <Trophy className="h-4 w-4" />
+                Admissions Score
+              </div>
+              <div className="mt-4 flex items-center justify-center">
+                {loading ? (
+                  <Skeleton className="h-36 w-36 rounded-full" />
+                ) : (
+                  <CircularProgress
+                    value={admissions}
+                    size={150}
+                    trackColor="#E6EAEE"
+                    segments={admissionsBreakdown.segments.map((segment) => ({
+                      value: segment.score,
+                      weight: segment.weight,
+                      color: segment.color,
+                    }))}
+                  />
+                )}
+              </div>
+              <p className="mt-3 text-center text-sm text-black/65">
+                Score improves when profile completeness, tests, and university planning improve.
+              </p>
+
               {loading ? (
-                <Skeleton className="h-36 w-36 rounded-full" />
+                <div className="mt-4 grid gap-2">
+                  {Array.from({ length: 4 }).map((_, index) => (
+                    <Skeleton key={index} className="h-12 w-full rounded-xl" />
+                  ))}
+                </div>
               ) : (
-                <CircularProgress value={admissions} size={150} fillColor="#FFDB58" trackColor="#E6EAEE" />
+                <div className="mt-4 grid gap-2">
+                  {admissionsBreakdown.segments.map((segment) => (
+                    <div
+                      key={segment.key}
+                      className="flex items-center justify-between gap-3 rounded-xl bg-white px-3 py-2 ring-1 ring-black/8"
+                    >
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className="h-2.5 w-2.5 shrink-0 rounded-full"
+                            style={{ backgroundColor: segment.color }}
+                            aria-hidden="true"
+                          />
+                          <p className="truncate text-sm font-semibold text-black">{segment.label}</p>
+                        </div>
+                        <p className="mt-1 text-xs text-black/55">
+                          {segment.contribution}/{segment.weight} pts · {segment.status}
+                        </p>
+                      </div>
+                      <div className="shrink-0 text-right">
+                        <p className="text-sm font-black text-black">{segment.score}%</p>
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-black/38">Progress</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
-            <p className="mt-3 text-center text-sm text-black/65">
-              Score improves when profile completeness, tests, and university planning improve.
-            </p>
 
-            <div className="mt-5 rounded-2xl bg-[#FFF4CC]/25 p-4 ring-1 ring-black/8">
-              <p className="text-sm font-black uppercase tracking-[0.14em] text-black/45">Honors</p>
-              {honors.length ? (
+            <div className="rounded-2xl bg-[#FFF4CC]/25 p-4 ring-1 ring-black/8">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-black uppercase tracking-[0.14em] text-black/45">Honors</p>
+                {hiddenHonorsCount > 0 ? (
+                  <span className="rounded-full bg-[#FFF4CC] px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.12em] text-black/55">
+                    +{hiddenHonorsCount} more
+                  </span>
+                ) : null}
+              </div>
+              {visibleHonors.length ? (
                 <div className="mt-3 grid gap-2">
-                  {honors.map((honor, index) => (
+                  {visibleHonors.map((honor, index) => (
                     <div
                       key={`honor-${index}-${honor}`}
                       className="rounded-xl border border-black/12 bg-[#FFF4CC] px-3 py-3 text-sm font-semibold leading-relaxed text-black/80"
@@ -226,7 +284,7 @@ function DashboardSnapshotSurface({
               )}
             </div>
 
-            {actionsSlot ? <div className="mt-4" data-share-ignore>{actionsSlot}</div> : null}
+            {actionsSlot ? <div data-share-ignore>{actionsSlot}</div> : null}
           </div>
         </div>
 

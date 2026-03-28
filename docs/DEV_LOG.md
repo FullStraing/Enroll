@@ -244,3 +244,6 @@ pm run dev:clean for explicit cache resets. Verified with frontend lint/build.
   - `Abilene Christian University`: snapshot present, `29` metrics, `4` deadlines
   - `Harvard/Stanford/MIT/NYU/Michigan`: snapshots present, `31-33` metrics each, `3` deadlines each
 - Seeded one example university for newly created users at registration / Google sign-in on the backend, without firing the real `first_university_added` analytics event.
+- Redesigned the Dashboard Snapshot score column so `Honors` is no longer visually nested under `Admissions Score`. The right side now uses two separate stacked surfaces: a score card with a visible segmented breakdown (`Profile readiness`, `Academics`, `Tests`, `Planning`) and a compact honors card capped to four visible items plus `+N more`.
+- Added `buildAdmissionsScoreBreakdown()` in dashboard utils, keeping the existing score formula intact while exposing segment weights, raw completion, weighted contribution, status, and color for the snapshot UI.
+- Extended `CircularProgress` with a backward-compatible segmented SVG mode so the same component can still render the simple ring elsewhere while the dashboard snapshot/export now shows weighted score segments directly in the circle.
