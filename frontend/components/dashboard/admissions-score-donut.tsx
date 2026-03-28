@@ -13,17 +13,38 @@ type AdmissionsScoreDonutProps = {
 
 type ScoreSegmentData = AdmissionsScoreBreakdown["segments"][number] & {
   value: number;
+  isFilled: boolean;
 };
 
 export function AdmissionsScoreDonut({ breakdown, total, className }: AdmissionsScoreDonutProps) {
   const [activeKey, setActiveKey] = useState<string | null>(null);
+  const trackColor = "#E6EAEE";
 
   const segments = useMemo<ScoreSegmentData[]>(
     () =>
-      breakdown.segments.map((segment) => ({
-        ...segment,
-        value: segment.weight,
-      })),
+      breakdown.segments.flatMap((segment) => {
+        const filledValue = Math.max(0, Math.min(segment.weight, segment.contribution));
+        const remainderValue = Math.max(0, segment.weight - filledValue);
+        const slices: ScoreSegmentData[] = [];
+
+        if (filledValue > 0) {
+          slices.push({
+            ...segment,
+            value: filledValue,
+            isFilled: true,
+          });
+        }
+
+        if (remainderValue > 0) {
+          slices.push({
+            ...segment,
+            value: remainderValue,
+            isFilled: false,
+          });
+        }
+
+        return slices;
+      }),
     [breakdown.segments],
   );
 
@@ -31,15 +52,15 @@ export function AdmissionsScoreDonut({ breakdown, total, className }: Admissions
 
   return (
     <div className={cn("relative mx-auto w-full max-w-[260px]", className)}>
-      <div className="relative mx-auto h-[184px] w-[184px]">
-        <PieChart width={184} height={184}>
+      <div className="relative mx-auto h-[196px] w-[196px]">
+        <PieChart width={196} height={196}>
           <Pie
             data={segments}
             dataKey="value"
             cx="50%"
             cy="50%"
-            innerRadius={62}
-            outerRadius={94}
+            innerRadius={64}
+            outerRadius={86}
             startAngle={90}
             endAngle={-270}
             paddingAngle={0}
@@ -55,11 +76,9 @@ export function AdmissionsScoreDonut({ breakdown, total, className }: Admissions
               const isDimmed = Boolean(activeKey && activeKey !== segment.key);
               return (
                 <Cell
-                  key={segment.key}
-                  fill={segment.color}
-                  fillOpacity={isDimmed ? 0.38 : 1}
-                  stroke={segment.color}
-                  strokeWidth={activeKey === segment.key ? 6 : 0}
+                  key={`${segment.key}-${segment.isFilled ? "filled" : "remainder"}-${segment.value}`}
+                  fill={segment.isFilled ? segment.color : trackColor}
+                  fillOpacity={segment.isFilled ? (isDimmed ? 0.35 : 1) : isDimmed ? 0.75 : 1}
                   className="cursor-pointer outline-none transition-opacity duration-150"
                 />
               );
@@ -68,7 +87,7 @@ export function AdmissionsScoreDonut({ breakdown, total, className }: Admissions
         </PieChart>
 
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <div className="flex h-[124px] w-[124px] items-center justify-center rounded-full bg-white shadow-[inset_0_0_0_1px_rgba(0,0,0,0.08)]">
+          <div className="flex h-[128px] w-[128px] items-center justify-center rounded-full bg-white shadow-[inset_0_0_0_1px_rgba(0,0,0,0.08)]">
             <div className="text-[44px] font-black leading-none tracking-tight text-black">{total}%</div>
           </div>
         </div>
