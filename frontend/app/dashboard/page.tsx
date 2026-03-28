@@ -167,12 +167,7 @@ function DashboardPageContent() {
     return () => URL.revokeObjectURL(sharePreviewUrl);
   }, [sharePreviewUrl]);
 
-  useEffect(() => {
-    if (loading) return;
-    if (profile && !isProfileReadyForDashboard(profile)) {
-      router.replace("/onboarding");
-    }
-  }, [loading, profile, router]);
+  const profileReadyForDashboard = isProfileReadyForDashboard(profile);
 
   const profileMajor = profile?.intended_major || quizAnswers.major || "N/A";
   const profileCountry = profile?.country || quizAnswers.country || "N/A";
@@ -379,6 +374,22 @@ function DashboardPageContent() {
             onSaveImage={() => void handleSaveSnapshot()}
             onEdit={handleOpenEdit}
           />
+
+          {!loading && profile && !profileReadyForDashboard ? (
+            <Card className="mt-5 border border-black/10 bg-[#FFF9E8] shadow-none">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <CardTitle className="text-xl">Finish your profile</CardTitle>
+                  <p className="mt-1 text-sm text-black/65">
+                    Add your key profile details to make the dashboard snapshot and recommendations more useful.
+                  </p>
+                </div>
+                <Link href="/onboarding" className="inline-flex">
+                  <Button>Edit Profile</Button>
+                </Link>
+              </div>
+            </Card>
+          ) : null}
 
           <div aria-hidden className="pointer-events-none fixed left-[-20000px] top-0 opacity-100">
             <DashboardExportCard

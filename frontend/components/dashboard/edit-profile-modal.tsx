@@ -161,35 +161,86 @@ export function EditProfileModal(props: Props) {
     node.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
-  function renderStepActions(section: SectionKey): ReactNode {
-    if (!isPageMode || activeSection !== section) return null;
-
-    const sectionIndex = SECTION_ORDER.indexOf(section);
+  function renderPageModeStepActions(): ReactNode {
+    if (!isPageMode) return null;
+    const sectionIndex = SECTION_ORDER.indexOf(activeSection);
     const previousSection = sectionIndex > 0 ? SECTION_ORDER[sectionIndex - 1] : null;
     const nextSection = sectionIndex < SECTION_ORDER.length - 1 ? SECTION_ORDER[sectionIndex + 1] : null;
 
     return (
-      <div className="flex flex-col gap-3 border-t border-black/10 bg-white px-5 py-4 sm:flex-row sm:items-center sm:justify-end">
-        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center">
-          {previousSection ? (
-            <Button variant="outline" onClick={() => setActiveSection(previousSection)} className="w-full sm:w-auto">
-              <ChevronLeft className="h-4 w-4" />
-              Back
-            </Button>
-          ) : null}
-          {nextSection ? (
-            <Button onClick={() => setActiveSection(nextSection)} className="w-full sm:w-auto">
-              Continue
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          ) : (
-            <Button onClick={onSave} disabled={savingEdit} className="w-full sm:w-auto">
-              {savingEdit ? "Saving..." : "Save profile"}
-            </Button>
-          )}
-        </div>
+      <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center">
+        {previousSection ? (
+          <Button variant="outline" onClick={() => setActiveSection(previousSection)} className="w-full sm:w-auto">
+            <ChevronLeft className="h-4 w-4" />
+            Back
+          </Button>
+        ) : null}
+        {nextSection ? (
+          <Button onClick={() => setActiveSection(nextSection)} className="w-full sm:w-auto">
+            Continue
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        ) : (
+          <Button onClick={onSave} disabled={savingEdit} className="w-full sm:w-auto">
+            {savingEdit ? "Saving..." : "Save profile"}
+          </Button>
+        )}
       </div>
     );
+  }
+
+  function renderPageModeSectionToolbar(section: SectionKey): ReactNode {
+    if (!isPageMode || activeSection !== section) return null;
+
+    if (section === "activities") {
+      return (
+        <div className="flex flex-col gap-3 rounded-[18px] bg-[#FFF9E8] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm font-semibold text-black/65">Add up to 6 activities for your dashboard snapshot.</p>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={addActivityRow}
+            disabled={editForm.activities.length >= 6}
+            className="w-full sm:w-auto"
+          >
+            + Add activity
+          </Button>
+        </div>
+      );
+    }
+
+    if (section === "honors") {
+      return (
+        <div className="flex flex-col gap-3 rounded-[18px] bg-[#FFF9E8] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm font-semibold text-black/65">Add up to 4 honors or awards.</p>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={addHonorRow}
+            disabled={editForm.honors.length >= 4}
+            className="w-full sm:w-auto"
+          >
+            + Add honor
+          </Button>
+        </div>
+      );
+    }
+
+    if (section === "universities") {
+      return (
+        <div className="flex flex-col gap-3 rounded-[18px] bg-[#DAF5F0]/55 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold text-black/70">Choose which universities appear in your dashboard snapshot.</p>
+            <p className="mt-1 text-xs text-black/55">You can highlight up to 7 universities here.</p>
+          </div>
+          <Button type="button" variant="outline" onClick={onEditUniversities} className="w-full sm:w-auto">
+            Edit universities
+          </Button>
+        </div>
+      );
+    }
+
+    return null;
   }
 
   function toggleUniversitySelection(universityId: number) {
@@ -337,7 +388,6 @@ export function EditProfileModal(props: Props) {
                 </label>
               </div>
             ) : null}
-            {renderStepActions("basic")}
           </section>
           ) : null}
 
@@ -581,7 +631,6 @@ export function EditProfileModal(props: Props) {
                 </div>
               </div>
             ) : null}
-            {renderStepActions("stats")}
           </section>
           ) : null}
 
@@ -605,6 +654,7 @@ export function EditProfileModal(props: Props) {
             </div>
             {openSections.activities || isPageMode ? (
               <div className="grid gap-3 p-5">
+                {renderPageModeSectionToolbar("activities")}
                 {editForm.activities.length ? (
                   editForm.activities.map((activity, index) => (
                     <div key={index} className="grid gap-3 rounded-[22px] border border-black/12 bg-[#FFFDF8] p-4 md:grid-cols-[1fr_1.2fr_auto]">
@@ -638,7 +688,6 @@ export function EditProfileModal(props: Props) {
                 )}
               </div>
             ) : null}
-            {renderStepActions("activities")}
           </section>
           ) : null}
 
@@ -662,6 +711,7 @@ export function EditProfileModal(props: Props) {
             </div>
             {openSections.honors || isPageMode ? (
               <div className="grid gap-3 p-5">
+                {renderPageModeSectionToolbar("honors")}
                 {editForm.honors.length ? (
                   editForm.honors.map((honor, index) => (
                     <div key={index} className="grid gap-3 rounded-[22px] border border-black/12 bg-[#FFFDF8] p-4 md:grid-cols-[1fr_auto]">
@@ -686,7 +736,6 @@ export function EditProfileModal(props: Props) {
                 )}
               </div>
             ) : null}
-            {renderStepActions("honors")}
           </section>
           ) : null}
 
@@ -713,6 +762,7 @@ export function EditProfileModal(props: Props) {
 
             {openSections.universities || isPageMode ? (
               <div className={`grid gap-3 ${isPageMode ? "p-5" : "p-5 pt-0"}`}>
+                {renderPageModeSectionToolbar("universities")}
                 <div className="flex items-center justify-between gap-3 rounded-[22px] border border-black/12 bg-white px-4 py-3 text-sm">
                   <p className="font-semibold text-black">Selected for snapshot</p>
                   <span className="rounded-full border border-black/15 bg-[#FFF4CC] px-3 py-1 text-xs font-black uppercase tracking-[0.12em] text-black/65">
@@ -770,13 +820,12 @@ export function EditProfileModal(props: Props) {
                 )}
               </div>
             ) : null}
-            {renderStepActions("universities")}
           </section>
           ) : null}
         </div>
 
-        <div className={`mt-4 shrink-0 bg-white px-4 py-3 ${isPageMode ? "rounded-none border-t border-black/10 bg-transparent px-0 shadow-none" : "rounded-[24px] border-2 border-black shadow-[0_8px_0_0_rgba(0,0,0,1)]"} sm:mt-5`}>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className={`mt-4 shrink-0 bg-white px-4 py-3 ${isPageMode ? "rounded-[24px] border border-black/10 bg-white px-5 py-4 shadow-none" : "rounded-[24px] border-2 border-black shadow-[0_8px_0_0_rgba(0,0,0,1)]"} sm:mt-5`}>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-col gap-1">
               <p className="text-sm font-semibold text-black/60">Changes update your dashboard snapshot automatically.</p>
               <p className="text-xs font-semibold text-black/45">
@@ -786,13 +835,16 @@ export function EditProfileModal(props: Props) {
                 {autosaveStatus === "idle" && "Autosave is on."}
               </p>
             </div>
-            <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-end">
-              <Button variant="outline" onClick={onClose} disabled={savingEdit} className="w-full sm:w-auto">
-                {closeLabel}
-              </Button>
-              <Button onClick={onSave} disabled={savingEdit} className="w-full sm:w-auto">
-                {savingEdit ? "Saving..." : "Save changes"}
-              </Button>
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-end">
+              {isPageMode ? renderPageModeStepActions() : null}
+              <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-end">
+                <Button variant="outline" onClick={onClose} disabled={savingEdit} className="w-full sm:w-auto">
+                  {closeLabel}
+                </Button>
+                <Button onClick={onSave} disabled={savingEdit} className="w-full sm:w-auto">
+                  {savingEdit ? "Saving..." : "Save changes"}
+                </Button>
+              </div>
             </div>
           </div>
         </div>
