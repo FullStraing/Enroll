@@ -137,6 +137,7 @@ export type AdmissionsScoreBreakdownSegment = {
   status: "Complete" | "Needs work" | "Missing";
   color: string;
   description: string;
+  missingHint: string;
 };
 
 export type AdmissionsScoreBreakdown = {
@@ -148,6 +149,29 @@ function getSegmentStatus(score: number): AdmissionsScoreBreakdownSegment["statu
   if (score >= 85) return "Complete";
   if (score <= 30) return "Missing";
   return "Needs work";
+}
+
+function buildMissingHint(
+  key: AdmissionsScoreSegmentKey,
+  remainingPoints: number,
+  status: AdmissionsScoreBreakdownSegment["status"],
+) {
+  if (status === "Complete" || remainingPoints <= 0) {
+    return "Complete";
+  }
+
+  switch (key) {
+    case "readiness":
+      return `Need +${remainingPoints} pts from profile fields and application details`;
+    case "academics":
+      return `Need +${remainingPoints} pts from stronger GPA and academic profile`;
+    case "tests":
+      return `Need +${remainingPoints} pts from stronger score profile`;
+    case "planning":
+      return `Need +${remainingPoints} pts from university list, deadlines, and next steps`;
+    default:
+      return `Need +${remainingPoints} pts to complete this section`;
+  }
 }
 
 export function buildAdmissionsScoreBreakdown(input: {
@@ -177,46 +201,70 @@ export function buildAdmissionsScoreBreakdown(input: {
   );
 
   const segments: AdmissionsScoreBreakdownSegment[] = [
-    {
+    (() => {
+      const status = getSegmentStatus(readiness);
+      const contribution = toPercent(readiness * 0.45);
+      const remainingPoints = Math.max(0, 45 - contribution);
+      return {
       key: "readiness",
       label: "Profile readiness",
       weight: 45,
       score: readiness,
-      contribution: toPercent(readiness * 0.45),
-      status: getSegmentStatus(readiness),
+      contribution,
+      status,
       color: "#FFDB58",
       description: "How complete your profile and Common App information are.",
-    },
-    {
+      missingHint: buildMissingHint("readiness", remainingPoints, status),
+      };
+    })(),
+    (() => {
+      const status = getSegmentStatus(academics);
+      const contribution = toPercent(academics * 0.25);
+      const remainingPoints = Math.max(0, 25 - contribution);
+      return {
       key: "academics",
       label: "Academics",
       weight: 25,
       score: academics,
-      contribution: toPercent(academics * 0.25),
-      status: getSegmentStatus(academics),
+      contribution,
+      status,
       color: "#8AD7C9",
       description: "Your GPA strength and academic profile depth.",
-    },
-    {
+      missingHint: buildMissingHint("academics", remainingPoints, status),
+      };
+    })(),
+    (() => {
+      const status = getSegmentStatus(tests);
+      const contribution = toPercent(tests * 0.2);
+      const remainingPoints = Math.max(0, 20 - contribution);
+      return {
       key: "tests",
       label: "Tests",
       weight: 20,
       score: tests,
-      contribution: toPercent(tests * 0.2),
-      status: getSegmentStatus(tests),
+      contribution,
+      status,
       color: "#FFB36A",
       description: "Standardized and language test readiness for applications.",
-    },
-    {
+      missingHint: buildMissingHint("tests", remainingPoints, status),
+      };
+    })(),
+    (() => {
+      const status = getSegmentStatus(planning);
+      const contribution = toPercent(planning * 0.1);
+      const remainingPoints = Math.max(0, 10 - contribution);
+      return {
       key: "planning",
       label: "Planning",
       weight: 10,
       score: planning,
-      contribution: toPercent(planning * 0.1),
-      status: getSegmentStatus(planning),
+      contribution,
+      status,
       color: "#A9B8FF",
       description: "Your university list, intended major, and intake readiness.",
-    },
+      missingHint: buildMissingHint("planning", remainingPoints, status),
+      };
+    })(),
   ];
 
   return {
