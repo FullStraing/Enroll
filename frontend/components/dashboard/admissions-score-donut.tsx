@@ -84,7 +84,7 @@ export function AdmissionsScoreDonut({ breakdown, total, className }: Admissions
   const missingSummary = breakdown.segments.filter((segment) => segment.missingPoints > 0);
 
   return (
-    <div className={cn("mx-auto w-full max-w-[280px]", className)}>
+    <div className={cn("relative mx-auto w-full max-w-[280px] pb-[108px] sm:pb-[104px]", className)}>
       <div className="relative mx-auto h-[196px] w-[196px]">
         <PieChart width={196} height={196}>
           <Pie
@@ -129,7 +129,7 @@ export function AdmissionsScoreDonut({ breakdown, total, className }: Admissions
       </div>
 
       {activeKey === "missing" ? (
-        <div className="mt-4 rounded-2xl bg-[#F7F7F7] px-3 py-3 ring-1 ring-black/8">
+        <div className="absolute inset-x-0 bottom-0 mx-auto w-full max-w-[280px] rounded-2xl bg-[#F7F7F7] px-3 py-3 ring-1 ring-black/8">
           <p className="text-sm font-black text-black">Missing to improve score</p>
           <div className="mt-2 grid gap-1.5">
             {missingSummary.map((segment) => (
@@ -140,7 +140,7 @@ export function AdmissionsScoreDonut({ breakdown, total, className }: Admissions
           </div>
         </div>
       ) : activeSegment ? (
-        <div className="mt-4 rounded-2xl bg-[#F7F7F7] px-3 py-3 ring-1 ring-black/8">
+        <div className="absolute inset-x-0 bottom-0 mx-auto w-full max-w-[280px] rounded-2xl bg-[#F7F7F7] px-3 py-3 ring-1 ring-black/8">
           <div className="flex items-center gap-2">
             <span
               className="h-2.5 w-2.5 shrink-0 rounded-full"
