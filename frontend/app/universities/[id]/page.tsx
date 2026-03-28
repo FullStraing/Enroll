@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { CircleHelp } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { CircularProgress } from "@/components/ui/circular-progress";
 import { ProtectedPage } from "@/components/protected-page";
@@ -12,7 +13,7 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiFetch } from "@/lib/api";
 import { getToken } from "@/lib/auth";
-import { formatDateShort } from "@/lib/date-format";
+import { formatDateShort, parseDateInput } from "@/lib/date-format";
 
 type University = {
   id: number;
@@ -71,6 +72,20 @@ type LabeledRow = {
   value_2?: string;
   value_3?: string;
   raw?: string;
+};
+
+type DeadlineCardMeta = {
+  id: number;
+  roundName: string;
+  mainLine: string;
+  secondaryLine: string;
+  badgeLabel: string;
+  badgeVariant: "default" | "primary" | "cyan" | "orange";
+  isRolling: boolean;
+  isPassed: boolean;
+  isNextImportant: boolean;
+  sortBucket: number;
+  sortTime: number;
 };
 
 function asNumber(v: UniversityMetric | undefined): number | null {
@@ -138,6 +153,116 @@ function explainAdmissionFactor(factorName?: string): string {
     explanations[normalized] ||
     "This factor is one of the signals the university may use when reviewing an application."
   );
+}
+
+function formatDeadlineRoundName(deadlineType?: string): string {
+  const normalized = (deadlineType || "").trim().toUpperCase();
+  const labels: Record<string, string> = {
+    RD: "Regular Decision",
+    REGULAR_DECISION: "Regular Decision",
+    ED: "Early Decision",
+    ED1: "Early Decision I",
+    ED2: "Early Decision II",
+    EA: "Early Action",
+    REA: "Restrictive Early Action",
+    SCEA: "Single-Choice Early Action",
+    PRIORITY: "Priority Deadline",
+    TRANSFER_FALL: "Transfer Fall",
+    TRANSFER_SPRING: "Transfer Spring",
+    SPRING: "Spring Entry",
+  };
+
+  if (labels[normalized]) return labels[normalized];
+
+  return (deadlineType || "Application deadline")
+    .replaceAll("_", " ")
+    .toLowerCase()
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function formatDeadlineCard(deadline: UniversityDeadline, now = new Date()): Omit<DeadlineCardMeta, "id" | "roundName" | "isNextImportant"> {
+  const deadlineDate = parseDateInput(deadline.deadline_date);
+  const notificationDate = parseDateInput(deadline.notification_date);
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const deadlineTime = deadlineDate?.getTime() ?? Number.POSITIVE_INFINITY;
+  const isPassed = Boolean(deadlineDate && deadlineTime < todayStart);
+
+  if (deadline.is_rolling) {
+    return {
+      mainLine: "Rolling admissions",
+      secondaryLine: notificationDate
+        ? `Decisions around ${formatDateShort(notificationDate)}`
+        : "Best to apply early. No fixed deadline published.",
+      badgeLabel: "Rolling",
+      badgeVariant: "cyan",
+      isRolling: true,
+      isPassed: false,
+      sortBucket: 1,
+      sortTime: Number.POSITIVE_INFINITY,
+    };
+  }
+
+  const mainLine = deadlineDate ? formatDateShort(deadlineDate) : deadline.deadline_text || "Deadline not published";
+  let secondaryLine = notificationDate
+    ? `Decision around ${formatDateShort(notificationDate)}`
+    : "Decision date not published";
+
+  if (!notificationDate && deadline.deadline_text && deadline.deadline_text !== mainLine) {
+    secondaryLine = deadline.deadline_text;
+  }
+
+  if (isPassed) {
+    return {
+      mainLine,
+      secondaryLine,
+      badgeLabel: "Passed",
+      badgeVariant: "default",
+      isRolling: false,
+      isPassed: true,
+      sortBucket: 2,
+      sortTime: deadlineTime,
+    };
+  }
+
+  const isPriority = (deadline.deadline_type || "").trim().toUpperCase() === "PRIORITY";
+  return {
+    mainLine,
+    secondaryLine,
+    badgeLabel: isPriority ? "Priority" : "Upcoming",
+    badgeVariant: isPriority ? "primary" : "orange",
+    isRolling: false,
+    isPassed: false,
+    sortBucket: 0,
+    sortTime: deadlineTime,
+  };
+}
+
+function buildDeadlineCards(deadlines: UniversityDeadline[]): DeadlineCardMeta[] {
+  const now = new Date();
+  const cards = deadlines.map((deadline) => ({
+    id: deadline.id,
+    roundName: formatDeadlineRoundName(deadline.deadline_type),
+    isNextImportant: false,
+    ...formatDeadlineCard(deadline, now),
+  }));
+
+  const sorted = [...cards].sort((a, b) => {
+    if (a.sortBucket !== b.sortBucket) return a.sortBucket - b.sortBucket;
+    if (a.sortBucket === 2) return b.sortTime - a.sortTime;
+    return a.sortTime - b.sortTime;
+  });
+
+  const nextImportantIndex = sorted.findIndex((item) => item.sortBucket === 0);
+  if (nextImportantIndex >= 0) {
+    sorted[nextImportantIndex] = {
+      ...sorted[nextImportantIndex],
+      isNextImportant: true,
+      badgeLabel: "Next important",
+      badgeVariant: "primary",
+    };
+  }
+
+  return sorted;
 }
 
 function extractNumbers(text: string): number[] {
@@ -427,6 +552,9 @@ export default function UniversityProfilePage() {
   const applicationFeeText = m.get("application_fee_text")?.value_text || "";
   const applyingRows = parseLabeledRows(m.get("applying_extended"));
   const financialAidRows = parseLabeledRows(m.get("financial_aid_items"));
+  const deadlineCards = useMemo(() => buildDeadlineCards(deadlines), [deadlines]);
+  const activeDeadlineCards = useMemo(() => deadlineCards.filter((item) => !item.isPassed), [deadlineCards]);
+  const passedDeadlineCards = useMemo(() => deadlineCards.filter((item) => item.isPassed), [deadlineCards]);
 
   return (
     <ProtectedPage>
@@ -654,22 +782,81 @@ export default function UniversityProfilePage() {
             </section>
 
             <section className="rounded-2xl border border-white/15 bg-white/5 p-5">
-              <h2 className="text-xl font-semibold">Deadlines</h2>
-              <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                {deadlines.length ? (
-                  deadlines.map((d) => (
-                    <div key={d.id} className="rounded-xl border border-white/10 bg-black/20 p-3 text-sm">
-                      <p className="font-semibold">{d.deadline_type}</p>
-                      <p className="mt-1 text-white/70">
-                        {d.is_rolling ? "Rolling" : d.deadline_date ? formatDateShort(d.deadline_date) : d.deadline_text || "-"}
-                      </p>
-                      {d.notification_date ? <p className="mt-1 text-xs text-violet-300">Notify: {formatDateShort(d.notification_date)}</p> : null}
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-white/70">No deadlines yet.</p>
-                )}
+              <div className="flex flex-wrap items-end justify-between gap-3">
+                <div>
+                  <h2 className="text-xl font-semibold">Deadlines</h2>
+                  <p className="mt-1 text-sm text-white/65">
+                    Scan the rounds, spot the next important date, and check when decisions usually arrive.
+                  </p>
+                </div>
+                {activeDeadlineCards.length ? (
+                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-white/40">
+                    {activeDeadlineCards.length} active round{activeDeadlineCards.length === 1 ? "" : "s"}
+                  </p>
+                ) : null}
               </div>
+
+              {deadlineCards.length ? (
+                <>
+                  <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                    {activeDeadlineCards.map((deadline) => (
+                      <div
+                        key={deadline.id}
+                        className={`rounded-2xl border p-4 shadow-none transition ${
+                          deadline.isNextImportant
+                            ? "border-black/20 bg-[#FFF4CC]/92 ring-2 ring-[#FFDB58]/45"
+                            : deadline.isRolling
+                              ? "border-black/10 bg-[#F5FBFA] text-black"
+                              : "border-black/10 bg-[#FAFAFA] text-black"
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="text-sm font-black tracking-[-0.02em] text-black">{deadline.roundName}</p>
+                            <p className="mt-2 text-[26px] font-black leading-none tracking-[-0.04em] text-black">
+                              {deadline.mainLine}
+                            </p>
+                          </div>
+                          <Badge variant={deadline.badgeVariant} className="shrink-0">
+                            {deadline.badgeLabel}
+                          </Badge>
+                        </div>
+                        <p className="mt-3 text-sm leading-relaxed text-black/58">{deadline.secondaryLine}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  {passedDeadlineCards.length ? (
+                    <div className="mt-5 border-t border-white/10 pt-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-sm font-semibold text-white/72">Past deadlines</p>
+                        <p className="text-xs uppercase tracking-[0.12em] text-white/40">{passedDeadlineCards.length}</p>
+                      </div>
+                      <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                        {passedDeadlineCards.map((deadline) => (
+                          <div
+                            key={deadline.id}
+                            className="rounded-2xl border border-white/10 bg-black/15 p-4 text-white/88 shadow-none"
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <p className="text-sm font-black tracking-[-0.02em] text-white">{deadline.roundName}</p>
+                                <p className="mt-2 text-[22px] font-black leading-none tracking-[-0.04em] text-white">
+                                  {deadline.mainLine}
+                                </p>
+                              </div>
+                              <Badge className="shrink-0 border-white/15 bg-white/8 text-white">Passed</Badge>
+                            </div>
+                            <p className="mt-3 text-sm leading-relaxed text-white/58">{deadline.secondaryLine}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                </>
+              ) : (
+                <p className="mt-4 text-sm text-white/70">No deadlines yet.</p>
+              )}
             </section>
 
             <section className="grid gap-4 lg:grid-cols-2">
