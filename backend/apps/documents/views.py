@@ -1,5 +1,6 @@
 from django.conf import settings
 from rest_framework import generics, permissions, parsers
+from rest_framework.throttling import ScopedRateThrottle
 
 from apps.core.runtime import feature_disabled_response
 from .models import Document
@@ -10,6 +11,7 @@ class DocumentListCreateView(generics.ListCreateAPIView):
     serializer_class = DocumentSerializer
     permission_classes = [permissions.IsAuthenticated]
     parser_classes = [parsers.MultiPartParser, parsers.FormParser, parsers.JSONParser]
+    throttle_classes = [ScopedRateThrottle]
 
     def get_queryset(self):
         return Document.objects.filter(user=self.request.user).select_related(
@@ -21,6 +23,12 @@ class DocumentListCreateView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+    def get_throttles(self):
+        if self.request.method == "POST":
+            self.throttle_scope = "document_upload"
+            return [throttle() for throttle in self.throttle_classes]
+        return []
 
     def create(self, request, *args, **kwargs):
         if not settings.FILE_UPLOADS_ENABLED:

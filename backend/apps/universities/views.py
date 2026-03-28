@@ -275,7 +275,7 @@ class UniversityListView(generics.ListAPIView):
 
 
 class UniversityDetailView(generics.RetrieveAPIView):
-    queryset = University.objects.all()
+    queryset = University.objects.filter(is_active=True)
     serializer_class = UniversitySerializer
     permission_classes = [permissions.IsAuthenticated]
 
@@ -334,7 +334,7 @@ class UniversityLatestSnapshotView(generics.RetrieveAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self):
-        university = generics.get_object_or_404(University, pk=self.kwargs["pk"])
+        university = generics.get_object_or_404(University, pk=self.kwargs["pk"], is_active=True)
         source = (self.request.query_params.get("source") or "").strip().lower()
         base_qs = UniversitySourceSnapshot.objects.filter(university=university)
 
@@ -357,7 +357,7 @@ class UniversityMetricsView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        university = generics.get_object_or_404(University, pk=self.kwargs["pk"])
+        university = generics.get_object_or_404(University, pk=self.kwargs["pk"], is_active=True)
         return UniversityMetric.objects.filter(university=university).order_by("key")
 
 
@@ -368,7 +368,7 @@ class UniversityDeadlinesView(generics.ListAPIView):
     TYPE_ORDER = ["RD", "EA", "ED1", "ED2", "REA", "PRIORITY", "TRANSFER_FALL", "TRANSFER_SPRING", "ROLLING", "OTHER"]
 
     def get_queryset(self):
-        university = generics.get_object_or_404(University, pk=self.kwargs["pk"])
+        university = generics.get_object_or_404(University, pk=self.kwargs["pk"], is_active=True)
         qs = UniversityDeadline.objects.filter(university=university)
         order = models.Case(
             *[models.When(deadline_type=value, then=models.Value(idx)) for idx, value in enumerate(self.TYPE_ORDER)],

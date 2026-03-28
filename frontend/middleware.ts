@@ -22,8 +22,8 @@ export function middleware(request: NextRequest) {
 
   if (!isProtected) return NextResponse.next();
 
-  const token = request.cookies.get("enroll_token")?.value;
-  if (!token) {
+  const session = request.cookies.get("enroll_session")?.value;
+  if (!session) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 

@@ -1,35 +1,29 @@
 export const tokenKey = "enroll_token";
 export const refreshKey = "enroll_refresh";
-
-function readCookie(name: string) {
-  if (typeof document === "undefined") return "";
-  const escaped = name.replace(/[-[\]/{}()*+?.\\^$|]/g, "\\$&");
-  const match = document.cookie.match(new RegExp(`(?:^|; )${escaped}=([^;]*)`));
-  return match ? decodeURIComponent(match[1]) : "";
-}
+export const sessionKey = "enroll_session";
 
 function buildCookieAttributes(maxAgeSeconds: number) {
   const secure = typeof window !== "undefined" && window.location.protocol === "https:" ? "; Secure" : "";
   return `Path=/; Max-Age=${maxAgeSeconds}; SameSite=Lax${secure}`;
 }
 
-export function saveTokens(access: string, refresh?: string) {
+export function saveTokens(access: string, _refresh?: string) {
   if (typeof window === "undefined") return;
   localStorage.setItem(tokenKey, access);
-  if (refresh) {
-    localStorage.setItem(refreshKey, refresh);
-  }
-  document.cookie = `${tokenKey}=${encodeURIComponent(access)}; ${buildCookieAttributes(60 * 60 * 24 * 30)}`;
+  localStorage.removeItem(refreshKey);
+  document.cookie = `${sessionKey}=1; ${buildCookieAttributes(60 * 60 * 12)}`;
+  document.cookie = `${tokenKey}=; ${buildCookieAttributes(0)}`;
 }
 
 export function clearTokens() {
   if (typeof window === "undefined") return;
   localStorage.removeItem(tokenKey);
   localStorage.removeItem(refreshKey);
+  document.cookie = `${sessionKey}=; ${buildCookieAttributes(0)}`;
   document.cookie = `${tokenKey}=; ${buildCookieAttributes(0)}`;
 }
 
 export function getToken() {
   if (typeof window === "undefined") return "";
-  return localStorage.getItem(tokenKey) || readCookie(tokenKey) || "";
+  return localStorage.getItem(tokenKey) || "";
 }

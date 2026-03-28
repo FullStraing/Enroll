@@ -39,7 +39,7 @@ function SectionHeader({
 }
 
 export default function LandingPage() {
-  const token = cookies().get("enroll_token")?.value;
+  const token = cookies().get("enroll_session")?.value;
   const introQuizLinked = cookies().get(INTRO_QUIZ_LINKED_COOKIE_KEY)?.value === "1";
   const primaryHref = token ? "/dashboard" : introQuizLinked ? "/register" : "/intro-quiz";
 

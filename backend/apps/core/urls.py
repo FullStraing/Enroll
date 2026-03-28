@@ -6,11 +6,8 @@ from django.http import JsonResponse
 
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
-from rest_framework_simplejwt.views import (
-    TokenObtainPairView,
-    TokenRefreshView,
-)
 from .runtime import runtime_flags, file_uploads_runtime
+from .auth_views import ThrottledTokenObtainPairView, ThrottledTokenRefreshView
 
 
 def ping_view(request):
@@ -59,8 +56,8 @@ def me_view(request):
 urlpatterns = [
     path("ping/", ping_view),
     path("me/", me_view),
-    path("auth/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
-    path("auth/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+    path("auth/token/", ThrottledTokenObtainPairView.as_view(), name="token_obtain_pair"),
+    path("auth/token/refresh/", ThrottledTokenRefreshView.as_view(), name="token_refresh"),
     path("auth/", include("apps.users.urls")),
     path("analytics/", include("apps.analytics.urls")),
     path("", include("apps.universities.urls")),

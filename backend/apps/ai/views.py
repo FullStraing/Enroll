@@ -21,13 +21,26 @@ from .serializers import (
 from .services import AiProviderError, generate_outline, generate_prompt_explanation, generate_selection_feedback, generate_starter_draft
 
 
+def _redact_for_log(value):
+    if isinstance(value, str):
+        text = value.strip()
+        if not text:
+            return ""
+        return {"type": "redacted_text", "chars": len(text)}
+    if isinstance(value, dict):
+        return {str(key): _redact_for_log(item) for key, item in list(value.items())[:25]}
+    if isinstance(value, list):
+        return [_redact_for_log(item) for item in value[:25]]
+    return value
+
+
 def log_interaction(user, payload, response_data):
     AIInteraction.objects.create(
         user=user,
         context_type=str(payload.get("context_type", "")),
         context_id=str(payload.get("context_id", "")),
-        prompt=json.dumps(payload, ensure_ascii=False),
-        response=json.dumps(response_data, ensure_ascii=False),
+        prompt=json.dumps(_redact_for_log(payload), ensure_ascii=False),
+        response=json.dumps(_redact_for_log(response_data), ensure_ascii=False),
     )
 
 

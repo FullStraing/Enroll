@@ -69,7 +69,7 @@ if SENTRY_DSN:
         environment=SENTRY_ENVIRONMENT,
         integrations=[DjangoIntegration()],
         traces_sample_rate=SENTRY_TRACES_SAMPLE_RATE,
-        send_default_pii=True,
+        send_default_pii=False,
     )
 
 
@@ -176,11 +176,20 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": (
         "rest_framework.permissions.IsAuthenticated",
     ),
+    "DEFAULT_THROTTLE_RATES": {
+        "auth_token": "6/minute",
+        "auth_refresh": "12/minute",
+        "auth_register": "10/hour",
+        "auth_google": "12/hour",
+        "analytics_track": "30/hour",
+        "document_upload": "20/hour",
+        "community_report": "12/hour",
+    },
 }
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(days=30),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=90),
+    "ACCESS_TOKEN_LIFETIME": timedelta(hours=12),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=14),
 }
 
 

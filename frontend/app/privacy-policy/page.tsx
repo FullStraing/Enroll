@@ -48,7 +48,7 @@ export default function PrivacyPolicyPage() {
         <h2 className="text-xl font-black">4. Cookies and Local Storage</h2>
         <p>We currently use essential storage items for core functionality, including:</p>
         <ul className="list-disc space-y-1 pl-6">
-          <li>`enroll_token` for authenticated app bootstrap.</li>
+          <li>`enroll_session` for authenticated app bootstrap routing.</li>
           <li>`enroll_intro_quiz_done` and related local state to preserve onboarding continuity.</li>
           <li>session/local storage keys for temporary workflow continuity, such as essays, tasks, and dashboard state.</li>
         </ul>

@@ -180,14 +180,13 @@ class UniversitySourceSnapshotSerializer(serializers.ModelSerializer):
             "status",
             "parser_version",
             "raw_payload",
-            "error_summary",
         ]
 
 
 class StudentUniversitySerializer(serializers.ModelSerializer):
     university = UniversitySerializer(read_only=True)
     university_id = serializers.PrimaryKeyRelatedField(
-        queryset=University.objects.all(),
+        queryset=University.objects.filter(is_active=True),
         source="university",
         write_only=True,
     )
@@ -221,7 +220,7 @@ class StudentUniversitySerializer(serializers.ModelSerializer):
 class ApplicationSerializer(serializers.ModelSerializer):
     university = UniversitySerializer(read_only=True)
     university_id = serializers.PrimaryKeyRelatedField(
-        queryset=University.objects.all(),
+        queryset=University.objects.filter(is_active=True),
         source="university",
         write_only=True,
         required=False,

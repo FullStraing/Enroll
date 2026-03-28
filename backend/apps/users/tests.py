@@ -4,7 +4,7 @@ from django.test import override_settings
 from rest_framework.test import APITestCase, APIClient
 from apps.analytics.models import ProductEvent
 from apps.universities.models import StudentUniversity, University
-from .models import StudentProfile
+from .models import StudentProfile, UserAuthIdentity
 
 
 class StudentProfileTests(APITestCase):
@@ -199,6 +199,58 @@ class GoogleAuthTests(APITestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data["detail"], "Invalid Google token audience.")
 
+    @override_settings(GOOGLE_OAUTH_CLIENT_ID="test-client-id")
+    def test_google_auth_links_existing_password_account_by_verified_email(self):
+        from unittest.mock import patch
+        from apps.users.google_auth import GoogleIdentity
+
+        existing = User.objects.create_user(
+            username="existing",
+            email="existing@example.com",
+            password="password123",
+        )
+
+        mock_identity = GoogleIdentity(
+            email="existing@example.com",
+            email_verified=True,
+            given_name="Existing",
+            family_name="User",
+            full_name="Existing User",
+            sub="google-sub-existing",
+        )
+
+        with patch("apps.users.views.verify_google_id_token", return_value=mock_identity):
+            response = self.client.post(reverse("google_auth"), {"id_token": "fake-token"}, format="json")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.data["is_new_user"])
+        identity = UserAuthIdentity.objects.get(user=existing)
+        self.assertEqual(identity.normalized_email, "existing@example.com")
+        self.assertEqual(identity.google_sub, "google-sub-existing")
+        self.assertTrue(identity.email_verified)
+
+    @override_settings(GOOGLE_OAUTH_CLIENT_ID="test-client-id")
+    def test_google_auth_rejects_legacy_duplicate_email_collision(self):
+        from unittest.mock import patch
+        from apps.users.google_auth import GoogleIdentity
+
+        User.objects.create_user(username="first", email="dup@example.com", password="password123")
+        User.objects.create_user(username="second", email="dup@example.com", password="password123")
+
+        mock_identity = GoogleIdentity(
+            email="dup@example.com",
+            email_verified=True,
+            given_name="Dup",
+            family_name="User",
+            full_name="Dup User",
+            sub="google-sub-dup",
+        )
+
+        with patch("apps.users.views.verify_google_id_token", return_value=mock_identity):
+            response = self.client.post(reverse("google_auth"), {"id_token": "fake-token"}, format="json")
+
+        self.assertEqual(response.status_code, 409)
+
 
 class RegisterAnalyticsTests(APITestCase):
     def test_register_records_signup_completed(self):
@@ -209,7 +261,7 @@ class RegisterAnalyticsTests(APITestCase):
             {
                 "username": "new-user",
                 "email": "new-user@example.com",
-                "password": "password123",
+                "password": "Strongpass123!",
             },
             format="json",
         )
@@ -219,3 +271,57 @@ class RegisterAnalyticsTests(APITestCase):
         self.assertEqual(StudentUniversity.objects.filter(student=user).count(), 1)
         self.assertEqual(ProductEvent.objects.filter(user=user, name="signup_completed").count(), 1)
         self.assertEqual(ProductEvent.objects.filter(user=user, name="first_university_added").count(), 0)
+
+    def test_register_rejects_duplicate_email_and_creates_identity(self):
+        User.objects.create_user(
+            username="existing",
+            email="existing@example.com",
+            password="password123",
+        )
+
+        response = self.client.post(
+            reverse("register"),
+            {
+                "username": "new-user",
+                "email": "existing@example.com",
+                "password": "Differentpass123!",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("email", response.data)
+
+    def test_register_creates_normalized_identity_record(self):
+        University.objects.create(name="Stanford University", acceptance_rate=4, is_active=True)
+
+        response = self.client.post(
+            reverse("register"),
+            {
+                "username": "new-user-identity",
+                "email": " New-User@Example.COM ",
+                "password": "Differentpass123!",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 201)
+        user = User.objects.get(username="new-user-identity")
+        identity = UserAuthIdentity.objects.get(user=user)
+        self.assertEqual(user.email, "new-user@example.com")
+        self.assertEqual(identity.normalized_email, "new-user@example.com")
+        self.assertFalse(identity.email_verified)
+
+    def test_register_rejects_weak_passwords(self):
+        response = self.client.post(
+            reverse("register"),
+            {
+                "username": "weak-user",
+                "email": "weak@example.com",
+                "password": "12345678",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("password", response.data)

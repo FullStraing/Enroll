@@ -2,6 +2,10 @@ from django.conf import settings
 from django.db import models
 
 
+def normalize_identity_email(email: str) -> str:
+    return str(email or "").strip().lower()
+
+
 class StudentProfile(models.Model):
     ACTIVITIES_LEVEL_CHOICES = [
         ("low", "Низкий"),
@@ -77,3 +81,28 @@ class StudentProfile(models.Model):
 
     def __str__(self):
         return f"Profile of {self.user.username}"
+
+
+class UserAuthIdentity(models.Model):
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="auth_identity",
+    )
+    normalized_email = models.EmailField(max_length=254, unique=True)
+    email_verified = models.BooleanField(default=False)
+    google_sub = models.CharField(max_length=255, unique=True, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["user_id"]
+
+    def save(self, *args, **kwargs):
+        self.normalized_email = normalize_identity_email(self.normalized_email)
+        if self.google_sub == "":
+            self.google_sub = None
+        return super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.user.username} <{self.normalized_email}>"

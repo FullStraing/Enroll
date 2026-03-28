@@ -54,21 +54,16 @@ class CommunityAuthorSerializer(serializers.Serializer):
     status_badge = serializers.SerializerMethodField()
 
     def get_display_name(self, user: User):
-        profile = _profile_for(user)
-        if profile and profile.full_name:
-            return profile.full_name
         return user.username
 
     def get_country(self, user: User):
-        profile = _profile_for(user)
-        return profile.country if profile else ""
+        return ""
 
     def get_intended_major(self, user: User):
-        profile = _profile_for(user)
-        return profile.intended_major if profile else ""
+        return ""
 
     def get_intake(self, user: User):
-        return _intake_label(_profile_for(user))
+        return ""
 
     def get_status_badge(self, user: User):
         return _community_status(user)
@@ -262,9 +257,17 @@ class CommunityPostWriteSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError("Only moderators can change moderation fields.")
         attrs["post_type"] = attrs.get("post_type") or "question"
         body = str(attrs.get("body", "")).strip()
+        if len(body) > 4000:
+            raise serializers.ValidationError("Posts must be 4,000 characters or fewer.")
         attrs["body"] = body
         title = str(attrs.get("title", "")).strip()
+        if len(title) > 160:
+            raise serializers.ValidationError("Title must be 160 characters or fewer.")
         attrs["title"] = title or (body[:72] if body else "Community message")
+        tag = str(attrs.get("tag", "")).strip()
+        if len(tag) > 64:
+            raise serializers.ValidationError("Tag must be 64 characters or fewer.")
+        attrs["tag"] = tag
         return attrs
 
 
@@ -284,6 +287,10 @@ class CommunityCommentWriteSerializer(serializers.ModelSerializer):
         if "status" in attrs:
             if not membership or membership.role not in {"moderator", "staff"}:
                 raise serializers.ValidationError("Only moderators can moderate comments.")
+        body = str(attrs.get("body", "")).strip()
+        if len(body) > 2000:
+            raise serializers.ValidationError("Comments must be 2,000 characters or fewer.")
+        attrs["body"] = body
         return attrs
 
 

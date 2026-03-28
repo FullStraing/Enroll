@@ -4,8 +4,10 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
+from django.db import transaction
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
@@ -15,7 +17,7 @@ from apps.universities.categorying import category_from_acceptance_rate
 from apps.universities.models import StudentUniversity, University
 from .common_app import build_common_app_progress
 from .google_auth import GoogleTokenVerificationError, verify_google_id_token
-from .models import StudentProfile
+from .models import StudentProfile, UserAuthIdentity, normalize_identity_email
 from .progress import has_completed_minimum_profile
 from .serializers import RegisterSerializer, StudentProfileSerializer
 
@@ -72,6 +74,8 @@ class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = RegisterSerializer
     permission_classes = [permissions.AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "auth_register"
 
     def perform_create(self, serializer):
         user = serializer.save()
@@ -144,6 +148,8 @@ class ChangePasswordView(APIView):
 
 class GoogleAuthView(APIView):
     permission_classes = [permissions.AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "auth_google"
 
     def post(self, request):
         if not settings.GOOGLE_AUTH_ENABLED:
@@ -157,22 +163,73 @@ class GoogleAuthView(APIView):
         except GoogleTokenVerificationError as exc:
             return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
 
-        user = User.objects.filter(email__iexact=identity.email).first()
+        normalized_email = normalize_identity_email(identity.email)
         created = False
-        if not user:
-            if not settings.REGISTRATION_ENABLED:
-                return feature_disabled_response("Registration is temporarily unavailable.")
-            user = User.objects.create(
-                username=_build_unique_username(identity.email),
-                email=identity.email,
-                first_name=identity.given_name,
-                last_name=identity.family_name,
-            )
-            user.set_unusable_password()
-            user.save(update_fields=["password"])
-            created = True
-        else:
+
+        with transaction.atomic():
+            auth_identity = UserAuthIdentity.objects.select_related("user").filter(google_sub=identity.sub).first()
+
+            if auth_identity is None:
+                auth_identity = UserAuthIdentity.objects.select_related("user").filter(normalized_email=normalized_email).first()
+
+                if auth_identity:
+                    if auth_identity.google_sub and auth_identity.google_sub != identity.sub:
+                        return Response(
+                            {"detail": "Google sign-in is already linked to a different account."},
+                            status=status.HTTP_409_CONFLICT,
+                        )
+                    auth_identity.google_sub = identity.sub
+                    auth_identity.email_verified = True
+                    auth_identity.save(update_fields=["google_sub", "email_verified", "updated_at"])
+                else:
+                    legacy_matches = list(User.objects.filter(email__iexact=normalized_email)[:2])
+                    if len(legacy_matches) > 1:
+                        return Response(
+                            {"detail": "Multiple accounts already use this email. Sign in with password and contact support."},
+                            status=status.HTTP_409_CONFLICT,
+                        )
+
+                    if legacy_matches:
+                        user = legacy_matches[0]
+                        auth_identity = UserAuthIdentity.objects.create(
+                            user=user,
+                            normalized_email=normalized_email,
+                            email_verified=True,
+                            google_sub=identity.sub,
+                        )
+                    else:
+                        if not settings.REGISTRATION_ENABLED:
+                            return feature_disabled_response("Registration is temporarily unavailable.")
+                        user = User.objects.create(
+                            username=_build_unique_username(normalized_email),
+                            email=normalized_email,
+                            first_name=identity.given_name,
+                            last_name=identity.family_name,
+                        )
+                        user.set_unusable_password()
+                        user.save(update_fields=["password"])
+                        auth_identity = UserAuthIdentity.objects.create(
+                            user=user,
+                            normalized_email=normalized_email,
+                            email_verified=True,
+                            google_sub=identity.sub,
+                        )
+                        created = True
+
+            user = auth_identity.user
+            identity_updates = []
+            if auth_identity.normalized_email != normalized_email:
+                auth_identity.normalized_email = normalized_email
+                identity_updates.append("normalized_email")
+            if not auth_identity.email_verified:
+                auth_identity.email_verified = True
+                identity_updates.append("email_verified")
+            if identity_updates:
+                auth_identity.save(update_fields=[*identity_updates, "updated_at"])
             updated_fields = []
+            if user.email != normalized_email:
+                user.email = normalized_email
+                updated_fields.append("email")
             if not user.first_name and identity.given_name:
                 user.first_name = identity.given_name
                 updated_fields.append("first_name")

@@ -10,6 +10,7 @@ from django.db.models import Count, Prefetch, Q
 from django.utils import timezone
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from apps.core.runtime import feature_disabled_response
@@ -432,6 +433,8 @@ class CommunityPostSaveView(APIView):
 class CommunityReportCreateView(generics.CreateAPIView):
     serializer_class = CommunityReportSerializer
     permission_classes = [permissions.IsAuthenticated]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "community_report"
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)

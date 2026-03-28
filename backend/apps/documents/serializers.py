@@ -1,9 +1,15 @@
 import hashlib
+from pathlib import Path
 
 from rest_framework import serializers
 
 from apps.universities.models import Application, StudentUniversity
-from .constants import MAX_DOCUMENTS_PER_USER, MAX_DOCUMENT_FILE_SIZE_BYTES
+from .constants import (
+    ALLOWED_DOCUMENT_EXTENSIONS,
+    ALLOWED_DOCUMENT_MIME_TYPES,
+    MAX_DOCUMENTS_PER_USER,
+    MAX_DOCUMENT_FILE_SIZE_BYTES,
+)
 from .models import Document
 
 
@@ -124,6 +130,12 @@ class DocumentSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Upload a non-empty file.")
         if file.size > MAX_DOCUMENT_FILE_SIZE_BYTES:
             raise serializers.ValidationError("File must be 5 MB or smaller.")
+        extension = Path(getattr(file, "name", "")).suffix.lower()
+        content_type = (getattr(file, "content_type", "") or "").lower().strip()
+        if extension not in ALLOWED_DOCUMENT_EXTENSIONS:
+            raise serializers.ValidationError("Only PDF, PNG, JPG, DOC, and DOCX files are allowed.")
+        if content_type and content_type not in ALLOWED_DOCUMENT_MIME_TYPES:
+            raise serializers.ValidationError("This file type is not allowed.")
         return file
 
     def _calculate_checksum(self, uploaded_file) -> str:

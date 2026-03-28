@@ -62,6 +62,9 @@ class EssayAiTests(APITestCase):
         self.assertEqual(response.data["version"]["status"], "ai_improved")
         self.assertEqual(EssayVersion.objects.filter(essay=self.essay).count(), 2)
         self.assertTrue(AIInteraction.objects.filter(user=self.user, context_type="essay_starter_draft").exists())
+        interaction = AIInteraction.objects.get(user=self.user, context_type="essay_starter_draft")
+        self.assertNotIn("This school fits my goals", interaction.response)
+        self.assertIn("redacted_text", interaction.response)
 
     @patch("apps.ai.views.generate_selection_feedback")
     def test_selection_feedback_returns_preview_payload(self, mock_generate):

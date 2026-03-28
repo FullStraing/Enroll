@@ -1,25 +1,56 @@
+from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError as DjangoValidationError
+from django.db import transaction
 from rest_framework import serializers
-from .models import StudentProfile
+from .models import StudentProfile, UserAuthIdentity, normalize_identity_email
 from .progress import has_completed_minimum_profile
 
 
 class RegisterSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, min_length=6)
+    email = serializers.EmailField(required=True, allow_blank=False)
+    password = serializers.CharField(write_only=True, min_length=8, trim_whitespace=False)
 
     class Meta:
         model = User
         fields = ["username", "email", "password"]
 
+    def validate_email(self, value):
+        normalized = normalize_identity_email(value)
+        if not normalized:
+            raise serializers.ValidationError("Email is required.")
+        if UserAuthIdentity.objects.filter(normalized_email=normalized).exists():
+            raise serializers.ValidationError("An account with this email already exists.")
+        if User.objects.filter(email__iexact=normalized).exists():
+            raise serializers.ValidationError("An account with this email already exists.")
+        return normalized
+
+    def validate_password(self, value):
+        user = User(
+            username=self.initial_data.get("username", ""),
+            email=normalize_identity_email(self.initial_data.get("email", "")),
+        )
+        try:
+            validate_password(value, user)
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError(list(exc.messages)) from exc
+        return value
+
     def create(self, validated_data):
         password = validated_data.pop("password")
-        user = User(
-            username=validated_data.get("username"),
-            email=validated_data.get("email"),
-        )
-        user.set_password(password)
-        user.save()
-        StudentProfile.objects.create(user=user)
+        with transaction.atomic():
+            user = User(
+                username=validated_data.get("username"),
+                email=validated_data.get("email"),
+            )
+            user.set_password(password)
+            user.save()
+            StudentProfile.objects.create(user=user)
+            UserAuthIdentity.objects.create(
+                user=user,
+                normalized_email=validated_data["email"],
+                email_verified=False,
+            )
         return user
 
 
@@ -71,6 +102,12 @@ class StudentProfileSerializer(serializers.ModelSerializer):
         # Merge Common App draft payload instead of overwriting whole object on partial updates.
         if "common_app_profile" in validated_data:
             incoming = validated_data.pop("common_app_profile") or {}
+            if isinstance(incoming, dict):
+                incoming = {
+                    key: value
+                    for key, value in incoming.items()
+                    if key not in {"community_status", "application_status"}
+                }
             merged = dict(instance.common_app_profile or {})
             merged.update(incoming)
             instance.common_app_profile = merged

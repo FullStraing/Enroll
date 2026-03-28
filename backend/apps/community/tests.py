@@ -105,3 +105,22 @@ class CommunityApiTests(APITestCase):
             format="json",
         )
         self.assertEqual(response.status_code, 400)
+
+    def test_community_author_payload_uses_pseudonymous_defaults(self):
+        self.client.post("/api/community/groups/kyrgyzstan-applicants/join/")
+        create_response = self.client.post(
+            "/api/community/groups/kyrgyzstan-applicants/posts/",
+            {
+                "post_type": "question",
+                "title": "Visibility test",
+                "body": "Checking author payload.",
+            },
+            format="json",
+        )
+
+        self.assertEqual(create_response.status_code, 201)
+        author = create_response.json()["author"]
+        self.assertEqual(author["display_name"], self.user.username)
+        self.assertEqual(author["country"], "")
+        self.assertEqual(author["intended_major"], "")
+        self.assertEqual(author["intake"], "")

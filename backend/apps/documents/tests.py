@@ -191,3 +191,23 @@ class DocumentTests(APITestCase):
         self.assertEqual(first_response.status_code, 201)
         self.assertEqual(duplicate_response.status_code, 400)
         self.assertEqual(duplicate_response.data["file"][0], "You already uploaded this file.")
+
+    def test_create_document_rejects_disallowed_file_type(self):
+        file = SimpleUploadedFile(
+            "payload.html",
+            b"<script>alert('xss')</script>",
+            content_type="text/html",
+        )
+
+        response = self.client.post(
+            reverse("documents_list_create"),
+            {
+                "title": "Bad File",
+                "type": "other",
+                "file": file,
+            },
+            format="multipart",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("file", response.data)

@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from django.db.models import Count
 from rest_framework import permissions, status
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from .models import ProductEvent
@@ -13,6 +14,8 @@ User = get_user_model()
 
 class ProductEventTrackView(APIView):
     permission_classes = [permissions.AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "analytics_track"
 
     def post(self, request):
         serializer = ProductEventWriteSerializer(data=request.data, context={"request": request})
@@ -68,4 +71,3 @@ class ProductAnalyticsSummaryView(APIView):
                 "recent_events": recent_events,
             }
         )
-

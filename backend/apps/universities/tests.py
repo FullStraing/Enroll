@@ -216,6 +216,24 @@ class UniversityDataTests(APITestCase):
         result_names = [item["name"] for item in response.data["results"]]
         self.assertIn(university.name, result_names)
 
+    def test_inactive_university_detail_is_hidden(self):
+        inactive = University.objects.create(name="Hidden University", is_active=False)
+
+        response = self.client.get(reverse("universities_detail", kwargs={"pk": inactive.id}))
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_inactive_university_cannot_be_added_to_my_universities(self):
+        inactive = University.objects.create(name="Hidden University", is_active=False)
+
+        response = self.client.post(
+            reverse("my_universities_list_create"),
+            {"university_id": inactive.id},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+
 
 class DeadlineParserTests(APITestCase):
     def test_parse_deadlines_from_html(self):
