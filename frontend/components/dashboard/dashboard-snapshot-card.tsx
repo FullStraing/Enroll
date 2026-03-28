@@ -1,5 +1,8 @@
+"use client";
+
 import Image from "next/image";
 import type { ReactNode, RefObject } from "react";
+import { useMemo, useState } from "react";
 import { Download, Share2, Trophy } from "lucide-react";
 import { statusSelectTone } from "@/app/universities/utils";
 import type { AdmissionsScoreBreakdown } from "@/app/dashboard/utils";
@@ -70,6 +73,11 @@ function DashboardSnapshotSurface({
   const showAllTests = allTestLabels.length > 0;
   const visibleHonors = honors.slice(0, 4);
   const hiddenHonorsCount = Math.max(0, honors.length - visibleHonors.length);
+  const [activeScoreKey, setActiveScoreKey] = useState<string | null>(null);
+  const activeScoreSegment = useMemo(() => {
+    if (!activeScoreKey) return null;
+    return admissionsBreakdown.segments.find((segment) => segment.key === activeScoreKey) || null;
+  }, [activeScoreKey, admissionsBreakdown.segments]);
 
   return (
     <Card className="relative overflow-hidden border border-black/10 bg-white shadow-none">
@@ -203,7 +211,7 @@ function DashboardSnapshotSurface({
                 <Trophy className="h-4 w-4" />
                 Admissions Score
               </div>
-              <div className="mt-4 flex items-center justify-center">
+              <div className="relative mt-4 flex items-center justify-center">
                 {loading ? (
                   <Skeleton className="h-36 w-36 rounded-full" />
                 ) : (
@@ -212,51 +220,35 @@ function DashboardSnapshotSurface({
                     size={150}
                     trackColor="#E6EAEE"
                     segments={admissionsBreakdown.segments.map((segment) => ({
+                      key: segment.key,
                       value: segment.score,
                       weight: segment.weight,
                       color: segment.color,
+                      label: segment.label,
+                      description: segment.description,
                     }))}
+                    activeSegmentKey={activeScoreKey}
+                    onSegmentEnter={(segment) => setActiveScoreKey(segment.key || null)}
+                    onSegmentLeave={() => setActiveScoreKey(null)}
                   />
                 )}
-              </div>
-              <p className="mt-3 text-center text-sm text-black/65">
-                Score improves when profile completeness, tests, and university planning improve.
-              </p>
-
-              {loading ? (
-                <div className="mt-4 grid gap-2">
-                  {Array.from({ length: 4 }).map((_, index) => (
-                    <Skeleton key={index} className="h-12 w-full rounded-xl" />
-                  ))}
-                </div>
-              ) : (
-                <div className="mt-4 grid gap-2">
-                  {admissionsBreakdown.segments.map((segment) => (
-                    <div
-                      key={segment.key}
-                      className="flex items-center justify-between gap-3 rounded-xl bg-white px-3 py-2 ring-1 ring-black/8"
-                    >
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span
-                            className="h-2.5 w-2.5 shrink-0 rounded-full"
-                            style={{ backgroundColor: segment.color }}
-                            aria-hidden="true"
-                          />
-                          <p className="truncate text-sm font-semibold text-black">{segment.label}</p>
-                        </div>
-                        <p className="mt-1 text-xs text-black/55">
-                          {segment.contribution}/{segment.weight} pts · {segment.status}
-                        </p>
-                      </div>
-                      <div className="shrink-0 text-right">
-                        <p className="text-sm font-black text-black">{segment.score}%</p>
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-black/38">Progress</p>
-                      </div>
+                {!loading && activeScoreSegment ? (
+                  <div className="absolute left-1/2 top-full z-10 mt-3 w-[220px] -translate-x-1/2 rounded-2xl bg-white px-3 py-3 text-left shadow-[0_10px_30px_rgba(0,0,0,0.08)] ring-1 ring-black/10">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="h-2.5 w-2.5 shrink-0 rounded-full"
+                        style={{ backgroundColor: activeScoreSegment.color }}
+                        aria-hidden="true"
+                      />
+                      <p className="text-sm font-black text-black">{activeScoreSegment.label}</p>
                     </div>
-                  ))}
-                </div>
-              )}
+                    <p className="mt-2 text-xs leading-relaxed text-black/65">{activeScoreSegment.description}</p>
+                    <p className="mt-2 text-xs font-semibold text-black/55">
+                      {activeScoreSegment.contribution}/{activeScoreSegment.weight} pts · {activeScoreSegment.status}
+                    </p>
+                  </div>
+                ) : null}
+              </div>
             </div>
 
             <div className="rounded-2xl bg-[#FFF4CC]/25 p-4 ring-1 ring-black/8">

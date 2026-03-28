@@ -1,9 +1,14 @@
 import { cn } from "@/lib/utils";
 
+type CircularProgressSegmentKey = string;
+
 type CircularProgressSegment = {
+  key?: CircularProgressSegmentKey;
   value: number;
   weight: number;
   color: string;
+  label?: string;
+  description?: string;
 };
 
 function polarToCartesian(center: number, radius: number, angleInDegrees: number) {
@@ -34,7 +39,10 @@ export function CircularProgress({
   textColor = "#111111",
   className,
   segments,
-  gapDegrees = 4,
+  gapDegrees = 0,
+  activeSegmentKey,
+  onSegmentEnter,
+  onSegmentLeave,
 }: {
   value: number;
   size?: number;
@@ -47,6 +55,9 @@ export function CircularProgress({
   className?: string;
   segments?: CircularProgressSegment[];
   gapDegrees?: number;
+  activeSegmentKey?: CircularProgressSegmentKey | null;
+  onSegmentEnter?: (segment: CircularProgressSegment) => void;
+  onSegmentLeave?: () => void;
 }) {
   const safeValue = Math.max(0, Math.min(100, value));
   const innerSize = size - thickness * 2;
@@ -69,22 +80,33 @@ export function CircularProgress({
             const filledEndAngle = startAngle + segmentDegrees * (Math.max(0, Math.min(100, segment.value)) / 100);
             cursor = endAngle + gapDegrees;
 
+            const isActive = Boolean(activeSegmentKey && segment.key === activeSegmentKey);
+
             return (
-              <g key={`${segment.color}-${segment.weight}-${segment.value}`}>
+              <g key={segment.key || `${segment.color}-${segment.weight}-${segment.value}`}>
                 <path
                   d={describeArc(size / 2, radius, startAngle, endAngle)}
                   fill="none"
                   stroke={trackColor}
                   strokeWidth={thickness}
-                  strokeLinecap="round"
+                  strokeLinecap="butt"
                 />
                 {segment.value > 0 ? (
                   <path
                     d={describeArc(size / 2, radius, startAngle, filledEndAngle)}
                     fill="none"
                     stroke={segment.color}
-                    strokeWidth={thickness}
-                    strokeLinecap="round"
+                    strokeWidth={isActive ? thickness + 6 : thickness}
+                    strokeLinecap="butt"
+                    className="cursor-pointer transition-[opacity,stroke-width] duration-150"
+                    style={{ opacity: activeSegmentKey && !isActive ? 0.55 : 1 }}
+                    onMouseEnter={() => onSegmentEnter?.(segment)}
+                    onMouseLeave={() => onSegmentLeave?.()}
+                    onFocus={() => onSegmentEnter?.(segment)}
+                    onBlur={() => onSegmentLeave?.()}
+                    tabIndex={segment.key ? 0 : -1}
+                    role={segment.key ? "img" : undefined}
+                    aria-label={segment.label ? `${segment.label}: ${segment.value}%` : undefined}
                   />
                 ) : null}
               </g>

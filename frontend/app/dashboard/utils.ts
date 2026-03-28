@@ -136,6 +136,7 @@ export type AdmissionsScoreBreakdownSegment = {
   contribution: number;
   status: "Complete" | "Needs work" | "Missing";
   color: string;
+  description: string;
 };
 
 export type AdmissionsScoreBreakdown = {
@@ -184,6 +185,7 @@ export function buildAdmissionsScoreBreakdown(input: {
       contribution: toPercent(readiness * 0.45),
       status: getSegmentStatus(readiness),
       color: "#FFDB58",
+      description: "How complete your profile and Common App information are.",
     },
     {
       key: "academics",
@@ -193,6 +195,7 @@ export function buildAdmissionsScoreBreakdown(input: {
       contribution: toPercent(academics * 0.25),
       status: getSegmentStatus(academics),
       color: "#8AD7C9",
+      description: "Your GPA strength and academic profile depth.",
     },
     {
       key: "tests",
@@ -202,6 +205,7 @@ export function buildAdmissionsScoreBreakdown(input: {
       contribution: toPercent(tests * 0.2),
       status: getSegmentStatus(tests),
       color: "#FFB36A",
+      description: "Standardized and language test readiness for applications.",
     },
     {
       key: "planning",
@@ -211,6 +215,7 @@ export function buildAdmissionsScoreBreakdown(input: {
       contribution: toPercent(planning * 0.1),
       status: getSegmentStatus(planning),
       color: "#A9B8FF",
+      description: "Your university list, intended major, and intake readiness.",
     },
   ];
 
