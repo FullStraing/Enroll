@@ -134,6 +134,7 @@ export type AdmissionsScoreBreakdownSegment = {
   weight: number;
   score: number;
   contribution: number;
+  missingPoints: number;
   status: "Complete" | "Needs work" | "Missing";
   color: string;
   description: string;
@@ -211,6 +212,7 @@ export function buildAdmissionsScoreBreakdown(input: {
       weight: 45,
       score: readiness,
       contribution,
+      missingPoints: remainingPoints,
       status,
       color: "#FFDB58",
       description: "How complete your profile and Common App information are.",
@@ -227,6 +229,7 @@ export function buildAdmissionsScoreBreakdown(input: {
       weight: 25,
       score: academics,
       contribution,
+      missingPoints: remainingPoints,
       status,
       color: "#8AD7C9",
       description: "Your GPA strength and academic profile depth.",
@@ -243,6 +246,7 @@ export function buildAdmissionsScoreBreakdown(input: {
       weight: 20,
       score: tests,
       contribution,
+      missingPoints: remainingPoints,
       status,
       color: "#FFB36A",
       description: "Standardized and language test readiness for applications.",
@@ -259,6 +263,7 @@ export function buildAdmissionsScoreBreakdown(input: {
       weight: 10,
       score: planning,
       contribution,
+      missingPoints: remainingPoints,
       status,
       color: "#A9B8FF",
       description: "Your university list, intended major, and intake readiness.",

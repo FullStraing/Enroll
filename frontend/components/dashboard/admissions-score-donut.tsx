@@ -11,10 +11,19 @@ type AdmissionsScoreDonutProps = {
   className?: string;
 };
 
-type DonutSlice = AdmissionsScoreBreakdown["segments"][number] & {
+type DonutSlice = {
+  key: string;
+  label: string;
+  weight: number;
+  score: number;
+  contribution: number;
+  missingPoints: number;
+  status: "Complete" | "Needs work" | "Missing";
+  color: string;
+  description: string;
+  missingHint: string;
   sliceKey: string;
   value: number;
-  isFilled: boolean;
 };
 
 export function AdmissionsScoreDonut({ breakdown, total, className }: AdmissionsScoreDonutProps) {
@@ -22,35 +31,57 @@ export function AdmissionsScoreDonut({ breakdown, total, className }: Admissions
   const trackColor = "#E6EAEE";
 
   const slices = useMemo<DonutSlice[]>(
-    () =>
-      breakdown.segments.flatMap((segment) => {
-        const remaining = Math.max(0, segment.weight - segment.contribution);
-        const nextSlices: DonutSlice[] = [];
+    () => {
+      const earnedSlices: DonutSlice[] = breakdown.segments
+        .filter((segment) => segment.contribution > 0)
+        .map((segment) => ({
+          key: segment.key,
+          label: segment.label,
+          weight: segment.weight,
+          score: segment.score,
+          contribution: segment.contribution,
+          missingPoints: segment.missingPoints,
+          status: segment.status,
+          color: segment.color,
+          description: segment.description,
+          missingHint: segment.missingHint,
+          sliceKey: segment.key,
+          value: segment.contribution,
+        }));
 
-        if (segment.contribution > 0) {
-          nextSlices.push({
-            ...segment,
-            sliceKey: `${segment.key}-filled`,
-            value: segment.contribution,
-            isFilled: true,
-          });
-        }
+      const remainingTotal = Math.max(0, 100 - breakdown.total);
 
-        if (remaining > 0) {
-          nextSlices.push({
-            ...segment,
-            sliceKey: `${segment.key}-remaining`,
-            value: remaining,
-            isFilled: false,
-          });
-        }
+      if (remainingTotal > 0) {
+        earnedSlices.push({
+          key: "missing",
+          label: "Missing to improve score",
+          weight: remainingTotal,
+          value: remainingTotal,
+          score: 0,
+          contribution: remainingTotal,
+          missingPoints: remainingTotal,
+          status: "Needs work",
+          color: trackColor,
+          description: "Grouped remaining score across all admissions categories.",
+          missingHint: "Complete profile readiness, tests, and planning to increase your score.",
+          sliceKey: "missing",
+        });
+      }
 
-        return nextSlices;
-      }),
-    [breakdown.segments],
+      return earnedSlices;
+    },
+    [breakdown.segments, breakdown.total],
   );
 
-  const activeSegment = activeKey ? breakdown.segments.find((segment) => segment.key === activeKey) || null : null;
+  const activeSegment =
+    activeKey === "missing"
+      ? null
+      : activeKey
+        ? breakdown.segments.find((segment) => segment.key === activeKey) || null
+        : null;
+  const coloredSpan = total * 3.6;
+  const startAngle = coloredSpan / 2;
+  const missingSummary = breakdown.segments.filter((segment) => segment.missingPoints > 0);
 
   return (
     <div className={cn("mx-auto w-full max-w-[280px]", className)}>
@@ -63,7 +94,7 @@ export function AdmissionsScoreDonut({ breakdown, total, className }: Admissions
             cy="50%"
             innerRadius={64}
             outerRadius={88}
-            startAngle={90}
+            startAngle={startAngle}
             endAngle={-270}
             paddingAngle={0}
             stroke="none"
@@ -79,9 +110,9 @@ export function AdmissionsScoreDonut({ breakdown, total, className }: Admissions
               return (
                 <Cell
                   key={slice.sliceKey}
-                  fill={slice.isFilled ? slice.color : trackColor}
-                  fillOpacity={slice.isFilled ? (isDimmed ? 0.4 : 1) : isDimmed ? 0.7 : 1}
-                  stroke={activeKey === slice.key ? slice.color : "none"}
+                  fill={slice.color}
+                  fillOpacity={isDimmed ? 0.4 : 1}
+                  stroke={activeKey === slice.key ? (slice.key === "missing" ? "#B8C0C8" : slice.color) : "none"}
                   strokeWidth={activeKey === slice.key ? 3 : 0}
                   className="cursor-pointer outline-none transition-opacity duration-150"
                 />
@@ -97,7 +128,18 @@ export function AdmissionsScoreDonut({ breakdown, total, className }: Admissions
         </div>
       </div>
 
-      {activeSegment ? (
+      {activeKey === "missing" ? (
+        <div className="mt-4 rounded-2xl bg-[#F7F7F7] px-3 py-3 ring-1 ring-black/8">
+          <p className="text-sm font-black text-black">Missing to improve score</p>
+          <div className="mt-2 grid gap-1.5">
+            {missingSummary.map((segment) => (
+              <p key={segment.key} className="text-sm text-black/70">
+                <span className="font-semibold text-black">{segment.label}:</span> +{segment.missingPoints} pts
+              </p>
+            ))}
+          </div>
+        </div>
+      ) : activeSegment ? (
         <div className="mt-4 rounded-2xl bg-[#F7F7F7] px-3 py-3 ring-1 ring-black/8">
           <div className="flex items-center gap-2">
             <span
@@ -111,8 +153,10 @@ export function AdmissionsScoreDonut({ breakdown, total, className }: Admissions
             {activeSegment.contribution} / {activeSegment.weight} pts
           </p>
           <p className="mt-1 text-sm font-semibold text-black">{activeSegment.score}%</p>
-          <p className="mt-1 text-sm font-semibold text-black/80">{activeSegment.status}</p>
-          <p className="mt-1 text-sm text-black/65">{activeSegment.missingHint}</p>
+          <p className="mt-1 text-sm font-semibold text-black/80">
+            Contribution to total: {activeSegment.contribution} pts
+          </p>
+          <p className="mt-1 text-sm text-black/65">{activeSegment.status === "Complete" ? "Complete" : activeSegment.missingHint}</p>
         </div>
       ) : null}
     </div>
