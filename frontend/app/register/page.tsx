@@ -106,6 +106,11 @@ export default function RegisterPage() {
   return (
     <main className="theme-home mx-auto flex min-h-screen max-w-md items-center px-6 py-16">
       <form onSubmit={onSubmit} className="glass w-full rounded-3xl p-6">
+        <div className="mb-4 flex justify-end">
+          <Link href="/" className="text-sm font-semibold text-black/70 underline underline-offset-2 transition hover:text-black">
+            На главную
+          </Link>
+        </div>
         <h1 className="text-2xl font-semibold">Регистрация</h1>
         {registrationDisabled ? (
           <div className="mt-4">

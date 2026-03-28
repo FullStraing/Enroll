@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, CheckCircle2, CircleAlert, FileStack, GraduationCap, ListTodo } from "lucide-react";
 import { landingTheme, painPoints, productShowcase, proofPoints, storySections } from "@/app/landing-content";
+import { LandingAuthActions } from "@/components/landing/landing-auth-actions";
 import { ProductShot } from "@/components/landing/product-shot";
 import { INTRO_QUIZ_LINKED_COOKIE_KEY } from "@/lib/intro-quiz";
 
@@ -63,7 +64,8 @@ export default function LandingPage() {
             </div>
           </Link>
 
-          <div className="flex items-center gap-2">
+          {false ? (
+            <div className="flex items-center gap-2">
             <Link href="/login" className="rounded-xl border-2 border-black bg-white px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5">
               Войти
             </Link>
@@ -74,7 +76,10 @@ export default function LandingPage() {
             >
               Начать
             </Link>
-          </div>
+            </div>
+          ) : (
+            <LandingAuthActions initialHasSession={Boolean(token)} primaryHref={primaryHref} />
+          )}
         </header>
 
         <section className="grid gap-8 px-5 py-12 md:grid-cols-[1.08fr_0.92fr] md:px-8 md:py-16">
