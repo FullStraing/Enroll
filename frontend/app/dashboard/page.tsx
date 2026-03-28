@@ -320,7 +320,7 @@ function DashboardPageContent() {
         return previewUrl;
       });
       setSharePreviewVisible(true);
-      window.setTimeout(() => setSharePreviewVisible(false), 2600);
+      window.setTimeout(() => setSharePreviewVisible(false), 3400);
 
       try {
         const copied = await copyImageToClipboard(blob);

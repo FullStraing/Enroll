@@ -37,6 +37,7 @@ export type DashboardSnapshotSurfaceProps = {
   admissions: number;
   admissionsBreakdown: AdmissionsScoreBreakdown;
   actionsSlot?: ReactNode;
+  donutMode?: "interactive" | "export";
 };
 
 type DashboardSnapshotCardProps = DashboardSnapshotSurfaceProps & {
@@ -68,6 +69,7 @@ function DashboardSnapshotSurface({
   admissions,
   admissionsBreakdown,
   actionsSlot,
+  donutMode = "interactive",
 }: DashboardSnapshotSurfaceProps) {
   const showAllTests = allTestLabels.length > 0;
   const visibleHonors = honors.slice(0, 4);
@@ -209,7 +211,7 @@ function DashboardSnapshotSurface({
                 {loading ? (
                   <Skeleton className="h-36 w-36 rounded-full" />
                 ) : (
-                  <AdmissionsScoreDonut breakdown={admissionsBreakdown} total={admissions} />
+                  <AdmissionsScoreDonut breakdown={admissionsBreakdown} total={admissions} mode={donutMode} />
                 )}
               </div>
             </div>
@@ -261,6 +263,7 @@ export function DashboardSnapshotCard({
     <div ref={snapshotRef}>
       <DashboardSnapshotSurface
         {...surfaceProps}
+        donutMode="interactive"
         actionsSlot={
           <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
             <Button
@@ -297,7 +300,7 @@ export function DashboardExportCard({
   return (
     <div ref={snapshotRef} className="w-[1600px] bg-white p-10">
       <div className="mx-auto w-[1520px]">
-        <DashboardSnapshotSurface {...surfaceProps} />
+        <DashboardSnapshotSurface {...surfaceProps} donutMode="export" />
       </div>
     </div>
   );

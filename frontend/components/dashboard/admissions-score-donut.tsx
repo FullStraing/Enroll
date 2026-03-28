@@ -9,6 +9,7 @@ type AdmissionsScoreDonutProps = {
   breakdown: AdmissionsScoreBreakdown;
   total: number;
   className?: string;
+  mode?: "interactive" | "export";
 };
 
 type DonutSlice = {
@@ -26,52 +27,100 @@ type DonutSlice = {
   value: number;
 };
 
-export function AdmissionsScoreDonut({ breakdown, total, className }: AdmissionsScoreDonutProps) {
+function buildSlices(breakdown: AdmissionsScoreBreakdown, trackColor: string): DonutSlice[] {
+  const earnedSlices: DonutSlice[] = breakdown.segments
+    .filter((segment) => segment.contribution > 0)
+    .map((segment) => ({
+      key: segment.key,
+      label: segment.label,
+      weight: segment.weight,
+      score: segment.score,
+      contribution: segment.contribution,
+      missingPoints: segment.missingPoints,
+      status: segment.status,
+      color: segment.color,
+      description: segment.description,
+      missingHint: segment.missingHint,
+      sliceKey: segment.key,
+      value: segment.contribution,
+    }));
+
+  const remainingTotal = Math.max(0, 100 - breakdown.total);
+  if (remainingTotal > 0) {
+    earnedSlices.push({
+      key: "missing",
+      label: "Missing to improve score",
+      weight: remainingTotal,
+      value: remainingTotal,
+      score: 0,
+      contribution: remainingTotal,
+      missingPoints: remainingTotal,
+      status: "Needs work",
+      color: trackColor,
+      description: "Grouped remaining score across all admissions categories.",
+      missingHint: "Complete profile readiness, tests, and planning to increase your score.",
+      sliceKey: "missing",
+    });
+  }
+
+  return earnedSlices;
+}
+
+function buildExportGradient(slices: DonutSlice[], total: number) {
+  if (!slices.length) {
+    return "conic-gradient(from -90deg, #E6EAEE 0deg 360deg)";
+  }
+
+  const coloredSpan = total * 3.6;
+  const startAngle = coloredSpan / 2 - 90;
+  let cursor = 0;
+  const stops = slices.map((slice) => {
+    const nextCursor = cursor + slice.value * 3.6;
+    const stop = `${slice.color} ${cursor}deg ${nextCursor}deg`;
+    cursor = nextCursor;
+    return stop;
+  });
+
+  return `conic-gradient(from ${startAngle}deg, ${stops.join(", ")})`;
+}
+
+function ExportScoreDonut({ slices, total }: { slices: DonutSlice[]; total: number }) {
+  const gradient = useMemo(() => buildExportGradient(slices, total), [slices, total]);
+
+  return (
+    <div className="relative mx-auto h-[196px] w-[196px]">
+      <div
+        className="absolute inset-0 rounded-full"
+        style={{
+          backgroundImage: gradient,
+        }}
+      />
+      <div className="absolute inset-[20px] rounded-full bg-white shadow-[inset_0_0_0_1px_rgba(0,0,0,0.08)]" />
+      <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+        <div className="text-[44px] font-black leading-none tracking-tight text-black">{total}%</div>
+      </div>
+    </div>
+  );
+}
+
+export function AdmissionsScoreDonut({
+  breakdown,
+  total,
+  className,
+  mode = "interactive",
+}: AdmissionsScoreDonutProps) {
   const [activeKey, setActiveKey] = useState<string | null>(null);
   const trackColor = "#E6EAEE";
 
-  const slices = useMemo<DonutSlice[]>(
-    () => {
-      const earnedSlices: DonutSlice[] = breakdown.segments
-        .filter((segment) => segment.contribution > 0)
-        .map((segment) => ({
-          key: segment.key,
-          label: segment.label,
-          weight: segment.weight,
-          score: segment.score,
-          contribution: segment.contribution,
-          missingPoints: segment.missingPoints,
-          status: segment.status,
-          color: segment.color,
-          description: segment.description,
-          missingHint: segment.missingHint,
-          sliceKey: segment.key,
-          value: segment.contribution,
-        }));
+  const slices = useMemo(() => buildSlices(breakdown, trackColor), [breakdown]);
 
-      const remainingTotal = Math.max(0, 100 - breakdown.total);
-
-      if (remainingTotal > 0) {
-        earnedSlices.push({
-          key: "missing",
-          label: "Missing to improve score",
-          weight: remainingTotal,
-          value: remainingTotal,
-          score: 0,
-          contribution: remainingTotal,
-          missingPoints: remainingTotal,
-          status: "Needs work",
-          color: trackColor,
-          description: "Grouped remaining score across all admissions categories.",
-          missingHint: "Complete profile readiness, tests, and planning to increase your score.",
-          sliceKey: "missing",
-        });
-      }
-
-      return earnedSlices;
-    },
-    [breakdown.segments, breakdown.total],
-  );
+  if (mode === "export") {
+    return (
+      <div className={cn("relative mx-auto w-full max-w-[280px]", className)}>
+        <ExportScoreDonut slices={slices} total={total} />
+      </div>
+    );
+  }
 
   const activeSegment =
     activeKey === "missing"

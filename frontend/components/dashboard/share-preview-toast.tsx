@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Lottie from "lottie-react";
+import { createPortal } from "react-dom";
 import checkboxAnimation from "@/public/animations/checkbox-animation.json";
 
 type SharePreviewToastProps = {
@@ -9,22 +11,30 @@ type SharePreviewToastProps = {
 };
 
 export function SharePreviewToast({ imageUrl, visible }: SharePreviewToastProps) {
-  if (!visible || !imageUrl) return null;
+  const [mounted, setMounted] = useState(false);
 
-  return (
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
+
+  if (!visible || !imageUrl) return null;
+  if (!mounted || typeof document === "undefined") return null;
+
+  return createPortal(
     <div
       data-share-ignore
-      className="pointer-events-none fixed bottom-5 right-5 z-[120] w-[300px] rounded-2xl border-2 border-black bg-white p-3 shadow-[0_8px_0_#000]"
+      className="pointer-events-none fixed inset-x-4 bottom-4 z-[160] mx-auto w-auto max-w-[340px] rounded-2xl border-2 border-black bg-white p-3 shadow-[0_8px_0_#000] sm:inset-x-auto sm:right-5 sm:mx-0 sm:w-[320px]"
     >
       <div className="flex items-start gap-3">
-        <div className="relative mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#DAF5F0]/75 ring-1 ring-black/8">
-          <span className="absolute h-8 w-8 rounded-full bg-[#63CDB8]/25 animate-ping" />
+        <div className="relative mt-0.5 flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#DAF5F0]/75 ring-1 ring-black/8">
+          <span className="absolute h-9 w-9 rounded-full bg-[#63CDB8]/25 animate-ping" />
           <Lottie
             animationData={checkboxAnimation}
             autoplay
             loop={false}
             initialSegment={[4, 25]}
-            className="relative h-12 w-12 scale-[1.12]"
+            className="relative h-12 w-12 scale-[1.18]"
           />
         </div>
         <div className="min-w-0 flex-1">
@@ -38,6 +48,7 @@ export function SharePreviewToast({ imageUrl, visible }: SharePreviewToastProps)
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={imageUrl} alt="Dashboard preview" className="h-auto w-full object-cover" />
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
