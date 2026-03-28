@@ -71,9 +71,28 @@ export default function CalendarPage() {
   const completeTimeoutRef = useRef<number | null>(null);
   const loadRequestIdRef = useRef(0);
   const mutationVersionRef = useRef(0);
+  const applicationsRef = useRef<ApplicationItem[]>([]);
+  const myUniversitiesRef = useRef<MyUniversityItem[]>([]);
+
+  useEffect(() => {
+    applicationsRef.current = applications;
+  }, [applications]);
+
+  useEffect(() => {
+    myUniversitiesRef.current = myUniversities;
+  }, [myUniversities]);
+
+  const invalidateWorkspaceLoads = useCallback(() => {
+    loadRequestIdRef.current += 1;
+    mutationVersionRef.current += 1;
+  }, []);
 
   const persistCalendarCache = useCallback(
-    (nextTasks: TaskItem[], nextApplications = applications, nextUniversities = myUniversities) => {
+    (
+      nextTasks: TaskItem[],
+      nextApplications = applicationsRef.current,
+      nextUniversities = myUniversitiesRef.current,
+    ) => {
       const token = getToken();
       if (!token) return;
       writeSessionCache(
@@ -86,7 +105,7 @@ export default function CalendarPage() {
         token,
       );
     },
-    [applications, myUniversities],
+    [],
   );
 
   const loadWorkspace = useCallback(async () => {
@@ -179,6 +198,7 @@ export default function CalendarPage() {
     setSaving(true);
     setStatusText("");
     try {
+      invalidateWorkspaceLoads();
       const dueDate = resolveDueDate(duePreset, customDueDate);
       const payload: Record<string, unknown> = {
         title: taskTitle.trim(),
@@ -195,9 +215,8 @@ export default function CalendarPage() {
       }
 
       const created = await apiFetch<TaskItem>("/api/tasks/", { method: "POST", body: JSON.stringify(payload) }, token);
-      mutationVersionRef.current += 1;
       setTasks((prev) => {
-        const nextTasks = [created, ...prev];
+        const nextTasks = [created, ...prev.filter((item) => item.id !== created.id)];
         persistCalendarCache(nextTasks);
         return nextTasks;
       });
@@ -243,8 +262,8 @@ export default function CalendarPage() {
 
     setSavingTaskId(task.id);
     try {
+      invalidateWorkspaceLoads();
       await apiFetch(`/api/tasks/${task.id}/`, { method: "PUT", body: JSON.stringify(buildTaskUpdatePayload(task, { status: nextStatus })) }, token);
-      mutationVersionRef.current += 1;
       setTasks((prev) => {
         const nextTasks = prev.map((item) => (item.id === task.id ? { ...item, status: nextStatus } : item));
         persistCalendarCache(nextTasks);
