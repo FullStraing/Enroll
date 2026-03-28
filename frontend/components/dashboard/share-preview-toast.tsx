@@ -27,14 +27,14 @@ export function SharePreviewToast({ imageUrl, visible }: SharePreviewToastProps)
       className="pointer-events-none fixed inset-x-4 bottom-4 z-[160] mx-auto w-auto max-w-[340px] rounded-2xl border-2 border-black bg-white p-3 shadow-[0_8px_0_#000] sm:inset-x-auto sm:right-5 sm:mx-0 sm:w-[320px]"
     >
       <div className="flex items-start gap-3">
-        <div className="relative mt-0.5 flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#DAF5F0]/75 ring-1 ring-black/8">
-          <span className="absolute h-9 w-9 rounded-full bg-[#63CDB8]/25 animate-ping" />
+        <div className="relative mt-0.5 flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#DAF5F0]/75 ring-1 ring-black/8">
+          <span className="absolute h-11 w-11 rounded-full bg-[#63CDB8]/25 animate-ping" />
           <Lottie
             animationData={checkboxAnimation}
             autoplay
             loop={false}
             initialSegment={[4, 25]}
-            className="relative h-12 w-12 scale-[1.18]"
+            className="relative h-16 w-16 scale-[1.28]"
           />
         </div>
         <div className="min-w-0 flex-1">
