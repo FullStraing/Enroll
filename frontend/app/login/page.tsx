@@ -8,6 +8,7 @@ import { useAuth } from "@/components/auth-provider";
 import { Button } from "@/components/ui/button";
 import { GoogleAuthButton } from "@/components/google-auth-button";
 import { hasPendingStoredIntroQuiz, syncStoredIntroQuizToProfile } from "@/lib/intro-quiz";
+import { resolvePostAuthDestination } from "@/lib/onboarding-gate";
 import { RequiredMark } from "@/components/ui/required-mark";
 import { RuntimeNotice } from "@/components/runtime-notice";
 import { fetchRuntimeConfig, type RuntimeConfig } from "@/lib/runtime-config";
@@ -52,7 +53,7 @@ export default function LoginPage() {
           return;
         }
       }
-      window.location.assign("/dashboard");
+      window.location.assign(await resolvePostAuthDestination(data.access));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");
     } finally {
@@ -70,7 +71,7 @@ export default function LoginPage() {
         return;
       }
     }
-    window.location.assign("/dashboard");
+    window.location.assign(await resolvePostAuthDestination(access));
   }, [setSession]);
 
   const handleGoogleError = useCallback((message: string) => {

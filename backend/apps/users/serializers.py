@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
 from .models import StudentProfile
+from .progress import has_completed_minimum_profile
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -23,6 +24,10 @@ class RegisterSerializer(serializers.ModelSerializer):
 
 
 class StudentProfileSerializer(serializers.ModelSerializer):
+    onboarding_completed = serializers.SerializerMethodField(read_only=True)
+    is_staff = serializers.SerializerMethodField(read_only=True)
+    is_superuser = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = StudentProfile
         fields = [
@@ -48,7 +53,19 @@ class StudentProfileSerializer(serializers.ModelSerializer):
             "target_country",
             "common_app_profile",
             "essays_onboarding_seen",
+            "onboarding_completed",
+            "is_staff",
+            "is_superuser",
         ]
+
+    def get_onboarding_completed(self, obj: StudentProfile):
+        return has_completed_minimum_profile(obj)
+
+    def get_is_staff(self, obj: StudentProfile):
+        return bool(obj.user.is_staff)
+
+    def get_is_superuser(self, obj: StudentProfile):
+        return bool(obj.user.is_superuser)
 
     def update(self, instance, validated_data):
         # Merge Common App draft payload instead of overwriting whole object on partial updates.

@@ -8,6 +8,8 @@ import { useAuth } from "@/components/auth-provider";
 import { Button } from "@/components/ui/button";
 import { GoogleAuthButton } from "@/components/google-auth-button";
 import { hasPendingStoredIntroQuiz, syncStoredIntroQuizToProfile } from "@/lib/intro-quiz";
+import { resolvePostAuthDestination } from "@/lib/onboarding-gate";
+import { trackProductEvent } from "@/lib/product-analytics";
 import { RequiredMark } from "@/components/ui/required-mark";
 import { RuntimeNotice } from "@/components/runtime-notice";
 import { fetchRuntimeConfig, type RuntimeConfig } from "@/lib/runtime-config";
@@ -44,6 +46,7 @@ export default function RegisterPage() {
     setPending(true);
     setError("");
     try {
+      void trackProductEvent("signup_started", { source: "password" });
       await apiFetch("/api/auth/register/", {
         method: "POST",
         body: JSON.stringify({ username, email, password }),
@@ -61,7 +64,7 @@ export default function RegisterPage() {
           return;
         }
       }
-      window.location.assign("/dashboard");
+      window.location.assign(await resolvePostAuthDestination(data.access));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Register failed");
     } finally {
@@ -79,7 +82,7 @@ export default function RegisterPage() {
         return;
       }
     }
-    window.location.assign("/dashboard");
+    window.location.assign(await resolvePostAuthDestination(access));
   }, [setSession]);
 
   const handleGoogleError = useCallback((message: string) => {
@@ -143,6 +146,7 @@ export default function RegisterPage() {
           onTokens={handleGoogleTokens}
           onError={handleGoogleError}
           unavailableMessage={googleUnavailableMessage}
+          onBeforeExchange={() => trackProductEvent("signup_started", { source: "google" })}
         />
         {error ? <p className="mt-3 text-sm text-red-600">{error}</p> : null}
         <p className="mt-4 text-sm text-black/70">

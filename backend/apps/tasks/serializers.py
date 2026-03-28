@@ -11,7 +11,7 @@ class RoadmapStageSerializer(serializers.ModelSerializer):
 
 
 class TaskApplicationSerializer(serializers.ModelSerializer):
-    university_id = serializers.IntegerField(source="university_id", read_only=True)
+    university_id = serializers.IntegerField(read_only=True)
     university_name = serializers.SerializerMethodField()
 
     class Meta:

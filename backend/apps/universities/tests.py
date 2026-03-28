@@ -7,6 +7,7 @@ from django.urls import reverse
 from django.utils import timezone
 from rest_framework.test import APITestCase, APIClient
 
+from apps.analytics.models import ProductEvent
 from .connectors.licensed_feed import LicensedFeedConnector
 from .categorying import category_from_acceptance_rate
 from .models import (
@@ -141,6 +142,7 @@ class UniversityDataTests(APITestCase):
 
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data["category"], "reach")
+        self.assertEqual(ProductEvent.objects.filter(user=self.user, name="first_university_added").count(), 1)
 
     def test_category_from_acceptance_rate_helper(self):
         self.assertEqual(category_from_acceptance_rate(5), "high_reach")

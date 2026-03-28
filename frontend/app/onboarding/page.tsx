@@ -274,6 +274,17 @@ export default function OnboardingPage() {
         const cleanLanguageTests = normalizedLanguageTests.map((item) => ({ type: item.type, score: item.score.trim() })).filter((item) => item.score);
         const cleanApScores = form.apScores.map((item) => ({ exam: item.exam.trim(), score: item.score.trim() })).filter((item) => item.exam && item.score);
 
+        const nextAnswers: IntroAnswers = {
+          ...quizAnswers,
+          major: form.major || undefined,
+          country: form.country || undefined,
+          intakeYear: form.intakeYear || undefined,
+          schoolLevel: form.schoolLevel || undefined,
+          gpaScale: form.gpaScale || undefined,
+          gpaValue: form.gpaValue || undefined,
+          tests: [...form.academicTests, ...form.languageTests].map((item) => item.type),
+        };
+
         const payload: Partial<Profile> = {
           full_name: form.fullName || "",
           intended_major: form.major || "",
@@ -286,6 +297,10 @@ export default function OnboardingPage() {
           activities: cleanActivities,
           honors: cleanHonors,
           common_app_profile: {
+            intro_quiz_completed: true,
+            intro_quiz_answers: {
+              ...nextAnswers,
+            },
             dashboard_snapshot: {
               academic_tests: cleanAcademicTests,
               language_tests: cleanLanguageTests,
@@ -298,16 +313,6 @@ export default function OnboardingPage() {
         await apiFetch("/api/auth/profile/", { method: "PATCH", body: JSON.stringify(payload) }, token);
         lastSavedEditSignatureRef.current = JSON.stringify(form);
 
-        const nextAnswers: IntroAnswers = {
-          ...quizAnswers,
-          major: form.major || undefined,
-          country: form.country || undefined,
-          intakeYear: form.intakeYear || undefined,
-          schoolLevel: form.schoolLevel || undefined,
-          gpaScale: form.gpaScale || undefined,
-          gpaValue: form.gpaValue || undefined,
-          tests: [...form.academicTests, ...form.languageTests].map((item) => item.type),
-        };
         setQuizAnswers(nextAnswers);
         writeStoredIntroQuiz({ step: 6, answers: nextAnswers });
         writeSessionCache(SESSION_CACHE_KEYS.onboarding, form, token);

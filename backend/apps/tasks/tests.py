@@ -2,6 +2,7 @@ from django.contrib.auth.models import User
 from django.urls import reverse
 from rest_framework.test import APITestCase, APIClient
 
+from apps.analytics.models import ProductEvent
 from apps.universities.models import University, Application, StudentUniversity
 
 
@@ -32,3 +33,27 @@ class TaskTests(APITestCase):
 
         self.assertEqual(response.status_code, 201)
         self.assertTrue(len(response.data) > 0)
+
+    def test_first_task_created_event_records_once(self):
+        first = self.client.post(
+            reverse("tasks_list_create"),
+            {
+                "title": "Finish essay draft",
+                "status": "planned",
+                "priority": "medium",
+            },
+            format="json",
+        )
+        second = self.client.post(
+            reverse("tasks_list_create"),
+            {
+                "title": "Prepare recommendation request",
+                "status": "planned",
+                "priority": "medium",
+            },
+            format="json",
+        )
+
+        self.assertEqual(first.status_code, 201)
+        self.assertEqual(second.status_code, 201)
+        self.assertEqual(ProductEvent.objects.filter(user=self.user, name="first_task_created").count(), 1)

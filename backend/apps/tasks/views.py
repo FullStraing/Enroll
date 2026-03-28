@@ -2,6 +2,7 @@ from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.analytics.services import record_product_event
 from apps.universities.models import Application
 from .models import RoadmapStage, Task
 from .serializers import RoadmapStageSerializer, TaskSerializer
@@ -86,7 +87,10 @@ class TaskListCreateView(generics.ListCreateAPIView):
         return queryset.select_related("roadmap_stage", "application", "application__university")
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        task = serializer.save(user=self.request.user)
+        if Task.objects.filter(user=self.request.user).count() == 1:
+            record_product_event("first_task_created", user=self.request.user, source="tasks")
+        return task
 
 
 class TaskDetailView(generics.RetrieveUpdateAPIView):

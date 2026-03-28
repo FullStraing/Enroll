@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { MessageSquare, Send, Users2 } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { ProtectedPage } from "@/components/protected-page";
@@ -82,15 +82,18 @@ export default function CommunityPage() {
   const [sending, setSending] = useState(false);
   const [statusText, setStatusText] = useState("");
   const [runtimeConfig, setRuntimeConfig] = useState<RuntimeConfig | null>(null);
+  const roomsRequestIdRef = useRef(0);
+  const messagesRequestIdRef = useRef(0);
 
   const activeRoom = useMemo(
     () => rooms.find((room) => room.slug === activeRoomSlug) ?? null,
     [rooms, activeRoomSlug],
   );
 
-  async function loadRooms() {
+  const loadRooms = useCallback(async () => {
     const token = getToken();
     if (!token) return;
+    const requestId = ++roomsRequestIdRef.current;
     setLoadingRooms(true);
     try {
       const data = await apiFetch<CommunityGroupSummary[]>(
@@ -98,34 +101,55 @@ export default function CommunityPage() {
         { method: "GET" },
         token,
       );
+      if (requestId !== roomsRequestIdRef.current) return;
       setRooms(data);
-      setActiveRoomSlug((current) => current || data.find((room) => room.slug === "central-asia-applicants")?.slug || data[0]?.slug || "");
+      setActiveRoomSlug((current) => {
+        const nextActiveRoomSlug =
+          data.find((room) => room.slug === current)?.slug ||
+          data.find((room) => room.slug === "central-asia-applicants")?.slug ||
+          data[0]?.slug ||
+          "";
+        if (!nextActiveRoomSlug) {
+          setMessages([]);
+        }
+        return nextActiveRoomSlug;
+      });
       setStatusText("");
     } catch (error) {
-      setStatusText(error instanceof Error ? error.message : "Could not load chat rooms.");
+      if (requestId === roomsRequestIdRef.current) {
+        setStatusText(error instanceof Error ? error.message : "Could not load chat rooms.");
+      }
     } finally {
-      setLoadingRooms(false);
+      if (requestId === roomsRequestIdRef.current) {
+        setLoadingRooms(false);
+      }
     }
-  }
+  }, []);
 
-  async function loadMessages(slug: string) {
+  const loadMessages = useCallback(async (slug: string) => {
     const token = getToken();
     if (!token || !slug) return;
+    const requestId = ++messagesRequestIdRef.current;
     setLoadingMessages(true);
     try {
       const data = await apiFetch<CommunityPost[]>(`/api/community/groups/${slug}/posts/`, { method: "GET" }, token);
+      if (requestId !== messagesRequestIdRef.current) return;
       setMessages([...data].reverse());
       setStatusText("");
     } catch (error) {
-      setStatusText(error instanceof Error ? error.message : "Could not load room messages.");
+      if (requestId === messagesRequestIdRef.current) {
+        setStatusText(error instanceof Error ? error.message : "Could not load room messages.");
+      }
     } finally {
-      setLoadingMessages(false);
+      if (requestId === messagesRequestIdRef.current) {
+        setLoadingMessages(false);
+      }
     }
-  }
+  }, []);
 
   useEffect(() => {
     void loadRooms();
-  }, []);
+  }, [loadRooms]);
 
   useEffect(() => {
     let cancelled = false;
@@ -144,8 +168,10 @@ export default function CommunityPage() {
   useEffect(() => {
     if (activeRoomSlug) {
       void loadMessages(activeRoomSlug);
+    } else {
+      setMessages([]);
     }
-  }, [activeRoomSlug]);
+  }, [activeRoomSlug, loadMessages]);
 
   async function ensureMembership(slug: string) {
     const token = getToken();

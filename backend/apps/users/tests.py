@@ -2,6 +2,7 @@ from django.contrib.auth.models import User
 from django.urls import reverse
 from django.test import override_settings
 from rest_framework.test import APITestCase, APIClient
+from apps.analytics.models import ProductEvent
 from .models import StudentProfile
 
 
@@ -54,6 +55,26 @@ class StudentProfileTests(APITestCase):
         self.assertEqual(response.data["graduation_year"], 2026)
         self.assertEqual(response.data["intended_major"], "Computer Science")
         self.assertEqual(response.data["activities"], ["Robotics club", "Volunteer"])
+
+    def test_profile_completion_records_onboarding_completed_once(self):
+        payload = {
+            "full_name": "Ivan Petrov",
+            "country": "Kazakhstan",
+            "intended_major": "Computer Science",
+            "common_app_profile": {
+                "intro_quiz_answers": {
+                    "intakeYear": "2027",
+                    "schoolLevel": "12",
+                }
+            },
+        }
+
+        first = self.client.patch(self.profile_url, payload, format="json")
+        second = self.client.patch(self.profile_url, {"school_name": "Gymnasium 1"}, format="json")
+
+        self.assertEqual(first.status_code, 200)
+        self.assertEqual(second.status_code, 200)
+        self.assertEqual(ProductEvent.objects.filter(user=self.user, name="onboarding_completed").count(), 1)
 
     def test_common_app_progress_contract_shape(self):
         response = self.client.get(self.common_app_progress_url)
@@ -155,6 +176,8 @@ class GoogleAuthTests(APITestCase):
         self.assertIn("refresh", response.data)
         self.assertTrue(response.data["is_new_user"])
         self.assertTrue(User.objects.filter(email="google.user@example.com").exists())
+        google_user = User.objects.get(email="google.user@example.com")
+        self.assertEqual(ProductEvent.objects.filter(user=google_user, name="signup_completed").count(), 1)
 
     @override_settings(GOOGLE_OAUTH_CLIENT_ID="test-client-id")
     def test_google_auth_returns_error_when_token_is_invalid(self):
@@ -170,3 +193,20 @@ class GoogleAuthTests(APITestCase):
 
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data["detail"], "Invalid Google token audience.")
+
+
+class RegisterAnalyticsTests(APITestCase):
+    def test_register_records_signup_completed(self):
+        response = self.client.post(
+            reverse("register"),
+            {
+                "username": "new-user",
+                "email": "new-user@example.com",
+                "password": "password123",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 201)
+        user = User.objects.get(username="new-user")
+        self.assertEqual(ProductEvent.objects.filter(user=user, name="signup_completed").count(), 1)

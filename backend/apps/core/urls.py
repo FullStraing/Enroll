@@ -62,6 +62,7 @@ urlpatterns = [
     path("auth/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("auth/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("auth/", include("apps.users.urls")),
+    path("analytics/", include("apps.analytics.urls")),
     path("", include("apps.universities.urls")),
     path("", include("apps.tasks.urls")),
     path("", include("apps.documents.urls")),

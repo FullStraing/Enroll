@@ -8,6 +8,7 @@ from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.analytics.services import record_product_event
 from apps.essays.models import Essay, EssayVersion
 from apps.essays.serializers import EssaySerializer, EssayVersionSerializer
 
@@ -56,6 +57,8 @@ class EssayListCreateView(generics.ListCreateAPIView):
             status="draft",
         )
         Essay.objects.filter(pk=essay.pk).update(updated_at=timezone.now())
+        if Essay.objects.filter(student=self.request.user).count() == 1:
+            record_product_event("first_essay_started", user=self.request.user, source=essay_type)
 
     def create(self, request, *args, **kwargs):
         response = super().create(request, *args, **kwargs)

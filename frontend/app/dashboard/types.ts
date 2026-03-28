@@ -30,6 +30,9 @@ export type DashboardSnapshotData = {
 export type Profile = {
   full_name?: string;
   username?: string;
+  is_staff?: boolean;
+  is_superuser?: boolean;
+  onboarding_completed?: boolean;
   country?: string;
   intended_major?: string;
   graduation_year?: number | null;

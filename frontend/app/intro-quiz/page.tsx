@@ -16,6 +16,7 @@ import {
   syncStoredIntroQuizToProfile,
   writeStoredIntroQuiz,
 } from "@/lib/intro-quiz";
+import { resolvePostAuthDestination } from "@/lib/onboarding-gate";
 
 type IntroAnswers = {
   country: string;
@@ -110,11 +111,21 @@ export default function IntroQuizPage() {
   const [statusText, setStatusText] = useState("");
 
   useEffect(() => {
+    let cancelled = false;
     setIsAuthed(Boolean(getToken()));
     try {
       const linked = localStorage.getItem(INTRO_QUIZ_LINKED_STORAGE_KEY) === "1";
       if (linked) {
-        router.replace(getToken() ? "/dashboard" : "/register");
+        const token = getToken();
+        if (token) {
+          void resolvePostAuthDestination(token).then((destination) => {
+            if (!cancelled) {
+              router.replace(destination);
+            }
+          });
+        } else {
+          router.replace("/register");
+        }
         return;
       }
       const parsed = readStoredIntroQuiz() as { step: number; answers: IntroAnswers } | null;
@@ -124,6 +135,9 @@ export default function IntroQuizPage() {
     } catch {
       // ignore invalid local data
     }
+    return () => {
+      cancelled = true;
+    };
   }, [router]);
 
   useEffect(() => {
@@ -178,7 +192,7 @@ export default function IntroQuizPage() {
     try {
       await syncStoredIntroQuizToProfile(token);
       if (!hasPendingStoredIntroQuiz()) {
-        window.location.assign("/dashboard");
+        window.location.assign(await resolvePostAuthDestination(token));
       }
     } catch (error) {
       setStatusText(error instanceof Error ? error.message : "Не удалось сохранить ответы в профиль.");

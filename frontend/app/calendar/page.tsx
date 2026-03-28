@@ -69,6 +69,8 @@ export default function CalendarPage() {
   const [completingTaskId, setCompletingTaskId] = useState<number | null>(null);
   const [statusText, setStatusText] = useState("");
   const completeTimeoutRef = useRef<number | null>(null);
+  const loadRequestIdRef = useRef(0);
+  const mutationVersionRef = useRef(0);
 
   const persistCalendarCache = useCallback(
     (nextTasks: TaskItem[], nextApplications = applications, nextUniversities = myUniversities) => {
@@ -90,6 +92,8 @@ export default function CalendarPage() {
   const loadWorkspace = useCallback(async () => {
     const token = getToken();
     if (!token) return;
+    const requestId = ++loadRequestIdRef.current;
+    const mutationVersionAtStart = mutationVersionRef.current;
 
     const { payload: cached, isFresh } = readSessionCache<CalendarCachePayload>(SESSION_CACHE_KEYS.calendar, SESSION_CACHE_TTLS.calendar, token);
     if (cached) {
@@ -114,6 +118,9 @@ export default function CalendarPage() {
         apiFetch<ApplicationItem[]>("/api/applications/", { method: "GET" }, token),
         apiFetch<MyUniversityItem[]>("/api/my-universities/", { method: "GET" }, token),
       ]);
+      if (requestId !== loadRequestIdRef.current || mutationVersionRef.current !== mutationVersionAtStart) {
+        return;
+      }
       setTasks(taskData);
       setApplications(appData);
       setMyUniversities(myUniData);
@@ -121,12 +128,17 @@ export default function CalendarPage() {
       persistCalendarCache(taskData, appData, myUniData);
       setCacheReady(true);
     } catch (error) {
+      if (requestId !== loadRequestIdRef.current) {
+        return;
+      }
       if (!cached) {
         setStatusText(error instanceof Error ? error.message : "Could not load tasks.");
       }
     } finally {
-      setLoading(false);
-      setHydrated(true);
+      if (requestId === loadRequestIdRef.current) {
+        setLoading(false);
+        setHydrated(true);
+      }
     }
   }, [persistCalendarCache]);
 
@@ -183,6 +195,7 @@ export default function CalendarPage() {
       }
 
       const created = await apiFetch<TaskItem>("/api/tasks/", { method: "POST", body: JSON.stringify(payload) }, token);
+      mutationVersionRef.current += 1;
       setTasks((prev) => {
         const nextTasks = [created, ...prev];
         persistCalendarCache(nextTasks);
@@ -231,6 +244,7 @@ export default function CalendarPage() {
     setSavingTaskId(task.id);
     try {
       await apiFetch(`/api/tasks/${task.id}/`, { method: "PUT", body: JSON.stringify(buildTaskUpdatePayload(task, { status: nextStatus })) }, token);
+      mutationVersionRef.current += 1;
       setTasks((prev) => {
         const nextTasks = prev.map((item) => (item.id === task.id ? { ...item, status: nextStatus } : item));
         persistCalendarCache(nextTasks);

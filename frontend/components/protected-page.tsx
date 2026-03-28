@@ -1,14 +1,19 @@
 ﻿"use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Loader } from "@/components/loader";
 import { useAuth } from "@/components/auth-provider";
 
 export function ProtectedPage({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const { status } = useAuth();
+  const pathname = usePathname();
+  const { status, profile } = useAuth();
   const [showLoader, setShowLoader] = useState(false);
+  const onboardingIncomplete =
+    status === "authenticated" &&
+    profile?.onboarding_completed === false &&
+    pathname !== "/onboarding";
 
   useEffect(() => {
     if (status !== "loading") {
@@ -25,10 +30,16 @@ export function ProtectedPage({ children }: { children: React.ReactNode }) {
     }
   }, [status, router]);
 
-  if (status === "loading" && showLoader) {
+  useEffect(() => {
+    if (onboardingIncomplete) {
+      router.replace("/onboarding");
+    }
+  }, [onboardingIncomplete, router]);
+
+  if ((status === "loading" && showLoader) || onboardingIncomplete) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <Loader size="lg" label="Проверяем сессию..." />
+        <Loader size="lg" label={onboardingIncomplete ? "Redirecting to Edit Profile..." : "Проверяем сессию..."} />
       </div>
     );
   }

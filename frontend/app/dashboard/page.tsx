@@ -38,6 +38,7 @@ import {
 import { apiFetch } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import { readStoredIntroQuiz } from "@/lib/intro-quiz";
+import { isProfileReadyForDashboard } from "@/lib/onboarding-gate";
 import { formatDateShort, formatDateShortNoYear } from "@/lib/date-format";
 import { readSessionCache, SESSION_CACHE_KEYS, SESSION_CACHE_TTLS, writeSessionCache } from "@/lib/session-cache";
 
@@ -165,6 +166,13 @@ function DashboardPageContent() {
     if (!sharePreviewUrl) return;
     return () => URL.revokeObjectURL(sharePreviewUrl);
   }, [sharePreviewUrl]);
+
+  useEffect(() => {
+    if (loading) return;
+    if (profile && !isProfileReadyForDashboard(profile)) {
+      router.replace("/onboarding");
+    }
+  }, [loading, profile, router]);
 
   const profileMajor = profile?.intended_major || quizAnswers.major || "N/A";
   const profileCountry = profile?.country || quizAnswers.country || "N/A";

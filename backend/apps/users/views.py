@@ -9,10 +9,12 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from apps.analytics.services import record_product_event
 from apps.core.runtime import feature_disabled_response
 from .common_app import build_common_app_progress
 from .google_auth import GoogleTokenVerificationError, verify_google_id_token
 from .models import StudentProfile
+from .progress import has_completed_minimum_profile
 from .serializers import RegisterSerializer, StudentProfileSerializer
 
 
@@ -37,6 +39,10 @@ class RegisterView(generics.CreateAPIView):
     serializer_class = RegisterSerializer
     permission_classes = [permissions.AllowAny]
 
+    def perform_create(self, serializer):
+        user = serializer.save()
+        record_product_event("signup_completed", user=user, source="password")
+
     def create(self, request, *args, **kwargs):
         if not settings.REGISTRATION_ENABLED:
             return feature_disabled_response("Registration is temporarily unavailable.")
@@ -50,6 +56,13 @@ class StudentProfileView(generics.RetrieveUpdateAPIView):
     def get_object(self):
         profile, _ = StudentProfile.objects.get_or_create(user=self.request.user)
         return profile
+
+    def perform_update(self, serializer):
+        profile = self.get_object()
+        was_complete = has_completed_minimum_profile(profile)
+        updated = serializer.save()
+        if not was_complete and has_completed_minimum_profile(updated):
+            record_product_event("onboarding_completed", user=self.request.user, source="profile_update")
 
 
 class CommonAppProgressView(APIView):
@@ -138,6 +151,8 @@ class GoogleAuthView(APIView):
         if created and not profile.full_name:
             profile.full_name = identity.full_name or f"{identity.given_name} {identity.family_name}".strip()
             profile.save(update_fields=["full_name"])
+        if created:
+            record_product_event("signup_completed", user=user, source="google")
 
         refresh = RefreshToken.for_user(user)
         return Response(

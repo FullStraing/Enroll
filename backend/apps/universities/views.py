@@ -6,6 +6,8 @@ from django.http import Http404
 from django.db import models
 from django.db.models import Max
 from rest_framework import generics, permissions
+
+from apps.analytics.services import record_product_event
 from rest_framework.pagination import PageNumberPagination
 from .models import Application, StudentUniversity, University, UniversityDeadline, UniversityMetric, UniversitySourceSnapshot
 from .serializers import (
@@ -294,7 +296,10 @@ class StudentUniversityListCreateView(generics.ListCreateAPIView):
         next_order = (
             StudentUniversity.objects.filter(student=self.request.user).aggregate(max_order=Max("sort_order"))["max_order"] or 0
         ) + 1
-        serializer.save(student=self.request.user, sort_order=next_order)
+        item = serializer.save(student=self.request.user, sort_order=next_order)
+        if StudentUniversity.objects.filter(student=self.request.user).count() == 1:
+            record_product_event("first_university_added", user=self.request.user, source="universities")
+        return item
 
 
 class StudentUniversityDetailView(generics.RetrieveUpdateDestroyAPIView):

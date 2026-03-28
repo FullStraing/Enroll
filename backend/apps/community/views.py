@@ -3,6 +3,7 @@ from __future__ import annotations
 import math
 import time
 
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.cache import cache
 from django.db.models import Count, Prefetch, Q

@@ -11,6 +11,9 @@ type AuthProfile = {
   username?: string;
   email?: string;
   essays_onboarding_seen?: boolean;
+  onboarding_completed?: boolean;
+  is_staff?: boolean;
+  is_superuser?: boolean;
 };
 
 type AuthContextValue = {

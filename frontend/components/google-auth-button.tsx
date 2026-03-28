@@ -9,6 +9,7 @@ type GoogleAuthButtonProps = {
   onError: (message: string) => void;
   disabled?: boolean;
   unavailableMessage?: string;
+  onBeforeExchange?: () => void | Promise<void>;
 };
 
 declare global {
@@ -42,6 +43,7 @@ export function GoogleAuthButton({
   onError,
   disabled = false,
   unavailableMessage,
+  onBeforeExchange,
 }: GoogleAuthButtonProps) {
   const [loading, setLoading] = useState(false);
   const [scriptFailed, setScriptFailed] = useState(false);
@@ -71,6 +73,9 @@ export function GoogleAuthButton({
           setLoading(true);
           onError("");
           try {
+            if (onBeforeExchange) {
+              await onBeforeExchange();
+            }
             const data = await apiFetch<{ access: string; refresh: string }>("/api/auth/google/", {
               method: "POST",
               body: JSON.stringify({ id_token: credential }),
@@ -114,7 +119,7 @@ export function GoogleAuthButton({
     return () => {
       cancelled = true;
     };
-  }, [clientId, onError, onTokens, unavailableMessage]);
+  }, [clientId, onBeforeExchange, onError, onTokens, unavailableMessage]);
 
   return (
     <div className="mt-4">

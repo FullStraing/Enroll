@@ -22,6 +22,26 @@ type ProfileForm = {
   target_country: string;
 };
 
+type AnalyticsSummary = {
+  totals: {
+    registered_users: number;
+    signup_started: number;
+    signup_completed: number;
+    onboarding_completed: number;
+    first_task_created: number;
+    first_university_added: number;
+    first_essay_started: number;
+  };
+  recent_events: Array<{
+    name: string;
+    source: string;
+    client_id: string;
+    created_at: string;
+    user__username?: string;
+    user__email?: string;
+  }>;
+};
+
 const initialForm: ProfileForm = {
   full_name: "",
   country: "",
@@ -35,13 +55,15 @@ const initialForm: ProfileForm = {
 
 export default function SettingsPage() {
   const router = useRouter();
-  const { logout: logoutSession } = useAuth();
+  const { logout: logoutSession, profile } = useAuth();
   const [form, setForm] = useState<ProfileForm>(initialForm);
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
+  const [analytics, setAnalytics] = useState<AnalyticsSummary | null>(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [statusText, setStatusText] = useState("");
 
   async function loadProfile() {
@@ -82,6 +104,22 @@ export default function SettingsPage() {
   useEffect(() => {
     void loadProfile();
   }, []);
+
+  useEffect(() => {
+    const token = getToken();
+    if (!token || !profile?.is_staff) return;
+    setAnalyticsLoading(true);
+    void apiFetch<AnalyticsSummary>("/api/analytics/summary/", { method: "GET" }, token)
+      .then((payload) => {
+        setAnalytics(payload);
+      })
+      .catch(() => {
+        setAnalytics(null);
+      })
+      .finally(() => {
+        setAnalyticsLoading(false);
+      });
+  }, [profile?.is_staff]);
 
   useEffect(() => {
     if (loading) return;
@@ -235,6 +273,42 @@ export default function SettingsPage() {
               </a>
             </div>
           </section>
+
+          {profile?.is_staff ? (
+            <section className="glass rounded-2xl p-5 xl:col-span-2">
+              <h2 className="text-lg font-semibold">Beta analytics</h2>
+              {analyticsLoading ? (
+                <div className="mt-4 flex justify-center py-6">
+                  <Loader size="md" label="Loading analytics..." />
+                </div>
+              ) : analytics ? (
+                <div className="mt-4 grid gap-4">
+                  <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-7">
+                    <div className="rounded-xl border border-white/10 bg-white/5 p-3"><p className="text-xs text-white/55">Users</p><p className="mt-1 text-2xl font-semibold">{analytics.totals.registered_users}</p></div>
+                    <div className="rounded-xl border border-white/10 bg-white/5 p-3"><p className="text-xs text-white/55">Signup started</p><p className="mt-1 text-2xl font-semibold">{analytics.totals.signup_started}</p></div>
+                    <div className="rounded-xl border border-white/10 bg-white/5 p-3"><p className="text-xs text-white/55">Signup completed</p><p className="mt-1 text-2xl font-semibold">{analytics.totals.signup_completed}</p></div>
+                    <div className="rounded-xl border border-white/10 bg-white/5 p-3"><p className="text-xs text-white/55">Onboarding</p><p className="mt-1 text-2xl font-semibold">{analytics.totals.onboarding_completed}</p></div>
+                    <div className="rounded-xl border border-white/10 bg-white/5 p-3"><p className="text-xs text-white/55">First task</p><p className="mt-1 text-2xl font-semibold">{analytics.totals.first_task_created}</p></div>
+                    <div className="rounded-xl border border-white/10 bg-white/5 p-3"><p className="text-xs text-white/55">First university</p><p className="mt-1 text-2xl font-semibold">{analytics.totals.first_university_added}</p></div>
+                    <div className="rounded-xl border border-white/10 bg-white/5 p-3"><p className="text-xs text-white/55">First essay</p><p className="mt-1 text-2xl font-semibold">{analytics.totals.first_essay_started}</p></div>
+                  </div>
+                  <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                    <h3 className="text-sm font-semibold uppercase tracking-wide text-white/65">Recent events</h3>
+                    <div className="mt-3 space-y-2">
+                      {analytics.recent_events.length ? analytics.recent_events.map((event, index) => (
+                        <div key={`${event.name}-${event.created_at}-${index}`} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-white/10 bg-black/10 px-3 py-2 text-sm text-white/80">
+                          <span className="font-medium">{event.name}</span>
+                          <span>{event.user__username || event.user__email || event.client_id || "anonymous"}</span>
+                        </div>
+                      )) : <p className="text-sm text-white/65">No events recorded yet.</p>}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <p className="mt-4 text-sm text-white/70">Analytics summary is unavailable right now.</p>
+              )}
+            </section>
+          ) : null}
 
           {statusText ? <p className="xl:col-span-2 text-sm text-white/70">{statusText}</p> : null}
         </div>
