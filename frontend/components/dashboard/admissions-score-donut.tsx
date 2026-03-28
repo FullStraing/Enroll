@@ -98,6 +98,7 @@ export function AdmissionsScoreDonut({ breakdown, total, className }: Admissions
             endAngle={-270}
             paddingAngle={0}
             stroke="none"
+            isAnimationActive={false}
             onMouseEnter={(_, index) => setActiveKey(slices[index]?.key || null)}
             onMouseLeave={() => setActiveKey(null)}
             onClick={(_, index) => {
@@ -114,6 +115,7 @@ export function AdmissionsScoreDonut({ breakdown, total, className }: Admissions
                   fillOpacity={isDimmed ? 0.4 : 1}
                   stroke={activeKey === slice.key ? (slice.key === "missing" ? "#B8C0C8" : slice.color) : "none"}
                   strokeWidth={activeKey === slice.key ? 3 : 0}
+                  style={{ outline: "none" }}
                   className="cursor-pointer outline-none transition-opacity duration-150"
                 />
               );
