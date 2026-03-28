@@ -3,7 +3,6 @@ from __future__ import annotations
 import time
 
 from django.core.management.base import BaseCommand
-from django.db.models import Q
 from django.utils import timezone
 
 from apps.universities.models import ScrapeRun, ScrapeRunItem, University
@@ -21,9 +20,7 @@ class Command(BaseCommand):
         parser.add_argument("--debug", action="store_true")
 
     def handle(self, *args, **options):
-        qs = University.objects.filter(
-            Q(source_provider="gradgpt") | Q(source_url__icontains="petersons.com/college-search/")
-        ).order_by("id")
+        qs = University.objects.filter(is_active=True).order_by("id")
         if options["only_id"]:
             qs = qs.filter(id__in=options["only_id"])
         if options["limit"]:

@@ -375,17 +375,21 @@ export default function UniversityProfilePage() {
     setLoading(true);
     setError("");
 
-    Promise.all([
+    Promise.allSettled([
       apiFetch<University>(`/api/universities/${id}/`, { method: "GET" }, token),
       apiFetch<UniversityMetric[]>(`/api/universities/${id}/metrics/`, { method: "GET" }, token),
       apiFetch<UniversitySnapshot>(`/api/universities/${id}/source-snapshot/`, { method: "GET" }, token),
       apiFetch<UniversityDeadline[]>(`/api/universities/${id}/deadlines/`, { method: "GET" }, token),
     ])
       .then(([u, m, s, d]) => {
-        setUniversity(u);
-        setMetrics(m);
-        setSnapshot(s);
-        setDeadlines(d);
+        if (u.status !== "fulfilled") {
+          throw u.reason;
+        }
+
+        setUniversity(u.value);
+        setMetrics(m.status === "fulfilled" ? m.value : []);
+        setSnapshot(s.status === "fulfilled" ? s.value : null);
+        setDeadlines(d.status === "fulfilled" ? d.value : []);
       })
       .catch((e) => setError(e instanceof Error ? e.message : "Ошибка загрузки карточки университета"))
       .finally(() => setLoading(false));
