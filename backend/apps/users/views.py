@@ -47,7 +47,11 @@ def _seed_example_university(user: User) -> None:
         "University of Michigan - Ann Arbor",
         "Abilene Christian University",
     ]
-    university = University.objects.filter(is_active=True, name__in=example_names).order_by("name").first()
+    university = None
+    for example_name in example_names:
+        university = University.objects.filter(is_active=True, name=example_name).first()
+        if university:
+            break
     if not university:
         university = University.objects.filter(is_active=True).order_by("name").first()
     if not university:
