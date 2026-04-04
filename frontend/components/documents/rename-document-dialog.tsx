@@ -5,6 +5,8 @@ import type { DocumentItem } from "@/app/documents/types";
 import { Button } from "@/components/ui/button";
 import { useBodyScrollLock } from "@/components/ui/use-body-scroll-lock";
 import { Loader } from "@/components/loader";
+import { useLocale } from "@/components/locale-provider";
+import { getProductCopy } from "@/lib/product-copy";
 
 type RenameDocumentDialogProps = {
   document: DocumentItem | null;
@@ -14,6 +16,8 @@ type RenameDocumentDialogProps = {
 };
 
 export function RenameDocumentDialog({ document, saving, onClose, onSave }: RenameDocumentDialogProps) {
+  const { locale } = useLocale();
+  const copy = getProductCopy(locale).documents;
   const [title, setTitle] = useState("");
 
   useBodyScrollLock(Boolean(document));
@@ -32,13 +36,13 @@ export function RenameDocumentDialog({ document, saving, onClose, onSave }: Rena
   return (
     <div className="fixed inset-0 z-50 bg-black/35 p-4">
       <div className="mx-auto mt-16 w-full max-w-lg rounded-3xl border-2 border-black bg-white p-5 shadow-[0_10px_0_0_rgba(0,0,0,1)]">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-black/45">Rename document</p>
-        <h3 className="mt-2 text-2xl font-black text-black">Update display name</h3>
-        <p className="mt-1 text-sm text-black/65">The file itself stays the same. This only changes how the document appears inside Enroll.</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-black/45">{copy.renameBadge}</p>
+        <h3 className="mt-2 text-2xl font-black text-black">{copy.renameTitle}</h3>
+        <p className="mt-1 text-sm text-black/65">{copy.renameDescription}</p>
 
         <form onSubmit={submit} className="mt-4 grid gap-3">
           <label className="text-sm text-black/70">
-            Title
+            {copy.title}
             <input
               value={title}
               onChange={(event) => setTitle(event.target.value)}
@@ -49,10 +53,10 @@ export function RenameDocumentDialog({ document, saving, onClose, onSave }: Rena
 
           <div className="mt-2 flex items-center justify-end gap-2">
             <Button type="button" variant="outline" onClick={onClose} disabled={saving}>
-              Cancel
+              {copy.cancel}
             </Button>
             <Button type="submit" disabled={saving || !title.trim()}>
-              {saving ? <Loader size="sm" /> : "Save"}
+              {saving ? <Loader size="sm" /> : copy.save}
             </Button>
           </div>
         </form>

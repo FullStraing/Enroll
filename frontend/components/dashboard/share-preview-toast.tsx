@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import Lottie from "lottie-react";
 import { createPortal } from "react-dom";
+import { useLocale } from "@/components/locale-provider";
+import { getDashboardCopy } from "@/lib/dashboard-copy";
 import checkboxAnimation from "@/public/animations/checkbox-animation.json";
 
 type SharePreviewToastProps = {
@@ -11,6 +13,8 @@ type SharePreviewToastProps = {
 };
 
 export function SharePreviewToast({ imageUrl, visible }: SharePreviewToastProps) {
+  const { locale } = useLocale();
+  const copy = getDashboardCopy(locale).shareToast;
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -38,15 +42,15 @@ export function SharePreviewToast({ imageUrl, visible }: SharePreviewToastProps)
           />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-xs font-black uppercase tracking-[0.16em] text-black/45">Copied to clipboard</p>
-          <p className="mt-1 text-sm font-semibold text-black">Dashboard snapshot is ready to share.</p>
-          <p className="mt-1 text-xs leading-relaxed text-black/55">You can paste it straight into chats, docs, or social posts.</p>
+          <p className="text-xs font-black uppercase tracking-[0.16em] text-black/45">{copy.title}</p>
+          <p className="mt-1 text-sm font-semibold text-black">{copy.body}</p>
+          <p className="mt-1 text-xs leading-relaxed text-black/55">{copy.hint}</p>
         </div>
       </div>
       <div className="mt-3 overflow-hidden rounded-xl border border-black/10 bg-[#F5F8FC]">
         {/* `blob:` preview URLs are more reliable with a plain img in production than with next/image. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={imageUrl} alt="Dashboard preview" className="h-auto w-full object-cover" />
+        <img src={imageUrl} alt={copy.previewAlt} className="h-auto w-full object-cover" />
       </div>
     </div>,
     document.body,

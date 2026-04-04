@@ -1,13 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { Card, CardDescription, CardTitle } from "@/components/ui/card";
+import type { ProgressBlock } from "@/app/dashboard/progress";
+import { useLocale } from "@/components/locale-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import type { ProgressBlock } from "@/app/dashboard/progress";
+import { getDashboardCopy } from "@/lib/dashboard-copy";
 
 export function ProgressBlockCard({ block }: { block: ProgressBlock }) {
+  const { locale } = useLocale();
+  const copy = getDashboardCopy(locale).progress;
+
   return (
     <Card className="flex h-full flex-col border border-black/10 bg-white/90 shadow-none">
       <div className="flex items-start justify-between gap-3">
@@ -15,7 +20,7 @@ export function ProgressBlockCard({ block }: { block: ProgressBlock }) {
           <CardTitle>{block.title}</CardTitle>
           <CardDescription className="mt-1">{block.summary}</CardDescription>
           <p className="mt-3 text-sm font-semibold">
-            {block.completed}/{block.total} completed
+            {block.completed}/{block.total} {copy.completed}
           </p>
         </div>
         <Badge variant={block.percent >= 100 ? "primary" : "cyan"}>{block.percent}%</Badge>
@@ -23,7 +28,7 @@ export function ProgressBlockCard({ block }: { block: ProgressBlock }) {
       <Progress value={block.percent} className="mt-4 h-3" variant="cyan" />
       <Link href={block.continueHref} className="mt-auto inline-flex pt-4">
         <Button size="sm" variant="outline" className="hover:-translate-y-0.5 hover:shadow-[0_4px_0_#000]">
-          Продолжить
+          {copy.continue}
         </Button>
       </Link>
     </Card>

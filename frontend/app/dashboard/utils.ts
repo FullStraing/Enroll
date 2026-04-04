@@ -10,6 +10,8 @@ import type {
   Profile,
   StudentUniversity,
 } from "@/app/dashboard/types";
+import { getDashboardCopy } from "@/lib/dashboard-copy";
+import type { Locale } from "@/lib/i18n";
 
 export function buildInitialAcademicTests(profile: Profile | null, quizAnswers: IntroAnswers): EditProfileForm["academicTests"] {
   const snapshot = profile?.common_app_profile?.dashboard_snapshot?.academic_tests || [];
@@ -122,6 +124,7 @@ export function admissionsScore(input: {
   universitiesCount: number;
   hasMajor: boolean;
   hasIntake: boolean;
+  locale?: Locale;
 }) {
   return buildAdmissionsScoreBreakdown(input).total;
 }
@@ -156,22 +159,24 @@ function buildMissingHint(
   key: AdmissionsScoreSegmentKey,
   remainingPoints: number,
   status: AdmissionsScoreBreakdownSegment["status"],
+  locale: Locale,
 ) {
+  const copy = getDashboardCopy(locale).donut;
   if (status === "Complete" || remainingPoints <= 0) {
-    return "Complete";
+    return copy.complete;
   }
 
   switch (key) {
     case "readiness":
-      return `Need +${remainingPoints} pts from profile fields and application details`;
+      return `${copy.missingHints.readiness}: +${remainingPoints} pts`;
     case "academics":
-      return `Need +${remainingPoints} pts from stronger GPA and academic profile`;
+      return `${copy.missingHints.academics}: +${remainingPoints} pts`;
     case "tests":
-      return `Need +${remainingPoints} pts from stronger score profile`;
+      return `${copy.missingHints.tests}: +${remainingPoints} pts`;
     case "planning":
-      return `Need +${remainingPoints} pts from university list, deadlines, and next steps`;
+      return `${copy.missingHints.planning}: +${remainingPoints} pts`;
     default:
-      return `Need +${remainingPoints} pts to complete this section`;
+      return `${copy.missingHints.fallback}: +${remainingPoints} pts`;
   }
 }
 
@@ -183,7 +188,10 @@ export function buildAdmissionsScoreBreakdown(input: {
   universitiesCount: number;
   hasMajor: boolean;
   hasIntake: boolean;
+  locale?: Locale;
 }): AdmissionsScoreBreakdown {
+  const locale = input.locale || "en";
+  const copy = getDashboardCopy(locale).donut;
   const readiness = toPercent(input.commonAppPercent);
   const academics = input.gpaNormalized4 == null ? 35 : toPercent((input.gpaNormalized4 / 4) * 100);
   const tests = (() => {
@@ -208,15 +216,15 @@ export function buildAdmissionsScoreBreakdown(input: {
       const remainingPoints = Math.max(0, 45 - contribution);
       return {
       key: "readiness",
-      label: "Profile readiness",
+      label: copy.labels.readiness,
       weight: 45,
       score: readiness,
       contribution,
       missingPoints: remainingPoints,
       status,
       color: "#FFDB58",
-      description: "How complete your profile and Common App information are.",
-      missingHint: buildMissingHint("readiness", remainingPoints, status),
+      description: copy.descriptions.readiness,
+      missingHint: buildMissingHint("readiness", remainingPoints, status, locale),
       };
     })(),
     (() => {
@@ -225,15 +233,15 @@ export function buildAdmissionsScoreBreakdown(input: {
       const remainingPoints = Math.max(0, 25 - contribution);
       return {
       key: "academics",
-      label: "Academics",
+      label: copy.labels.academics,
       weight: 25,
       score: academics,
       contribution,
       missingPoints: remainingPoints,
       status,
       color: "#8AD7C9",
-      description: "Your GPA strength and academic profile depth.",
-      missingHint: buildMissingHint("academics", remainingPoints, status),
+      description: copy.descriptions.academics,
+      missingHint: buildMissingHint("academics", remainingPoints, status, locale),
       };
     })(),
     (() => {
@@ -242,15 +250,15 @@ export function buildAdmissionsScoreBreakdown(input: {
       const remainingPoints = Math.max(0, 20 - contribution);
       return {
       key: "tests",
-      label: "Tests",
+      label: copy.labels.tests,
       weight: 20,
       score: tests,
       contribution,
       missingPoints: remainingPoints,
       status,
       color: "#FFB36A",
-      description: "Standardized and language test readiness for applications.",
-      missingHint: buildMissingHint("tests", remainingPoints, status),
+      description: copy.descriptions.tests,
+      missingHint: buildMissingHint("tests", remainingPoints, status, locale),
       };
     })(),
     (() => {
@@ -259,15 +267,15 @@ export function buildAdmissionsScoreBreakdown(input: {
       const remainingPoints = Math.max(0, 10 - contribution);
       return {
       key: "planning",
-      label: "Planning",
+      label: copy.labels.planning,
       weight: 10,
       score: planning,
       contribution,
       missingPoints: remainingPoints,
       status,
       color: "#A9B8FF",
-      description: "Your university list, intended major, and intake readiness.",
-      missingHint: buildMissingHint("planning", remainingPoints, status),
+      description: copy.descriptions.planning,
+      missingHint: buildMissingHint("planning", remainingPoints, status, locale),
       };
     })(),
   ];

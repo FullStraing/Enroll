@@ -1,3 +1,6 @@
+import { getDashboardCopy } from "@/lib/dashboard-copy";
+import type { Locale } from "@/lib/i18n";
+
 type ProgressCondition = {
   label: string;
   done: boolean;
@@ -106,7 +109,10 @@ export function buildDashboardProgress(input: {
   essays: DashboardEssay[];
   documents: DashboardDocument[];
   sections: DashboardSection[];
+  locale?: Locale;
 }) {
+  const locale = input.locale || "en";
+  const copy = getDashboardCopy(locale).progress;
   const explicitNoTests = hasExplicitNoTests(input.quizAnswers, input.profile);
   const hasAnyTestScore =
     hasValue(input.profile?.sat_total) ||
@@ -115,13 +121,13 @@ export function buildDashboardProgress(input: {
     hasValue(input.profile?.det_score);
 
   const profileConditions: ProgressCondition[] = [
-    { label: "GPA", done: hasValue(input.profile?.gpa) },
-    { label: "Intended major", done: hasValue(input.profile?.intended_major) || hasValue(input.quizAnswers.major) },
-    { label: "Graduation year", done: hasValue(input.profile?.graduation_year) },
-    { label: "Target intake", done: hasValue(input.quizAnswers.intakeYear) },
-    { label: "Country", done: hasValue(input.profile?.country) || hasValue(input.quizAnswers.country) },
-    { label: "Budget", done: hasValue(input.profile?.budget_range) },
-    { label: "Tests or no-tests", done: hasAnyTestScore || explicitNoTests },
+    { label: copy.conditions.gpa, done: hasValue(input.profile?.gpa) },
+    { label: copy.conditions.intendedMajor, done: hasValue(input.profile?.intended_major) || hasValue(input.quizAnswers.major) },
+    { label: copy.conditions.graduationYear, done: hasValue(input.profile?.graduation_year) },
+    { label: copy.conditions.targetIntake, done: hasValue(input.quizAnswers.intakeYear) },
+    { label: copy.conditions.country, done: hasValue(input.profile?.country) || hasValue(input.quizAnswers.country) },
+    { label: copy.conditions.budget, done: hasValue(input.profile?.budget_range) },
+    { label: copy.conditions.testsOrNoTests, done: hasAnyTestScore || explicitNoTests },
   ];
   const profileContinueHref =
     !profileConditions[0].done ? "/dashboard?edit=gpa" :
@@ -135,14 +141,14 @@ export function buildDashboardProgress(input: {
 
   const universitiesCount = input.universities.length;
   const universitiesConditions: ProgressCondition[] = [
-    { label: "At least 1 university", done: universitiesCount >= 1 },
-    { label: "At least 10 universities", done: universitiesCount >= 10 },
-    { label: "Has a safety school", done: input.universities.some((item) => item.category === "safety" || item.category === "likely") },
-    { label: "Has a target school", done: input.universities.some((item) => item.category === "target") },
-    { label: "Has a reach school", done: input.universities.some((item) => item.category === "reach" || item.category === "high_reach") },
-    { label: "All statuses set", done: universitiesCount > 0 && input.universities.every((item) => hasValue(item.status)) },
+    { label: copy.conditions.atLeastOneUniversity, done: universitiesCount >= 1 },
+    { label: copy.conditions.atLeastTenUniversities, done: universitiesCount >= 10 },
+    { label: copy.conditions.safetySchool, done: input.universities.some((item) => item.category === "safety" || item.category === "likely") },
+    { label: copy.conditions.targetSchool, done: input.universities.some((item) => item.category === "target") },
+    { label: copy.conditions.reachSchool, done: input.universities.some((item) => item.category === "reach" || item.category === "high_reach") },
+    { label: copy.conditions.allStatusesSet, done: universitiesCount > 0 && input.universities.every((item) => hasValue(item.status)) },
     {
-      label: "All deadlines set",
+      label: copy.conditions.allDeadlinesSet,
       done:
         universitiesCount > 0 &&
         input.universities.every((item) => hasValue(item.deadline_override) || hasValue(item.university?.main_deadline)),
@@ -153,10 +159,10 @@ export function buildDashboardProgress(input: {
 
   const personalStatement = input.essays.find((essay) => essay.essay_type === "personal_statement");
   const essayConditions: ProgressCondition[] = [
-    { label: "Personal statement created", done: Boolean(personalStatement) },
-    { label: "Personal statement has text", done: Boolean(personalStatement?.latest_has_text) },
-    { label: "Personal statement draft is 500+ words", done: (personalStatement?.latest_word_count || 0) >= 500 },
-    { label: "At least one essay has multiple versions", done: input.essays.some((essay) => essay.versions_count > 1) },
+    { label: copy.conditions.personalStatementCreated, done: Boolean(personalStatement) },
+    { label: copy.conditions.personalStatementHasText, done: Boolean(personalStatement?.latest_has_text) },
+    { label: copy.conditions.personalStatementWordCount, done: (personalStatement?.latest_word_count || 0) >= 500 },
+    { label: copy.conditions.essayMultipleVersions, done: input.essays.some((essay) => essay.versions_count > 1) },
   ];
   const essaysContinueHref =
     !essayConditions[0].done
@@ -170,31 +176,32 @@ export function buildDashboardProgress(input: {
     requiredDocumentTypes.push("test_score");
   }
   const documentsConditions = requiredDocumentTypes.map((type) => ({
-    label: type,
+    label: copy.documentTypes[type as keyof typeof copy.documentTypes] || type,
     done: input.documents.some((document) => document.type === type),
   }));
-  const firstMissingDocumentType = documentsConditions.find((condition) => !condition.done)?.label || "transcript";
+  const firstMissingDocumentType =
+    requiredDocumentTypes.find((type) => !input.documents.some((document) => document.type === type)) || "transcript";
   const documentsContinueHref = `/documents?type=${encodeURIComponent(firstMissingDocumentType)}`;
 
   const sectionByKey = new Map(input.sections.map((section) => [section.key, section]));
   const isSectionComplete = (key: string) => (sectionByKey.get(key)?.percent || 0) >= 100;
   const applicationConditions: ProgressCondition[] = [
-    { label: "Profile", done: isSectionComplete("profile") },
-    { label: "Family", done: isSectionComplete("family") },
-    { label: "Education", done: isSectionComplete("education") },
-    { label: "Testing", done: isSectionComplete("testing") || explicitNoTests },
-    { label: "Activities", done: isSectionComplete("activities") },
-    { label: "Writing", done: isSectionComplete("writing") },
+    { label: copy.conditions.profile, done: isSectionComplete("profile") },
+    { label: copy.conditions.family, done: isSectionComplete("family") },
+    { label: copy.conditions.education, done: isSectionComplete("education") },
+    { label: copy.conditions.testing, done: isSectionComplete("testing") || explicitNoTests },
+    { label: copy.conditions.activities, done: isSectionComplete("activities") },
+    { label: copy.conditions.writing, done: isSectionComplete("writing") },
   ];
   const firstIncompleteApplicationSection = applicationConditions.find((condition) => !condition.done)?.label.toLowerCase() || "profile";
   const applicationsContinueHref = `/common-app?section=${encodeURIComponent(firstIncompleteApplicationSection)}`;
 
   const blocks: ProgressBlock[] = [
-    finalizeBlock("profile", "Profile", profileConditions, "Core student profile fields", profileContinueHref),
-    finalizeBlock("universities", "Universities", universitiesConditions, "Balanced and deadline-ready shortlist", universitiesContinueHref),
-    finalizeBlock("essays", "Essays", essayConditions, "Personal statement drafting progress", essaysContinueHref),
-    finalizeBlock("documents", "Documents", documentsConditions, "Required admissions files uploaded", documentsContinueHref),
-    finalizeBlock("applications", "Applications", applicationConditions, "Common App section completion", applicationsContinueHref),
+    finalizeBlock("profile", copy.titles.profile, profileConditions, copy.profileSummary, profileContinueHref),
+    finalizeBlock("universities", copy.titles.universities, universitiesConditions, copy.universitiesSummary, universitiesContinueHref),
+    finalizeBlock("essays", copy.titles.essays, essayConditions, copy.essaysSummary, essaysContinueHref),
+    finalizeBlock("documents", copy.titles.documents, documentsConditions, copy.documentsSummary, documentsContinueHref),
+    finalizeBlock("applications", copy.titles.applications, applicationConditions, copy.applicationsSummary, applicationsContinueHref),
   ];
 
   const overallPercent = Math.round(blocks.reduce((sum, block) => sum + block.percent, 0) / blocks.length);

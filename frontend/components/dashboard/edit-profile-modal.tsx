@@ -3,6 +3,7 @@
 import { useRef, useState, type Dispatch, type ReactNode, type RefObject, type SetStateAction } from "react";
 import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp } from "lucide-react";
 import { statusSelectTone } from "@/app/universities/utils";
+import { useLocale } from "@/components/locale-provider";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { useBodyScrollLock } from "@/components/ui/use-body-scroll-lock";
@@ -20,6 +21,7 @@ import {
   TEST_SCORE_RULES,
 } from "@/app/dashboard/constants";
 import type { AcademicTestType, EditProfileForm, LanguageTestType, StudentUniversity } from "@/app/dashboard/types";
+import { getDashboardCopy, translateDashboardStatus } from "@/lib/dashboard-copy";
 
 type Props = {
   editModalRef: RefObject<HTMLDivElement>;
@@ -65,17 +67,9 @@ const SECTION_BUTTON_STYLES: Record<SectionKey, string> = {
   universities: "bg-[#DAF5F0]",
 };
 
-const SECTION_LABELS: Record<SectionKey, string> = {
-  basic: "Basic Info",
-  stats: "Stats",
-  activities: "Activities",
-  honors: "Honors",
-  universities: "Universities",
-};
-
 const SECTION_ORDER: SectionKey[] = ["basic", "stats", "activities", "honors", "universities"];
 
-function SectionToggle({ open, onToggle }: { open: boolean; onToggle: () => void }) {
+function SectionToggle({ open, onToggle, showLabel, hideLabel }: { open: boolean; onToggle: () => void; showLabel: string; hideLabel: string }) {
   return (
     <button
       type="button"
@@ -83,12 +77,14 @@ function SectionToggle({ open, onToggle }: { open: boolean; onToggle: () => void
       className="inline-flex items-center gap-2 rounded-full border-2 border-black bg-white px-3 py-1.5 text-sm font-semibold transition hover:-translate-y-0.5 hover:bg-[#FFF4CC]"
     >
       {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-      {open ? "Hide" : "Show"}
+      {open ? hideLabel : showLabel}
     </button>
   );
 }
 
 export function EditProfileModal(props: Props) {
+  const { locale } = useLocale();
+  const copy = getDashboardCopy(locale).modal;
   const {
     editModalRef,
     editForm,
@@ -125,11 +121,18 @@ export function EditProfileModal(props: Props) {
 
   const isPageMode = mode === "page";
   useBodyScrollLock(!isPageMode);
-  const sectionBadge = isPageMode ? "Profile workspace" : "Quick edit";
-  const heading = isPageMode ? "Update your profile" : "Update your profile snapshot";
+  const sectionLabels: Record<SectionKey, string> = {
+    basic: copy.basicInfo,
+    stats: copy.stats,
+    activities: copy.activities,
+    honors: copy.honors,
+    universities: copy.universities,
+  };
+  const sectionBadge = isPageMode ? copy.pageBadge : copy.quickEditBadge;
+  const heading = isPageMode ? copy.pageHeading : copy.modalHeading;
   const description = isPageMode
-    ? "Keep your academic profile, tests, activities, honors, and dashboard snapshot details current in one place."
-    : "Edit your profile in blocks, keep it share-ready, and make the card look like a real admissions snapshot.";
+    ? copy.pageDescription
+    : copy.modalDescription;
 
   const [openSections, setOpenSections] = useState<Record<SectionKey, boolean>>({
     basic: true,
@@ -172,17 +175,17 @@ export function EditProfileModal(props: Props) {
         {previousSection ? (
           <Button variant="outline" onClick={() => setActiveSection(previousSection)} className="w-full sm:w-auto">
             <ChevronLeft className="h-4 w-4" />
-            Back
+            {copy.back}
           </Button>
         ) : null}
         {nextSection ? (
           <Button onClick={() => setActiveSection(nextSection)} className="w-full sm:w-auto">
-            Continue
+            {copy.continue}
             <ChevronRight className="h-4 w-4" />
           </Button>
         ) : (
           <Button onClick={onSave} disabled={savingEdit} className="w-full sm:w-auto">
-            {savingEdit ? "Saving..." : "Save profile"}
+            {savingEdit ? copy.saving : copy.saveProfile}
           </Button>
         )}
       </div>
@@ -195,7 +198,7 @@ export function EditProfileModal(props: Props) {
     if (section === "activities") {
       return (
         <div className="flex flex-col gap-3 rounded-[18px] bg-[#FFF9E8] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm font-semibold text-black/65">Add up to 6 activities for your dashboard snapshot.</p>
+          <p className="text-sm font-semibold text-black/65">{copy.activitiesHint}</p>
           <Button
             type="button"
             variant="outline"
@@ -203,7 +206,7 @@ export function EditProfileModal(props: Props) {
             disabled={editForm.activities.length >= 6}
             className="w-full sm:w-auto"
           >
-            + Add activity
+            + {copy.addActivity}
           </Button>
         </div>
       );
@@ -212,7 +215,7 @@ export function EditProfileModal(props: Props) {
     if (section === "honors") {
       return (
         <div className="flex flex-col gap-3 rounded-[18px] bg-[#FFF9E8] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm font-semibold text-black/65">Add up to 4 honors or awards.</p>
+          <p className="text-sm font-semibold text-black/65">{copy.honorsHint}</p>
           <Button
             type="button"
             variant="outline"
@@ -220,7 +223,7 @@ export function EditProfileModal(props: Props) {
             disabled={editForm.honors.length >= 4}
             className="w-full sm:w-auto"
           >
-            + Add honor
+            + {copy.addHonor}
           </Button>
         </div>
       );
@@ -230,11 +233,11 @@ export function EditProfileModal(props: Props) {
       return (
         <div className="flex flex-col gap-3 rounded-[18px] bg-[#DAF5F0]/55 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm font-semibold text-black/70">Choose which universities appear in your dashboard snapshot.</p>
-            <p className="mt-1 text-xs text-black/55">You can highlight up to 7 universities here.</p>
+            <p className="text-sm font-semibold text-black/70">{copy.universitiesHint}</p>
+            <p className="mt-1 text-xs text-black/55">{copy.universitiesHintSecondary}</p>
           </div>
           <Button type="button" variant="outline" onClick={onEditUniversities} className="w-full sm:w-auto">
-            Edit universities
+            {copy.editUniversities}
           </Button>
         </div>
       );
@@ -283,9 +286,9 @@ export function EditProfileModal(props: Props) {
               {isPageMode ? (
                 <>
                   <p className="text-xs font-black uppercase tracking-[0.16em] text-black/45">
-                    Step {SECTION_ORDER.indexOf(activeSection) + 1} of {SECTION_ORDER.length}
+                    {copy.stepOf} {SECTION_ORDER.indexOf(activeSection) + 1} {copy.of} {SECTION_ORDER.length}
                   </p>
-                  <h3 className="mt-1 text-2xl font-black tracking-[-0.04em] text-black sm:text-3xl">{SECTION_LABELS[activeSection]}</h3>
+                  <h3 className="mt-1 text-2xl font-black tracking-[-0.04em] text-black sm:text-3xl">{sectionLabels[activeSection]}</h3>
                 </>
               ) : (
                 <>
@@ -311,7 +314,7 @@ export function EditProfileModal(props: Props) {
                       : `border-2 border-black text-black shadow-[0_3px_0_#000] hover:-translate-y-0.5 ${SECTION_BUTTON_STYLES[key]}`
                   }`}
                 >
-                  {SECTION_LABELS[key]}
+                  {sectionLabels[key]}
                 </button>
               ))}
             </div>
@@ -323,67 +326,67 @@ export function EditProfileModal(props: Props) {
           <section ref={sectionRefs.basic} className={`rounded-[28px] bg-white ${isPageMode ? "border border-black/10 shadow-none" : "border border-black/12 shadow-[0_5px_0_rgba(0,0,0,0.04)]"}`}>
             <div className={`${isPageMode ? "hidden" : "flex flex-col items-start gap-3 rounded-t-[26px] border-b border-black/10 bg-[#DAF5F0] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5"}`}>
               <span className="inline-flex rounded-full border border-black/15 bg-white px-3 py-1 text-sm font-black uppercase tracking-[0.14em] text-black/65">
-                Basic Info
+                {copy.basicInfo}
               </span>
-              {!isPageMode ? <SectionToggle open={openSections.basic} onToggle={() => toggleSection("basic")} /> : null}
+              {!isPageMode ? <SectionToggle open={openSections.basic} onToggle={() => toggleSection("basic")} showLabel={copy.show} hideLabel={copy.hide} /> : null}
             </div>
             {openSections.basic || isPageMode ? (
               <div className="grid gap-4 p-5 md:grid-cols-2">
                 <label className="text-sm">
-                  <span className="text-xs uppercase tracking-wide text-black/50">Name</span>
+                  <span className="text-xs uppercase tracking-wide text-black/50">{copy.labels.name}</span>
                   <input
                     value={editForm.fullName}
                     onChange={(event) => setEditForm((prev) => ({ ...prev, fullName: event.target.value }))}
-                    placeholder="Emirlan Togolokov"
+                    placeholder={copy.placeholders.fullName}
                     className={MODAL_FIELD_CLASS}
                   />
                 </label>
                 <label className="text-sm">
-                  <span className="text-xs uppercase tracking-wide text-black/50">Country</span>
+                  <span className="text-xs uppercase tracking-wide text-black/50">{copy.labels.country}</span>
                   <Select
                     value={editForm.country}
                     onChange={(value) => setEditForm((prev) => ({ ...prev, country: value }))}
                     className={MODAL_FIELD_CLASS}
                     options={[
-                      { value: "", label: "Select country" },
+                      { value: "", label: copy.placeholders.selectCountry },
                       ...COUNTRY_OPTIONS.map((country) => ({ value: country, label: country })),
                     ]}
-                    ariaLabel="Country"
+                    ariaLabel={copy.labels.country}
                   />
                 </label>
                 <label className="text-sm">
-                  <span className="text-xs uppercase tracking-wide text-black/50">Major</span>
+                  <span className="text-xs uppercase tracking-wide text-black/50">{copy.labels.major}</span>
                   <input
                     value={editForm.major}
                     onChange={(event) => setEditForm((prev) => ({ ...prev, major: event.target.value }))}
-                    placeholder="Computer Science"
+                    placeholder={copy.placeholders.major}
                     className={MODAL_FIELD_CLASS}
                   />
                 </label>
                 <label className="text-sm">
-                  <span className="text-xs uppercase tracking-wide text-black/50">Target intake</span>
+                  <span className="text-xs uppercase tracking-wide text-black/50">{copy.labels.targetIntake}</span>
                   <Select
                     value={editForm.intakeYear}
                     onChange={(value) => setEditForm((prev) => ({ ...prev, intakeYear: value }))}
                     className={MODAL_FIELD_CLASS}
                     options={[
-                      { value: "", label: "Select intake year" },
+                      { value: "", label: copy.placeholders.selectIntakeYear },
                       ...INTAKE_OPTIONS.map((option) => ({ value: option, label: option })),
                     ]}
-                    ariaLabel="Target intake"
+                    ariaLabel={copy.labels.targetIntake}
                   />
                 </label>
                 <label className="text-sm">
-                  <span className="text-xs uppercase tracking-wide text-black/50">Current level</span>
+                  <span className="text-xs uppercase tracking-wide text-black/50">{copy.labels.currentLevel}</span>
                   <Select
                     value={editForm.schoolLevel}
                     onChange={(value) => setEditForm((prev) => ({ ...prev, schoolLevel: value }))}
                     className={MODAL_FIELD_CLASS}
                     options={[
-                      { value: "", label: "Select current level" },
+                      { value: "", label: copy.placeholders.selectCurrentLevel },
                       ...SCHOOL_LEVEL_OPTIONS.map((option) => ({ value: option, label: option })),
                     ]}
-                    ariaLabel="Current level"
+                    ariaLabel={copy.labels.currentLevel}
                   />
                 </label>
               </div>
@@ -396,16 +399,16 @@ export function EditProfileModal(props: Props) {
             <div className={`${isPageMode ? "hidden" : "flex flex-col items-start gap-3 rounded-t-[26px] border-b border-black/10 bg-[#F8D6B3] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5"}`}>
               <div className="flex flex-wrap items-center gap-3">
                 <span className="inline-flex rounded-full border border-black/15 bg-white px-3 py-1 text-sm font-black uppercase tracking-[0.14em] text-black/65">
-                  Stats
+                  {copy.stats}
                 </span>
-                <p className="text-sm font-semibold text-black/55">Academic, language, and AP scores</p>
+                <p className="text-sm font-semibold text-black/55">{copy.academicScores}</p>
               </div>
-              {!isPageMode ? <SectionToggle open={openSections.stats} onToggle={() => toggleSection("stats")} /> : null}
+              {!isPageMode ? <SectionToggle open={openSections.stats} onToggle={() => toggleSection("stats")} showLabel={copy.show} hideLabel={copy.hide} /> : null}
             </div>
             {openSections.stats || isPageMode ? (
               <div className="grid gap-4 p-5 md:grid-cols-2">
                 <label className="text-sm">
-                  <span className="text-xs uppercase tracking-wide text-black/50">GPA scale</span>
+                  <span className="text-xs uppercase tracking-wide text-black/50">{copy.labels.gpaScale}</span>
                   <Select
                     value={editForm.gpaScale}
                     onChange={(nextScale) =>
@@ -419,12 +422,12 @@ export function EditProfileModal(props: Props) {
                     }
                     className={MODAL_FIELD_CLASS}
                     options={GPA_SCALE_OPTIONS.map((option) => ({ value: option, label: option }))}
-                    ariaLabel="GPA scale"
+                    ariaLabel={copy.labels.gpaScale}
                   />
                 </label>
 
                 <label className="text-sm">
-                  <span className="text-xs uppercase tracking-wide text-black/50">GPA</span>
+                  <span className="text-xs uppercase tracking-wide text-black/50">{copy.labels.gpa}</span>
                   <input
                     type="number"
                     step={gpaStep}
@@ -452,8 +455,8 @@ export function EditProfileModal(props: Props) {
                     <div className="rounded-[22px] border border-black/12 bg-[#FFFDF8] p-4">
                       <div className="mb-3 flex items-center justify-between gap-3">
                         <div>
-                          <p className="text-sm font-black uppercase tracking-[0.14em] text-black/50">Academic Tests</p>
-                          <p className="mt-1 text-sm text-black/55">SAT and ACT stay together.</p>
+                          <p className="text-sm font-black uppercase tracking-[0.14em] text-black/50">{copy.academicTests}</p>
+                          <p className="mt-1 text-sm text-black/55">{copy.academicTestsHint}</p>
                         </div>
                         <button
                           type="button"
@@ -461,7 +464,7 @@ export function EditProfileModal(props: Props) {
                           disabled={editForm.academicTests.length >= 2}
                           className="rounded-full border-2 border-black bg-white px-3 py-1.5 text-sm font-semibold transition hover:-translate-y-0.5 hover:bg-[#FFF4CC] disabled:opacity-40"
                         >
-                          + Add test
+                          + {copy.addTest}
                         </button>
                       </div>
                       <div className="grid gap-3">
@@ -469,17 +472,17 @@ export function EditProfileModal(props: Props) {
                           editForm.academicTests.map((test, index) => (
                             <div key={`${test.type}-${index}`} className="grid gap-3 rounded-[20px] border border-black/10 bg-white p-4 md:grid-cols-[0.9fr_1fr_auto]">
                               <label className="text-sm">
-                                <span className="text-xs uppercase tracking-wide text-black/50">Test type</span>
+                                <span className="text-xs uppercase tracking-wide text-black/50">{copy.labels.testType}</span>
                                 <Select
                                   value={test.type}
                                   onChange={(value) => updateAcademicTestRow(index, { type: value as AcademicTestType })}
                                   className={MODAL_FIELD_CLASS}
                                   options={ACADEMIC_TEST_OPTIONS.map((option) => ({ value: option, label: option }))}
-                                  ariaLabel="Academic test type"
+                                  ariaLabel={copy.academicTests}
                                 />
                               </label>
                               <label className="text-sm">
-                                <span className="text-xs uppercase tracking-wide text-black/50">Score</span>
+                                <span className="text-xs uppercase tracking-wide text-black/50">{copy.labels.score}</span>
                                 <input
                                   type="text"
                                   inputMode="decimal"
@@ -497,14 +500,14 @@ export function EditProfileModal(props: Props) {
                               </label>
                               <div className="flex items-end">
                                 <button type="button" onClick={() => removeAcademicTestRow(index)} className={MODAL_REMOVE_BUTTON_CLASS}>
-                                  Remove
+                                  {copy.remove}
                                 </button>
                               </div>
                             </div>
                           ))
                         ) : (
                           <p className="rounded-2xl border border-dashed border-black/15 bg-white px-4 py-5 text-sm text-black/50">
-                            Add SAT or ACT.
+                            {copy.emptyAcademicTests}
                           </p>
                         )}
                       </div>
@@ -513,8 +516,8 @@ export function EditProfileModal(props: Props) {
                     <div className="rounded-[22px] border border-black/12 bg-[#FFFDF8] p-4">
                       <div className="mb-3 flex items-center justify-between gap-3">
                         <div>
-                          <p className="text-sm font-black uppercase tracking-[0.14em] text-black/50">Language Tests</p>
-                          <p className="mt-1 text-sm text-black/55">IELTS, TOEFL, Duolingo, PTE, Cambridge.</p>
+                          <p className="text-sm font-black uppercase tracking-[0.14em] text-black/50">{copy.languageTests}</p>
+                          <p className="mt-1 text-sm text-black/55">{copy.languageTestsHint}</p>
                         </div>
                         <button
                           type="button"
@@ -522,7 +525,7 @@ export function EditProfileModal(props: Props) {
                           disabled={editForm.languageTests.length >= 5}
                           className="rounded-full border-2 border-black bg-white px-3 py-1.5 text-sm font-semibold transition hover:-translate-y-0.5 hover:bg-[#FFF4CC] disabled:opacity-40"
                         >
-                          + Add test
+                          + {copy.addTest}
                         </button>
                       </div>
                       <div className="grid gap-3">
@@ -530,7 +533,7 @@ export function EditProfileModal(props: Props) {
                           editForm.languageTests.map((test, index) => (
                             <div key={`${test.type}-${index}`} className="grid gap-3 rounded-[20px] border border-black/10 bg-white p-4 md:grid-cols-[0.9fr_1fr_auto]">
                               <label className="text-sm">
-                                <span className="text-xs uppercase tracking-wide text-black/50">Test type</span>
+                                <span className="text-xs uppercase tracking-wide text-black/50">{copy.labels.testType}</span>
                                 <Select
                                   value={test.type}
                                   onChange={(value) => updateLanguageTestRow(index, { type: value as LanguageTestType })}
@@ -539,11 +542,11 @@ export function EditProfileModal(props: Props) {
                                     value: option,
                                     label: option === "DET" ? "Duolingo English Test" : option,
                                   }))}
-                                  ariaLabel="Language test type"
+                                  ariaLabel={copy.languageTests}
                                 />
                               </label>
                               <label className="text-sm">
-                                <span className="text-xs uppercase tracking-wide text-black/50">Score</span>
+                                <span className="text-xs uppercase tracking-wide text-black/50">{copy.labels.score}</span>
                                 <input
                                   type="text"
                                   inputMode="decimal"
@@ -561,14 +564,14 @@ export function EditProfileModal(props: Props) {
                               </label>
                               <div className="flex items-end">
                                 <button type="button" onClick={() => removeLanguageTestRow(index)} className={MODAL_REMOVE_BUTTON_CLASS}>
-                                  Remove
+                                  {copy.remove}
                                 </button>
                               </div>
                             </div>
                           ))
                         ) : (
                           <p className="rounded-2xl border border-dashed border-black/15 bg-white px-4 py-5 text-sm text-black/50">
-                            Add one or more language exams if you have them.
+                            {copy.emptyLanguageTests}
                           </p>
                         )}
                       </div>
@@ -577,8 +580,8 @@ export function EditProfileModal(props: Props) {
                     <div className="rounded-[22px] border border-black/12 bg-[#FFFDF8] p-4">
                       <div className="mb-3 flex items-center justify-between gap-3">
                         <div>
-                          <p className="text-sm font-black uppercase tracking-[0.14em] text-black/50">AP Exams</p>
-                          <p className="mt-1 text-sm text-black/55">Pick the exam and the real AP score from 1 to 5.</p>
+                          <p className="text-sm font-black uppercase tracking-[0.14em] text-black/50">{copy.apExams}</p>
+                          <p className="mt-1 text-sm text-black/55">{copy.apExamsHint}</p>
                         </div>
                         <button
                           type="button"
@@ -586,7 +589,7 @@ export function EditProfileModal(props: Props) {
                           disabled={editForm.apScores.length >= 8}
                           className="rounded-full border-2 border-black bg-white px-3 py-1.5 text-sm font-semibold transition hover:-translate-y-0.5 hover:bg-[#FFF4CC] disabled:opacity-40"
                         >
-                          + Add AP
+                          + {copy.addAp}
                         </button>
                       </div>
                       <div className="grid gap-3">
@@ -594,35 +597,35 @@ export function EditProfileModal(props: Props) {
                           editForm.apScores.map((item, index) => (
                             <div key={`${item.exam}-${index}`} className="grid gap-3 rounded-[20px] border border-black/10 bg-white p-4 md:grid-cols-[1.4fr_0.45fr_auto]">
                               <label className="text-sm">
-                                <span className="text-xs uppercase tracking-wide text-black/50">Exam</span>
+                                <span className="text-xs uppercase tracking-wide text-black/50">{copy.labels.exam}</span>
                                 <Select
                                   value={item.exam}
                                   onChange={(value) => updateApScoreRow(index, { exam: value })}
                                   className={MODAL_FIELD_CLASS}
                                   options={AP_EXAM_OPTIONS.map((option) => ({ value: option, label: option }))}
-                                  ariaLabel="AP exam"
+                                  ariaLabel={copy.labels.exam}
                                 />
                               </label>
                               <label className="text-sm">
-                                <span className="text-xs uppercase tracking-wide text-black/50">Score</span>
+                                <span className="text-xs uppercase tracking-wide text-black/50">{copy.labels.score}</span>
                                 <Select
                                   value={item.score}
                                   onChange={(value) => updateApScoreRow(index, { score: value })}
                                   className={MODAL_FIELD_CLASS}
                                   options={AP_SCORE_OPTIONS.map((option) => ({ value: option, label: option }))}
-                                  ariaLabel="AP score"
+                                  ariaLabel={copy.labels.score}
                                 />
                               </label>
                               <div className="flex items-end">
                                 <button type="button" onClick={() => removeApScoreRow(index)} className={MODAL_REMOVE_BUTTON_CLASS}>
-                                  Remove
+                                  {copy.remove}
                                 </button>
                               </div>
                             </div>
                           ))
                         ) : (
                           <p className="rounded-2xl border border-dashed border-black/15 bg-white px-4 py-5 text-sm text-black/50">
-                            Add AP exams only if you actually took them.
+                            {copy.emptyApExams}
                           </p>
                         )}
                       </div>
@@ -638,7 +641,7 @@ export function EditProfileModal(props: Props) {
           <section ref={sectionRefs.activities} className={`rounded-[28px] bg-white ${isPageMode ? "border border-black/10 shadow-none" : "border border-black/12 shadow-[0_5px_0_rgba(0,0,0,0.04)]"}`}>
             <div className={`${isPageMode ? "hidden" : "flex items-center justify-between gap-3 rounded-t-[26px] border-b border-black/10 bg-[#FFDB58] px-5 py-4"}`}>
               <span className="inline-flex rounded-full border border-black/15 bg-white px-3 py-1 text-sm font-black uppercase tracking-[0.14em] text-black/65">
-                Activities
+                {copy.activities}
               </span>
               <div className="flex items-center gap-3">
                 <button
@@ -647,9 +650,9 @@ export function EditProfileModal(props: Props) {
                   disabled={editForm.activities.length >= 6}
                   className="rounded-full border-2 border-black bg-white px-3 py-1.5 text-sm font-semibold transition hover:-translate-y-0.5 hover:bg-[#FFF4CC] disabled:opacity-40"
                 >
-                  + Add activity
+                  + {copy.addActivity}
                 </button>
-                {!isPageMode ? <SectionToggle open={openSections.activities} onToggle={() => toggleSection("activities")} /> : null}
+                {!isPageMode ? <SectionToggle open={openSections.activities} onToggle={() => toggleSection("activities")} showLabel={copy.show} hideLabel={copy.hide} /> : null}
               </div>
             </div>
             {openSections.activities || isPageMode ? (
@@ -659,32 +662,32 @@ export function EditProfileModal(props: Props) {
                   editForm.activities.map((activity, index) => (
                     <div key={index} className="grid gap-3 rounded-[22px] border border-black/12 bg-[#FFFDF8] p-4 md:grid-cols-[1fr_1.2fr_auto]">
                       <label className="text-sm">
-                        <span className="text-xs uppercase tracking-wide text-black/50">Title</span>
+                        <span className="text-xs uppercase tracking-wide text-black/50">{copy.labels.title}</span>
                         <input
                           value={activity.title}
                           onChange={(event) => updateActivityRow(index, { title: event.target.value })}
-                          placeholder="Founder — Robotics Club"
+                          placeholder={copy.placeholders.activityTitle}
                           className={MODAL_FIELD_CLASS}
                         />
                       </label>
                       <label className="text-sm">
-                        <span className="text-xs uppercase tracking-wide text-black/50">Description</span>
+                        <span className="text-xs uppercase tracking-wide text-black/50">{copy.labels.description}</span>
                         <input
                           value={activity.description}
                           onChange={(event) => updateActivityRow(index, { description: event.target.value })}
-                          placeholder="One-line context"
+                          placeholder={copy.placeholders.activityDescription}
                           className={MODAL_FIELD_CLASS}
                         />
                       </label>
                       <div className="flex items-end">
                         <button type="button" onClick={() => removeActivityRow(index)} className={MODAL_REMOVE_BUTTON_CLASS}>
-                          Remove
+                          {copy.remove}
                         </button>
                       </div>
                     </div>
                   ))
                 ) : (
-                  <p className="rounded-2xl border border-dashed border-black/15 bg-white px-4 py-5 text-sm text-black/50">Add up to 6 activities.</p>
+                  <p className="rounded-2xl border border-dashed border-black/15 bg-white px-4 py-5 text-sm text-black/50">{copy.emptyActivities}</p>
                 )}
               </div>
             ) : null}
@@ -695,7 +698,7 @@ export function EditProfileModal(props: Props) {
           <section ref={sectionRefs.honors} className={`rounded-[28px] bg-white ${isPageMode ? "border border-black/10 shadow-none" : "border border-black/12 shadow-[0_5px_0_rgba(0,0,0,0.04)]"}`}>
             <div className={`${isPageMode ? "hidden" : "flex items-center justify-between gap-3 rounded-t-[26px] border-b border-black/10 bg-[#FFF4CC] px-5 py-4"}`}>
               <span className="inline-flex rounded-full border border-black/15 bg-white px-3 py-1 text-sm font-black uppercase tracking-[0.14em] text-black/65">
-                Honors
+                {copy.honors}
               </span>
               <div className="flex items-center gap-3">
                 <button
@@ -704,9 +707,9 @@ export function EditProfileModal(props: Props) {
                   disabled={editForm.honors.length >= 4}
                   className="rounded-full border-2 border-black bg-white px-3 py-1.5 text-sm font-semibold transition hover:-translate-y-0.5 hover:bg-[#FFF4CC] disabled:opacity-40"
                 >
-                  + Add honor
+                  + {copy.addHonor}
                 </button>
-                {!isPageMode ? <SectionToggle open={openSections.honors} onToggle={() => toggleSection("honors")} /> : null}
+                {!isPageMode ? <SectionToggle open={openSections.honors} onToggle={() => toggleSection("honors")} showLabel={copy.show} hideLabel={copy.hide} /> : null}
               </div>
             </div>
             {openSections.honors || isPageMode ? (
@@ -716,23 +719,23 @@ export function EditProfileModal(props: Props) {
                   editForm.honors.map((honor, index) => (
                     <div key={index} className="grid gap-3 rounded-[22px] border border-black/12 bg-[#FFFDF8] p-4 md:grid-cols-[1fr_auto]">
                       <label className="text-sm">
-                        <span className="text-xs uppercase tracking-wide text-black/50">Title</span>
+                        <span className="text-xs uppercase tracking-wide text-black/50">{copy.labels.title}</span>
                         <input
                           value={honor}
                           onChange={(event) => updateHonorRow(index, event.target.value)}
-                          placeholder="Math Olympiad participant"
+                          placeholder={copy.placeholders.honor}
                           className={MODAL_FIELD_CLASS}
                         />
                       </label>
                       <div className="flex items-end">
                         <button type="button" onClick={() => removeHonorRow(index)} className={MODAL_REMOVE_BUTTON_CLASS}>
-                          Remove
+                          {copy.remove}
                         </button>
                       </div>
                     </div>
                   ))
                 ) : (
-                  <p className="rounded-2xl border border-dashed border-black/15 bg-white px-4 py-5 text-sm text-black/50">Add up to 4 honors.</p>
+                  <p className="rounded-2xl border border-dashed border-black/15 bg-white px-4 py-5 text-sm text-black/50">{copy.emptyHonors}</p>
                 )}
               </div>
             ) : null}
@@ -744,9 +747,9 @@ export function EditProfileModal(props: Props) {
             <div className={`${isPageMode ? "hidden" : "mb-3 flex flex-col items-start gap-3 rounded-t-[26px] border-b border-black/10 bg-[#DAF5F0] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5"}`}>
               <div>
                 <span className="inline-flex rounded-full border border-black/15 bg-white px-3 py-1 text-sm font-black uppercase tracking-[0.14em] text-black/65">
-                  Universities
+                  {copy.universities}
                 </span>
-                <p className="mt-1 text-sm text-black/55">Choose which universities appear in your dashboard snapshot.</p>
+                <p className="mt-1 text-sm text-black/55">{copy.universitiesHint}</p>
               </div>
               <div className="flex w-full flex-wrap items-center gap-3 sm:w-auto sm:justify-end">
                 <button
@@ -754,9 +757,9 @@ export function EditProfileModal(props: Props) {
                   onClick={onEditUniversities}
                   className="rounded-full border-2 border-black bg-white px-3 py-1.5 text-sm font-semibold transition hover:-translate-y-0.5 hover:bg-[#FFF4CC]"
                 >
-                  Edit universities
+                  {copy.editUniversities}
                 </button>
-                {!isPageMode ? <SectionToggle open={openSections.universities} onToggle={() => toggleSection("universities")} /> : null}
+                {!isPageMode ? <SectionToggle open={openSections.universities} onToggle={() => toggleSection("universities")} showLabel={copy.show} hideLabel={copy.hide} /> : null}
               </div>
             </div>
 
@@ -764,7 +767,7 @@ export function EditProfileModal(props: Props) {
               <div className={`grid gap-3 ${isPageMode ? "p-5" : "p-5 pt-0"}`}>
                 {renderPageModeSectionToolbar("universities")}
                 <div className="flex items-center justify-between gap-3 rounded-[22px] border border-black/12 bg-white px-4 py-3 text-sm">
-                  <p className="font-semibold text-black">Selected for snapshot</p>
+                  <p className="font-semibold text-black">{copy.selectedForSnapshot}</p>
                   <span className="rounded-full border border-black/15 bg-[#FFF4CC] px-3 py-1 text-xs font-black uppercase tracking-[0.12em] text-black/65">
                     {editForm.selectedUniversityIds.length}/7
                   </span>
@@ -789,7 +792,7 @@ export function EditProfileModal(props: Props) {
                           <div className="min-w-0">
                             <p className="text-sm font-semibold text-black">{item.university.name}</p>
                             <p className="mt-1 text-xs text-black/55">
-                              {selected ? "Shown in dashboard snapshot" : "Tap to include in dashboard snapshot"}
+                              {selected ? copy.shownInSnapshot : copy.tapToInclude}
                             </p>
                           </div>
                           <span
@@ -797,26 +800,26 @@ export function EditProfileModal(props: Props) {
                               item.status as never,
                             )}`}
                           >
-                            {item.status.replaceAll("_", " ")}
+                            {translateDashboardStatus(locale, item.status)}
                           </span>
                         </div>
                         <div className="flex items-center justify-between gap-3">
                           <span className="text-xs font-semibold text-black/55">
-                            {selected ? `Position ${editForm.selectedUniversityIds.indexOf(item.id) + 1}` : "Not selected"}
+                            {selected ? `${copy.position} ${editForm.selectedUniversityIds.indexOf(item.id) + 1}` : copy.notSelected}
                           </span>
                           <span
                             className={`rounded-full border px-3 py-1 text-xs font-black uppercase tracking-[0.12em] ${
                               selected ? "border-black bg-[#DAF5F0] text-black" : "border-black/12 bg-white text-black/55"
                             }`}
                           >
-                            {selected ? "Selected" : "Select"}
+                            {selected ? copy.selected : copy.select}
                           </span>
                         </div>
                       </button>
                     );
                   })
                 ) : (
-                  <p className="rounded-2xl border border-dashed border-black/15 bg-white px-4 py-5 text-sm text-black/50">No universities added yet.</p>
+                  <p className="rounded-2xl border border-dashed border-black/15 bg-white px-4 py-5 text-sm text-black/50">{copy.noUniversitiesAdded}</p>
                 )}
               </div>
             ) : null}
@@ -827,22 +830,22 @@ export function EditProfileModal(props: Props) {
         <div className={`mt-4 shrink-0 bg-white px-4 py-3 ${isPageMode ? "rounded-[24px] border border-black/10 bg-white px-5 py-4 shadow-none" : "rounded-[24px] border-2 border-black shadow-[0_8px_0_0_rgba(0,0,0,1)]"} sm:mt-5`}>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-col gap-1">
-              <p className="text-sm font-semibold text-black/60">Changes update your dashboard snapshot automatically.</p>
+              <p className="text-sm font-semibold text-black/60">{copy.autosaveLead}</p>
               <p className="text-xs font-semibold text-black/45">
-                {autosaveStatus === "saving" && "Autosaving changes..."}
-                {autosaveStatus === "saved" && "All changes saved."}
-                {autosaveStatus === "error" && "Autosave failed. Use Save changes to try again."}
-                {autosaveStatus === "idle" && "Autosave is on."}
+                {autosaveStatus === "saving" && copy.autosaving}
+                {autosaveStatus === "saved" && copy.autosaved}
+                {autosaveStatus === "error" && copy.autosaveFailed}
+                {autosaveStatus === "idle" && copy.autosaveOn}
               </p>
             </div>
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-end">
               {isPageMode ? renderPageModeStepActions() : null}
               <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-end">
                 <Button variant="outline" onClick={onClose} disabled={savingEdit} className="w-full sm:w-auto">
-                  {closeLabel}
+                  {closeLabel === "Close" ? copy.close : closeLabel}
                 </Button>
                 <Button onClick={onSave} disabled={savingEdit} className="w-full sm:w-auto">
-                  {savingEdit ? "Saving..." : "Save changes"}
+                  {savingEdit ? copy.saving : copy.saveChanges}
                 </Button>
               </div>
             </div>

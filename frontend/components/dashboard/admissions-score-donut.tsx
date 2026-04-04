@@ -3,6 +3,8 @@
 import { useMemo, useState } from "react";
 import { Pie, PieChart, Cell } from "recharts";
 import type { AdmissionsScoreBreakdown } from "@/app/dashboard/utils";
+import { useLocale } from "@/components/locale-provider";
+import { getDashboardCopy } from "@/lib/dashboard-copy";
 import { cn } from "@/lib/utils";
 
 type AdmissionsScoreDonutProps = {
@@ -27,7 +29,7 @@ type DonutSlice = {
   value: number;
 };
 
-function buildSlices(breakdown: AdmissionsScoreBreakdown, trackColor: string): DonutSlice[] {
+function buildSlices(breakdown: AdmissionsScoreBreakdown, trackColor: string, copy: ReturnType<typeof getDashboardCopy>["donut"]): DonutSlice[] {
   const earnedSlices: DonutSlice[] = breakdown.segments
     .filter((segment) => segment.contribution > 0)
     .map((segment) => ({
@@ -49,7 +51,7 @@ function buildSlices(breakdown: AdmissionsScoreBreakdown, trackColor: string): D
   if (remainingTotal > 0) {
     earnedSlices.push({
       key: "missing",
-      label: "Missing to improve score",
+      label: copy.missingTitle,
       weight: remainingTotal,
       value: remainingTotal,
       score: 0,
@@ -57,8 +59,8 @@ function buildSlices(breakdown: AdmissionsScoreBreakdown, trackColor: string): D
       missingPoints: remainingTotal,
       status: "Needs work",
       color: trackColor,
-      description: "Grouped remaining score across all admissions categories.",
-      missingHint: "Complete profile readiness, tests, and planning to increase your score.",
+      description: copy.groupedDescription,
+      missingHint: copy.groupedHint,
       sliceKey: "missing",
     });
   }
@@ -109,10 +111,12 @@ export function AdmissionsScoreDonut({
   className,
   mode = "interactive",
 }: AdmissionsScoreDonutProps) {
+  const { locale } = useLocale();
+  const copy = getDashboardCopy(locale).donut;
   const [activeKey, setActiveKey] = useState<string | null>(null);
   const trackColor = "#E6EAEE";
 
-  const slices = useMemo(() => buildSlices(breakdown, trackColor), [breakdown]);
+  const slices = useMemo(() => buildSlices(breakdown, trackColor, copy), [breakdown, copy]);
 
   if (mode === "export") {
     return (
@@ -181,7 +185,7 @@ export function AdmissionsScoreDonut({
 
       {activeKey === "missing" ? (
         <div className="absolute inset-x-0 bottom-0 mx-auto w-full max-w-[280px] rounded-2xl bg-[#F7F7F7] px-3 py-3 ring-1 ring-black/8">
-          <p className="text-sm font-black text-black">Missing to improve score</p>
+          <p className="text-sm font-black text-black">{copy.missingSummaryIntro}</p>
           <div className="mt-2 grid gap-1.5">
             {missingSummary.map((segment) => (
               <p key={segment.key} className="text-sm text-black/70">
@@ -205,9 +209,9 @@ export function AdmissionsScoreDonut({
           </p>
           <p className="mt-1 text-sm font-semibold text-black">{activeSegment.score}%</p>
           <p className="mt-1 text-sm font-semibold text-black/80">
-            Contribution to total: {activeSegment.contribution} pts
+            {copy.contributionToTotal}: {activeSegment.contribution} pts
           </p>
-          <p className="mt-1 text-sm text-black/65">{activeSegment.status === "Complete" ? "Complete" : activeSegment.missingHint}</p>
+          <p className="mt-1 text-sm text-black/65">{activeSegment.status === "Complete" ? copy.complete : activeSegment.missingHint}</p>
         </div>
       ) : null}
     </div>

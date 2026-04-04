@@ -11,6 +11,8 @@ import { Loader } from "@/components/loader";
 import { RequiredMark } from "@/components/ui/required-mark";
 import { Select } from "@/components/ui/select";
 import { RuntimeNotice } from "@/components/runtime-notice";
+import { useLocale } from "@/components/locale-provider";
+import { getProductCopy } from "@/lib/product-copy";
 
 type UploadPanelProps = {
   documentTypes: readonly DocumentTypeMeta[];
@@ -35,6 +37,8 @@ export function UploadPanel({
   onUpload,
   onError,
 }: UploadPanelProps) {
+  const { locale } = useLocale();
+  const copy = getProductCopy(locale).documents;
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [dragActive, setDragActive] = useState(false);
   const [title, setTitle] = useState("");
@@ -53,11 +57,11 @@ export function UploadPanel({
 
     const combined = [...files, ...nextFiles];
     if (combined.length > remainingSlots) {
-      onError(`You can upload up to ${remainingSlots} more document${remainingSlots === 1 ? "" : "s"}.`);
+      onError(copy.tooMany.replace("{count}", String(remainingSlots)).replace("{suffix}", remainingSlots === 1 ? "document" : "documents"));
       return;
     }
 
-    const validationError = validateSelectedFiles(combined);
+    const validationError = validateSelectedFiles(combined, locale);
     if (validationError) {
       onError(validationError);
       return;
@@ -76,11 +80,11 @@ export function UploadPanel({
   async function submit(event: FormEvent) {
     event.preventDefault();
     if (!uploadsEnabled) {
-      onError(uploadUnavailableMessage || "Document uploads are temporarily unavailable.");
+      onError(uploadUnavailableMessage || copy.uploadsUnavailable);
       return;
     }
     if (!files.length) {
-      onError("Choose at least one file.");
+      onError(copy.chooseAtLeastOne);
       return;
     }
 
@@ -96,10 +100,8 @@ export function UploadPanel({
 
   return (
     <Card className="shadow-none">
-      <CardTitle className="text-lg">Upload document</CardTitle>
-      <CardDescription className="mt-2 text-sm">
-        Add files for your applications.
-      </CardDescription>
+      <CardTitle className="text-lg">{copy.uploadTitle}</CardTitle>
+      <CardDescription className="mt-2 text-sm">{copy.uploadDescription}</CardDescription>
       {!uploadsEnabled && uploadUnavailableMessage ? (
         <div className="mt-4">
           <RuntimeNotice message={uploadUnavailableMessage} />
@@ -108,39 +110,39 @@ export function UploadPanel({
 
       <form onSubmit={submit} className="mt-4 grid gap-3">
         <label className="text-sm text-black/70">
-          Title
+          {copy.title}
           <input
             value={title}
             onChange={(event) => setTitle(event.target.value)}
-            placeholder="Used only for a single-file upload"
+            placeholder={copy.titlePlaceholder}
             className="mt-1 w-full rounded-xl border border-black/15 bg-white px-3 py-2 disabled:cursor-not-allowed disabled:bg-black/[0.03]"
             disabled={!uploadsEnabled || uploading}
           />
         </label>
 
         <label className="text-sm text-black/70">
-          Document type<RequiredMark />
+          {copy.type}<RequiredMark />
           <Select
             value={type}
             onChange={(value) => setType(value as DocumentType)}
             options={documentTypes.map((item) => ({ value: item.id, label: item.label }))}
             className="mt-1 w-full border border-black/15"
-            ariaLabel="Document type"
+            ariaLabel={copy.type}
             disabled={!uploadsEnabled || uploading}
           />
         </label>
 
         <label className="text-sm text-black/70">
-          Link to university
+          {copy.linkUniversity}
           <Select
             value={studentUniversityId}
             onChange={setStudentUniversityId}
             options={[
-              { value: "", label: "No university link" },
+              { value: "", label: copy.noUniversityLink },
               ...studentUniversities.map((item) => ({ value: String(item.id), label: item.university.name })),
             ]}
             className="mt-1 w-full border border-black/15"
-            ariaLabel="Link document to university"
+            ariaLabel={copy.linkUniversity}
             disabled={!uploadsEnabled || uploading}
           />
         </label>
@@ -162,10 +164,10 @@ export function UploadPanel({
           }`}
         >
           <Upload className="mx-auto h-5 w-5 text-black/55" />
-          <p className="mt-2 text-sm font-semibold text-black">
-            Drag & drop files here<RequiredMark />
+          <p className="mt-2 text-sm font-semibold text-black">{copy.dragHere}<RequiredMark /></p>
+          <p className="mt-1 text-xs text-black/55">
+            {copy.uploadLimit.replace("{slots}", `${remainingSlots} ${remainingSlots === 1 ? (locale === "ru" ? "слот" : "slot") : (locale === "ru" ? "слотов" : "slots")}`)}
           </p>
-          <p className="mt-1 text-xs text-black/55">Up to 5 MB per file, {remainingSlots} slot{remainingSlots === 1 ? "" : "s"} left.</p>
           <input
             ref={inputRef}
             type="file"
@@ -182,14 +184,14 @@ export function UploadPanel({
             onClick={() => inputRef.current?.click()}
             disabled={!uploadsEnabled || uploading}
           >
-            Choose files
+            {copy.chooseFiles}
           </Button>
         </label>
 
         {files.length ? (
           <div className="rounded-2xl border border-black/15 bg-white px-3 py-3">
             <div className="flex items-center justify-between gap-2">
-              <p className="text-sm font-semibold text-black">Selected files</p>
+              <p className="text-sm font-semibold text-black">{copy.selectedFiles}</p>
               <button
                 type="button"
                 onClick={() => {
@@ -198,7 +200,7 @@ export function UploadPanel({
                 }}
                 className="text-xs font-semibold text-black/55 underline underline-offset-2"
               >
-                Clear
+                {copy.clear}
               </button>
             </div>
             <div className="mt-2 grid gap-2">
@@ -209,7 +211,7 @@ export function UploadPanel({
                     type="button"
                     onClick={() => setFiles((prev) => prev.filter((_, fileIndex) => fileIndex !== index))}
                     className="ml-3 rounded-md p-1 text-black/45 hover:bg-black/5 hover:text-black"
-                    aria-label={`Remove ${file.name}`}
+                    aria-label={copy.removeFile.replace("{name}", file.name)}
                   >
                     <X className="h-4 w-4" />
                   </button>
@@ -221,7 +223,7 @@ export function UploadPanel({
 
         <Button type="submit" disabled={!uploadsEnabled || uploading || remainingSlots === 0} className="mt-1 w-full gap-2 sm:w-auto">
           {uploading ? <Loader size="sm" /> : <Upload className="h-4 w-4" />}
-          {uploading ? "Uploading..." : "Upload document"}
+          {uploading ? copy.uploading : copy.uploadDocument}
         </Button>
       </form>
     </Card>

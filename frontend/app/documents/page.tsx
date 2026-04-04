@@ -3,12 +3,13 @@
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
+import { useLocale } from "@/components/locale-provider";
 import { ProtectedPage } from "@/components/protected-page";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiFetch } from "@/lib/api";
 import { getToken } from "@/lib/auth";
-import { DOCUMENT_TYPES, MAX_DOCUMENTS_PER_USER } from "@/app/documents/constants";
+import { MAX_DOCUMENTS_PER_USER } from "@/app/documents/constants";
 import type { DocumentItem, DocumentType, StudentUniversityOption } from "@/app/documents/types";
 import { DocumentGroupSection } from "@/components/documents/document-group-section";
 import { RenameDocumentDialog } from "@/components/documents/rename-document-dialog";
@@ -22,6 +23,7 @@ import {
   writeSessionCache,
 } from "@/lib/session-cache";
 import { fetchRuntimeConfig, type RuntimeConfig } from "@/lib/runtime-config";
+import { getDocumentTypes, getProductCopy } from "@/lib/product-copy";
 
 type DocumentsCachePayload = {
   documents: DocumentItem[];
@@ -29,6 +31,9 @@ type DocumentsCachePayload = {
 };
 
 function DocumentsPageContent() {
+  const { locale } = useLocale();
+  const copy = getProductCopy(locale).documents;
+  const documentTypes = useMemo(() => getDocumentTypes(locale), [locale]);
   const searchParams = useSearchParams();
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
   const [studentUniversities, setStudentUniversities] = useState<StudentUniversityOption[]>([]);
@@ -44,28 +49,28 @@ function DocumentsPageContent() {
 
   const requestedDocumentType = useMemo(() => {
     const value = searchParams.get("type");
-    return DOCUMENT_TYPES.some((item) => item.id === value) ? (value as DocumentType) : "transcript";
-  }, [searchParams]);
+    return documentTypes.some((item) => item.id === value) ? (value as DocumentType) : "transcript";
+  }, [documentTypes, searchParams]);
 
   const groupedDocuments = useMemo(() => {
     const map = new Map<DocumentType, DocumentItem[]>();
-    for (const meta of DOCUMENT_TYPES) {
+    for (const meta of documentTypes) {
       map.set(meta.id, []);
     }
     for (const item of documents) {
       map.get(item.type)?.push(item);
     }
     return map;
-  }, [documents]);
+  }, [documentTypes, documents]);
 
   const readyCount = useMemo(
-    () => DOCUMENT_TYPES.filter((meta) => (groupedDocuments.get(meta.id) || []).length > 0).length,
-    [groupedDocuments],
+    () => documentTypes.filter((meta) => (groupedDocuments.get(meta.id) || []).length > 0).length,
+    [documentTypes, groupedDocuments],
   );
 
   const missingTypes = useMemo(
-    () => DOCUMENT_TYPES.filter((meta) => (groupedDocuments.get(meta.id) || []).length === 0),
-    [groupedDocuments],
+    () => documentTypes.filter((meta) => (groupedDocuments.get(meta.id) || []).length === 0),
+    [documentTypes, groupedDocuments],
   );
 
   const loadData = useCallback(async () => {
@@ -89,7 +94,7 @@ function DocumentsPageContent() {
     }
 
     try {
-      const [documentsResp, universitiesResp] = await Promise.all([
+        const [documentsResp, universitiesResp] = await Promise.all([
         apiFetch<DocumentItem[]>("/api/documents/", { method: "GET" }, token),
         apiFetch<StudentUniversityOption[]>("/api/my-universities/", { method: "GET" }, token),
       ]);
@@ -103,13 +108,13 @@ function DocumentsPageContent() {
       setCacheReady(true);
     } catch (error) {
       if (!cached) {
-        setStatusText(error instanceof Error ? error.message : "Failed to load documents.");
+        setStatusText(error instanceof Error ? error.message : copy.loadFailed);
       }
     } finally {
       setLoading(false);
       setHydrated(true);
     }
-  }, []);
+  }, [copy.loadFailed]);
 
   useEffect(() => {
     void loadData();
@@ -145,7 +150,7 @@ function DocumentsPageContent() {
     files: File[];
   }) {
     if (runtimeConfig?.features.file_uploads_enabled === false) {
-      setStatusText("Document uploads are temporarily unavailable.");
+      setStatusText(copy.uploadsUnavailable);
       return;
     }
     const token = getToken();
@@ -179,9 +184,11 @@ function DocumentsPageContent() {
       setHydrated(true);
       setCacheReady(true);
       clearSessionCaches([SESSION_CACHE_KEYS.dashboard]);
-      setStatusText(payload.files.length === 1 ? "Document uploaded." : `${payload.files.length} documents uploaded.`);
+      setStatusText(
+        payload.files.length === 1 ? copy.documentUploaded : copy.documentsUploaded.replace("{count}", String(payload.files.length)),
+      );
     } catch (error) {
-      setStatusText(error instanceof Error ? error.message : "Failed to upload document.");
+      setStatusText(error instanceof Error ? error.message : copy.uploadFailed);
     } finally {
       setUploading(false);
     }
@@ -205,9 +212,9 @@ function DocumentsPageContent() {
       setHydrated(true);
       setCacheReady(true);
       clearSessionCaches([SESSION_CACHE_KEYS.dashboard]);
-      setStatusText("Document deleted.");
+      setStatusText(copy.documentDeleted);
     } catch (error) {
-      setStatusText(error instanceof Error ? error.message : "Failed to delete document.");
+      setStatusText(error instanceof Error ? error.message : copy.deleteFailed);
     } finally {
       setDeletingId(null);
     }
@@ -236,9 +243,9 @@ function DocumentsPageContent() {
       setCacheReady(true);
       clearSessionCaches([SESSION_CACHE_KEYS.dashboard]);
       setRenamingDocument(null);
-      setStatusText("Document renamed.");
+      setStatusText(copy.documentRenamed);
     } catch (error) {
-      setStatusText(error instanceof Error ? error.message : "Failed to rename document.");
+      setStatusText(error instanceof Error ? error.message : copy.renameFailed);
     } finally {
       setRenaming(false);
     }
@@ -249,27 +256,33 @@ function DocumentsPageContent() {
       <AppShell title="Documents" subtitle="Application files in one place.">
         {runtimeConfig?.features.file_uploads_enabled === false ? (
           <div className="mb-5">
-            <RuntimeNotice message="Document uploads are temporarily unavailable. Existing files stay available for viewing, renaming, and deleting." />
+            <RuntimeNotice
+              message={
+                locale === "ru"
+                  ? "Загрузки документов временно недоступны. Уже загруженные файлы всё ещё можно смотреть, переименовывать и удалять."
+                  : "Document uploads are temporarily unavailable. Existing files stay available for viewing, renaming, and deleting."
+              }
+            />
           </div>
         ) : null}
         <div className="grid gap-5 xl:grid-cols-[360px_1fr]">
           <div className="min-w-0 space-y-5">
             <UploadPanel
-              documentTypes={DOCUMENT_TYPES}
+              documentTypes={documentTypes}
               studentUniversities={studentUniversities}
               currentDocumentCount={documents.length}
               initialType={requestedDocumentType}
               uploading={uploading}
               uploadsEnabled={runtimeConfig?.features.file_uploads_enabled !== false}
-              uploadUnavailableMessage="Uploads are temporarily disabled while we stabilize storage."
+              uploadUnavailableMessage={copy.uploadsUnavailableLong}
               onUpload={handleUpload}
               onError={setStatusText}
             />
 
             <Card className="shadow-none">
-              <CardTitle className="text-lg">Readiness</CardTitle>
+              <CardTitle className="text-lg">{copy.readiness}</CardTitle>
               <CardDescription className="mt-2 hidden text-sm sm:block">
-                Quick view of what is already covered.
+                {copy.readinessDescription}
               </CardDescription>
 
               {loading ? (
@@ -281,25 +294,25 @@ function DocumentsPageContent() {
                 <>
                   <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
                     <div className="rounded-2xl border border-black/15 bg-[#DAF5F0] px-4 py-4">
-                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-black/55">Prepared</p>
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-black/55">{copy.prepared}</p>
                       <p className="mt-2 text-2xl font-black text-black">
-                        {readyCount} / {DOCUMENT_TYPES.length}
+                        {readyCount} / {documentTypes.length}
                       </p>
-                      <p className="mt-1 text-xs text-black/55">Document groups with at least one file.</p>
+                      <p className="mt-1 text-xs text-black/55">{copy.preparedHint}</p>
                     </div>
                     <div className="rounded-2xl border border-black/15 bg-[#FFF4CC] px-4 py-4">
-                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-black/55">Still missing</p>
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-black/55">{copy.missing}</p>
                       <p className="mt-2 text-2xl font-black text-black">{missingTypes.length}</p>
                       <p className="mt-1 text-xs text-black/55">
-                        {missingTypes.length ? missingTypes.map((item) => item.label).join(", ") : "All default groups are covered."}
+                        {missingTypes.length ? missingTypes.map((item) => item.label).join(", ") : copy.missingHintAll}
                       </p>
                     </div>
                   </div>
 
                   <div className="mt-4 rounded-2xl border border-black/15 bg-white px-4 py-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-black/55">Storage</p>
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-black/55">{copy.storage}</p>
                     <p className="mt-2 text-sm text-black/70">
-                      {documents.length} of {MAX_DOCUMENTS_PER_USER} document slots used.
+                      {copy.storageHint.replace("{used}", String(documents.length)).replace("{total}", String(MAX_DOCUMENTS_PER_USER))}
                     </p>
                   </div>
                 </>
@@ -315,7 +328,7 @@ function DocumentsPageContent() {
                 <Skeleton className="h-40 rounded-2xl" />
               </div>
             ) : (
-              DOCUMENT_TYPES.map((group) => (
+              documentTypes.map((group) => (
                 <DocumentGroupSection
                   key={group.id}
                   group={group}

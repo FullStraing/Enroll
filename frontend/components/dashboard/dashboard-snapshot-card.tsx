@@ -6,9 +6,11 @@ import { statusSelectTone } from "@/app/universities/utils";
 import type { AdmissionsScoreBreakdown } from "@/app/dashboard/utils";
 import { EnrollWordmark } from "@/components/brand/enroll-wordmark";
 import { AdmissionsScoreDonut } from "@/components/dashboard/admissions-score-donut";
+import { useLocale } from "@/components/locale-provider";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getDashboardCopy } from "@/lib/dashboard-copy";
 
 export type SnapshotUniversity = {
   id: number;
@@ -71,6 +73,8 @@ function DashboardSnapshotSurface({
   actionsSlot,
   donutMode = "interactive",
 }: DashboardSnapshotSurfaceProps) {
+  const { locale } = useLocale();
+  const copy = getDashboardCopy(locale).snapshot;
   const showAllTests = allTestLabels.length > 0;
   const visibleHonors = honors.slice(0, 4);
   const hiddenHonorsCount = Math.max(0, honors.length - visibleHonors.length);
@@ -81,16 +85,16 @@ function DashboardSnapshotSurface({
         <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
           <div>
             <div className="inline-flex items-center gap-2 rounded-xl border-2 border-black bg-white px-3 py-1 text-sm font-semibold">
-              Shareable Dashboard Snapshot
+              {copy.badge}
             </div>
-            <CardTitle className="mt-3 text-2xl">Profile snapshot worth sharing</CardTitle>
+            <CardTitle className="mt-3 text-2xl">{copy.title}</CardTitle>
             <CardDescription className="mt-1">
-              A clean admissions card with your profile, activities, and current university list.
+              {copy.description}
             </CardDescription>
           </div>
           <div className="mt-3 inline-flex items-center gap-2 self-start text-black sm:ml-auto">
             <div className="leading-none">
-              <p className="text-[11px] font-black uppercase tracking-[0.22em] text-black/45">Powered by</p>
+              <p className="text-[11px] font-black uppercase tracking-[0.22em] text-black/45">{copy.poweredBy}</p>
               <div className="mt-1">
                 <EnrollWordmark size="md" />
               </div>
@@ -104,7 +108,7 @@ function DashboardSnapshotSurface({
               <h2 className="text-3xl font-black tracking-[-0.04em] text-black">{shareName}</h2>
               <p className="mt-2 text-base font-semibold text-black/70">{shareCountry}</p>
               <p className="mt-1 text-base font-semibold text-black/70">{shareIntake}</p>
-              <p className="mt-4 text-lg font-bold text-black">Major: {profileMajor}</p>
+              <p className="mt-4 text-lg font-bold text-black">{copy.major}: {profileMajor}</p>
             </div>
 
             <div className="mt-6 overflow-hidden rounded-2xl bg-white ring-1 ring-black/8">
@@ -122,14 +126,14 @@ function DashboardSnapshotSurface({
                   <p className="mt-1 text-lg font-black text-black">{primaryLanguageLabel}</p>
                 </div>
                 <div className="px-4 py-3">
-                  <p className="text-xs font-black uppercase tracking-[0.16em] text-black/40">Level</p>
+                  <p className="text-xs font-black uppercase tracking-[0.16em] text-black/40">{copy.level}</p>
                   <p className="mt-1 text-lg font-black text-black">{profileClass}</p>
                 </div>
               </div>
 
               {showAllTests ? (
                 <div className="border-t border-black/8 px-4 py-3">
-                  <p className="text-xs font-black uppercase tracking-[0.16em] text-black/40">All Tests</p>
+                  <p className="text-xs font-black uppercase tracking-[0.16em] text-black/40">{copy.allTests}</p>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {allTestLabels.map((label, index) => (
                       <span
@@ -145,7 +149,7 @@ function DashboardSnapshotSurface({
 
               {apLabels.length ? (
                 <div className="border-t border-black/8 px-4 py-3">
-                  <p className="text-xs font-black uppercase tracking-[0.16em] text-black/40">AP Exams</p>
+                  <p className="text-xs font-black uppercase tracking-[0.16em] text-black/40">{copy.apExams}</p>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {apLabels.map((label, index) => (
                       <span
@@ -162,7 +166,7 @@ function DashboardSnapshotSurface({
 
             <div className="mt-6 grid gap-4 lg:grid-cols-[1fr_0.86fr]">
               <div className="rounded-2xl bg-[#DAF5F0]/35 p-4 ring-1 ring-black/8">
-                <p className="text-sm font-black uppercase tracking-[0.14em] text-black/45">Activities</p>
+                <p className="text-sm font-black uppercase tracking-[0.14em] text-black/45">{copy.activities}</p>
                 {activities.length ? (
                   <ul className="mt-3 grid gap-3">
                     {activities.map((activity, index) => (
@@ -173,12 +177,12 @@ function DashboardSnapshotSurface({
                     ))}
                   </ul>
                 ) : (
-                  <p className="mt-3 text-sm text-black/55">No activities added yet.</p>
+                  <p className="mt-3 text-sm text-black/55">{copy.noActivities}</p>
                 )}
               </div>
 
               <div className="rounded-2xl bg-[#FFF4CC]/45 p-4 ring-1 ring-black/8">
-                <p className="text-sm font-black uppercase tracking-[0.14em] text-black/45">Target Universities</p>
+                <p className="text-sm font-black uppercase tracking-[0.14em] text-black/45">{copy.targetUniversities}</p>
                 {targetUniversityEntries.length ? (
                   <ul className="mt-3 grid gap-2.5">
                     {targetUniversityEntries.map((item) => (
@@ -195,7 +199,7 @@ function DashboardSnapshotSurface({
                     ))}
                   </ul>
                 ) : (
-                  <p className="mt-3 text-sm text-black/55">No universities selected yet.</p>
+                  <p className="mt-3 text-sm text-black/55">{copy.noUniversities}</p>
                 )}
               </div>
             </div>
@@ -206,7 +210,7 @@ function DashboardSnapshotSurface({
             <div className="rounded-2xl bg-white p-4 ring-1 ring-black/8">
               <div className="inline-flex items-center gap-2 rounded-xl border-2 border-black bg-[#FFDB58]/40 px-3 py-1 text-sm font-semibold">
                 <Trophy className="h-4 w-4" />
-                Admissions Score
+                {copy.admissionsScore}
               </div>
               <div className="mt-4 flex items-center justify-center">
                 {loading ? (
@@ -219,10 +223,10 @@ function DashboardSnapshotSurface({
 
             <div className="rounded-2xl bg-[#FFF4CC]/25 p-4 ring-1 ring-black/8">
               <div className="flex items-center justify-between gap-3">
-                <p className="text-sm font-black uppercase tracking-[0.14em] text-black/45">Honors</p>
+                <p className="text-sm font-black uppercase tracking-[0.14em] text-black/45">{copy.honors}</p>
                 {hiddenHonorsCount > 0 ? (
                   <span className="rounded-full bg-[#FFF4CC] px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.12em] text-black/55">
-                    +{hiddenHonorsCount} more
+                    +{hiddenHonorsCount} {copy.more}
                   </span>
                 ) : null}
               </div>
@@ -238,7 +242,7 @@ function DashboardSnapshotSurface({
                   ))}
                 </div>
               ) : (
-                <p className="mt-3 text-sm text-black/55">No honors added yet.</p>
+                <p className="mt-3 text-sm text-black/55">{copy.noHonors}</p>
               )}
             </div>
 
@@ -260,6 +264,9 @@ export function DashboardSnapshotCard({
   onEdit,
   ...surfaceProps
 }: DashboardSnapshotCardProps) {
+  const { locale } = useLocale();
+  const copy = getDashboardCopy(locale).snapshot;
+
   return (
     <div ref={snapshotRef}>
       <DashboardSnapshotSurface
@@ -273,7 +280,7 @@ export function DashboardSnapshotCard({
               disabled={sharingDashboard || savingSnapshot}
             >
               <Share2 className="h-4 w-4" />
-              {sharingDashboard ? "Preparing image..." : "Copy image"}
+              {sharingDashboard ? copy.preparingImage : copy.copyImage}
             </Button>
             <Button
               variant="outline"
@@ -282,10 +289,10 @@ export function DashboardSnapshotCard({
               disabled={savingSnapshot || sharingDashboard}
             >
               <Download className="h-4 w-4" />
-              {savingSnapshot ? "Saving image..." : "Save image"}
+              {savingSnapshot ? copy.savingImage : copy.saveImage}
             </Button>
             <Button variant="secondary" onClick={onEdit} className="w-full sm:min-w-[132px] sm:w-auto">
-              Edit profile
+              {copy.editProfile}
             </Button>
           </div>
         }

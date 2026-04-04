@@ -1,12 +1,12 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { useLocale } from "@/components/locale-provider";
 import { getToken } from "@/lib/auth";
 import {
   INTRO_QUIZ_COMPLETED_STORAGE_KEY,
@@ -17,6 +17,7 @@ import {
   writeStoredIntroQuiz,
 } from "@/lib/intro-quiz";
 import { resolvePostAuthDestination } from "@/lib/onboarding-gate";
+import { getProductCopy } from "@/lib/product-copy";
 
 type IntroAnswers = {
   country: string;
@@ -42,32 +43,18 @@ const initialAnswers: IntroAnswers = {
   shortlistSize: "",
 };
 
-const countryOptions = ["Кыргызстан", "Казахстан", "Узбекистан", "Россия", "Украина", "Турция", "Индия", "Другая страна"];
-const schoolLevelOptions = ["9 класс", "10 класс", "11 класс", "12 класс", "Gap year", "Уже в колледже"];
-const intakeOptions = ["2027", "2028", "2029+", "Еще не решил"];
-const majorOptions = [
-  "Computer Science",
-  "Business / Economics",
-  "Engineering",
-  "Biology / Medicine",
-  "Social Sciences",
-  "Arts / Design",
-  "Еще не определился",
-];
-const gpaScaleOptions = ["GPA 4.0 (unweighted)", "GPA 5.0 / локальная шкала", "Проценты", "Еще не знаю"];
-const testOptions = ["SAT", "ACT", "TOEFL", "IELTS", "Duolingo English Test", "Пока без тестов"];
-const shortlistOptions = ["3", "5", "8", "10+", "Не знаю"];
-
 function OptionGrid({
   options,
   value,
   onChange,
   multi = false,
+  noTestsOption,
 }: {
   options: string[];
   value: string | string[];
   onChange: (next: string | string[]) => void;
   multi?: boolean;
+  noTestsOption?: string;
 }) {
   return (
     <div className="grid gap-3 sm:grid-cols-2">
@@ -82,12 +69,14 @@ function OptionGrid({
                 onChange(option);
                 return;
               }
+
               const current = value as string[];
-              if (option === "Пока без тестов") {
+              if (option === noTestsOption) {
                 onChange(current.includes(option) ? [] : [option]);
                 return;
               }
-              const next = current.includes("Пока без тестов") ? [] : [...current];
+
+              const next = noTestsOption && current.includes(noTestsOption) ? [] : [...current];
               onChange(next.includes(option) ? next.filter((item) => item !== option) : [...next, option]);
             }}
             className={`rounded-2xl border-2 px-4 py-4 text-left text-base font-semibold transition ${
@@ -103,6 +92,8 @@ function OptionGrid({
 }
 
 export default function IntroQuizPage() {
+  const { locale } = useLocale();
+  const copy = getProductCopy(locale).introQuiz;
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<IntroAnswers>(initialAnswers);
@@ -130,8 +121,8 @@ export default function IntroQuizPage() {
       }
       const parsed = readStoredIntroQuiz() as { step: number; answers: IntroAnswers } | null;
       if (!parsed) return;
-      if (parsed?.answers) setAnswers({ ...initialAnswers, ...parsed.answers });
-      if (typeof parsed?.step === "number") setStep(Math.min(Math.max(parsed.step, 0), totalSteps));
+      if (parsed.answers) setAnswers({ ...initialAnswers, ...parsed.answers });
+      if (typeof parsed.step === "number") setStep(Math.min(Math.max(parsed.step, 0), totalSteps));
     } catch {
       // ignore invalid local data
     }
@@ -158,30 +149,12 @@ export default function IntroQuizPage() {
     if (step === 3) return Boolean(answers.major);
     if (step === 4) {
       if (!answers.gpaScale) return false;
-      if (answers.gpaScale === "Еще не знаю") return true;
+      if (answers.gpaScale === copy.gpaScaleOptions[copy.gpaScaleOptions.length - 1]) return true;
       return Boolean(answers.gpaValue);
     }
     if (step === 5) return answers.tests.length > 0;
     if (step === 6) return Boolean(answers.shortlistSize);
     return true;
-  }
-
-  function stepTitle() {
-    if (step === 0) return "В какой стране вы учитесь сейчас?";
-    if (step === 1) return "В каком вы сейчас классе?";
-    if (step === 2) return "Когда планируете начать учебу в США?";
-    if (step === 3) return "Какой major вас интересует?";
-    if (step === 4) return "Какой у вас текущий GPA / средний балл?";
-    if (step === 5) return "Какие тесты уже есть или планируете сдавать?";
-    if (step === 6) return "Сколько университетов добавить в шортлист на старте?";
-    return "Готово! Ваш стартовый профиль собран.";
-  }
-
-  function stepSubtitle() {
-    if (step === 4) return "Выберите шкалу, чтобы корректно сравнивать результаты без искажений.";
-    if (step === 5) return "Можно выбрать несколько вариантов.";
-    if (step === 7) return "Дальше вы получите персональный стартовый план подачи.";
-    return "Ответ займет 5-10 секунд.";
   }
 
   async function handleAuthedContinue() {
@@ -195,7 +168,7 @@ export default function IntroQuizPage() {
         window.location.assign(await resolvePostAuthDestination(token));
       }
     } catch (error) {
-      setStatusText(error instanceof Error ? error.message : "Не удалось сохранить ответы в профиль.");
+      setStatusText(error instanceof Error ? error.message : copy.saveError);
     } finally {
       setSyncingProfile(false);
       if (!hasPendingStoredIntroQuiz()) {
@@ -219,7 +192,7 @@ export default function IntroQuizPage() {
               className="inline-flex h-9 w-9 items-center justify-center rounded-xl border-2 border-black bg-white"
               onClick={() => setStep((prev) => Math.max(prev - 1, 0))}
               disabled={step === 0}
-              aria-label="Назад"
+              aria-label={copy.back}
             >
               <ArrowLeft className="h-4 w-4" />
             </button>
@@ -230,27 +203,61 @@ export default function IntroQuizPage() {
           <div className="mb-7 grid gap-4 rounded-2xl border-2 border-black/15 bg-white p-4 md:grid-cols-[120px_1fr]">
             <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full border-2 border-black bg-[#DAF5F0] text-4xl">🎓</div>
             <div className="rounded-2xl border-2 border-black/15 bg-[#F8F9FA] px-4 py-3">
-              <p className="text-base font-bold">Привет! Я Enroll Buddy.</p>
-              <p className="mt-1 text-sm text-black/70">Соберем стартовый профиль и сразу покажем ваш next step.</p>
+              <p className="text-base font-bold">{copy.greetingTitle}</p>
+              <p className="mt-1 text-sm text-black/70">{copy.greetingBody}</p>
             </div>
           </div>
 
-          <p className="text-sm font-semibold text-black/55">Шаг {Math.min(step + 1, totalSteps)} из {totalSteps}</p>
-          <h1 className="mt-1 text-3xl font-black leading-tight md:text-4xl">{stepTitle()}</h1>
-          <p className="mt-2 text-base text-black/65">{stepSubtitle()}</p>
+          <p className="text-sm font-semibold text-black/55">
+            {copy.step} {Math.min(step + 1, totalSteps)} {copy.of} {totalSteps}
+          </p>
+          <h1 className="mt-1 text-3xl font-black leading-tight md:text-4xl">
+            {step < totalSteps ? copy.steps[step].title : copy.completeTitle}
+          </h1>
+          <p className="mt-2 text-base text-black/65">
+            {step < totalSteps ? copy.steps[step].subtitle : copy.completeSubtitle}
+          </p>
 
           <div className="mt-7 space-y-4">
-            {step === 0 ? <OptionGrid options={countryOptions} value={answers.country} onChange={(next) => setAnswers((prev) => ({ ...prev, country: String(next) }))} /> : null}
-            {step === 1 ? <OptionGrid options={schoolLevelOptions} value={answers.schoolLevel} onChange={(next) => setAnswers((prev) => ({ ...prev, schoolLevel: String(next) }))} /> : null}
-            {step === 2 ? <OptionGrid options={intakeOptions} value={answers.intakeYear} onChange={(next) => setAnswers((prev) => ({ ...prev, intakeYear: String(next) }))} /> : null}
-            {step === 3 ? <OptionGrid options={majorOptions} value={answers.major} onChange={(next) => setAnswers((prev) => ({ ...prev, major: String(next) }))} /> : null}
+            {step === 0 ? (
+              <OptionGrid
+                options={copy.countryOptions}
+                value={answers.country}
+                onChange={(next) => setAnswers((prev) => ({ ...prev, country: String(next) }))}
+              />
+            ) : null}
+            {step === 1 ? (
+              <OptionGrid
+                options={copy.schoolLevelOptions}
+                value={answers.schoolLevel}
+                onChange={(next) => setAnswers((prev) => ({ ...prev, schoolLevel: String(next) }))}
+              />
+            ) : null}
+            {step === 2 ? (
+              <OptionGrid
+                options={copy.intakeOptions}
+                value={answers.intakeYear}
+                onChange={(next) => setAnswers((prev) => ({ ...prev, intakeYear: String(next) }))}
+              />
+            ) : null}
+            {step === 3 ? (
+              <OptionGrid
+                options={copy.majorOptions}
+                value={answers.major}
+                onChange={(next) => setAnswers((prev) => ({ ...prev, major: String(next) }))}
+              />
+            ) : null}
 
             {step === 4 ? (
               <>
-                <OptionGrid options={gpaScaleOptions} value={answers.gpaScale} onChange={(next) => setAnswers((prev) => ({ ...prev, gpaScale: String(next), gpaValue: "" }))} />
-                {answers.gpaScale && answers.gpaScale !== "Еще не знаю" ? (
+                <OptionGrid
+                  options={copy.gpaScaleOptions}
+                  value={answers.gpaScale}
+                  onChange={(next) => setAnswers((prev) => ({ ...prev, gpaScale: String(next), gpaValue: "" }))}
+                />
+                {answers.gpaScale && answers.gpaScale !== copy.gpaScaleOptions[copy.gpaScaleOptions.length - 1] ? (
                   <div className="rounded-2xl border-2 border-black/15 bg-white p-4">
-                    <label className="mb-2 block text-sm font-semibold">Введите значение</label>
+                    <label className="mb-2 block text-sm font-semibold">{copy.enterValue}</label>
                     <input
                       type="number"
                       step="0.01"
@@ -259,27 +266,45 @@ export default function IntroQuizPage() {
                       value={answers.gpaValue}
                       onChange={(event) => setAnswers((prev) => ({ ...prev, gpaValue: event.target.value }))}
                       className="h-11 w-full rounded-xl border-2 border-black px-3"
-                      placeholder={answers.gpaScale.includes("Проценты") ? "Например: 87" : "Например: 3.7"}
+                      placeholder={
+                        answers.gpaScale.includes("Процент") || answers.gpaScale.includes("Percentage")
+                          ? copy.valuePercentExample
+                          : copy.valueGpaExample
+                      }
                     />
                   </div>
                 ) : null}
               </>
             ) : null}
 
-            {step === 5 ? <OptionGrid options={testOptions} value={answers.tests} multi onChange={(next) => setAnswers((prev) => ({ ...prev, tests: next as string[] }))} /> : null}
-            {step === 6 ? <OptionGrid options={shortlistOptions} value={answers.shortlistSize} onChange={(next) => setAnswers((prev) => ({ ...prev, shortlistSize: String(next) }))} /> : null}
+            {step === 5 ? (
+              <OptionGrid
+                options={copy.testOptions}
+                value={answers.tests}
+                multi
+                noTestsOption={copy.noTestsOption}
+                onChange={(next) => setAnswers((prev) => ({ ...prev, tests: next as string[] }))}
+              />
+            ) : null}
+            {step === 6 ? (
+              <OptionGrid
+                options={copy.shortlistOptions}
+                value={answers.shortlistSize}
+                onChange={(next) => setAnswers((prev) => ({ ...prev, shortlistSize: String(next) }))}
+              />
+            ) : null}
 
             {step >= totalSteps ? (
               <div className="rounded-2xl border-2 border-black bg-[#DAF5F0] p-5">
                 <div className="mb-3 inline-flex items-center gap-2 rounded-xl border-2 border-black bg-white px-3 py-1 text-sm font-bold">
                   <CheckCircle2 className="h-4 w-4" />
-                  Профиль собран
+                  {copy.profileReady}
                 </div>
                 <p className="text-sm text-black/75">
-                  Страна: <b>{answers.country || "N/A"}</b> · Класс: <b>{answers.schoolLevel || "N/A"}</b> · Major: <b>{answers.major || "N/A"}</b>
+                  {copy.summaryCountry}: <b>{answers.country || copy.unknownValue}</b> · {copy.summaryLevel}: <b>{answers.schoolLevel || copy.unknownValue}</b> · {copy.summaryMajor}: <b>{answers.major || copy.unknownValue}</b>
                 </p>
                 <p className="mt-1 text-sm text-black/75">
-                  План старта: <b>{answers.intakeYear || "N/A"}</b> · Шортлист: <b>{answers.shortlistSize || "N/A"}</b>
+                  {copy.summaryPlan}: <b>{answers.intakeYear || copy.unknownValue}</b> · {copy.summaryShortlist}: <b>{answers.shortlistSize || copy.unknownValue}</b>
                 </p>
                 <div className="mt-5 flex flex-wrap gap-2">
                   {isAuthed ? (
@@ -289,7 +314,7 @@ export default function IntroQuizPage() {
                       disabled={syncingProfile}
                       className="inline-flex h-11 items-center justify-center rounded-xl border-2 border-black bg-[#FFDB58] px-5 text-sm font-semibold transition hover:-translate-y-0.5"
                     >
-                      {syncingProfile ? "Сохраняем..." : "Перейти в Dashboard"}
+                      {syncingProfile ? copy.saving : copy.goToDashboard}
                     </button>
                   ) : (
                     <>
@@ -298,14 +323,14 @@ export default function IntroQuizPage() {
                         onClick={() => void handleContinueToAuth("/register")}
                         className="inline-flex h-11 items-center justify-center rounded-xl border-2 border-black bg-[#FFDB58] px-5 text-sm font-semibold transition hover:-translate-y-0.5"
                       >
-                        Создать аккаунт
+                        {copy.createAccount}
                       </button>
                       <button
                         type="button"
                         onClick={() => void handleContinueToAuth("/login")}
                         className="inline-flex h-11 items-center justify-center rounded-xl border-2 border-black bg-white px-5 text-sm font-semibold transition hover:bg-black/5"
                       >
-                        Войти
+                        {copy.login}
                       </button>
                     </>
                   )}
@@ -317,9 +342,9 @@ export default function IntroQuizPage() {
 
           {step < totalSteps ? (
             <div className="mt-8 flex items-center justify-between border-t-2 border-black/10 pt-4">
-              <p className="text-xs text-black/60">Ответы сохраняются локально, можно продолжить позже.</p>
+              <p className="text-xs text-black/60">{copy.answersSaved}</p>
               <Button variant="primary" size="lg" disabled={!isCurrentStepValid()} onClick={() => setStep((prev) => Math.min(prev + 1, totalSteps))}>
-                Далее
+                {copy.next}
               </Button>
             </div>
           ) : null}

@@ -252,12 +252,11 @@ export function AppShell({
               </div>
             </div>
 
-            <div className="mt-3 rounded-2xl border border-black/10 bg-[#FFF4CC] px-3 py-2">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-black/45">{localDateTime.dateLabel}</p>
-              <p className="mt-1 text-sm font-semibold text-black">{localDateTime.timeLabel}</p>
-            </div>
-
-            <div className="mt-3">
+            <div className="mt-3 flex items-center justify-between gap-3 rounded-2xl border border-black/10 bg-[#FFF4CC] px-3 py-2">
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-black/45">{localDateTime.dateLabel}</p>
+                <p className="mt-1 text-sm font-semibold text-black">{localDateTime.timeLabel}</p>
+              </div>
               <LanguageSwitcher compact />
             </div>
           </div>
@@ -292,29 +291,26 @@ export function AppShell({
                   <EnrollWordmark size="md" className="translate-y-[1px]" />
                 </div>
               </Link>
-              <div className="flex items-center gap-2">
-                <LanguageSwitcher compact />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={toggleSidebar}
-                  className="relative h-9 w-9 overflow-hidden px-0"
-                  aria-label={messages.shell.closeMenu}
-                  title={messages.shell.closeMenu}
-                >
-                  <Menu
-                    className={`absolute h-4 w-4 transition-all duration-200 ${
-                      collapsed ? "rotate-0 scale-100 opacity-100" : "rotate-90 scale-0 opacity-0"
-                    }`}
-                  />
-                  <X
-                    className={`absolute h-4 w-4 transition-all duration-200 ${
-                      collapsed ? "-rotate-90 scale-0 opacity-0" : "rotate-0 scale-100 opacity-100"
-                    }`}
-                  />
-                </Button>
-              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={toggleSidebar}
+                className="relative h-9 w-9 overflow-hidden px-0"
+                aria-label={messages.shell.closeMenu}
+                title={messages.shell.closeMenu}
+              >
+                <Menu
+                  className={`absolute h-4 w-4 transition-all duration-200 ${
+                    collapsed ? "rotate-0 scale-100 opacity-100" : "rotate-90 scale-0 opacity-0"
+                  }`}
+                />
+                <X
+                  className={`absolute h-4 w-4 transition-all duration-200 ${
+                    collapsed ? "-rotate-90 scale-0 opacity-0" : "rotate-0 scale-100 opacity-100"
+                  }`}
+                />
+              </Button>
             </>
           )}
         </div>
@@ -385,7 +381,6 @@ export function AppShell({
           </div>
 
           <div className="hidden items-center gap-2 sm:flex">
-            <LanguageSwitcher compact />
             <span
               className="rounded-xl border-2 border-black bg-white px-3 py-1.5 text-sm font-semibold leading-tight"
               title={localDateTime.timeZone}
@@ -395,6 +390,7 @@ export function AppShell({
               </span>
               <span className="block text-sm font-semibold text-black">{localDateTime.timeLabel}</span>
             </span>
+            <LanguageSwitcher compact />
             <span className="rounded-xl border-2 border-black bg-white px-3 py-1.5 text-sm font-semibold">
               <span className="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#DAF5F0] text-xs">
                 {name.charAt(0).toUpperCase()}

@@ -8,6 +8,7 @@ import { AppShell } from "@/components/app-shell";
 import { DashboardExportCard, DashboardSnapshotCard } from "@/components/dashboard/dashboard-snapshot-card";
 import { ProgressBlockCard } from "@/components/dashboard/progress-block-card";
 import { SharePreviewToast } from "@/components/dashboard/share-preview-toast";
+import { useLocale } from "@/components/locale-provider";
 import { ProtectedPage } from "@/components/protected-page";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -38,12 +39,15 @@ import {
 } from "@/app/dashboard/utils";
 import { apiFetch } from "@/lib/api";
 import { getToken } from "@/lib/auth";
+import { getDashboardCopy, translateDashboardStatus } from "@/lib/dashboard-copy";
 import { readStoredIntroQuiz } from "@/lib/intro-quiz";
 import { isProfileReadyForDashboard } from "@/lib/onboarding-gate";
 import { formatDateShort, formatDateShortNoYear } from "@/lib/date-format";
 import { readSessionCache, SESSION_CACHE_KEYS, SESSION_CACHE_TTLS, writeSessionCache } from "@/lib/session-cache";
 
 function DashboardPageContent() {
+  const { locale } = useLocale();
+  const copy = getDashboardCopy(locale);
   const router = useRouter();
   const dashboardShareRef = useRef<HTMLDivElement>(null);
   const dashboardExportRef = useRef<HTMLDivElement>(null);
@@ -140,7 +144,7 @@ function DashboardPageContent() {
         }, token);
       } catch (error) {
         if (!cached) {
-          setStatusText(error instanceof Error ? error.message : "Failed to load dashboard.");
+          setStatusText(error instanceof Error ? error.message : copy.statusText.dashboardLoadFailed);
         }
       } finally {
         setLoading(false);
@@ -148,7 +152,7 @@ function DashboardPageContent() {
     };
 
     void run();
-  }, [applyDashboardData]);
+  }, [applyDashboardData, copy.statusText.dashboardLoadFailed]);
 
   useEffect(() => {
     if (loading || !profile || !progressData) return;
@@ -202,8 +206,9 @@ function DashboardPageContent() {
         universitiesCount: myUniversities.length,
         hasMajor: profileMajor !== "N/A",
         hasIntake: intake !== "N/A",
+        locale,
       }),
-    [progressData?.overall.percent, normalizedGpa, profile?.sat_total, quizAnswers.tests, myUniversities.length, profileMajor, intake],
+    [progressData?.overall.percent, normalizedGpa, profile?.sat_total, quizAnswers.tests, myUniversities.length, profileMajor, intake, locale],
   );
   const admissionsBreakdown = useMemo(
     () =>
@@ -215,8 +220,9 @@ function DashboardPageContent() {
         universitiesCount: myUniversities.length,
         hasMajor: profileMajor !== "N/A",
         hasIntake: intake !== "N/A",
+        locale,
       }),
-    [progressData?.overall.percent, normalizedGpa, profile?.sat_total, quizAnswers.tests, myUniversities.length, profileMajor, intake],
+    [progressData?.overall.percent, normalizedGpa, profile?.sat_total, quizAnswers.tests, myUniversities.length, profileMajor, intake, locale],
   );
 
   const dashboardProgress = useMemo(
@@ -228,8 +234,9 @@ function DashboardPageContent() {
         essays,
         documents,
         sections: progressData?.sections || [],
+        locale,
       }),
-    [profile, quizAnswers, myUniversities, essays, documents, progressData?.sections],
+    [profile, quizAnswers, myUniversities, essays, documents, progressData?.sections, locale],
   );
 
   const nearestDeadline = useMemo(() => {
@@ -239,7 +246,7 @@ function DashboardPageContent() {
       if (application.deadline_date) {
         candidates.push({
           date: application.deadline_date,
-          label: `${application.university?.name || application.university_name || "Application"} - ${application.status}`,
+          label: `${application.university?.name || application.university_name || copy.progress.applications} - ${translateDashboardStatus(locale, application.status)}`,
         });
       }
     }
@@ -263,12 +270,12 @@ function DashboardPageContent() {
       .sort((a, b) => a.ts - b.ts);
 
     return filtered[0] || null;
-  }, [applications, tasks, myUniversities]);
+  }, [applications, tasks, myUniversities, copy.progress.applications, locale]);
 
   const latestEssay = essays[0] || null;
-  const shareName = profile?.full_name || "Student";
-  const shareCountry = profileCountry !== "N/A" ? `${COUNTRY_FLAG_MAP[profileCountry] || "\u{1F30D}"} ${profileCountry}` : "Country not set";
-  const shareIntake = intake !== "N/A" ? `Applying for Fall ${intake}` : "Target intake not set";
+  const shareName = profile?.full_name || (locale === "ru" ? "Студент" : "Student");
+  const shareCountry = profileCountry !== "N/A" ? `${COUNTRY_FLAG_MAP[profileCountry] || "\u{1F30D}"} ${profileCountry}` : copy.snapshot.countryNotSet;
+  const shareIntake = intake !== "N/A" ? `${copy.snapshot.applyingForFall} ${intake}` : copy.snapshot.targetIntakeNotSet;
   const activities = Array.isArray(profile?.activities) ? profile.activities.filter(Boolean).slice(0, 8) : [];
   const honors = Array.isArray(profile?.honors) ? profile.honors.filter(Boolean).slice(0, 6) : [];
   const selectedUniversityIds = profile?.common_app_profile?.dashboard_snapshot?.displayed_university_ids || [];
@@ -282,7 +289,7 @@ function DashboardPageContent() {
     id: item.id,
     name: item.university.name,
     statusKey: item.status,
-    status: item.status.replaceAll("_", " "),
+    status: translateDashboardStatus(locale, item.status),
   }));
   const shareAcademicTests = buildInitialAcademicTests(profile, quizAnswers).filter((item) => item.score.trim());
   const shareLanguageTests = buildInitialLanguageTests(profile, quizAnswers).filter((item) => item.score.trim());
@@ -306,7 +313,7 @@ function DashboardPageContent() {
   async function handleShareProfile() {
     const node = dashboardExportRef.current;
     if (!node) {
-      setStatusText("Dashboard snapshot is not ready yet.");
+      setStatusText(copy.statusText.snapshotNotReady);
       return;
     }
 
@@ -325,17 +332,17 @@ function DashboardPageContent() {
       try {
         const copied = await copyImageToClipboard(blob);
         if (copied) {
-          setStatusText("Dashboard snapshot copied to clipboard.");
+          setStatusText(copy.statusText.snapshotCopied);
           return;
         }
         downloadImageBlob(blob);
-        setStatusText("Clipboard image is not supported here. Downloaded a dashboard snapshot instead.");
+        setStatusText(copy.statusText.clipboardUnsupported);
       } catch {
         downloadImageBlob(blob);
-        setStatusText("Clipboard access was blocked. Downloaded a dashboard snapshot instead.");
+        setStatusText(copy.statusText.clipboardBlocked);
       }
     } catch {
-      setStatusText("Unable to create a dashboard snapshot right now.");
+      setStatusText(copy.statusText.snapshotCreateFailed);
     } finally {
       setSharingDashboard(false);
     }
@@ -344,7 +351,7 @@ function DashboardPageContent() {
   async function handleSaveSnapshot() {
     const node = dashboardExportRef.current;
     if (!node) {
-      setStatusText("Dashboard snapshot is not ready yet.");
+      setStatusText(copy.statusText.snapshotNotReady);
       return;
     }
 
@@ -352,9 +359,9 @@ function DashboardPageContent() {
     try {
       const blob = await captureDashboardBlob(node);
       downloadImageBlob(blob);
-      setStatusText("Dashboard snapshot saved as an image.");
+      setStatusText(copy.statusText.snapshotSaved);
     } catch {
-      setStatusText("Unable to save the dashboard snapshot right now.");
+      setStatusText(copy.statusText.snapshotSaveFailed);
     } finally {
       setSavingSnapshot(false);
     }
@@ -399,13 +406,13 @@ function DashboardPageContent() {
             <Card className="mt-5 border border-black/10 bg-[#FFF9E8] shadow-none">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <CardTitle className="text-xl">Finish your profile</CardTitle>
+                  <CardTitle className="text-xl">{copy.progress.finishProfile}</CardTitle>
                   <p className="mt-1 text-sm text-black/65">
-                    Add your key profile details to make the dashboard snapshot and recommendations more useful.
+                    {copy.progress.finishProfileBody}
                   </p>
                 </div>
                 <Link href="/onboarding" className="inline-flex">
-                  <Button>Edit Profile</Button>
+                  <Button>{copy.progress.editProfile}</Button>
                 </Link>
               </div>
             </Card>
@@ -439,20 +446,20 @@ function DashboardPageContent() {
             <Card className="border border-black/10 bg-white/90 shadow-none">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <CardDescription>Overall progress</CardDescription>
+                  <CardDescription>{copy.progress.overallProgress}</CardDescription>
                   {loading ? <Skeleton className="mt-2 h-7 w-20" /> : <p className="mt-2 text-3xl font-black">{dashboardProgress.overallPercent}%</p>}
                   <p className="mt-1 text-xs text-black/60">
                     {dashboardProgress.blocks.reduce((sum, block) => sum + block.completed, 0)}/
-                    {dashboardProgress.blocks.reduce((sum, block) => sum + block.total, 0)} completed across all blocks
+                    {dashboardProgress.blocks.reduce((sum, block) => sum + block.total, 0)} {copy.progress.sectionsCompleteSuffix}
                   </p>
                 </div>
                 <Target className="h-6 w-6 text-black/60" />
               </div>
               <Progress value={loading ? 0 : dashboardProgress.overallPercent} className="mt-4 h-3" />
               <div className="mt-3 flex items-center justify-between text-xs text-black/60">
-                <span>Blocks tracked: {dashboardProgress.blocks.length}/5</span>
+                <span>{copy.progress.blocksTracked}: {dashboardProgress.blocks.length}/5</span>
                 <Link href="/common-app" className="font-semibold text-black underline">
-                  Open form
+                  {copy.progress.openForm}
                 </Link>
               </div>
             </Card>
@@ -460,7 +467,7 @@ function DashboardPageContent() {
             <Card className="border border-black/10 bg-white/90 shadow-none">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <CardDescription>Next deadline</CardDescription>
+                  <CardDescription>{copy.progress.nextDeadline}</CardDescription>
                   {loading ? (
                     <Skeleton className="mt-2 h-6 w-36" />
                   ) : nearestDeadline ? (
@@ -470,15 +477,15 @@ function DashboardPageContent() {
                     </>
                   ) : (
                     <>
-                      <p className="mt-2 text-xl font-black">No upcoming date</p>
-                      <p className="mt-1 text-sm text-black/65">Add universities and deadlines to activate this card.</p>
+                      <p className="mt-2 text-xl font-black">{copy.progress.noUpcomingDate}</p>
+                      <p className="mt-1 text-sm text-black/65">{copy.progress.activateDeadlineCard}</p>
                     </>
                   )}
                 </div>
                 <CalendarClock className="h-6 w-6 text-black/60" />
               </div>
               <Link href="/calendar" className="mt-4 inline-flex">
-                <Button variant="secondary">Open calendar</Button>
+                <Button variant="secondary">{copy.progress.openCalendar}</Button>
               </Link>
             </Card>
           </div>
@@ -494,7 +501,7 @@ function DashboardPageContent() {
               <div className="mb-3 flex items-center justify-between gap-2">
                 <CardTitle className="flex items-center gap-2">
                   <GraduationCap className="h-4 w-4" />
-                  Universities
+                  {copy.progress.universities}
                 </CardTitle>
                 <Badge variant="cyan">{myUniversities.length}</Badge>
               </div>
@@ -506,10 +513,10 @@ function DashboardPageContent() {
                 </div>
               ) : myUniversities.length === 0 ? (
                 <div className="rounded-2xl bg-[#DAF5F0]/22 p-4 ring-1 ring-black/8">
-                  <p className="text-sm font-semibold">Start building your university list</p>
-                  <p className="mt-1 text-sm text-black/65">Pick 5-8 universities to unlock better deadline and planning recommendations.</p>
+                  <p className="text-sm font-semibold">{copy.progress.buildUniversityListTitle}</p>
+                  <p className="mt-1 text-sm text-black/65">{copy.progress.buildUniversityListBody}</p>
                   <Link href="/applications" className="mt-3 inline-flex">
-                    <Button size="sm">Build list</Button>
+                    <Button size="sm">{copy.progress.buildList}</Button>
                   </Link>
                 </div>
               ) : (
@@ -518,12 +525,12 @@ function DashboardPageContent() {
                     <div key={item.id} className="flex items-center justify-between rounded-xl bg-white p-3 ring-1 ring-black/8">
                       <div>
                         <p className="text-sm font-semibold">{item.university.name}</p>
-                        <p className="text-xs text-black/60">Status: {item.status.replaceAll("_", " ")}</p>
+                        <p className="text-xs text-black/60">{copy.progress.status}: {translateDashboardStatus(locale, item.status)}</p>
                       </div>
                       <Badge>{item.progress_percent}%</Badge>
                     </div>
                   ))}
-                  {myUniversities.length > 5 ? <p className="text-xs text-black/60">+{myUniversities.length - 5} more in your list</p> : null}
+                  {myUniversities.length > 5 ? <p className="text-xs text-black/60">+{myUniversities.length - 5} {copy.snapshot.more}</p> : null}
                 </div>
               )}
             </Card>
@@ -532,7 +539,7 @@ function DashboardPageContent() {
               <div className="mb-3 flex items-center justify-between gap-2">
                 <CardTitle className="flex items-center gap-2">
                   <FileText className="h-4 w-4" />
-                  Essays
+                  {copy.progress.essays}
                 </CardTitle>
                 <Badge variant="orange">{essays.length}</Badge>
               </div>
@@ -546,19 +553,19 @@ function DashboardPageContent() {
                   <div className="rounded-xl bg-white p-3 ring-1 ring-black/8">
                     <p className="text-sm font-semibold">{latestEssay.title}</p>
                     <p className="mt-1 text-xs text-black/60">
-                      Versions: {latestEssay.versions_count} · Last edited: {latestEssay.last_edited_at ? formatDateShort(latestEssay.last_edited_at) : "N/A"}
+                      {locale === "ru" ? "Версии" : "Versions"}: {latestEssay.versions_count} · {locale === "ru" ? "Обновлено" : "Last edited"}: {latestEssay.last_edited_at ? formatDateShort(latestEssay.last_edited_at) : "N/A"}
                     </p>
                   </div>
                   <Link href="/essays" className="inline-flex">
-                    <Button size="sm">Continue essays</Button>
+                    <Button size="sm">{copy.progress.continueEssays}</Button>
                   </Link>
                 </div>
               ) : (
                 <div className="rounded-2xl bg-[#FFF4CC]/22 p-4 ring-1 ring-black/8">
-                  <p className="text-sm font-semibold">Personal essay: not started</p>
-                  <p className="mt-1 text-sm text-black/65">Create your first draft to start version tracking.</p>
+                  <p className="text-sm font-semibold">{copy.progress.personalEssayNotStarted}</p>
+                  <p className="mt-1 text-sm text-black/65">{copy.progress.personalEssayNotStartedBody}</p>
                   <Link href="/essays" className="mt-3 inline-flex">
-                    <Button size="sm">Start essay</Button>
+                    <Button size="sm">{copy.progress.startEssay}</Button>
                   </Link>
                 </div>
               )}
@@ -567,15 +574,15 @@ function DashboardPageContent() {
 
           <div className="mt-5 grid gap-4 sm:grid-cols-3">
             <Card className="border border-black/10 bg-white/90 shadow-none">
-              <CardDescription>Open tasks</CardDescription>
+              <CardDescription>{copy.progress.openTasks}</CardDescription>
               {loading ? <Skeleton className="mt-2 h-7 w-14" /> : <p className="mt-2 text-2xl font-black">{tasks.filter((task) => task.status !== "done").length}</p>}
             </Card>
             <Card className="border border-black/10 bg-white/90 shadow-none">
-              <CardDescription>Documents</CardDescription>
+              <CardDescription>{copy.progress.documents}</CardDescription>
               {loading ? <Skeleton className="mt-2 h-7 w-14" /> : <p className="mt-2 text-2xl font-black">{documents.length}</p>}
             </Card>
             <Card className="border border-black/10 bg-white/90 shadow-none">
-              <CardDescription>Applications</CardDescription>
+              <CardDescription>{copy.progress.applications}</CardDescription>
               {loading ? <Skeleton className="mt-2 h-7 w-14" /> : <p className="mt-2 text-2xl font-black">{applications.length}</p>}
             </Card>
           </div>
@@ -588,7 +595,7 @@ function DashboardPageContent() {
           ) : (
             <div className="mt-4 flex items-center gap-2 rounded-xl bg-[#DAF5F0]/50 px-3 py-2 text-sm ring-1 ring-black/10">
               <CircleCheck className="h-4 w-4" />
-              Dashboard is synced with your latest profile and application data.
+              {locale === "ru" ? "Дашборд синхронизирован с последними данными профиля и заявок." : "Dashboard is synced with your latest profile and application data."}
             </div>
           )}
         </div>
