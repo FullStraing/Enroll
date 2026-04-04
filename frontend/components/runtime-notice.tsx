@@ -8,8 +8,8 @@ type RuntimeNoticeProps = {
 export function RuntimeNotice({ message, tone = "warning" }: RuntimeNoticeProps) {
   const toneClass =
     tone === "warning"
-      ? "border-[#F5B27C] bg-[#FFF4CC] text-black/80"
-      : "border-[#B7D9FF] bg-[#EFF7FF] text-black/80";
+      ? "border-[var(--enroll-surface-border-strong)] bg-[var(--enroll-yellow-soft)] text-[var(--enroll-fg-soft)]"
+      : "border-[var(--enroll-surface-border-strong)] bg-[color-mix(in_srgb,var(--enroll-cyan)_75%,var(--enroll-surface-elevated))] text-[var(--enroll-fg-soft)]";
 
   return <div className={`rounded-2xl border px-4 py-3 text-sm ${toneClass}`}>{message}</div>;
 }

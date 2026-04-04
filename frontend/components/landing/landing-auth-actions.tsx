@@ -68,9 +68,9 @@ export function LandingAuthActions({
       {hasAccount ? (
         <Link
           href="/dashboard"
-          className="inline-flex items-center gap-3 rounded-2xl border-2 border-black bg-white px-3 py-2 text-sm font-semibold transition hover:-translate-y-0.5"
+          className="inline-flex items-center gap-3 rounded-2xl border-2 border-[var(--enroll-strong-border)] bg-[var(--enroll-surface-elevated)] px-3 py-2 text-sm font-semibold text-[var(--enroll-fg)] transition hover:-translate-y-0.5"
         >
-          <span className="flex h-8 w-8 items-center justify-center rounded-full border border-black/15 bg-[#DAF5F0] text-xs font-black text-black">
+          <span className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--enroll-surface-border)] bg-[var(--enroll-cyan)] text-xs font-black text-[var(--enroll-fg)]">
             {initial}
           </span>
           <span className="max-w-[10rem] truncate">{label}</span>
@@ -78,7 +78,7 @@ export function LandingAuthActions({
       ) : (
         <Link
           href="/login"
-          className="rounded-2xl border-2 border-black bg-white px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5"
+          className="rounded-2xl border-2 border-[var(--enroll-strong-border)] bg-[var(--enroll-surface-elevated)] px-4 py-2 text-sm font-semibold text-[var(--enroll-fg)] transition hover:-translate-y-0.5"
         >
           {messages.common.login}
         </Link>
@@ -87,8 +87,8 @@ export function LandingAuthActions({
       <LandingPrimaryLink
         fallbackHref={primaryHref}
         initialHasSession={initialHasSession}
-        className="inline-flex items-center gap-2 rounded-2xl border-2 border-black px-5 py-2 text-sm font-black transition hover:-translate-y-0.5 hover:shadow-[0_4px_0_#000]"
-        style={{ backgroundColor: "#FFDB58" }}
+        className="inline-flex items-center gap-2 rounded-2xl border-2 border-[var(--enroll-strong-border)] px-5 py-2 text-sm font-black text-[var(--enroll-strong-fg)] transition hover:-translate-y-0.5 hover:shadow-[0_4px_0_var(--enroll-strong-shadow)]"
+        style={{ backgroundColor: "var(--enroll-yellow)" }}
       >
         {messages.common.startFree}
         <ArrowRight className="h-4 w-4" />

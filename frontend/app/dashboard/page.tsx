@@ -374,7 +374,7 @@ function DashboardPageContent() {
   return (
     <ProtectedPage>
       <AppShell title="Dashboard" subtitle="Your admissions status, profile strength, and next action.">
-        <div>
+        <div className="text-[var(--enroll-fg)] dark:[&_*]:text-[var(--enroll-fg)]">
           <DashboardSnapshotCard
             snapshotRef={dashboardShareRef}
             shareName={shareName}
@@ -403,11 +403,11 @@ function DashboardPageContent() {
           />
 
           {!loading && profile && !profileReadyForDashboard ? (
-            <Card className="mt-5 border border-black/10 bg-[#FFF9E8] shadow-none">
+            <Card className="mt-5 border border-[var(--enroll-surface-border)] bg-[var(--enroll-yellow-soft)] shadow-none">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <CardTitle className="text-xl">{copy.progress.finishProfile}</CardTitle>
-                  <p className="mt-1 text-sm text-black/65">
+                  <p className="mt-1 text-sm text-[var(--enroll-muted)]">
                     {copy.progress.finishProfileBody}
                   </p>
                 </div>
@@ -442,29 +442,29 @@ function DashboardPageContent() {
             />
           </div>
 
-          <div className="mt-5 grid gap-4 lg:grid-cols-2">
-            <Card className="border border-black/10 bg-white/90 shadow-none">
+          <div className="mt-5 grid gap-4 lg:grid-cols-2 text-[var(--enroll-fg)]">
+            <Card className="border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] shadow-none">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <CardDescription>{copy.progress.overallProgress}</CardDescription>
-                  {loading ? <Skeleton className="mt-2 h-7 w-20" /> : <p className="mt-2 text-3xl font-black">{dashboardProgress.overallPercent}%</p>}
-                  <p className="mt-1 text-xs text-black/60">
+                  {loading ? <Skeleton className="mt-2 h-7 w-20" /> : <p className="mt-2 text-3xl font-black text-[var(--enroll-fg)]">{dashboardProgress.overallPercent}%</p>}
+                  <p className="mt-1 text-xs text-[var(--enroll-muted)]">
                     {dashboardProgress.blocks.reduce((sum, block) => sum + block.completed, 0)}/
                     {dashboardProgress.blocks.reduce((sum, block) => sum + block.total, 0)} {copy.progress.sectionsCompleteSuffix}
                   </p>
                 </div>
-                <Target className="h-6 w-6 text-black/60" />
+                <Target className="h-6 w-6 text-[var(--enroll-muted)]" />
               </div>
               <Progress value={loading ? 0 : dashboardProgress.overallPercent} className="mt-4 h-3" />
-              <div className="mt-3 flex items-center justify-between text-xs text-black/60">
+              <div className="mt-3 flex items-center justify-between text-xs text-[var(--enroll-muted)]">
                 <span>{copy.progress.blocksTracked}: {dashboardProgress.blocks.length}/5</span>
-                <Link href="/common-app" className="font-semibold text-black underline">
+                <Link href="/common-app" className="font-semibold text-[var(--enroll-fg)] underline">
                   {copy.progress.openForm}
                 </Link>
               </div>
             </Card>
 
-            <Card className="border border-black/10 bg-white/90 shadow-none">
+            <Card className="border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] shadow-none">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <CardDescription>{copy.progress.nextDeadline}</CardDescription>
@@ -473,16 +473,16 @@ function DashboardPageContent() {
                   ) : nearestDeadline ? (
                     <>
                       <p className="mt-2 text-xl font-black">{formatDateShortNoYear(nearestDeadline.date)}</p>
-                      <p className="mt-1 text-sm text-black/65">{nearestDeadline.label}</p>
+                      <p className="mt-1 text-sm text-[var(--enroll-muted)]">{nearestDeadline.label}</p>
                     </>
                   ) : (
                     <>
                       <p className="mt-2 text-xl font-black">{copy.progress.noUpcomingDate}</p>
-                      <p className="mt-1 text-sm text-black/65">{copy.progress.activateDeadlineCard}</p>
+                      <p className="mt-1 text-sm text-[var(--enroll-muted)]">{copy.progress.activateDeadlineCard}</p>
                     </>
                   )}
                 </div>
-                <CalendarClock className="h-6 w-6 text-black/60" />
+                <CalendarClock className="h-6 w-6 text-[var(--enroll-muted)]" />
               </div>
               <Link href="/calendar" className="mt-4 inline-flex">
                 <Button variant="secondary">{copy.progress.openCalendar}</Button>
@@ -496,8 +496,8 @@ function DashboardPageContent() {
               : dashboardProgress.blocks.map((block) => <ProgressBlockCard key={block.key} block={block} />)}
           </div>
 
-          <div className="mt-5 grid gap-4 xl:grid-cols-2">
-            <Card className="border border-black/10 bg-white/90 shadow-none">
+          <div className="mt-5 grid gap-4 xl:grid-cols-2 text-[var(--enroll-fg)]">
+            <Card className="border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] shadow-none">
               <div className="mb-3 flex items-center justify-between gap-2">
                 <CardTitle className="flex items-center gap-2">
                   <GraduationCap className="h-4 w-4" />
@@ -512,9 +512,9 @@ function DashboardPageContent() {
                   <Skeleton className="h-10 w-full" />
                 </div>
               ) : myUniversities.length === 0 ? (
-                <div className="rounded-2xl bg-[#DAF5F0]/22 p-4 ring-1 ring-black/8">
+                <div className="rounded-2xl bg-[var(--enroll-cyan)]/18 p-4 ring-1 ring-[var(--enroll-surface-border)]">
                   <p className="text-sm font-semibold">{copy.progress.buildUniversityListTitle}</p>
-                  <p className="mt-1 text-sm text-black/65">{copy.progress.buildUniversityListBody}</p>
+                  <p className="mt-1 text-sm text-[var(--enroll-muted)]">{copy.progress.buildUniversityListBody}</p>
                   <Link href="/applications" className="mt-3 inline-flex">
                     <Button size="sm">{copy.progress.buildList}</Button>
                   </Link>
@@ -522,20 +522,20 @@ function DashboardPageContent() {
               ) : (
                 <div className="space-y-2">
                   {myUniversities.slice(0, 5).map((item) => (
-                    <div key={item.id} className="flex items-center justify-between rounded-xl bg-white p-3 ring-1 ring-black/8">
+                    <div key={item.id} className="flex items-center justify-between rounded-xl bg-[var(--enroll-surface-elevated)] p-3 ring-1 ring-[var(--enroll-surface-border)]">
                       <div>
                         <p className="text-sm font-semibold">{item.university.name}</p>
-                        <p className="text-xs text-black/60">{copy.progress.status}: {translateDashboardStatus(locale, item.status)}</p>
+                        <p className="text-xs text-[var(--enroll-muted)]">{copy.progress.status}: {translateDashboardStatus(locale, item.status)}</p>
                       </div>
                       <Badge>{item.progress_percent}%</Badge>
                     </div>
                   ))}
-                  {myUniversities.length > 5 ? <p className="text-xs text-black/60">+{myUniversities.length - 5} {copy.snapshot.more}</p> : null}
+                  {myUniversities.length > 5 ? <p className="text-xs text-[var(--enroll-muted)]">+{myUniversities.length - 5} {copy.snapshot.more}</p> : null}
                 </div>
               )}
             </Card>
 
-            <Card className="border border-black/10 bg-white/90 shadow-none">
+            <Card className="border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] shadow-none">
               <div className="mb-3 flex items-center justify-between gap-2">
                 <CardTitle className="flex items-center gap-2">
                   <FileText className="h-4 w-4" />
@@ -550,9 +550,9 @@ function DashboardPageContent() {
                 </div>
               ) : latestEssay ? (
                 <div className="space-y-3">
-                  <div className="rounded-xl bg-white p-3 ring-1 ring-black/8">
+                  <div className="rounded-xl bg-[var(--enroll-surface-elevated)] p-3 ring-1 ring-[var(--enroll-surface-border)]">
                     <p className="text-sm font-semibold">{latestEssay.title}</p>
-                    <p className="mt-1 text-xs text-black/60">
+                    <p className="mt-1 text-xs text-[var(--enroll-muted)]">
                       {locale === "ru" ? "Версии" : "Versions"}: {latestEssay.versions_count} · {locale === "ru" ? "Обновлено" : "Last edited"}: {latestEssay.last_edited_at ? formatDateShort(latestEssay.last_edited_at) : "N/A"}
                     </p>
                   </div>
@@ -561,9 +561,9 @@ function DashboardPageContent() {
                   </Link>
                 </div>
               ) : (
-                <div className="rounded-2xl bg-[#FFF4CC]/22 p-4 ring-1 ring-black/8">
+                <div className="rounded-2xl bg-[var(--enroll-yellow-soft)]/65 p-4 ring-1 ring-[var(--enroll-surface-border)]">
                   <p className="text-sm font-semibold">{copy.progress.personalEssayNotStarted}</p>
-                  <p className="mt-1 text-sm text-black/65">{copy.progress.personalEssayNotStartedBody}</p>
+                  <p className="mt-1 text-sm text-[var(--enroll-muted)]">{copy.progress.personalEssayNotStartedBody}</p>
                   <Link href="/essays" className="mt-3 inline-flex">
                     <Button size="sm">{copy.progress.startEssay}</Button>
                   </Link>
@@ -572,28 +572,28 @@ function DashboardPageContent() {
             </Card>
           </div>
 
-          <div className="mt-5 grid gap-4 sm:grid-cols-3">
-            <Card className="border border-black/10 bg-white/90 shadow-none">
+          <div className="mt-5 grid gap-4 sm:grid-cols-3 text-[var(--enroll-fg)]">
+            <Card className="border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] shadow-none">
               <CardDescription>{copy.progress.openTasks}</CardDescription>
               {loading ? <Skeleton className="mt-2 h-7 w-14" /> : <p className="mt-2 text-2xl font-black">{tasks.filter((task) => task.status !== "done").length}</p>}
             </Card>
-            <Card className="border border-black/10 bg-white/90 shadow-none">
+            <Card className="border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] shadow-none">
               <CardDescription>{copy.progress.documents}</CardDescription>
               {loading ? <Skeleton className="mt-2 h-7 w-14" /> : <p className="mt-2 text-2xl font-black">{documents.length}</p>}
             </Card>
-            <Card className="border border-black/10 bg-white/90 shadow-none">
+            <Card className="border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] shadow-none">
               <CardDescription>{copy.progress.applications}</CardDescription>
               {loading ? <Skeleton className="mt-2 h-7 w-14" /> : <p className="mt-2 text-2xl font-black">{applications.length}</p>}
             </Card>
           </div>
 
           {statusText ? (
-            <div className="mt-4 flex items-center gap-2 rounded-xl bg-white/90 px-3 py-2 text-sm text-black/70 ring-1 ring-black/10">
+            <div className="mt-4 flex items-center gap-2 rounded-xl bg-[var(--enroll-surface-elevated)] px-3 py-2 text-sm text-[var(--enroll-muted)] ring-1 ring-[var(--enroll-surface-border)]">
               <CircleAlert className="h-4 w-4" />
               {statusText}
             </div>
           ) : (
-            <div className="mt-4 flex items-center gap-2 rounded-xl bg-[#DAF5F0]/50 px-3 py-2 text-sm ring-1 ring-black/10">
+            <div className="mt-4 flex items-center gap-2 rounded-xl bg-[var(--enroll-cyan)]/30 px-3 py-2 text-sm text-[var(--enroll-fg)] ring-1 ring-[var(--enroll-surface-border)]">
               <CircleCheck className="h-4 w-4" />
               {locale === "ru" ? "Дашборд синхронизирован с последними данными профиля и заявок." : "Dashboard is synced with your latest profile and application data."}
             </div>
@@ -613,4 +613,6 @@ export default function DashboardPage() {
     </Suspense>
   );
 }
+
+
 

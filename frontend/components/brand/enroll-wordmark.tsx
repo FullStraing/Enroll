@@ -23,10 +23,10 @@ export function EnrollWordmark({
   className = "",
 }: EnrollWordmarkProps) {
   return (
-    <div className={`${spaceGrotesk.className} leading-none text-black ${className}`}>
+    <div className={`${spaceGrotesk.className} leading-none text-[var(--enroll-fg)] ${className}`}>
       <div className={`font-black ${sizeMap[size]}`}>Enroll</div>
       {subtitle ? (
-        <div className="mt-1 text-[11px] font-black uppercase tracking-[0.24em] text-black/38">
+        <div className="mt-1 text-[11px] font-black uppercase tracking-[0.24em] text-[var(--enroll-muted)]">
           Admissions OS
         </div>
       ) : null}

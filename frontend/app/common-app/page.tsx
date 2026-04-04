@@ -23,6 +23,7 @@ import {
 } from "@/lib/common-app-progress";
 import { SectionNav } from "@/components/common-app/section-nav";
 import { StepForm } from "@/components/common-app/step-form";
+import { DeepWorkflowTheme } from "@/components/deep-workflow-theme";
 import { clearSessionCaches, readSessionCache, SESSION_CACHE_KEYS, SESSION_CACHE_TTLS, writeSessionCache } from "@/lib/session-cache";
 
 type CommonAppCachePayload = {
@@ -289,7 +290,9 @@ function CommonAppPageContent() {
   return (
     <ProtectedPage>
       <AppShell title="Common Application" subtitle="Complete your application in guided steps.">
-        <Card className="shadow-none">
+        <DeepWorkflowTheme>
+          <div className="theme-workflow space-y-5">
+            <Card className="shadow-none">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <CardTitle>Application readiness</CardTitle>
@@ -312,42 +315,44 @@ function CommonAppPageContent() {
               className="h-3"
             />
           </div>
-        </Card>
-
-        {loading ? (
-          <Card className="mt-5 shadow-none">
-            <Spinner size="md" label="Loading Common App steps..." />
-          </Card>
-        ) : null}
-
-        {!loading && currentStep ? (
-          <div className="mt-5 grid gap-4 lg:grid-cols-[260px_1fr]">
-            <Card className="h-fit shadow-none">
-              <SectionNav
-                progressData={progressData}
-                currentStep={currentStep}
-                sectionStartIndexes={sectionStartIndexes}
-                subsectionStepIndexes={subsectionStepIndexes}
-                liveProgress={liveProgress}
-                onSelectStep={setCurrentStepIndex}
-              />
             </Card>
-            <StepForm
-              currentStep={currentStep}
-              visibleFields={visibleFields as ProgressField[]}
-              draftValues={draftValues}
-              isFieldRequired={(step, field) => isFieldRequired(draftValues, step, field)}
-              setDraftValues={setDraftValues}
-              saving={saving}
-              statusText={statusText}
-              onBack={handleBack}
-              onContinue={handleContinue}
-              currentStepIndex={currentStepIndex}
-              totalSteps={steps.length}
-              liveProgress={liveProgress}
-            />
+
+            {loading ? (
+              <Card className="shadow-none">
+                <Spinner size="md" label="Loading Common App steps..." />
+              </Card>
+            ) : null}
+
+            {!loading && currentStep ? (
+              <div className="grid gap-4 lg:grid-cols-[260px_1fr]">
+                <Card className="h-fit shadow-none">
+                  <SectionNav
+                    progressData={progressData}
+                    currentStep={currentStep}
+                    sectionStartIndexes={sectionStartIndexes}
+                    subsectionStepIndexes={subsectionStepIndexes}
+                    liveProgress={liveProgress}
+                    onSelectStep={setCurrentStepIndex}
+                  />
+                </Card>
+                <StepForm
+                  currentStep={currentStep}
+                  visibleFields={visibleFields as ProgressField[]}
+                  draftValues={draftValues}
+                  isFieldRequired={(step, field) => isFieldRequired(draftValues, step, field)}
+                  setDraftValues={setDraftValues}
+                  saving={saving}
+                  statusText={statusText}
+                  onBack={handleBack}
+                  onContinue={handleContinue}
+                  currentStepIndex={currentStepIndex}
+                  totalSteps={steps.length}
+                  liveProgress={liveProgress}
+                />
+              </div>
+            ) : null}
           </div>
-        ) : null}
+        </DeepWorkflowTheme>
       </AppShell>
     </ProtectedPage>
   );

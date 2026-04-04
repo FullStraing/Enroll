@@ -22,6 +22,7 @@ import { formatDateTimeShort } from "@/lib/date-format";
 import { clearSessionCaches, getEssayDetailCacheKey, readSessionCache, SESSION_CACHE_KEYS, SESSION_CACHE_TTLS, writeSessionCache } from "@/lib/session-cache";
 import { RuntimeNotice } from "@/components/runtime-notice";
 import { fetchRuntimeConfig, type RuntimeConfig } from "@/lib/runtime-config";
+import { DeepWorkflowTheme } from "@/components/deep-workflow-theme";
 
 type Essay = {
   id: number;
@@ -838,6 +839,8 @@ export default function EssayWorkspacePage() {
         title={essay ? `Essay Workspace - ${essay.title}` : "Essay Workspace"}
         subtitle="Versions + Editor"
       >
+        <DeepWorkflowTheme>
+          <div className="theme-workflow">
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
           <div className="flex items-center gap-2 text-sm text-black/70">
             <Sparkles className="h-4 w-4" />
@@ -1562,6 +1565,8 @@ export default function EssayWorkspacePage() {
         />
 
         {statusText ? <p className="mt-4 text-sm text-black/65">{statusText}</p> : null}
+          </div>
+        </DeepWorkflowTheme>
       </AppShell>
     </ProtectedPage>
   );

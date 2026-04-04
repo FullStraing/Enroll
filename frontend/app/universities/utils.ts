@@ -1,4 +1,4 @@
-import type { ChanceBand, DiscoverFilters, StudentUniversity, University } from "./types";
+﻿import type { ChanceBand, DiscoverFilters, StudentUniversity, University } from "./types";
 import type { Locale } from "@/lib/i18n";
 import { getProductCopy } from "@/lib/product-copy";
 
@@ -37,19 +37,19 @@ export function categoryLabelForLocale(category: StudentUniversity["category"], 
 }
 
 export function categoryToneClass(category: StudentUniversity["category"] | ChanceBand): string {
-  if (category === "high_reach") return "border-[#E58E5B]/60 bg-[#F8D6B3] text-black";
-  if (category === "reach") return "border-[#E7B77C]/60 bg-[#F6E3C8] text-black";
-  if (category === "likely") return "border-[#84DCCB]/60 bg-[#DAF5F0] text-black";
-  if (category === "safety") return "border-[#A9C973]/60 bg-[#E8F4CF] text-black";
-  return "border-[#E0B94B]/60 bg-[#FFF4CC] text-black";
+  if (category === "high_reach") return "border-[#E58E5B]/60 bg-[#F8D6B3] text-black dark:border-[#D08A61]/40 dark:bg-[var(--enroll-surface-inset)] dark:text-[var(--enroll-fg)]";
+  if (category === "reach") return "border-[#E7B77C]/60 bg-[#F6E3C8] text-black dark:border-[#CFA06A]/40 dark:bg-[var(--enroll-surface-inset)] dark:text-[var(--enroll-fg)]";
+  if (category === "likely") return "border-[#84DCCB]/60 bg-[#DAF5F0] text-black dark:border-[#63CDB8]/35 dark:bg-[var(--enroll-cyan)] dark:text-[var(--enroll-fg)]";
+  if (category === "safety") return "border-[#A9C973]/60 bg-[#E8F4CF] text-black dark:border-[#8FB857]/35 dark:bg-[var(--enroll-surface-inset)] dark:text-[var(--enroll-fg)]";
+  return "border-[#E0B94B]/60 bg-[#FFF4CC] text-black dark:border-[var(--enroll-strong-border)] dark:bg-[var(--enroll-yellow-soft)] dark:text-[var(--enroll-fg)]";
 }
 
 export function categorySelectToneClass(category: StudentUniversity["category"]): string {
-  if (category === "high_reach") return "border-[#C97844] bg-[#F8D6B3]";
-  if (category === "reach") return "border-[#D5A363] bg-[#F6E3C8]";
-  if (category === "likely") return "border-[#63CDB8] bg-[#DAF5F0]";
-  if (category === "safety") return "border-[#8FB857] bg-[#E8F4CF]";
-  return "border-[#D9B13F] bg-[#FFF4CC]";
+  if (category === "high_reach") return "border-[#C97844] bg-[#F8D6B3] dark:border-[#C97844]/50 dark:bg-[var(--enroll-surface-inset)]";
+  if (category === "reach") return "border-[#D5A363] bg-[#F6E3C8] dark:border-[#D5A363]/50 dark:bg-[var(--enroll-surface-inset)]";
+  if (category === "likely") return "border-[#63CDB8] bg-[#DAF5F0] dark:border-[#63CDB8]/50 dark:bg-[var(--enroll-cyan)]";
+  if (category === "safety") return "border-[#8FB857] bg-[#E8F4CF] dark:border-[#8FB857]/50 dark:bg-[var(--enroll-surface-inset)]";
+  return "border-[#D9B13F] bg-[#FFF4CC] dark:border-[var(--enroll-strong-border)] dark:bg-[var(--enroll-yellow-soft)]";
 }
 
 export function getChanceBandFromAcceptance(acceptanceRate?: number | null): ChanceBand {
@@ -148,19 +148,20 @@ export function sumKnown(values: Array<number | string | null | undefined>): { t
 }
 
 export function rowStatusTone(status: StudentUniversity["status"]): string {
-  if (status === "admitted") return "bg-emerald-50/70";
-  if (status === "submitted") return "bg-[#FFF4CC]/80";
-  if (status === "rejected") return "bg-rose-50/70";
+  if (status === "admitted") return "bg-emerald-50/70 dark:bg-emerald-400/10";
+  if (status === "submitted") return "bg-[#FFF4CC]/80 dark:bg-[var(--enroll-yellow-soft)]";
+  if (status === "rejected") return "bg-rose-50/70 dark:bg-rose-400/10";
   return "";
 }
 
 export function statusSelectTone(status: StudentUniversity["status"]): string {
-  if (status === "admitted") return "bg-emerald-100 border-emerald-500";
-  if (status === "submitted") return "bg-[#FFF4CC] border-[#E0A800]";
-  if (status === "rejected") return "bg-rose-100 border-rose-500";
-  return "bg-white border-black/25";
+  if (status === "admitted") return "bg-emerald-100 border-emerald-500 dark:bg-emerald-400/10 dark:border-emerald-400/40";
+  if (status === "submitted") return "bg-[#FFF4CC] border-[#E0A800] dark:bg-[var(--enroll-yellow-soft)] dark:border-[var(--enroll-strong-border)]";
+  if (status === "rejected") return "bg-rose-100 border-rose-500 dark:bg-rose-400/10 dark:border-rose-400/40";
+  return "bg-white border-black/25 dark:bg-[var(--enroll-surface-elevated)] dark:border-[var(--enroll-surface-border)]";
 }
 
 export function filtersHash(filters: DiscoverFilters): string {
   return JSON.stringify(filters);
 }
+

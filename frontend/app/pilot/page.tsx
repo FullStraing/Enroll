@@ -40,7 +40,7 @@ export default function PilotPage() {
   }
 
   return (
-    <main className="theme-home mx-auto flex min-h-screen max-w-3xl flex-col gap-6 px-6 py-10 md:py-14">
+    <main className="marketing-shell theme-home mx-auto flex min-h-screen max-w-3xl flex-col gap-6 px-6 py-10 md:py-14">
       <header className="glass rounded-3xl p-6 md:p-8">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <Link href="/" className="text-sm font-semibold text-black/70 underline underline-offset-2 transition hover:text-black">

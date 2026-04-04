@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import Lottie from "lottie-react";
@@ -28,11 +28,11 @@ export function SharePreviewToast({ imageUrl, visible }: SharePreviewToastProps)
   return createPortal(
     <div
       data-share-ignore
-      className="pointer-events-none fixed inset-x-4 bottom-4 z-[160] mx-auto w-auto max-w-[340px] rounded-2xl border-2 border-black bg-white p-3 shadow-[0_8px_0_#000] sm:inset-x-auto sm:right-5 sm:mx-0 sm:w-[320px]"
+      className="pointer-events-none fixed inset-x-4 bottom-4 z-[160] mx-auto w-auto max-w-[340px] rounded-2xl border-2 border-[var(--enroll-strong-border)] bg-[var(--enroll-surface-elevated)] p-3 shadow-[0_8px_0_#000] sm:inset-x-auto sm:right-5 sm:mx-0 sm:w-[320px]"
     >
       <div className="flex items-start gap-3">
-        <div className="relative mt-0.5 flex h-14 w-14 shrink-0 items-center justify-center overflow-visible rounded-full bg-[#DAF5F0]/75 ring-1 ring-black/8">
-          <span className="absolute h-11 w-11 rounded-full bg-[#63CDB8]/25 animate-ping" />
+        <div className="relative mt-0.5 flex h-14 w-14 shrink-0 items-center justify-center overflow-visible rounded-full bg-[var(--enroll-cyan)]/75 ring-1 ring-[var(--enroll-surface-border)]">
+          <span className="absolute h-11 w-11 rounded-full bg-[var(--enroll-cyan)]/25 animate-ping" />
           <Lottie
             animationData={checkboxAnimation}
             autoplay
@@ -42,12 +42,12 @@ export function SharePreviewToast({ imageUrl, visible }: SharePreviewToastProps)
           />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-xs font-black uppercase tracking-[0.16em] text-black/45">{copy.title}</p>
-          <p className="mt-1 text-sm font-semibold text-black">{copy.body}</p>
-          <p className="mt-1 text-xs leading-relaxed text-black/55">{copy.hint}</p>
+          <p className="text-xs font-black uppercase tracking-[0.16em] text-[var(--enroll-muted)]">{copy.title}</p>
+          <p className="mt-1 text-sm font-semibold text-[var(--enroll-fg)]">{copy.body}</p>
+          <p className="mt-1 text-xs leading-relaxed text-[var(--enroll-muted)]">{copy.hint}</p>
         </div>
       </div>
-      <div className="mt-3 overflow-hidden rounded-xl border border-black/10 bg-[#F5F8FC]">
+      <div className="mt-3 overflow-hidden rounded-xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-inset)]">
         {/* `blob:` preview URLs are more reliable with a plain img in production than with next/image. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={imageUrl} alt={copy.previewAlt} className="h-auto w-full object-cover" />
@@ -56,3 +56,4 @@ export function SharePreviewToast({ imageUrl, visible }: SharePreviewToastProps)
     document.body,
   );
 }
+

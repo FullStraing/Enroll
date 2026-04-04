@@ -25,6 +25,7 @@ import {
   writeSessionCache,
 } from "@/lib/session-cache";
 import { RequiredMark } from "@/components/ui/required-mark";
+import { DeepWorkflowTheme } from "@/components/deep-workflow-theme";
 
 type EssayType = "personal_statement" | "motivation_essay" | "supplemental_essay" | "other";
 
@@ -400,6 +401,8 @@ function EssaysPageContent() {
   return (
     <ProtectedPage>
       <AppShell title="Essays" subtitle="Drafts, versions, and university-specific prompts.">
+        <DeepWorkflowTheme>
+          <div className="theme-workflow">
         {showOnboarding ? (
           <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/45 p-4">
             <div className="w-full max-w-3xl rounded-3xl border-2 border-black bg-white p-6 shadow-2xl">
@@ -612,6 +615,8 @@ function EssaysPageContent() {
 
           {statusText ? <p className="text-sm text-black/65">{statusText}</p> : null}
         </section>
+          </div>
+        </DeepWorkflowTheme>
       </AppShell>
     </ProtectedPage>
   );

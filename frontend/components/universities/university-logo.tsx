@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Image from "next/image";
 import { getUniversityInitials, getUniversityLogoPath } from "@/app/universities/logo-map";
@@ -27,7 +27,7 @@ export function UniversityLogo({ name, size = "md" }: UniversityLogoProps) {
 
   return (
     <div
-      className={`flex shrink-0 items-center justify-center border border-black/10 bg-[#F5F8FC] ${sizeStyle.container}`}
+      className={`flex shrink-0 items-center justify-center border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] ${sizeStyle.container}`}
       aria-hidden="true"
     >
       {logoPath ? (
@@ -39,10 +39,11 @@ export function UniversityLogo({ name, size = "md" }: UniversityLogoProps) {
           className="h-auto w-auto object-contain"
         />
       ) : (
-        <span className={`font-black tracking-[-0.04em] text-[#1B3558] ${sizeStyle.text}`}>
+        <span className={`font-black tracking-[-0.04em] text-[var(--enroll-fg)] ${sizeStyle.text}`}>
           {getUniversityInitials(name)}
         </span>
       )}
     </div>
   );
 }
+

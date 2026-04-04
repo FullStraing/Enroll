@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useMemo, useState } from "react";
 import { Pie, PieChart, Cell } from "recharts";
@@ -97,9 +97,9 @@ function ExportScoreDonut({ slices, total }: { slices: DonutSlice[]; total: numb
           backgroundImage: gradient,
         }}
       />
-      <div className="absolute inset-[20px] rounded-full bg-white shadow-[inset_0_0_0_1px_rgba(0,0,0,0.08)]" />
+      <div className="absolute inset-[20px] rounded-full bg-[var(--enroll-surface-elevated)] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]" />
       <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-        <div className="text-[44px] font-black leading-none tracking-tight text-black">{total}%</div>
+        <div className="text-[44px] font-black leading-none tracking-tight text-[var(--enroll-fg)]">{total}%</div>
       </div>
     </div>
   );
@@ -177,43 +177,44 @@ export function AdmissionsScoreDonut({
         </PieChart>
 
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <div className="flex h-[128px] w-[128px] items-center justify-center rounded-full bg-white shadow-[inset_0_0_0_1px_rgba(0,0,0,0.08)]">
-            <div className="text-[44px] font-black leading-none tracking-tight text-black">{total}%</div>
+          <div className="flex h-[128px] w-[128px] items-center justify-center rounded-full bg-[var(--enroll-surface-elevated)] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]">
+            <div className="text-[44px] font-black leading-none tracking-tight text-[var(--enroll-fg)]">{total}%</div>
           </div>
         </div>
       </div>
 
       {activeKey === "missing" ? (
-        <div className="absolute inset-x-0 bottom-0 mx-auto w-full max-w-[280px] rounded-2xl bg-[#F7F7F7] px-3 py-3 ring-1 ring-black/8">
-          <p className="text-sm font-black text-black">{copy.missingSummaryIntro}</p>
+        <div className="absolute inset-x-0 bottom-0 mx-auto w-full max-w-[280px] rounded-2xl bg-[var(--enroll-surface-elevated)] px-3 py-3 ring-1 ring-[var(--enroll-surface-border)]">
+          <p className="text-sm font-black text-[var(--enroll-fg)]">{copy.missingSummaryIntro}</p>
           <div className="mt-2 grid gap-1.5">
             {missingSummary.map((segment) => (
-              <p key={segment.key} className="text-sm text-black/70">
-                <span className="font-semibold text-black">{segment.label}:</span> +{segment.missingPoints} pts
+              <p key={segment.key} className="text-sm text-[var(--enroll-fg)]/70">
+                <span className="font-semibold text-[var(--enroll-fg)]">{segment.label}:</span> +{segment.missingPoints} pts
               </p>
             ))}
           </div>
         </div>
       ) : activeSegment ? (
-        <div className="absolute inset-x-0 bottom-0 mx-auto w-full max-w-[280px] rounded-2xl bg-[#F7F7F7] px-3 py-3 ring-1 ring-black/8">
+        <div className="absolute inset-x-0 bottom-0 mx-auto w-full max-w-[280px] rounded-2xl bg-[var(--enroll-surface-elevated)] px-3 py-3 ring-1 ring-[var(--enroll-surface-border)]">
           <div className="flex items-center gap-2">
             <span
               className="h-2.5 w-2.5 shrink-0 rounded-full"
               style={{ backgroundColor: activeSegment.color }}
               aria-hidden="true"
             />
-            <p className="text-sm font-black text-black">{activeSegment.label}</p>
+            <p className="text-sm font-black text-[var(--enroll-fg)]">{activeSegment.label}</p>
           </div>
-          <p className="mt-2 text-sm font-semibold text-black">
+          <p className="mt-2 text-sm font-semibold text-[var(--enroll-fg)]">
             {activeSegment.contribution} / {activeSegment.weight} pts
           </p>
-          <p className="mt-1 text-sm font-semibold text-black">{activeSegment.score}%</p>
-          <p className="mt-1 text-sm font-semibold text-black/80">
+          <p className="mt-1 text-sm font-semibold text-[var(--enroll-fg)]">{activeSegment.score}%</p>
+          <p className="mt-1 text-sm font-semibold text-[var(--enroll-fg)]/80">
             {copy.contributionToTotal}: {activeSegment.contribution} pts
           </p>
-          <p className="mt-1 text-sm text-black/65">{activeSegment.status === "Complete" ? copy.complete : activeSegment.missingHint}</p>
+          <p className="mt-1 text-sm text-[var(--enroll-fg)]/65">{activeSegment.status === "Complete" ? copy.complete : activeSegment.missingHint}</p>
         </div>
       ) : null}
     </div>
   );
 }
+

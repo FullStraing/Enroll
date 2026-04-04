@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
@@ -259,7 +259,7 @@ function DocumentsPageContent() {
             <RuntimeNotice
               message={
                 locale === "ru"
-                  ? "Загрузки документов временно недоступны. Уже загруженные файлы всё ещё можно смотреть, переименовывать и удалять."
+                  ? "Р—Р°РіСЂСѓР·РєРё РґРѕРєСѓРјРµРЅС‚РѕРІ РІСЂРµРјРµРЅРЅРѕ РЅРµРґРѕСЃС‚СѓРїРЅС‹. РЈР¶Рµ Р·Р°РіСЂСѓР¶РµРЅРЅС‹Рµ С„Р°Р№Р»С‹ РІСЃС‘ РµС‰С‘ РјРѕР¶РЅРѕ СЃРјРѕС‚СЂРµС‚СЊ, РїРµСЂРµРёРјРµРЅРѕРІС‹РІР°С‚СЊ Рё СѓРґР°Р»СЏС‚СЊ."
                   : "Document uploads are temporarily unavailable. Existing files stay available for viewing, renaming, and deleting."
               }
             />
@@ -293,25 +293,25 @@ function DocumentsPageContent() {
               ) : (
                 <>
                   <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
-                    <div className="rounded-2xl border border-black/15 bg-[#DAF5F0] px-4 py-4">
-                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-black/55">{copy.prepared}</p>
-                      <p className="mt-2 text-2xl font-black text-black">
+                    <div className="rounded-2xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-cyan)] px-4 py-4 dark:bg-[var(--enroll-surface-inset)]">
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--enroll-muted)]">{copy.prepared}</p>
+                      <p className="mt-2 text-2xl font-black text-[var(--enroll-fg)]">
                         {readyCount} / {documentTypes.length}
                       </p>
-                      <p className="mt-1 text-xs text-black/55">{copy.preparedHint}</p>
+                      <p className="mt-1 text-xs text-[var(--enroll-muted)]">{copy.preparedHint}</p>
                     </div>
-                    <div className="rounded-2xl border border-black/15 bg-[#FFF4CC] px-4 py-4">
-                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-black/55">{copy.missing}</p>
-                      <p className="mt-2 text-2xl font-black text-black">{missingTypes.length}</p>
-                      <p className="mt-1 text-xs text-black/55">
+                    <div className="rounded-2xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-yellow-soft)] px-4 py-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--enroll-muted)]">{copy.missing}</p>
+                      <p className="mt-2 text-2xl font-black text-[var(--enroll-fg)]">{missingTypes.length}</p>
+                      <p className="mt-1 text-xs text-[var(--enroll-muted)]">
                         {missingTypes.length ? missingTypes.map((item) => item.label).join(", ") : copy.missingHintAll}
                       </p>
                     </div>
                   </div>
 
-                  <div className="mt-4 rounded-2xl border border-black/15 bg-white px-4 py-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-black/55">{copy.storage}</p>
-                    <p className="mt-2 text-sm text-black/70">
+                  <div className="mt-4 rounded-2xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] px-4 py-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--enroll-muted)]">{copy.storage}</p>
+                    <p className="mt-2 text-sm text-[var(--enroll-muted-strong)]">
                       {copy.storageHint.replace("{used}", String(documents.length)).replace("{total}", String(MAX_DOCUMENTS_PER_USER))}
                     </p>
                   </div>
@@ -341,7 +341,7 @@ function DocumentsPageContent() {
             )}
 
             {statusText ? (
-              <div className="rounded-2xl border border-black/15 bg-white px-4 py-3 text-sm text-black/70">{statusText}</div>
+              <div className="rounded-2xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] px-4 py-3 text-sm text-[var(--enroll-fg)]">{statusText}</div>
             ) : null}
           </div>
         </div>
@@ -364,3 +364,5 @@ export default function DocumentsPage() {
     </Suspense>
   );
 }
+
+

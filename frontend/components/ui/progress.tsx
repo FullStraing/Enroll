@@ -13,14 +13,14 @@ export const Progress = React.forwardRef<
 >(({ className, value, indicatorClassName, variant = "primary", ...props }, ref) => (
   <ProgressPrimitive.Root
     ref={ref}
-    className={cn("relative h-2 w-full overflow-hidden rounded-full border border-black/10 bg-white", className)}
+    className={cn("relative h-2 w-full overflow-hidden rounded-full border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)]", className)}
     {...props}
   >
     <ProgressPrimitive.Indicator
       className={cn(
         "h-full w-full flex-1 transition-all",
-        variant === "primary" && "bg-[#FFDB58]",
-        variant === "cyan" && "bg-[#DAF5F0]",
+        variant === "primary" && "bg-[var(--enroll-yellow)]",
+        variant === "cyan" && "bg-[var(--enroll-cyan)]",
         indicatorClassName,
       )}
       style={{ transform: `translateX(-${100 - (value || 0)}%)` }}

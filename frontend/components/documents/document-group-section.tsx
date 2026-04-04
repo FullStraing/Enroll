@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { Download, FileText, Link2, Pencil, Trash2 } from "lucide-react";
 import type { DocumentItem, DocumentTypeMeta } from "@/app/documents/types";
@@ -23,7 +23,7 @@ export function DocumentGroupSection({ group, items, deletingId, onDelete, onRen
   const copy = getProductCopy(locale).documents;
 
   return (
-    <Card className="shadow-none">
+    <Card className="border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] shadow-none">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <CardTitle className="text-lg">{group.label}</CardTitle>
@@ -31,7 +31,7 @@ export function DocumentGroupSection({ group, items, deletingId, onDelete, onRen
         </div>
         <span
           className={`rounded-full border px-3 py-1 text-xs font-semibold ${
-            items.length ? "border-black bg-[#DAF5F0]" : "border-black/15 bg-white text-black/55"
+            items.length ? "border-[var(--enroll-strong-border)] bg-[var(--enroll-cyan)] text-[var(--enroll-fg)]" : "border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] text-[var(--enroll-muted)]"
           }`}
         >
           {items.length ? copy.uploaded.replace("{count}", String(items.length)) : copy.missingBadge}
@@ -41,22 +41,22 @@ export function DocumentGroupSection({ group, items, deletingId, onDelete, onRen
       {items.length ? (
         <div className="mt-4 grid gap-3">
           {items.map((item) => (
-            <div key={item.id} className="min-w-0 rounded-2xl border border-black/15 bg-white px-4 py-4">
+            <div key={item.id} className="min-w-0 rounded-2xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] px-4 py-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-black/55" />
-                    <p className="truncate text-sm font-semibold text-black">{item.title}</p>
+                    <FileText className="h-4 w-4 text-[var(--enroll-muted)]" />
+                    <p className="truncate text-sm font-semibold text-[var(--enroll-fg)]">{item.title}</p>
                   </div>
-                  <p className="mt-1 text-sm text-black/60">{item.file_name || copy.uploadedFile}</p>
-                  <div className="mt-2 flex flex-wrap gap-2 text-xs text-black/55">
-                    <span className="rounded-full border border-black/10 bg-black/[0.02] px-2 py-1">{formatFileSize(item.file_size)}</span>
-                    <span className="rounded-full border border-black/10 bg-black/[0.02] px-2 py-1">{item.mime_type || copy.unknownType}</span>
-                    <span className="rounded-full border border-black/10 bg-black/[0.02] px-2 py-1">
+                  <p className="mt-1 text-sm text-[var(--enroll-muted)]">{item.file_name || copy.uploadedFile}</p>
+                  <div className="mt-2 flex flex-wrap gap-2 text-xs text-[var(--enroll-muted)]">
+                    <span className="rounded-full border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-inset)] px-2 py-1">{formatFileSize(item.file_size)}</span>
+                    <span className="rounded-full border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-inset)] px-2 py-1">{item.mime_type || copy.unknownType}</span>
+                    <span className="rounded-full border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-inset)] px-2 py-1">
                       {copy.updatedAt.replace("{value}", formatDateTimeShort(item.updated_at))}
                     </span>
                     {item.student_university?.university?.name ? (
-                      <span className="rounded-full border border-black/10 bg-[#FFF4CC] px-2 py-1 text-black">
+                      <span className="rounded-full border border-[var(--enroll-strong-border)] bg-[var(--enroll-yellow-soft)] px-2 py-1 text-[var(--enroll-fg)]">
                         <Link2 className="mr-1 inline h-3 w-3" />
                         {item.student_university.university.name}
                       </span>
@@ -91,10 +91,12 @@ export function DocumentGroupSection({ group, items, deletingId, onDelete, onRen
           ))}
         </div>
       ) : (
-        <div className="mt-4 rounded-2xl border border-dashed border-black/15 bg-black/[0.02] px-4 py-4 text-sm text-black/60">
+        <div className="mt-4 rounded-2xl border border-dashed border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-inset)] px-4 py-4 text-sm text-[var(--enroll-muted)]">
           {copy.noFiles}
         </div>
       )}
     </Card>
   );
 }
+
+

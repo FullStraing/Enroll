@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { MessageSquare, Send, Users2 } from "lucide-react";
@@ -14,12 +14,12 @@ import { getProductCopy } from "@/lib/product-copy";
 import { useLocale } from "@/components/locale-provider";
 
 const TAG_STYLES: Record<string, string> = {
-  "": "bg-white text-black/60 border-black/10",
-  essay: "bg-[#FFF4CC] text-black border-black/10",
-  visa: "bg-[#DAF5F0] text-black border-black/10",
-  financial_aid: "bg-[#F8D6B3] text-black border-black/10",
-  documents: "bg-[#FFF9E8] text-black border-black/10",
-  deadlines: "bg-white text-black/70 border-black/10",
+  "": "bg-[var(--enroll-surface-elevated)] text-[var(--enroll-muted)] border-[var(--enroll-surface-border)]",
+  essay: "bg-[var(--enroll-yellow-soft)] text-[var(--enroll-fg)] border-[var(--enroll-surface-border)]",
+  visa: "bg-[var(--enroll-cyan)] text-[var(--enroll-fg)] border-[var(--enroll-surface-border)]",
+  financial_aid: "bg-[var(--enroll-yellow-soft)] text-[var(--enroll-fg)] border-[var(--enroll-surface-border)]",
+  documents: "bg-[var(--enroll-yellow-soft)] text-[var(--enroll-fg)] border-[var(--enroll-surface-border)]",
+  deadlines: "bg-[var(--enroll-surface-elevated)] text-[var(--enroll-muted-strong)] border-[var(--enroll-surface-border)]",
 };
 
 function formatMessageTime(value: string) {
@@ -35,24 +35,24 @@ function formatMessageTime(value: string) {
 function RoomSkeleton() {
   return (
     <div className="grid gap-4 xl:grid-cols-[260px_minmax(0,1fr)]">
-      <div className="rounded-2xl border border-black/10 bg-white p-4">
+      <div className="rounded-2xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] p-4">
         <Skeleton className="h-5 w-32" />
         <div className="mt-4 grid gap-3">
           {Array.from({ length: 4 }).map((_, index) => (
-            <div key={index} className="rounded-2xl border border-black/10 p-4">
+            <div key={index} className="rounded-2xl border border-[var(--enroll-surface-border)] p-4">
               <Skeleton className="h-5 w-36" />
               <Skeleton className="mt-2 h-4 w-full" />
             </div>
           ))}
         </div>
       </div>
-      <div className="rounded-2xl border border-black/10 bg-white p-4">
+      <div className="rounded-2xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] p-4">
         <Skeleton className="h-6 w-48" />
         <Skeleton className="mt-2 h-4 w-64" />
         <Skeleton className="mt-4 h-24 w-full rounded-2xl" />
         <div className="mt-4 grid gap-3">
           {Array.from({ length: 5 }).map((_, index) => (
-            <div key={index} className="rounded-2xl border border-black/10 p-4">
+            <div key={index} className="rounded-2xl border border-[var(--enroll-surface-border)] p-4">
               <Skeleton className="h-4 w-40" />
               <Skeleton className="mt-2 h-4 w-full" />
               <Skeleton className="mt-2 h-4 w-4/5" />
@@ -250,14 +250,14 @@ export default function CommunityPage() {
           <RoomSkeleton />
         ) : (
           <div className="grid gap-4 xl:grid-cols-[260px_minmax(0,1fr)]">
-            <aside className="rounded-2xl border border-black/10 bg-white p-4">
+            <aside className="rounded-2xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] p-4">
               <div className="flex items-center gap-2">
-                <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-[#FFF4CC]">
-                  <Users2 className="h-4 w-4 text-black" />
+                <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-[var(--enroll-yellow-soft)]">
+                  <Users2 className="h-4 w-4 text-[var(--enroll-fg)]" />
                 </span>
                 <div>
-                  <h2 className="text-lg font-black text-black">{copy.rooms}</h2>
-                  <p className="text-sm text-black/55">{copy.roomsHint}</p>
+                  <h2 className="text-lg font-black text-[var(--enroll-fg)]">{copy.rooms}</h2>
+                  <p className="text-sm text-[var(--enroll-muted)]">{copy.roomsHint}</p>
                 </div>
               </div>
 
@@ -271,16 +271,16 @@ export default function CommunityPage() {
                       onClick={() => setActiveRoomSlug(room.slug)}
                       className={`rounded-2xl border px-4 py-3 text-left transition ${
                         isActive
-                          ? "border-black bg-[#FFDB58] shadow-[0_4px_0_rgba(0,0,0,0.08)]"
-                          : "border-black/10 bg-white hover:-translate-y-0.5 hover:border-black/30"
+                          ? "border-[var(--enroll-strong-border)] bg-[var(--enroll-yellow)] shadow-[0_4px_0_rgba(0,0,0,0.08)]"
+                          : "border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] hover:-translate-y-0.5 hover:border-[var(--enroll-strong-border)]/30"
                       }`}
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <p className="text-sm font-bold text-black">{room.title}</p>
-                          <p className="mt-1 text-xs text-black/60">{room.description}</p>
+                          <p className="text-sm font-bold text-[var(--enroll-fg)]">{room.title}</p>
+                          <p className="mt-1 text-xs text-[var(--enroll-muted)]">{room.description}</p>
                         </div>
-                        <span className="rounded-full border border-black/10 bg-white px-2 py-0.5 text-xs font-semibold text-black/65">
+                        <span className="rounded-full border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] px-2 py-0.5 text-xs font-semibold text-[var(--enroll-muted-strong)]">
                           {room.member_count}
                         </span>
                       </div>
@@ -290,34 +290,34 @@ export default function CommunityPage() {
               </div>
             </aside>
 
-            <section className="rounded-2xl border border-black/10 bg-white p-4">
+            <section className="rounded-2xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] p-4">
               {activeRoom ? (
                 <div className="flex h-full min-h-[72vh] flex-col">
-                  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-black/10 pb-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--enroll-surface-border)] pb-4">
                     <div>
                       <div className="flex items-center gap-2">
-                        <MessageSquare className="h-5 w-5 text-black" />
-                        <h2 className="text-2xl font-black text-black">{activeRoom.title}</h2>
+                        <MessageSquare className="h-5 w-5 text-[var(--enroll-fg)]" />
+                        <h2 className="text-2xl font-black text-[var(--enroll-fg)]">{activeRoom.title}</h2>
                       </div>
-                      <p className="mt-1 text-sm text-black/60">
+                      <p className="mt-1 text-sm text-[var(--enroll-muted)]">
                         {copy.participants.replace("{count}", String(activeRoom.member_count))}
                       </p>
                     </div>
-                    <div className="rounded-full border border-black/10 bg-[#DAF5F0] px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-black/70">
+                    <div className="rounded-full border border-[var(--enroll-surface-border)] bg-[var(--enroll-cyan)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--enroll-muted-strong)]">
                       {copy.applicantsChat}
                     </div>
                   </div>
 
-                  <div className="mt-4 rounded-2xl border border-black/10 bg-[#DAF5F0]/20 px-4 py-3 text-sm text-black/70">
-                    <span className="font-semibold text-black">{copy.pinned}</span>{" "}
+                  <div className="mt-4 rounded-2xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-cyan)]/20 px-4 py-3 text-sm text-[var(--enroll-muted-strong)]">
+                    <span className="font-semibold text-[var(--enroll-fg)]">{copy.pinned}</span>{" "}
                     {activeRoom.pinned_prompt || copy.defaultPinned}
                   </div>
 
-                  <div className="mt-4 min-h-0 flex-1 overflow-y-auto rounded-2xl border border-black/10 bg-[#FFFDFC] p-3">
+                  <div className="mt-4 min-h-0 flex-1 overflow-y-auto rounded-2xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] p-3">
                     {loadingMessages ? (
                       <div className="grid gap-3">
                         {Array.from({ length: 5 }).map((_, index) => (
-                          <div key={index} className="rounded-2xl border border-black/10 bg-white p-4">
+                          <div key={index} className="rounded-2xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] p-4">
                             <Skeleton className="h-4 w-40" />
                             <Skeleton className="mt-2 h-4 w-full" />
                             <Skeleton className="mt-2 h-4 w-3/4" />
@@ -327,10 +327,10 @@ export default function CommunityPage() {
                     ) : messages.length ? (
                       <div className="grid gap-3">
                         {messages.map((message) => (
-                          <article key={message.id} className="rounded-2xl border border-black/10 bg-white px-4 py-3">
+                          <article key={message.id} className="rounded-2xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] px-4 py-3">
                             <div className="flex flex-wrap items-center gap-2">
-                              <span className="text-sm font-bold text-black">{message.author.display_name}</span>
-                              <span className="rounded-full border border-black/10 bg-white px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-black/55">
+                              <span className="text-sm font-bold text-[var(--enroll-fg)]">{message.author.display_name}</span>
+                              <span className="rounded-full border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--enroll-muted)]">
                                 {message.author.status_badge}
                               </span>
                               {message.tag ? (
@@ -338,14 +338,14 @@ export default function CommunityPage() {
                                   {tags.find((tag) => tag.value === message.tag)?.label || message.tag}
                                 </span>
                               ) : null}
-                              <span className="ml-auto text-[11px] text-black/45">{formatMessageTime(message.created_at)}</span>
+                              <span className="ml-auto text-[11px] text-[var(--enroll-muted)]">{formatMessageTime(message.created_at)}</span>
                             </div>
-                            <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-black/80">{message.body}</p>
+                            <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-[var(--enroll-fg)]">{message.body}</p>
                           </article>
                         ))}
                       </div>
                     ) : (
-                      <div className="rounded-2xl border border-dashed border-black/15 bg-white p-6 text-sm text-black/60">
+                      <div className="rounded-2xl border border-dashed border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] p-6 text-sm text-[var(--enroll-muted)]">
                         {locale === "ru"
                           ? "Сообщений пока нет. Начни комнату с короткого знакомства или одного реального вопроса по подаче."
                           : "No messages yet. Start the room with a quick intro or one real admissions question."}
@@ -353,7 +353,7 @@ export default function CommunityPage() {
                     )}
                   </div>
 
-                  <div className="mt-4 rounded-2xl border border-black/10 bg-white p-4">
+                  <div className="mt-4 rounded-2xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] p-4">
                     <div className="flex flex-wrap gap-2">
                       {tags.map((tag) => {
                         const active = selectedTag === tag.value;
@@ -365,8 +365,8 @@ export default function CommunityPage() {
                             disabled={runtimeConfig?.features.community_posting_enabled === false}
                             className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
                               active
-                                ? "border-black bg-[#FFDB58] text-black"
-                                : "border-black/10 bg-white text-black/65 hover:border-black/30 hover:text-black"
+                                ? "border-[var(--enroll-strong-border)] bg-[var(--enroll-yellow)] text-[var(--enroll-fg)]"
+                                : "border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] text-[var(--enroll-muted-strong)] hover:border-[var(--enroll-strong-border)]/30 hover:text-[var(--enroll-fg)]"
                             } disabled:cursor-not-allowed disabled:opacity-60`}
                           >
                             {tag.label}
@@ -381,25 +381,25 @@ export default function CommunityPage() {
                         onChange={(event) => setDraft(event.target.value)}
                         placeholder={copy.messagePlaceholder}
                         rows={3}
-                        className="min-h-[104px] flex-1 rounded-2xl border border-black/10 bg-[#FFFDFC] px-4 py-3 text-sm text-black outline-none transition placeholder:text-black/35 focus:border-black/30 disabled:cursor-not-allowed disabled:bg-black/[0.03]"
+                        className="min-h-[104px] flex-1 rounded-2xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] px-4 py-3 text-sm text-[var(--enroll-fg)] outline-none transition placeholder:text-[var(--enroll-fg)]/35 focus:border-[var(--enroll-strong-border)]/30 disabled:cursor-not-allowed disabled:bg-black/[0.03]"
                         disabled={runtimeConfig?.features.community_posting_enabled === false || sending}
                       />
                       <button
                         type="button"
                         onClick={() => void sendMessage()}
                         disabled={runtimeConfig?.features.community_posting_enabled === false || sending || !draft.trim()}
-                        className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border-2 border-black bg-[#FFDB58] px-5 text-sm font-semibold text-black transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 sm:self-end"
+                        className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border-2 border-[var(--enroll-strong-border)] bg-[var(--enroll-yellow)] px-5 text-sm font-semibold text-[var(--enroll-fg)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 sm:self-end"
                       >
                         <Send className="h-4 w-4" />
                         {sending ? copy.sending : copy.send}
                       </button>
                     </div>
 
-                    {statusText ? <p className="mt-3 text-sm text-black/55">{statusText}</p> : null}
+                    {statusText ? <p className="mt-3 text-sm text-[var(--enroll-muted)]">{statusText}</p> : null}
                   </div>
                 </div>
               ) : (
-                <div className="rounded-2xl border border-dashed border-black/15 bg-white p-6 text-sm text-black/60">
+                <div className="rounded-2xl border border-dashed border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] p-6 text-sm text-[var(--enroll-muted)]">
                   {locale === "ru" ? "Комнаты чата пока недоступны." : "No chat rooms available yet."}
                 </div>
               )}
@@ -410,3 +410,5 @@ export default function CommunityPage() {
     </ProtectedPage>
   );
 }
+
+

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
@@ -58,16 +58,16 @@ export function DiscoverFiltersPanel({
   return (
     <>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <Button size="sm" variant="outline" onClick={onToggle} className={open ? "bg-[#DAF5F0]" : ""}>
+        <Button size="sm" variant="outline" onClick={onToggle} className={open ? "bg-[var(--enroll-cyan)] dark:bg-[var(--enroll-surface-inset)]" : ""}>
           {open ? copy.hideFilters : copy.showFilters}
         </Button>
-        <div className="text-sm text-black/65">{copy.activeFilters.replace("{count}", String(activeFiltersCount))}</div>
+        <div className="text-sm text-[var(--enroll-muted)]">{copy.activeFilters.replace("{count}", String(activeFiltersCount))}</div>
       </div>
 
       {open ? (
-        <div className="grid gap-3 rounded-xl border border-black/10 bg-black/[0.02] p-3 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-3 rounded-xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-inset)] p-3 md:grid-cols-2 xl:grid-cols-4">
           {inputFields.slice(0, 2).map((field) => (
-            <label key={field.key} className="text-xs text-black/70">
+            <label key={field.key} className="text-xs text-[var(--enroll-muted-strong)]">
               {field.label}
               <input
                 type={field.type ?? "text"}
@@ -75,12 +75,12 @@ export function DiscoverFiltersPanel({
                 value={filtersDraft[field.key]}
                 onChange={(event) => onChange((prev) => ({ ...prev, [field.key]: event.target.value }))}
                 placeholder={field.placeholder}
-                className="mt-1 w-full rounded-lg border border-black/15 bg-white px-2 py-2 text-sm"
+                className="mt-1 w-full rounded-lg border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] px-2 py-2 text-sm text-[var(--enroll-fg)]"
               />
             </label>
           ))}
 
-          <label className="text-xs text-black/70">
+          <label className="text-xs text-[var(--enroll-muted-strong)]">
             {copy.chanceBand}
             <Select
               value={filtersDraft.chanceBand}
@@ -93,12 +93,12 @@ export function DiscoverFiltersPanel({
                 { value: "reach", label: copy.chanceLabels.reach },
                 { value: "high_reach", label: copy.chanceLabels.high_reach },
               ]}
-              className="mt-1 w-full rounded-lg border border-black/15 px-2 py-2 text-sm"
+              className="mt-1 w-full rounded-lg border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] px-2 py-2 text-sm text-[var(--enroll-fg)]"
               ariaLabel={copy.chanceBand}
             />
           </label>
 
-          <label className="text-xs text-black/70">
+          <label className="text-xs text-[var(--enroll-muted-strong)]">
             {copy.rankingBand}
             <Select
               value={filtersDraft.rankingBand}
@@ -109,20 +109,20 @@ export function DiscoverFiltersPanel({
                 { value: "medium", label: copy.mediumSelectivity },
                 { value: "low", label: copy.lowSelectivity },
               ]}
-              className="mt-1 w-full rounded-lg border border-black/15 px-2 py-2 text-sm"
+              className="mt-1 w-full rounded-lg border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] px-2 py-2 text-sm text-[var(--enroll-fg)]"
               ariaLabel={copy.rankingBand}
             />
           </label>
 
           {inputFields.slice(2).map((field) => (
-            <label key={field.key} className="text-xs text-black/70">
+            <label key={field.key} className="text-xs text-[var(--enroll-muted-strong)]">
               {field.label}
               <input
                 type={field.type ?? "text"}
                 step={field.step}
                 value={filtersDraft[field.key]}
                 onChange={(event) => onChange((prev) => ({ ...prev, [field.key]: event.target.value }))}
-                className="mt-1 w-full rounded-lg border border-black/15 bg-white px-2 py-2 text-sm"
+                className="mt-1 w-full rounded-lg border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] px-2 py-2 text-sm text-[var(--enroll-fg)]"
               />
             </label>
           ))}
@@ -140,3 +140,4 @@ export function DiscoverFiltersPanel({
     </>
   );
 }
+

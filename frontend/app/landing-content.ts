@@ -1,15 +1,15 @@
 import type { Locale } from "@/lib/i18n";
 
 export const landingTheme = {
-  bg: "#FCFAF5",
-  black: "#000000",
-  white: "#FFFFFF",
-  primary: "#FFDB58",
-  orange: "#F8D6B3",
-  cyan: "#DAF5F0",
-  sand: "#F3EDE2",
-  yellowSoft: "#FFF4CC",
-  line: "rgba(0, 0, 0, 0.12)",
+  bg: "var(--enroll-bg)",
+  black: "var(--enroll-fg)",
+  white: "var(--enroll-surface-elevated)",
+  primary: "var(--enroll-yellow)",
+  orange: "var(--enroll-orange)",
+  cyan: "var(--enroll-cyan)",
+  sand: "var(--enroll-sand)",
+  yellowSoft: "var(--enroll-yellow-soft)",
+  line: "var(--enroll-surface-border)",
 };
 
 const content = {

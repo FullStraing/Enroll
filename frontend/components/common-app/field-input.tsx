@@ -25,7 +25,7 @@ export function FieldInput({ field, value, onChange, onClear }: Props) {
           { value: "true", label: "Yes" },
           { value: "false", label: "No" },
         ]}
-        className="mt-1 w-full border border-black/20 text-sm disabled:bg-black/[0.04]"
+        className="mt-1 w-full border border-[var(--enroll-surface-border)] text-sm disabled:bg-black/[0.04]"
         ariaLabel={field.label}
       />
     );
@@ -38,7 +38,7 @@ export function FieldInput({ field, value, onChange, onClear }: Props) {
         value={numberValue}
         disabled={field.readonly}
         onChange={(event) => onChange(event.target.value === "" ? "" : Number(event.target.value))}
-        className="mt-1 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm disabled:bg-black/[0.04]"
+        className="mt-1 w-full rounded-xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] px-3 py-2 text-sm text-[var(--enroll-fg)] disabled:bg-black/[0.04]"
       />
     );
   }
@@ -50,7 +50,7 @@ export function FieldInput({ field, value, onChange, onClear }: Props) {
         value={stringValue}
         disabled={field.readonly}
         onChange={(event) => onChange(event.target.value)}
-        className="mt-1 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm disabled:bg-black/[0.04]"
+        className="mt-1 w-full rounded-xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] px-3 py-2 text-sm text-[var(--enroll-fg)] disabled:bg-black/[0.04]"
       />
     );
   }
@@ -63,14 +63,14 @@ export function FieldInput({ field, value, onChange, onClear }: Props) {
       return (
         <div className="mt-2 space-y-3">
           {options.map((option) => (
-            <label key={option} className="flex items-center gap-3 text-sm text-black/80">
+            <label key={option} className="flex items-center gap-3 text-sm text-[var(--enroll-fg)]">
               <input
                 type="radio"
                 name={`${field.path}-${field.id}`}
                 checked={value === option}
                 disabled={field.readonly}
                 onChange={() => onChange(option)}
-                className="h-4 w-4 border-black/30"
+                className="h-4 w-4 border-[var(--enroll-surface-border)]"
               />
               <span>{isYesNo ? (option === "Yes" ? "Yes" : "No") : option}</span>
             </label>
@@ -79,7 +79,7 @@ export function FieldInput({ field, value, onChange, onClear }: Props) {
             <button
               type="button"
               onClick={onClear}
-              className="rounded-full border-2 border-black/35 px-4 py-1.5 text-sm font-semibold text-black/60 transition hover:bg-black/[0.03]"
+              className="rounded-full border-2 border-[var(--enroll-surface-border-strong)] px-4 py-1.5 text-sm font-semibold text-[var(--enroll-muted)] transition hover:bg-black/[0.03]"
             >
               Clear answer
             </button>
@@ -97,14 +97,14 @@ export function FieldInput({ field, value, onChange, onClear }: Props) {
             { value: "", label: "- Choose an option -" },
             ...options.map((option) => ({ value: option, label: option })),
           ]}
-          className="mt-1 w-full border border-black/20 text-sm disabled:bg-black/[0.04]"
+          className="mt-1 w-full border border-[var(--enroll-surface-border)] text-sm disabled:bg-black/[0.04]"
           ariaLabel={field.label}
         />
         {field.clearable && onClear ? (
           <button
             type="button"
             onClick={onClear}
-            className="rounded-full border-2 border-black/35 px-4 py-1.5 text-sm font-semibold text-black/60 transition hover:bg-black/[0.03]"
+            className="rounded-full border-2 border-[var(--enroll-surface-border-strong)] px-4 py-1.5 text-sm font-semibold text-[var(--enroll-muted)] transition hover:bg-black/[0.03]"
           >
             Clear answer
           </button>
@@ -123,13 +123,13 @@ export function FieldInput({ field, value, onChange, onClear }: Props) {
       return (
         <div className="mt-2 space-y-2">
           {(field.options || []).map((option) => (
-            <label key={option} className="flex items-center gap-3 text-sm text-black/80">
+            <label key={option} className="flex items-center gap-3 text-sm text-[var(--enroll-fg)]">
               <input
                 type="checkbox"
                 checked={selected.includes(option)}
                 disabled={field.readonly}
                 onChange={() => toggle(option)}
-                className="h-5 w-5 rounded border border-black/30"
+                className="h-5 w-5 rounded border border-[var(--enroll-surface-border)]"
               />
               <span>{option}</span>
             </label>
@@ -138,7 +138,7 @@ export function FieldInput({ field, value, onChange, onClear }: Props) {
             <button
               type="button"
               onClick={onClear}
-              className="rounded-full border-2 border-black/35 px-4 py-1.5 text-sm font-semibold text-black/60 transition hover:bg-black/[0.03]"
+              className="rounded-full border-2 border-[var(--enroll-surface-border-strong)] px-4 py-1.5 text-sm font-semibold text-[var(--enroll-muted)] transition hover:bg-black/[0.03]"
             >
               Clear answer
             </button>
@@ -159,7 +159,7 @@ export function FieldInput({ field, value, onChange, onClear }: Props) {
               .filter(Boolean),
           )
         }
-        className="mt-1 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm disabled:bg-black/[0.04]"
+        className="mt-1 w-full rounded-xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] px-3 py-2 text-sm text-[var(--enroll-fg)] disabled:bg-black/[0.04]"
         placeholder="Values separated by commas"
       />
     );
@@ -172,7 +172,7 @@ export function FieldInput({ field, value, onChange, onClear }: Props) {
         disabled={field.readonly}
         onChange={(event) => onChange(event.target.value)}
         rows={4}
-        className="mt-1 w-full resize-y rounded-xl border border-black/20 bg-white px-3 py-2 text-sm disabled:bg-black/[0.04]"
+        className="mt-1 w-full resize-y rounded-xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] px-3 py-2 text-sm text-[var(--enroll-fg)] disabled:bg-black/[0.04]"
       />
     );
   }
@@ -182,7 +182,7 @@ export function FieldInput({ field, value, onChange, onClear }: Props) {
       value={typeof value === "string" || typeof value === "number" ? String(value) : ""}
       disabled={field.readonly}
       onChange={(event) => onChange(event.target.value)}
-      className="mt-1 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm disabled:bg-black/[0.04]"
+      className="mt-1 w-full rounded-xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] px-3 py-2 text-sm text-[var(--enroll-fg)] disabled:bg-black/[0.04]"
     />
   );
 }

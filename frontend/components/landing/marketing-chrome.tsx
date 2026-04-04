@@ -6,6 +6,7 @@ import { landingTheme } from "@/app/landing-content";
 import { EnrollWordmark } from "@/components/brand/enroll-wordmark";
 import { LandingAuthActions } from "@/components/landing/landing-auth-actions";
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { ThemeSwitcher } from "@/components/theme-switcher";
 import { useMessages } from "@/components/locale-provider";
 
 type MarketingHeaderProps = {
@@ -17,7 +18,9 @@ type MarketingHeaderProps = {
 };
 
 function navClass(active: boolean) {
-  return active ? "text-black" : "text-black/55 transition hover:text-black";
+  return active
+    ? "text-[var(--enroll-fg)]"
+    : "text-[var(--enroll-muted-strong)] transition hover:text-[var(--enroll-fg)]";
 }
 
 export function MarketingHeader({
@@ -30,7 +33,7 @@ export function MarketingHeader({
   const messages = useMessages();
 
   return (
-    <header className="flex flex-wrap items-center justify-between gap-4 border-b-2 border-black px-5 py-5 md:px-8">
+    <header className="flex flex-wrap items-center justify-between gap-4 border-b-2 border-[var(--enroll-strong-border)] px-5 py-5 md:px-8">
       <Link href="/" className="inline-flex items-center gap-3">
         {brandVariant === "minimal" ? (
           <MinimalBrand className={brandClassName} />
@@ -52,6 +55,7 @@ export function MarketingHeader({
           </Link>
         </nav>
 
+        <ThemeSwitcher compact />
         <LanguageSwitcher compact />
         <LandingAuthActions initialHasSession={initialHasSession} primaryHref={primaryHref} />
       </div>
@@ -62,7 +66,7 @@ export function MarketingHeader({
 function DefaultBrand({ className = "" }: { className?: string }) {
   return (
     <>
-      <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-black/10 bg-[#FFF4CC]">
+      <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-yellow-soft)]">
         <MinimalBrandMark className="h-7 w-7" />
       </div>
       <EnrollWordmark size="sm" className={className} />
@@ -99,33 +103,33 @@ export function MarketingFooter() {
   const messages = useMessages();
 
   return (
-    <footer className="border-t-2 border-black px-5 py-6 md:px-8">
+    <footer className="border-t-2 border-[var(--enroll-strong-border)] px-5 py-6 md:px-8">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <EnrollWordmark size="sm" />
-          <p className="mt-1 text-sm text-black/55">{messages.marketing.footerTagline}</p>
+          <p className="mt-1 text-sm text-[var(--enroll-muted)]">{messages.marketing.footerTagline}</p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-4 text-sm font-semibold text-black/65">
-          <Link href="/product" className="transition hover:text-black">
+        <div className="flex flex-wrap items-center gap-4 text-sm font-semibold text-[var(--enroll-muted)]">
+          <Link href="/product" className="transition hover:text-[var(--enroll-fg)]">
             {messages.common.product}
           </Link>
-          <Link href="/pricing" className="transition hover:text-black">
+          <Link href="/pricing" className="transition hover:text-[var(--enroll-fg)]">
             {messages.common.pricing}
           </Link>
-          <Link href="/pilot" className="transition hover:text-black">
+          <Link href="/pilot" className="transition hover:text-[var(--enroll-fg)]">
             {messages.common.pilot}
           </Link>
-          <Link href="/terms" className="transition hover:text-black">
+          <Link href="/terms" className="transition hover:text-[var(--enroll-fg)]">
             {messages.marketing.terms}
           </Link>
-          <Link href="/privacy-policy" className="transition hover:text-black">
+          <Link href="/privacy-policy" className="transition hover:text-[var(--enroll-fg)]">
             {messages.marketing.privacy}
           </Link>
-          <Link href="/refund-policy" className="transition hover:text-black">
+          <Link href="/refund-policy" className="transition hover:text-[var(--enroll-fg)]">
             {messages.marketing.refunds}
           </Link>
-          <span className="text-black/45">© 2026 Enroll</span>
+          <span className="text-[var(--enroll-muted)]">© 2026 Enroll</span>
         </div>
       </div>
     </footer>
@@ -143,11 +147,13 @@ export function MarketingSectionHeading({
 }) {
   return (
     <div className="mx-auto max-w-3xl text-center">
-      <p className="text-xs font-black uppercase tracking-[0.18em] text-black/45">{eyebrow}</p>
-      <h2 className="mt-3 text-3xl font-black leading-[0.96] tracking-[-0.05em] text-black sm:text-4xl md:text-5xl">
+      <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--enroll-muted)]">{eyebrow}</p>
+      <h2 className="mt-3 text-3xl font-black leading-[0.96] tracking-[-0.05em] text-[var(--enroll-fg)] sm:text-4xl md:text-5xl">
         {title}
       </h2>
-      {description ? <p className="mt-4 text-sm leading-7 text-black/65 sm:text-base md:text-lg">{description}</p> : null}
+      {description ? (
+        <p className="mt-4 text-sm leading-7 text-[var(--enroll-muted)] sm:text-base md:text-lg">{description}</p>
+      ) : null}
     </div>
   );
 }
@@ -170,7 +176,7 @@ export function MarketingToneCard({
 
   return (
     <div
-      className={`rounded-[28px] border-2 border-black bg-white p-6 shadow-[0_8px_0_#000] ${className}`}
+      className={`rounded-[28px] border-2 border-[var(--enroll-strong-border)] bg-[var(--enroll-surface-elevated)] p-6 shadow-[0_8px_0_var(--enroll-strong-shadow)] ${className}`}
       style={{ backgroundColor: backgroundMap[tone] }}
     >
       {children}

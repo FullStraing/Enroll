@@ -1,4 +1,4 @@
-import type { AcademicTestType, LanguageTestType } from "@/app/dashboard/types";
+﻿import type { AcademicTestType, LanguageTestType } from "@/app/dashboard/types";
 
 export const introQuizStorageKey = "enroll_intro_quiz_v1";
 export const DASHBOARD_CACHE_KEY = "enroll_dashboard_cache_v1";
@@ -89,7 +89,8 @@ export const TEST_SCORE_RULES = {
 } as const;
 
 export const MODAL_FIELD_CLASS =
-  "mt-2 h-12 w-full rounded-2xl border border-black/15 bg-white px-4 py-3 text-base text-black outline-none transition placeholder:text-black/30 focus:border-black/35 focus:ring-0";
+  "mt-2 h-12 w-full rounded-2xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] px-4 py-3 text-base text-[var(--enroll-fg)] outline-none transition placeholder:text-[var(--enroll-muted)] focus:border-[var(--enroll-strong-border)] focus:ring-0";
 
 export const MODAL_REMOVE_BUTTON_CLASS =
-  "rounded-full border border-black bg-white px-3 py-2 text-sm font-semibold transition hover:-translate-y-0.5 hover:bg-black/5";
+  "rounded-full border border-[var(--enroll-strong-border)] bg-[var(--enroll-surface-elevated)] px-3 py-2 text-sm font-semibold text-[var(--enroll-fg)] transition hover:-translate-y-0.5 hover:bg-[var(--enroll-surface-inset)]";
+

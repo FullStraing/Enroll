@@ -184,7 +184,7 @@ function PlanCard({
 }) {
   return (
     <div className="overflow-hidden rounded-[28px] border-2 border-black bg-white shadow-[0_8px_0_#000]">
-      {highlight ? <div className="h-3 w-full bg-[#FFDB58]" /> : null}
+      {highlight ? <div className="h-3 w-full bg-[var(--enroll-yellow)]" /> : null}
       <div className={cn("p-7", highlight ? "pt-6" : "")}>
         <div className="flex items-start justify-between gap-3">
           <div>
@@ -192,7 +192,7 @@ function PlanCard({
             <p className="mt-2 text-sm leading-6 text-black/58">{subtitle}</p>
           </div>
           {highlight ? (
-            <Badge variant="primary" className="border-2 border-black bg-[#FFF4CC] px-3 py-1 text-[11px] uppercase tracking-[0.16em]">
+            <Badge variant="primary" className="border-2 border-[var(--enroll-strong-border)] bg-[var(--enroll-yellow-soft)] px-3 py-1 text-[11px] uppercase tracking-[0.16em]">
               {popularLabel}
             </Badge>
           ) : null}
@@ -206,7 +206,7 @@ function PlanCard({
           <p className="mt-2 text-sm leading-6 text-black/55">{pricing.billed}</p>
           {pricing.save ? (
             <div className="mt-3">
-              <Badge variant="default" className="border-black/20 bg-[#FFF4CC] px-3 py-1 text-[11px] uppercase tracking-[0.16em]">
+              <Badge variant="default" className="border-[var(--enroll-surface-border)] bg-[var(--enroll-yellow-soft)] px-3 py-1 text-[11px] uppercase tracking-[0.16em]">
                 {pricing.save}
               </Badge>
             </div>
@@ -218,7 +218,7 @@ function PlanCard({
           initialHasSession={initialHasSession}
           className={cn(
             "mt-6 inline-flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-black px-5 py-3.5 text-base font-black transition hover:-translate-y-0.5",
-            highlight ? "bg-[#FFDB58]" : "bg-white",
+            highlight ? "bg-[var(--enroll-yellow)]" : "bg-[var(--enroll-surface-elevated)]",
           )}
         >
           {cta}

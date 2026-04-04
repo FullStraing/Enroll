@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -49,7 +49,7 @@ export function DiscoverGrid({
                 key={university.id}
                 role="button"
                 tabIndex={0}
-                className="cursor-pointer transition hover:-translate-y-0.5"
+                className="cursor-pointer transition hover:-translate-y-0.5 dark:hover:border-[var(--enroll-strong-border)]"
                 onClick={() => onOpen(university.id)}
                 onKeyDown={(event) => {
                   if (event.key === "Enter" || event.key === " ") {
@@ -76,7 +76,7 @@ export function DiscoverGrid({
 
                   <div className="flex w-full justify-start self-start sm:w-auto sm:min-w-[148px] sm:justify-end">
                     {myUniversityIds.has(university.id) ? (
-                      <div className="inline-flex min-h-10 items-center justify-center rounded-2xl border-2 border-black bg-[#FFF4CC] px-4 text-sm font-semibold text-black shadow-[0_2px_0_#000]">
+                      <div className="inline-flex min-h-10 items-center justify-center rounded-2xl border-2 border-[var(--enroll-strong-border)] bg-[var(--enroll-yellow)] px-4 text-sm font-semibold text-[var(--enroll-strong-fg)] shadow-[0_2px_0_#000]">
                         {copy.addedToList}
                       </div>
                     ) : (
@@ -99,3 +99,4 @@ export function DiscoverGrid({
     </div>
   );
 }
+

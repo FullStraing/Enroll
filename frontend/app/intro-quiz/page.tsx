@@ -18,6 +18,7 @@ import {
 } from "@/lib/intro-quiz";
 import { resolvePostAuthDestination } from "@/lib/onboarding-gate";
 import { getProductCopy } from "@/lib/product-copy";
+import { DeepWorkflowTheme } from "@/components/deep-workflow-theme";
 
 type IntroAnswers = {
   country: string;
@@ -183,7 +184,8 @@ export default function IntroQuizPage() {
   }
 
   return (
-    <main className="min-h-screen px-4 py-6 md:px-8">
+    <DeepWorkflowTheme>
+      <main className="theme-workflow min-h-screen px-4 py-6 md:px-8">
       <div className="mx-auto max-w-4xl">
         <Card className="p-5 md:p-8">
           <div className="mb-6 flex items-center gap-3">
@@ -350,6 +352,7 @@ export default function IntroQuizPage() {
           ) : null}
         </Card>
       </div>
-    </main>
+      </main>
+    </DeepWorkflowTheme>
   );
 }

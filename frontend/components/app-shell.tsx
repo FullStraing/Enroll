@@ -23,6 +23,7 @@ import { EnrollWordmark } from "@/components/brand/enroll-wordmark";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { useLocale, useMessages } from "@/components/locale-provider";
 import { RuntimeNotice } from "@/components/runtime-notice";
+import { ThemeSwitcher } from "@/components/theme-switcher";
 import { Button } from "@/components/ui/button";
 import { fetchRuntimeConfig, type RuntimeConfig } from "@/lib/runtime-config";
 import { translateAppShellSubtitle, translateAppShellTitle } from "@/lib/i18n";
@@ -204,7 +205,7 @@ export function AppShell({
       <button
         type="button"
         onClick={() => setMobileMenuOpen((prev) => !prev)}
-        className="fixed left-3 top-3 z-50 rounded-xl border-2 border-black bg-white p-2 shadow-[0_4px_0_rgba(0,0,0,0.08)] lg:hidden"
+        className="fixed left-3 top-3 z-50 rounded-xl border-2 border-[var(--enroll-strong-border)] bg-[var(--enroll-surface-elevated)] p-2 shadow-[0_4px_0_var(--enroll-strong-shadow)] lg:hidden"
         aria-label={mobileMenuOpen ? messages.shell.closeMenu : messages.shell.openMenu}
       >
         {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -214,7 +215,7 @@ export function AppShell({
         <button
           type="button"
           aria-label={messages.shell.closeOverlay}
-          className="fixed inset-0 z-40 bg-black/30 lg:hidden"
+          className="fixed inset-0 z-40 bg-black/40 lg:hidden"
           onClick={() => setMobileMenuOpen(false)}
         />
       ) : null}
@@ -234,30 +235,33 @@ export function AppShell({
             <button
               type="button"
               onClick={() => setMobileMenuOpen(false)}
-              className="rounded-xl border-2 border-black bg-white p-2"
+              className="rounded-xl border-2 border-[var(--enroll-strong-border)] bg-[var(--enroll-surface-elevated)] p-2"
               aria-label={messages.shell.closeMenu}
             >
               <X className="h-4 w-4" />
             </button>
           </div>
 
-          <div className="rounded-2xl border border-black/10 bg-white px-3 py-3">
+          <div className="rounded-2xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] px-3 py-3">
             <div className="flex items-center gap-3">
-              <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#DAF5F0] text-sm font-bold text-black">
+              <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[var(--enroll-cyan)] text-sm font-bold text-[var(--enroll-fg)]">
                 {name.charAt(0).toUpperCase()}
               </span>
               <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-black">{name}</p>
-                <p className="truncate text-xs text-black/45">{profile?.email || messages.shell.workspaceFallback}</p>
+                <p className="truncate text-sm font-semibold text-[var(--enroll-fg)]">{name}</p>
+                <p className="truncate text-xs text-[var(--enroll-muted)]">{profile?.email || messages.shell.workspaceFallback}</p>
               </div>
             </div>
 
-            <div className="mt-3 flex items-center justify-between gap-3 rounded-2xl border border-black/10 bg-[#FFF4CC] px-3 py-2">
-              <div className="min-w-0">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-black/45">{localDateTime.dateLabel}</p>
-                <p className="mt-1 text-sm font-semibold text-black">{localDateTime.timeLabel}</p>
+            <div className="mt-3 grid gap-3 rounded-2xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-yellow-soft)] px-3 py-3">
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--enroll-muted)]">{localDateTime.dateLabel}</p>
+                  <p className="mt-1 text-sm font-semibold text-[var(--enroll-fg)]">{localDateTime.timeLabel}</p>
+                </div>
+                <LanguageSwitcher compact />
               </div>
-              <LanguageSwitcher compact />
+              <ThemeSwitcher compact className="justify-self-start" />
             </div>
           </div>
         </div>
@@ -324,10 +328,10 @@ export function AppShell({
               title={item.label}
               className={`rounded-xl px-3 py-2 text-sm font-semibold transition ${
                 pathname === item.href
-                  ? "border-2 border-black bg-[#FFDB58] text-black"
+                  ? "border-2 border-[var(--enroll-strong-border)] bg-[var(--enroll-yellow)] text-[var(--enroll-strong-fg)]"
                   : navigatingTo === item.href
-                    ? "border-2 border-black/70 bg-[#DAF5F0] text-black"
-                    : "text-black/75 hover:bg-black/5 hover:text-black"
+                    ? "border-2 border-[var(--enroll-surface-border-strong)] bg-[var(--enroll-cyan)] text-[var(--enroll-fg)]"
+                    : "text-[var(--enroll-muted-strong)] hover:bg-[color-mix(in_srgb,var(--enroll-fg)_5%,transparent)] hover:text-[var(--enroll-fg)]"
               } ${collapsed ? "flex items-center justify-center px-0" : "flex items-center gap-2"}`}
             >
               <item.icon className="h-4 w-4 shrink-0" />
@@ -339,7 +343,7 @@ export function AppShell({
             href="/"
             onClick={(event) => navigateWithTransition(event, "/")}
             title={messages.common.home}
-            className={`mt-4 rounded-2xl border-2 border-black bg-[#F3EDE2] px-4 py-3 text-sm text-black transition hover:-translate-y-0.5 hover:shadow-[0_5px_0_#000] ${
+            className={`mt-4 rounded-2xl border-2 border-[var(--enroll-strong-border)] bg-[var(--enroll-sand)] px-4 py-3 text-sm text-[var(--enroll-fg)] transition hover:-translate-y-0.5 hover:shadow-[0_5px_0_var(--enroll-strong-shadow)] ${
               collapsed ? "flex items-center justify-center px-0" : "flex items-center gap-3"
             }`}
           >
@@ -348,9 +352,9 @@ export function AppShell({
               <>
                 <div className="min-w-0 flex-1">
                   <div className="text-sm font-black leading-none">{messages.common.home}</div>
-                  <div className="mt-1 text-[11px] leading-none text-black/45">{messages.shell.marketingPage}</div>
+                  <div className="mt-1 text-[11px] leading-none text-[var(--enroll-muted)]">{messages.shell.marketingPage}</div>
                 </div>
-                <ArrowUpRight className="h-4 w-4 shrink-0 text-black/55" />
+                <ArrowUpRight className="h-4 w-4 shrink-0 text-[var(--enroll-muted)]" />
               </>
             ) : null}
           </Link>
@@ -362,7 +366,7 @@ export function AppShell({
               logout();
               router.push("/");
             }}
-            className="w-full rounded-xl border-2 border-black bg-[#FFDB58] px-3 py-2 text-sm font-semibold hover:-translate-y-0.5"
+            className="w-full rounded-xl border-2 border-[var(--enroll-strong-border)] bg-[var(--enroll-yellow)] px-3 py-2 text-sm font-semibold text-[var(--enroll-strong-fg)] hover:-translate-y-0.5"
           >
             {messages.common.logout}
           </button>
@@ -370,29 +374,30 @@ export function AppShell({
       </aside>
 
       <section
-        className={`glass glass-soft rounded-3xl p-4 pt-14 transition-[opacity,transform,filter] duration-200 ease-out sm:p-6 ${
+        className={`glass glass-soft min-w-0 rounded-3xl p-4 pt-14 transition-[opacity,transform,filter] duration-200 ease-out sm:p-6 ${
           navigatingTo ? "translate-y-1 scale-[0.995] opacity-80 blur-[1px]" : "translate-y-0 scale-100 opacity-100 blur-0"
         }`}
       >
-        <header className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b-2 border-black/80 pb-4 pl-10 sm:pl-0">
+        <header className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b-2 border-[var(--enroll-strong-border)] pb-4 pl-10 sm:pl-0">
           <div>
             <h1 className="text-2xl font-black">{translatedTitle}</h1>
-            {translatedSubtitle ? <p className="mt-1 max-w-2xl text-sm text-black/60">{translatedSubtitle}</p> : null}
+            {translatedSubtitle ? <p className="mt-1 max-w-2xl text-sm text-[var(--enroll-muted)]">{translatedSubtitle}</p> : null}
           </div>
 
           <div className="hidden items-center gap-2 sm:flex">
             <span
-              className="rounded-xl border-2 border-black bg-white px-3 py-1.5 text-sm font-semibold leading-tight"
+              className="rounded-xl border-2 border-[var(--enroll-strong-border)] bg-[var(--enroll-surface-elevated)] px-3 py-1.5 text-sm font-semibold leading-tight"
               title={localDateTime.timeZone}
             >
-              <span className="block text-[11px] font-semibold uppercase tracking-[0.14em] text-black/45">
+              <span className="block text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--enroll-muted)]">
                 {localDateTime.dateLabel}
               </span>
-              <span className="block text-sm font-semibold text-black">{localDateTime.timeLabel}</span>
+              <span className="block text-sm font-semibold text-[var(--enroll-fg)]">{localDateTime.timeLabel}</span>
             </span>
+            <ThemeSwitcher compact />
             <LanguageSwitcher compact />
-            <span className="rounded-xl border-2 border-black bg-white px-3 py-1.5 text-sm font-semibold">
-              <span className="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#DAF5F0] text-xs">
+            <span className="rounded-xl border-2 border-[var(--enroll-strong-border)] bg-[var(--enroll-surface-elevated)] px-3 py-1.5 text-sm font-semibold">
+              <span className="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-[var(--enroll-cyan)] text-xs text-[var(--enroll-fg)]">
                 {name.charAt(0).toUpperCase()}
               </span>
               {name}
@@ -402,14 +407,14 @@ export function AppShell({
                 logout();
                 router.push("/");
               }}
-              className="rounded-xl border-2 border-black bg-[#FFDB58] px-3 py-1.5 text-sm font-semibold hover:-translate-y-0.5"
+              className="rounded-xl border-2 border-[var(--enroll-strong-border)] bg-[var(--enroll-yellow)] px-3 py-1.5 text-sm font-semibold text-[var(--enroll-strong-fg)] hover:-translate-y-0.5"
             >
               {messages.common.logout}
             </button>
           </div>
 
           <div className="flex items-center gap-2 sm:hidden">
-            <span className="inline-flex h-9 min-w-9 items-center justify-center rounded-full border border-black/10 bg-[#DAF5F0] px-3 text-sm font-bold text-black">
+            <span className="inline-flex h-9 min-w-9 items-center justify-center rounded-full border border-[var(--enroll-surface-border)] bg-[var(--enroll-cyan)] px-3 text-sm font-bold text-[var(--enroll-fg)]">
               {name.charAt(0).toUpperCase()}
             </span>
           </div>

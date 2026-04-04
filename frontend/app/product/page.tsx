@@ -25,7 +25,7 @@ export default function ProductPage() {
   const primaryHref = token ? "/dashboard" : introQuizLinked ? "/register" : "/intro-quiz";
 
   return (
-    <main className="min-h-screen bg-transparent px-4 py-6 text-black md:px-8">
+    <main className="marketing-shell min-h-screen bg-transparent px-4 py-6 text-black md:px-8">
       <div className="mx-auto max-w-7xl overflow-hidden rounded-[28px] border-2 border-black bg-white shadow-[0_10px_0_#000]">
         <MarketingHeader initialHasSession={Boolean(token)} primaryHref={primaryHref} current="product" brandVariant="minimal" />
 

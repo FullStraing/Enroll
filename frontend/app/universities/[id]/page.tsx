@@ -572,20 +572,20 @@ export default function UniversityProfilePage() {
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
                   <h1 className="text-3xl font-black">{university.name}</h1>
-                  <p className="mt-2 text-sm text-white/70">
+                  <p className="mt-2 text-sm text-[var(--enroll-muted-strong)]">
                     {university.city || "-"}, {university.state || "-"}, {university.country || "USA"}
                   </p>
                   <div className="mt-3 flex flex-wrap gap-2 text-xs">
                     {officialWebsiteHref ? (
-                      <a href={officialWebsiteHref} target="_blank" rel="noreferrer" className="rounded-lg border border-white/20 px-2 py-1 hover:bg-white/10">
+                      <a href={officialWebsiteHref} target="_blank" rel="noreferrer" className="rounded-lg border border-[var(--enroll-surface-border)] px-2 py-1 hover:bg-[var(--enroll-surface-elevated)]/10">
                         official site
                       </a>
                     ) : (
-                      <span className="rounded-lg border border-white/15 px-2 py-1 text-white/50">official site: -</span>
+                      <span className="rounded-lg border border-[var(--enroll-surface-border)] px-2 py-1 text-[var(--enroll-muted)]">official site: -</span>
                     )}
                   </div>
                 </div>
-                <Link href="/universities" className="rounded-xl border border-white/20 px-3 py-2 text-sm hover:bg-white/10">
+                <Link href="/universities" className="rounded-xl border border-[var(--enroll-surface-border)] px-3 py-2 text-sm hover:bg-[var(--enroll-surface-elevated)]/10">
                   Назад к списку
                 </Link>
               </div>
@@ -606,31 +606,31 @@ export default function UniversityProfilePage() {
               <Card className="shadow-none">
                 <CardTitle>Can I afford it?</CardTitle>
                 <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-xl border border-white/10 bg-black/20 p-3">
-                    <p className="text-sm text-white/60">In state</p>
+                  <div className="rounded-xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-inset)] p-3">
+                    <p className="text-sm text-[var(--enroll-muted)]">In state</p>
                     <p className="text-3xl font-black">{prettyMoney(inState)}</p>
                   </div>
-                  <div className="rounded-xl border border-white/10 bg-black/20 p-3">
-                    <p className="text-sm text-white/60">Out of state</p>
+                  <div className="rounded-xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-inset)] p-3">
+                    <p className="text-sm text-[var(--enroll-muted)]">Out of state</p>
                     <p className="text-3xl font-black">{prettyMoney(outState)}</p>
                   </div>
                 </div>
               </Card>
             </section>
 
-            <section className="rounded-2xl border border-white/15 bg-white/5 p-5">
-              <h2 className="text-3xl font-light tracking-wide text-white/90">Location & Contact</h2>
+            <section className="rounded-2xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-inset)] p-5">
+              <h2 className="text-3xl font-light tracking-wide text-[var(--enroll-fg)]">Location & Contact</h2>
               <div className="mt-5 grid gap-4 lg:grid-cols-2">
-                <article className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                <article className="rounded-2xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-inset)] p-4">
                   <h3 className="text-lg font-semibold">Address</h3>
-                  <div className="mt-2 space-y-1 text-base text-white/80">
+                  <div className="mt-2 space-y-1 text-base text-[var(--enroll-muted-strong)]">
                     {locationContact.addressLines.map((line) => (
                       <p key={line}>{line}</p>
                     ))}
                   </div>
 
                   <h3 className="mt-6 text-lg font-semibold">Contact</h3>
-                  <div className="mt-2 space-y-1 text-base text-white/80">
+                  <div className="mt-2 space-y-1 text-base text-[var(--enroll-muted-strong)]">
                     <p>Email: {locationContact.email || "-"}</p>
                     <p>Phone: {locationContact.phone || "-"}</p>
                     <p>
@@ -646,7 +646,7 @@ export default function UniversityProfilePage() {
                   </div>
                 </article>
 
-                <article className="relative overflow-hidden rounded-2xl border border-white/10 bg-black/20 p-2">
+                <article className="relative overflow-hidden rounded-2xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-inset)] p-2">
                   <iframe
                     title="University map"
                     src={`https://www.google.com/maps?q=${mapQuery}&output=embed`}
@@ -658,7 +658,7 @@ export default function UniversityProfilePage() {
                     href={`https://www.google.com/maps/search/?api=1&query=${mapQuery}`}
                     target="_blank"
                     rel="noreferrer"
-                    className="absolute bottom-4 right-4 rounded-lg border border-white/20 bg-white/90 px-3 py-1.5 text-sm font-medium text-black hover:bg-white"
+                    className="absolute bottom-4 right-4 rounded-lg border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] px-3 py-1.5 text-sm font-medium text-[var(--enroll-fg)] hover:bg-[var(--enroll-surface-elevated)]"
                   >
                     Larger Map
                   </a>
@@ -667,19 +667,19 @@ export default function UniversityProfilePage() {
             </section>
 
             <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              <article className="rounded-2xl border border-white/15 bg-white/5 p-5">
+              <article className="rounded-2xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-inset)] p-5">
                 <h2 className="text-xl font-semibold">Average SAT</h2>
-                <p className="mt-2 text-sm text-white/70">25th-75th: {sat25 ?? "-"} - {sat75 ?? "-"}</p>
+                <p className="mt-2 text-sm text-[var(--enroll-muted-strong)]">25th-75th: {sat25 ?? "-"} - {sat75 ?? "-"}</p>
                 <p className="mt-2 text-4xl font-black md:text-5xl">{avgSat ? Math.round(avgSat) : "-"}</p>
               </article>
-              <article className="rounded-2xl border border-white/15 bg-white/5 p-5">
+              <article className="rounded-2xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-inset)] p-5">
                 <h2 className="text-xl font-semibold">Average ACT</h2>
-                <p className="mt-2 text-sm text-white/70">25th-75th: {act25 ?? "-"} - {act75 ?? "-"}</p>
+                <p className="mt-2 text-sm text-[var(--enroll-muted-strong)]">25th-75th: {act25 ?? "-"} - {act75 ?? "-"}</p>
                 <p className="mt-2 text-4xl font-black md:text-5xl">{avgAct ? Math.round(avgAct) : "-"}</p>
               </article>
-              <article className="rounded-2xl border border-white/15 bg-white/5 p-5">
+              <article className="rounded-2xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-inset)] p-5">
                 <h2 className="text-xl font-semibold">Average GPA</h2>
-                <p className="mt-2 text-sm text-white/70">Unweighted scale (0-4)</p>
+                <p className="mt-2 text-sm text-[var(--enroll-muted-strong)]">Unweighted scale (0-4)</p>
                 <p className="mt-2 text-4xl font-black md:text-5xl">{avgGpa != null ? avgGpa.toFixed(2) : "N/A"}</p>
               </article>
             </section>
@@ -693,11 +693,11 @@ export default function UniversityProfilePage() {
                 <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_1fr_88px] sm:items-center">
                   <div>
                     <p className="text-3xl font-black">{formatInt(femaleAdmissions.applied)}</p>
-                    <p className="text-xs text-white/60">Females Applied</p>
+                    <p className="text-xs text-[var(--enroll-muted)]">Females Applied</p>
                   </div>
                   <div>
                     <p className="text-3xl font-black">{formatInt(femaleAdmissions.accepted)}</p>
-                    <p className="text-xs text-white/60">Females Accepted</p>
+                    <p className="text-xs text-[var(--enroll-muted)]">Females Accepted</p>
                   </div>
                   <div className="justify-self-start sm:justify-self-end">
                     <CircularProgress value={Math.round(femaleAdmissions.rate || 0)} size={88} thickness={12} fillColor="#F4A6C8" />
@@ -713,11 +713,11 @@ export default function UniversityProfilePage() {
                 <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_1fr_88px] sm:items-center">
                   <div>
                     <p className="text-3xl font-black">{formatInt(maleAdmissions.applied)}</p>
-                    <p className="text-xs text-white/60">Males Applied</p>
+                    <p className="text-xs text-[var(--enroll-muted)]">Males Applied</p>
                   </div>
                   <div>
                     <p className="text-3xl font-black">{formatInt(maleAdmissions.accepted)}</p>
-                    <p className="text-xs text-white/60">Males Accepted</p>
+                    <p className="text-xs text-[var(--enroll-muted)]">Males Accepted</p>
                   </div>
                   <div className="justify-self-start sm:justify-self-end">
                     <CircularProgress value={Math.round(maleAdmissions.rate || 0)} size={88} thickness={12} fillColor="#7FB6FF" />
@@ -726,10 +726,10 @@ export default function UniversityProfilePage() {
               </Card>
             </section>
 
-            <section className="rounded-2xl border border-white/15 bg-white/5 p-5">
+            <section className="rounded-2xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-inset)] p-5">
               <div>
                 <h2 className="text-xl font-semibold">Important factors of admission</h2>
-                <p className="mt-1 text-sm text-white/70">Sorted from highest to lowest admissions weight.</p>
+                <p className="mt-1 text-sm text-[var(--enroll-muted-strong)]">Sorted from highest to lowest admissions weight.</p>
               </div>
               <div className="mt-4 grid gap-2">
                 {sortedFactors.length ? (
@@ -742,55 +742,55 @@ export default function UniversityProfilePage() {
                             <button
                               type="button"
                               tabIndex={0}
-                              className="flex h-6 w-6 items-center justify-center rounded-full border border-white/20 bg-black/20 text-white/65 transition hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/30"
+                              className="flex h-6 w-6 items-center justify-center rounded-full border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-inset)] text-[var(--enroll-muted)] transition hover:bg-[var(--enroll-surface-elevated)]/10 hover:text-[var(--enroll-fg)] focus:outline-none focus:ring-2 focus:ring-white/30"
                               aria-label={`What ${(f.factor_name || "this factor").replaceAll("_", " ")} means`}
                             >
                               <CircleHelp className="h-3.5 w-3.5" />
                             </button>
-                            <div className="pointer-events-none absolute left-8 top-1/2 z-20 hidden w-72 -translate-y-1/2 rounded-2xl border border-black/10 bg-white p-3 text-sm text-black shadow-xl group-hover:block group-focus-within:block">
-                              <p className="font-semibold text-black">{(f.factor_name || "Factor").replaceAll("_", " ")}</p>
-                              <p className="mt-1 text-black/70">{explainAdmissionFactor(f.factor_name)}</p>
-                              <p className="mt-2 text-xs font-medium text-black/55">{factorLabel(f.importance_level)}</p>
+                            <div className="pointer-events-none absolute left-8 top-1/2 z-20 hidden w-72 -translate-y-1/2 rounded-2xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] p-3 text-sm text-[var(--enroll-fg)] shadow-xl group-hover:block group-focus-within:block">
+                              <p className="font-semibold text-[var(--enroll-fg)]">{(f.factor_name || "Factor").replaceAll("_", " ")}</p>
+                              <p className="mt-1 text-[var(--enroll-muted-strong)]">{explainAdmissionFactor(f.factor_name)}</p>
+                              <p className="mt-2 text-xs font-medium text-[var(--enroll-muted)]">{factorLabel(f.importance_level)}</p>
                             </div>
                           </div>
                         </div>
-                        <p className="mt-1 text-xs text-white/55">{factorLabel(f.importance_level)}</p>
+                        <p className="mt-1 text-xs text-[var(--enroll-muted)]">{factorLabel(f.importance_level)}</p>
                       </div>
                       <Progress value={factorWeight(f.importance_level)} variant="primary" className="h-2" />
                     </div>
                   ))
                 ) : (
-                  <p className="text-sm text-white/70">Нет данных.</p>
+                  <p className="text-sm text-[var(--enroll-muted-strong)]">Нет данных.</p>
                 )}
               </div>
             </section>
 
-            <section className="rounded-2xl border border-white/15 bg-white/5 p-5">
+            <section className="rounded-2xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-inset)] p-5">
               <h2 className="text-xl font-semibold">Campus diversity</h2>
               <div className="mt-4 grid gap-3 md:grid-cols-2">
                 {diversity.length ? (
                   diversity.map((d, idx) => (
-                    <div key={`${d.group_name || "group"}-${idx}`} className="rounded-xl border border-white/10 bg-black/20 p-3">
-                      <p className="text-sm text-white/70">{(d.group_name || "-").replaceAll("_", " ")}</p>
+                    <div key={`${d.group_name || "group"}-${idx}`} className="rounded-xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-inset)] p-3">
+                      <p className="text-sm text-[var(--enroll-muted-strong)]">{(d.group_name || "-").replaceAll("_", " ")}</p>
                       <p className="text-3xl font-black">{d.count ?? d.source_text ?? "-"}</p>
                     </div>
                   ))
                 ) : (
-                  <p className="text-sm text-white/70">Нет данных.</p>
+                  <p className="text-sm text-[var(--enroll-muted-strong)]">Нет данных.</p>
                 )}
               </div>
             </section>
 
-            <section className="rounded-2xl border border-white/15 bg-white/5 p-5">
+            <section className="rounded-2xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-inset)] p-5">
               <div className="flex flex-wrap items-end justify-between gap-3">
                 <div>
                   <h2 className="text-xl font-semibold">Deadlines</h2>
-                  <p className="mt-1 text-sm text-white/65">
+                  <p className="mt-1 text-sm text-[var(--enroll-muted)]">
                     Scan the rounds, spot the next important date, and check when decisions usually arrive.
                   </p>
                 </div>
                 {activeDeadlineCards.length ? (
-                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-white/40">
+                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--enroll-muted)]">
                     {activeDeadlineCards.length} active round{activeDeadlineCards.length === 1 ? "" : "s"}
                   </p>
                 ) : null}
@@ -804,16 +804,16 @@ export default function UniversityProfilePage() {
                         key={deadline.id}
                         className={`rounded-2xl border p-4 shadow-none transition ${
                           deadline.isNextImportant
-                            ? "border-black/20 bg-[#FFF4CC]/92 ring-2 ring-[#FFDB58]/45"
+                            ? "border-[var(--enroll-surface-border)] bg-[var(--enroll-yellow-soft)] ring-2 ring-[#FFDB58]/45"
                             : deadline.isRolling
-                              ? "border-black/10 bg-[#F5FBFA] text-black"
-                              : "border-black/10 bg-[#FAFAFA] text-black"
+                              ? "border-[var(--enroll-surface-border)] bg-[var(--enroll-cyan)]/15 text-[var(--enroll-fg)]"
+                              : "border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] text-[var(--enroll-fg)]"
                         }`}
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0">
-                            <p className="text-sm font-black tracking-[-0.02em] text-black">{deadline.roundName}</p>
-                            <p className="mt-2 text-[26px] font-black leading-none tracking-[-0.04em] text-black">
+                            <p className="text-sm font-black tracking-[-0.02em] text-[var(--enroll-fg)]">{deadline.roundName}</p>
+                            <p className="mt-2 text-[26px] font-black leading-none tracking-[-0.04em] text-[var(--enroll-fg)]">
                               {deadline.mainLine}
                             </p>
                           </div>
@@ -821,33 +821,33 @@ export default function UniversityProfilePage() {
                             {deadline.badgeLabel}
                           </Badge>
                         </div>
-                        <p className="mt-3 text-sm leading-relaxed text-black/58">{deadline.secondaryLine}</p>
+                        <p className="mt-3 text-sm leading-relaxed text-[var(--enroll-muted)]">{deadline.secondaryLine}</p>
                       </div>
                     ))}
                   </div>
 
                   {passedDeadlineCards.length ? (
-                    <div className="mt-5 border-t border-white/10 pt-4">
+                    <div className="mt-5 border-t border-[var(--enroll-surface-border)] pt-4">
                       <div className="flex items-center justify-between gap-3">
-                        <p className="text-sm font-semibold text-white/72">Past deadlines</p>
-                        <p className="text-xs uppercase tracking-[0.12em] text-white/40">{passedDeadlineCards.length}</p>
+                        <p className="text-sm font-semibold text-[var(--enroll-muted-strong)]">Past deadlines</p>
+                        <p className="text-xs uppercase tracking-[0.12em] text-[var(--enroll-muted)]">{passedDeadlineCards.length}</p>
                       </div>
                       <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                         {passedDeadlineCards.map((deadline) => (
                           <div
                             key={deadline.id}
-                            className="rounded-2xl border border-white/10 bg-black/15 p-4 text-white/88 shadow-none"
+                            className="rounded-2xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-inset)] p-4 text-[var(--enroll-fg)] shadow-none"
                           >
                             <div className="flex items-start justify-between gap-3">
                               <div className="min-w-0">
-                                <p className="text-sm font-black tracking-[-0.02em] text-white">{deadline.roundName}</p>
-                                <p className="mt-2 text-[22px] font-black leading-none tracking-[-0.04em] text-white">
+                                <p className="text-sm font-black tracking-[-0.02em] text-[var(--enroll-fg)]">{deadline.roundName}</p>
+                                <p className="mt-2 text-[22px] font-black leading-none tracking-[-0.04em] text-[var(--enroll-fg)]">
                                   {deadline.mainLine}
                                 </p>
                               </div>
-                              <Badge className="shrink-0 border-white/15 bg-white/8 text-white">Passed</Badge>
+                              <Badge className="shrink-0 border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-inset)] text-[var(--enroll-fg)]">Passed</Badge>
                             </div>
-                            <p className="mt-3 text-sm leading-relaxed text-white/58">{deadline.secondaryLine}</p>
+                            <p className="mt-3 text-sm leading-relaxed text-[var(--enroll-muted)]">{deadline.secondaryLine}</p>
                           </div>
                         ))}
                       </div>
@@ -855,30 +855,30 @@ export default function UniversityProfilePage() {
                   ) : null}
                 </>
               ) : (
-                <p className="mt-4 text-sm text-white/70">No deadlines yet.</p>
+                <p className="mt-4 text-sm text-[var(--enroll-muted-strong)]">No deadlines yet.</p>
               )}
             </section>
 
             <section className="grid gap-4 lg:grid-cols-2">
               <Card className="shadow-none">
                 <h2 className="text-xl font-semibold">Applying</h2>
-                <div className="mt-4 rounded-xl border border-white/10 bg-black/20 p-4">
-                  <p className="text-sm text-white/60">Application fee</p>
+                <div className="mt-4 rounded-xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-inset)] p-4">
+                  <p className="text-sm text-[var(--enroll-muted)]">Application fee</p>
                   <p className="mt-1 text-3xl font-black">{applicationFeeNumber != null ? prettyMoney(applicationFeeNumber) : "N/A"}</p>
-                  {applicationFeeText ? <p className="mt-2 text-xs text-white/65">{applicationFeeText}</p> : null}
+                  {applicationFeeText ? <p className="mt-2 text-xs text-[var(--enroll-muted)]">{applicationFeeText}</p> : null}
                 </div>
                 <div className="mt-4 max-h-[420px] space-y-2 overflow-auto pr-1">
                   {applyingRows.length ? (
                     applyingRows.map((row, idx) => (
-                      <div key={`${row.label || "app"}-${idx}`} className="rounded-lg border border-white/10 bg-black/20 p-3">
-                        <p className="text-sm font-semibold text-white">{row.label || "Field"}</p>
-                        <p className="text-sm text-white/80">{row.value || "-"}</p>
-                        {row.value_2 ? <p className="text-xs text-white/65">{row.value_2}</p> : null}
-                        {row.value_3 ? <p className="text-xs text-white/65">{row.value_3}</p> : null}
+                      <div key={`${row.label || "app"}-${idx}`} className="rounded-lg border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-inset)] p-3">
+                        <p className="text-sm font-semibold text-[var(--enroll-fg)]">{row.label || "Field"}</p>
+                        <p className="text-sm text-[var(--enroll-muted-strong)]">{row.value || "-"}</p>
+                        {row.value_2 ? <p className="text-xs text-[var(--enroll-muted)]">{row.value_2}</p> : null}
+                        {row.value_3 ? <p className="text-xs text-[var(--enroll-muted)]">{row.value_3}</p> : null}
                       </div>
                     ))
                   ) : (
-                    <p className="text-sm text-white/70">No applying values found.</p>
+                    <p className="text-sm text-[var(--enroll-muted-strong)]">No applying values found.</p>
                   )}
                 </div>
               </Card>
@@ -888,15 +888,15 @@ export default function UniversityProfilePage() {
                 <div className="mt-4 max-h-[520px] space-y-2 overflow-auto pr-1">
                   {financialAidRows.length ? (
                     financialAidRows.map((row, idx) => (
-                      <div key={`${row.label || "aid"}-${idx}`} className="rounded-lg border border-white/10 bg-black/20 p-3">
-                        <p className="text-sm font-semibold text-white">{row.label || "Field"}</p>
-                        <p className="text-sm text-white/80">{row.value || "-"}</p>
-                        {row.value_2 ? <p className="text-xs text-white/65">{row.value_2}</p> : null}
-                        {row.value_3 ? <p className="text-xs text-white/65">{row.value_3}</p> : null}
+                      <div key={`${row.label || "aid"}-${idx}`} className="rounded-lg border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-inset)] p-3">
+                        <p className="text-sm font-semibold text-[var(--enroll-fg)]">{row.label || "Field"}</p>
+                        <p className="text-sm text-[var(--enroll-muted-strong)]">{row.value || "-"}</p>
+                        {row.value_2 ? <p className="text-xs text-[var(--enroll-muted)]">{row.value_2}</p> : null}
+                        {row.value_3 ? <p className="text-xs text-[var(--enroll-muted)]">{row.value_3}</p> : null}
                       </div>
                     ))
                   ) : (
-                    <p className="text-sm text-white/70">No financial aid values found.</p>
+                    <p className="text-sm text-[var(--enroll-muted-strong)]">No financial aid values found.</p>
                   )}
                 </div>
               </Card>
@@ -907,3 +907,4 @@ export default function UniversityProfilePage() {
     </ProtectedPage>
   );
 }
+

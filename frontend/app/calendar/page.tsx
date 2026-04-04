@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CheckCircle2, Clock3, ListTodo } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { ProtectedPage } from "@/components/protected-page";
+import { DeepWorkflowTheme } from "@/components/deep-workflow-theme";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getToken } from "@/lib/auth";
@@ -285,128 +286,130 @@ export default function CalendarPage() {
   return (
     <ProtectedPage>
       <AppShell title="Tasks" subtitle="Simple, fast task planning for admissions work.">
-        {loading ? (
-          <LoadingState />
-        ) : (
-          <div className="grid gap-4">
-            <Card className="relative overflow-hidden bg-gradient-to-br from-white via-white to-[#DAF5F0]/20">
-              <div className="grid gap-5 xl:grid-cols-[minmax(0,1.28fr)_320px]">
-                <div>
-                  <h2 className="text-3xl font-black tracking-[-0.05em] text-black sm:text-4xl">Today</h2>
-                  <p className="mt-2 max-w-xl text-sm text-black/60 sm:text-[15px]">
-                    Add one task fast and keep your day clear.
-                  </p>
+        <DeepWorkflowTheme>
+          <div className="theme-workflow grid gap-4">
+            {loading ? (
+              <LoadingState />
+            ) : (
+              <>
+                <Card className="relative overflow-hidden bg-gradient-to-br from-white via-white to-[#DAF5F0]/20">
+                  <div className="grid gap-5 xl:grid-cols-[minmax(0,1.28fr)_320px]">
+                    <div>
+                      <h2 className="text-3xl font-black tracking-[-0.05em] text-black sm:text-4xl">Today</h2>
+                      <p className="mt-2 max-w-xl text-sm text-black/60 sm:text-[15px]">
+                        Add one task fast and keep your day clear.
+                      </p>
 
-                  <div className="mt-4 sm:mt-5">
-                    <QuickTaskComposer
-                      title={taskTitle}
-                      onTitleChange={setTaskTitle}
-                      duePreset={duePreset}
-                      onDuePresetChange={setDuePreset}
-                      customDate={customDueDate}
-                      onCustomDateChange={setCustomDueDate}
-                      universityId={selectedUniversityId}
-                      onUniversityIdChange={setSelectedUniversityId}
-                      universities={universityOptions}
-                      saving={saving}
-                      onSubmit={() => void addTask()}
-                    />
+                      <div className="mt-4 sm:mt-5">
+                        <QuickTaskComposer
+                          title={taskTitle}
+                          onTitleChange={setTaskTitle}
+                          duePreset={duePreset}
+                          onDuePresetChange={setDuePreset}
+                          customDate={customDueDate}
+                          onCustomDateChange={setCustomDueDate}
+                          universityId={selectedUniversityId}
+                          onUniversityIdChange={setSelectedUniversityId}
+                          universities={universityOptions}
+                          saving={saving}
+                          onSubmit={() => void addTask()}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
+                      <div className="surface-card rounded-2xl bg-white/90 p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-[#FFF4CC]">
+                            <ListTodo className="h-4 w-4 text-black/70" />
+                          </div>
+                          <div>
+                            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-black/45">Open tasks</p>
+                            <p className="mt-1 text-2xl font-black text-black">{openTasksCount}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="surface-card rounded-2xl bg-white/90 p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-[#DAF5F0]">
+                            <Clock3 className="h-4 w-4 text-black/70" />
+                          </div>
+                          <div>
+                            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-black/45">Due today</p>
+                            <p className="mt-1 text-2xl font-black text-black">{todayTasks.length}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="surface-card rounded-2xl bg-white/90 p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-[#E8F4CF]">
+                            <CheckCircle2 className="h-4 w-4 text-black/70" />
+                          </div>
+                          <div>
+                            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-black/45">Completed</p>
+                            <p className="mt-1 text-2xl font-black text-black">{completedTasks.length}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
+                </Card>
+
+                <div className="grid gap-4 lg:grid-cols-2">
+                  <TaskSection
+                    title="Today"
+                    description="Tasks due today and anything already overdue."
+                    tasks={todayTasks}
+                    emptyText="Nothing due today. Add one important task and keep the momentum."
+                    savingTaskId={savingTaskId}
+                    completingTaskId={completingTaskId}
+                    onToggle={(task) => void toggleTask(task)}
+                    bodyClassName="max-h-[360px] xl:max-h-[390px]"
+                  />
+
+                  <TaskSection
+                    title="Upcoming"
+                    description="Tasks already scheduled for later."
+                    tasks={upcomingTasks}
+                    emptyText="No upcoming tasks yet."
+                    savingTaskId={savingTaskId}
+                    completingTaskId={completingTaskId}
+                    onToggle={(task) => void toggleTask(task)}
+                    bodyClassName="max-h-[360px] xl:max-h-[390px]"
+                  />
+
+                  <TaskSection
+                    title="Inbox"
+                    description="Tasks without a date."
+                    tasks={inboxTasks}
+                    emptyText="Your inbox is clear."
+                    savingTaskId={savingTaskId}
+                    completingTaskId={completingTaskId}
+                    onToggle={(task) => void toggleTask(task)}
+                    bodyClassName="max-h-[320px] xl:max-h-[360px]"
+                  />
+
+                  <TaskSection
+                    title="Completed"
+                    description="Recently finished work."
+                    tasks={completedTasks}
+                    emptyText="Completed tasks will show up here."
+                    savingTaskId={savingTaskId}
+                    completingTaskId={completingTaskId}
+                    onToggle={(task) => void toggleTask(task)}
+                    bodyClassName="max-h-[320px] xl:max-h-[360px]"
+                  />
                 </div>
 
-                <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
-                  <div className="surface-card rounded-2xl bg-white/90 p-4">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-[#FFF4CC]">
-                        <ListTodo className="h-4 w-4 text-black/70" />
-                      </div>
-                      <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-black/45">Open tasks</p>
-                        <p className="mt-1 text-2xl font-black text-black">{openTasksCount}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="surface-card rounded-2xl bg-white/90 p-4">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-[#DAF5F0]">
-                        <Clock3 className="h-4 w-4 text-black/70" />
-                      </div>
-                      <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-black/45">Due today</p>
-                        <p className="mt-1 text-2xl font-black text-black">{todayTasks.length}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="surface-card rounded-2xl bg-white/90 p-4">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-[#E8F4CF]">
-                        <CheckCircle2 className="h-4 w-4 text-black/70" />
-                      </div>
-                      <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-black/45">Completed</p>
-                        <p className="mt-1 text-2xl font-black text-black">{completedTasks.length}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Card>
-
-            <div className="grid gap-4 lg:grid-cols-2">
-              <TaskSection
-                title="Today"
-                description="Tasks due today and anything already overdue."
-                tasks={todayTasks}
-                emptyText="Nothing due today. Add one important task and keep the momentum."
-                savingTaskId={savingTaskId}
-                completingTaskId={completingTaskId}
-                onToggle={(task) => void toggleTask(task)}
-                bodyClassName="max-h-[360px] xl:max-h-[390px]"
-              />
-
-              <TaskSection
-                title="Upcoming"
-                description="Tasks already scheduled for later."
-                tasks={upcomingTasks}
-                emptyText="No upcoming tasks yet."
-                savingTaskId={savingTaskId}
-                completingTaskId={completingTaskId}
-                onToggle={(task) => void toggleTask(task)}
-                bodyClassName="max-h-[360px] xl:max-h-[390px]"
-              />
-
-              <TaskSection
-                title="Inbox"
-                description="Tasks without a date."
-                tasks={inboxTasks}
-                emptyText="Your inbox is clear."
-                savingTaskId={savingTaskId}
-                completingTaskId={completingTaskId}
-                onToggle={(task) => void toggleTask(task)}
-                bodyClassName="max-h-[320px] xl:max-h-[360px]"
-              />
-
-              <TaskSection
-                title="Completed"
-                description="Recently finished work."
-                tasks={completedTasks}
-                emptyText="Completed tasks will show up here."
-                savingTaskId={savingTaskId}
-                completingTaskId={completingTaskId}
-                onToggle={(task) => void toggleTask(task)}
-                bodyClassName="max-h-[320px] xl:max-h-[360px]"
-              />
-            </div>
-
-            {statusText ? (
-              <div className="surface-card rounded-2xl px-4 py-3 text-sm text-black/60">
-                {statusText}
-              </div>
-            ) : null}
+                {statusText ? (
+                  <div className="surface-card rounded-2xl px-4 py-3 text-sm text-black/60">{statusText}</div>
+                ) : null}
+              </>
+            )}
           </div>
-        )}
+        </DeepWorkflowTheme>
       </AppShell>
     </ProtectedPage>
   );

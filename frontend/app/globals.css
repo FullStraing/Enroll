@@ -5,32 +5,93 @@
 :root {
   color-scheme: light;
   --enroll-bg: #f9f5f6;
+  --enroll-bg-rgb: 249 245 246;
+  --enroll-fg: #111111;
+  --enroll-fg-rgb: 17 17 17;
+  --enroll-fg-soft: rgba(17, 17, 17, 0.82);
+  --enroll-muted: rgba(17, 17, 17, 0.6);
+  --enroll-muted-strong: rgba(17, 17, 17, 0.72);
   --enroll-cyan: #daf5f0;
   --enroll-orange: #f8d6b3;
   --enroll-yellow: #ffdb58;
+  --enroll-yellow-soft: #fff4cc;
+  --enroll-sand: #f3ede2;
+  --enroll-strong-border: #000000;
+  --enroll-strong-shadow: #000000;
   --enroll-surface-border: rgba(0, 0, 0, 0.12);
+  --enroll-surface-border-strong: rgba(0, 0, 0, 0.24);
   --enroll-surface-shadow: 0 2px 0 rgba(0, 0, 0, 0.05);
   --enroll-surface-bg: rgba(255, 255, 255, 0.96);
+  --enroll-surface-panel: rgba(255, 255, 255, 0.94);
+  --enroll-surface-inset: rgba(255, 253, 252, 0.96);
+  --enroll-surface-elevated: #ffffff;
+  --enroll-dot: rgba(0, 0, 0, 0.08);
+  --enroll-primary-ring: rgba(0, 0, 0, 0.3);
+}
+
+html.dark {
+  color-scheme: dark;
+  --enroll-bg: #121619;
+  --enroll-bg-rgb: 18 22 25;
+  --enroll-fg: #edf0ec;
+  --enroll-fg-rgb: 237 240 236;
+  --enroll-fg-soft: rgba(237, 240, 236, 0.88);
+  --enroll-muted: rgba(210, 217, 214, 0.68);
+  --enroll-muted-strong: rgba(226, 232, 230, 0.8);
+  --enroll-cyan: #213a39;
+  --enroll-orange: #4a3325;
+  --enroll-yellow: #d9b94a;
+  --enroll-yellow-soft: #3f3515;
+  --enroll-sand: #262420;
+  --enroll-strong-border: #d4dbd7;
+  --enroll-strong-shadow: rgba(0, 0, 0, 0.42);
+  --enroll-surface-border: rgba(236, 241, 239, 0.12);
+  --enroll-surface-border-strong: rgba(236, 241, 239, 0.22);
+  --enroll-surface-shadow: 0 2px 0 rgba(0, 0, 0, 0.24);
+  --enroll-surface-bg: rgba(28, 34, 37, 0.94);
+  --enroll-surface-panel: rgba(31, 38, 41, 0.96);
+  --enroll-surface-inset: rgba(22, 28, 31, 0.98);
+  --enroll-surface-elevated: #1d2427;
+  --enroll-dot: rgba(236, 241, 239, 0.07);
+  --enroll-primary-ring: rgba(217, 185, 74, 0.34);
 }
 
 body {
   @apply antialiased;
-  color: #111111;
+  color: var(--enroll-fg);
   background-color: var(--enroll-bg);
-  background-image: radial-gradient(rgba(0, 0, 0, 0.08) 1.2px, transparent 1.2px);
+  background-image: radial-gradient(var(--enroll-dot) 1.2px, transparent 1.2px);
   background-size: 10px 10px;
   min-height: 100dvh;
   overflow-y: auto;
+  transition:
+    background-color 180ms ease,
+    color 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+a,
+button,
+input,
+textarea,
+select {
+  transition:
+    background-color 160ms ease,
+    color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
 }
 
 .glass {
-  border: 2px solid #000;
-  background: rgba(255, 255, 255, 0.88);
-  box-shadow: 0 8px 0 #000;
+  border: 2px solid var(--enroll-strong-border);
+  background: color-mix(in srgb, var(--enroll-surface-elevated) 88%, transparent);
+  box-shadow: 0 8px 0 var(--enroll-strong-shadow);
 }
 
 .glass-soft {
-  box-shadow: 0 5px 0 #000;
+  box-shadow: 0 5px 0 var(--enroll-strong-shadow);
 }
 
 .surface-card {
@@ -41,33 +102,107 @@ body {
 
 .surface-panel {
   border: 1px solid var(--enroll-surface-border);
-  background: rgba(255, 255, 255, 0.94);
+  background: var(--enroll-surface-panel);
   box-shadow: var(--enroll-surface-shadow);
 }
 
 .surface-inset {
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  background: rgba(255, 253, 252, 0.96);
+  border: 1px solid var(--enroll-surface-border);
+  background: var(--enroll-surface-inset);
 }
 
 .theme-home [class*="text-white"] {
-  color: rgba(0, 0, 0, 0.82) !important;
+  color: var(--enroll-fg-soft) !important;
 }
 
 .theme-home [class*="border-white/"] {
-  border-color: rgba(0, 0, 0, 0.18) !important;
+  border-color: var(--enroll-surface-border-strong) !important;
 }
 
 .theme-home [class*="bg-white/"] {
-  background-color: rgba(0, 0, 0, 0.04) !important;
+  background-color: color-mix(in srgb, var(--enroll-fg) 4%, transparent) !important;
 }
 
 .theme-home [class*="bg-black/"] {
-  background-color: rgba(255, 255, 255, 0.75) !important;
+  background-color: color-mix(in srgb, var(--enroll-surface-elevated) 75%, transparent) !important;
 }
 
 .theme-home [class*="hover:bg-white/"]:hover {
-  background-color: rgba(0, 0, 0, 0.07) !important;
+  background-color: color-mix(in srgb, var(--enroll-fg) 7%, transparent) !important;
+}
+
+html.dark .theme-home .bg-white {
+  background-color: var(--enroll-surface-elevated) !important;
+}
+
+html.dark .theme-home [class*="bg-white/"] {
+  background-color: color-mix(in srgb, var(--enroll-surface-elevated) 88%, transparent) !important;
+}
+
+html.dark .theme-home .text-black {
+  color: var(--enroll-fg) !important;
+}
+
+html.dark .theme-home [class*="text-black/"] {
+  color: var(--enroll-muted) !important;
+}
+
+html.dark .theme-home .border-black {
+  border-color: var(--enroll-strong-border) !important;
+}
+
+html.dark .theme-home [class*="border-black/"] {
+  border-color: var(--enroll-surface-border) !important;
+}
+
+html.dark .theme-home input,
+html.dark .theme-home textarea,
+html.dark .theme-home select {
+  border-color: var(--enroll-surface-border) !important;
+  background-color: var(--enroll-surface-elevated) !important;
+  color: var(--enroll-fg) !important;
+}
+
+html.dark .theme-home input::placeholder,
+html.dark .theme-home textarea::placeholder {
+  color: var(--enroll-muted) !important;
+}
+
+html.dark .marketing-shell .bg-white {
+  background-color: var(--enroll-surface-elevated) !important;
+}
+
+html.dark .marketing-shell [class*="bg-white/"] {
+  background-color: color-mix(in srgb, var(--enroll-surface-elevated) 88%, transparent) !important;
+}
+
+html.dark .marketing-shell .text-black {
+  color: var(--enroll-fg) !important;
+}
+
+html.dark .marketing-shell [class*="text-black/"] {
+  color: var(--enroll-muted) !important;
+}
+
+html.dark .marketing-shell .border-black {
+  border-color: var(--enroll-strong-border) !important;
+}
+
+html.dark .marketing-shell [class*="border-black/"] {
+  border-color: var(--enroll-surface-border) !important;
+}
+
+html.dark .marketing-shell input,
+html.dark .marketing-shell textarea,
+html.dark .marketing-shell select {
+  border-color: var(--enroll-surface-border) !important;
+  background-color: var(--enroll-surface-elevated) !important;
+  color: var(--enroll-fg) !important;
+}
+
+html.dark .marketing-shell input::placeholder,
+html.dark .marketing-shell textarea::placeholder {
+  color: var(--enroll-muted) !important;
 }
 
 .theme-home .card-shadow-hover {
@@ -76,21 +211,24 @@ body {
 
 .theme-home .card-shadow-hover:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 0 #000;
+  box-shadow: 0 10px 0 var(--enroll-strong-shadow);
 }
 
 @keyframes taskCompletionPulse {
   0% {
     transform: translateY(0) scale(1);
-    color: #111111;
+    color: var(--enroll-fg);
+    letter-spacing: 0;
   }
   45% {
-    transform: translateY(-1px) scale(1.015);
-    color: rgba(17, 17, 17, 0.88);
+    transform: translateY(-1px) scale(1.012);
+    color: var(--enroll-fg-soft);
+    letter-spacing: 0.01em;
   }
   100% {
     transform: translateY(0) scale(1);
-    color: rgba(17, 17, 17, 0.76);
+    color: var(--enroll-muted-strong);
+    letter-spacing: 0;
   }
 }
 
@@ -178,7 +316,7 @@ body {
 
 .ProseMirror p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
-  color: rgba(0, 0, 0, 0.42);
+  color: var(--enroll-muted);
   float: left;
   height: 0;
   pointer-events: none;
@@ -202,8 +340,11 @@ body {
 
 .marketing-route-overlay {
   background:
-    radial-gradient(rgba(0, 0, 0, 0.08) 1.2px, transparent 1.2px),
-    linear-gradient(rgba(249, 245, 246, 0.66), rgba(249, 245, 246, 0.66));
+    radial-gradient(var(--enroll-dot) 1.2px, transparent 1.2px),
+    linear-gradient(
+      rgba(var(--enroll-bg-rgb), 0.72),
+      rgba(var(--enroll-bg-rgb), 0.72)
+    );
   background-size: 10px 10px, auto;
   animation: marketing-route-overlay-fade 420ms ease forwards;
 }

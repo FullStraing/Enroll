@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { type DragEvent, type FormEvent, useEffect, useRef, useState } from "react";
 import { Upload, X } from "lucide-react";
@@ -99,7 +99,7 @@ export function UploadPanel({
   }
 
   return (
-    <Card className="shadow-none">
+    <Card className="border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] shadow-none">
       <CardTitle className="text-lg">{copy.uploadTitle}</CardTitle>
       <CardDescription className="mt-2 text-sm">{copy.uploadDescription}</CardDescription>
       {!uploadsEnabled && uploadUnavailableMessage ? (
@@ -109,30 +109,30 @@ export function UploadPanel({
       ) : null}
 
       <form onSubmit={submit} className="mt-4 grid gap-3">
-        <label className="text-sm text-black/70">
+        <label className="text-sm text-[var(--enroll-muted)]">
           {copy.title}
           <input
             value={title}
             onChange={(event) => setTitle(event.target.value)}
             placeholder={copy.titlePlaceholder}
-            className="mt-1 w-full rounded-xl border border-black/15 bg-white px-3 py-2 disabled:cursor-not-allowed disabled:bg-black/[0.03]"
+            className="mt-1 w-full rounded-xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] px-3 py-2 text-[var(--enroll-fg)] disabled:cursor-not-allowed disabled:bg-[var(--enroll-surface-inset)]"
             disabled={!uploadsEnabled || uploading}
           />
         </label>
 
-        <label className="text-sm text-black/70">
+        <label className="text-sm text-[var(--enroll-muted)]">
           {copy.type}<RequiredMark />
           <Select
             value={type}
             onChange={(value) => setType(value as DocumentType)}
             options={documentTypes.map((item) => ({ value: item.id, label: item.label }))}
-            className="mt-1 w-full border border-black/15"
+            className="mt-1 w-full border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] text-[var(--enroll-fg)]"
             ariaLabel={copy.type}
             disabled={!uploadsEnabled || uploading}
           />
         </label>
 
-        <label className="text-sm text-black/70">
+        <label className="text-sm text-[var(--enroll-muted)]">
           {copy.linkUniversity}
           <Select
             value={studentUniversityId}
@@ -141,7 +141,7 @@ export function UploadPanel({
               { value: "", label: copy.noUniversityLink },
               ...studentUniversities.map((item) => ({ value: String(item.id), label: item.university.name })),
             ]}
-            className="mt-1 w-full border border-black/15"
+            className="mt-1 w-full border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] text-[var(--enroll-fg)]"
             ariaLabel={copy.linkUniversity}
             disabled={!uploadsEnabled || uploading}
           />
@@ -157,16 +157,16 @@ export function UploadPanel({
           onDrop={onDrop}
           className={`rounded-2xl border-2 border-dashed px-4 py-6 text-center transition ${
             !uploadsEnabled
-              ? "border-black/10 bg-black/[0.02] opacity-70"
+              ? "border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-inset)] opacity-70"
               : dragActive
-                ? "border-black bg-[#DAF5F0]/50"
-                : "border-black/20 bg-black/[0.02]"
+                ? "border-[var(--enroll-strong-border)] bg-[var(--enroll-cyan)]/40"
+                : "border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-inset)]"
           }`}
         >
-          <Upload className="mx-auto h-5 w-5 text-black/55" />
-          <p className="mt-2 text-sm font-semibold text-black">{copy.dragHere}<RequiredMark /></p>
-          <p className="mt-1 text-xs text-black/55">
-            {copy.uploadLimit.replace("{slots}", `${remainingSlots} ${remainingSlots === 1 ? (locale === "ru" ? "слот" : "slot") : (locale === "ru" ? "слотов" : "slots")}`)}
+          <Upload className="mx-auto h-5 w-5 text-[var(--enroll-muted)]" />
+          <p className="mt-2 text-sm font-semibold text-[var(--enroll-fg)]">{copy.dragHere}<RequiredMark /></p>
+          <p className="mt-1 text-xs text-[var(--enroll-muted)]">
+            {copy.uploadLimit.replace("{slots}", `${remainingSlots} ${remainingSlots === 1 ? (locale === "ru" ? "СЃР»РѕС‚" : "slot") : (locale === "ru" ? "СЃР»РѕС‚РѕРІ" : "slots")}`)}
           </p>
           <input
             ref={inputRef}
@@ -189,28 +189,28 @@ export function UploadPanel({
         </label>
 
         {files.length ? (
-          <div className="rounded-2xl border border-black/15 bg-white px-3 py-3">
+          <div className="rounded-2xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] px-3 py-3">
             <div className="flex items-center justify-between gap-2">
-              <p className="text-sm font-semibold text-black">{copy.selectedFiles}</p>
+              <p className="text-sm font-semibold text-[var(--enroll-fg)]">{copy.selectedFiles}</p>
               <button
                 type="button"
                 onClick={() => {
                   setFiles([]);
                   if (inputRef.current) inputRef.current.value = "";
                 }}
-                className="text-xs font-semibold text-black/55 underline underline-offset-2"
+                className="text-xs font-semibold text-[var(--enroll-muted)] underline underline-offset-2"
               >
                 {copy.clear}
               </button>
             </div>
             <div className="mt-2 grid gap-2">
               {files.map((file, index) => (
-                <div key={`${file.name}-${index}`} className="flex items-center justify-between rounded-xl border border-black/10 px-3 py-2 text-sm">
-                  <span className="truncate text-black">{file.name}</span>
+                <div key={`${file.name}-${index}`} className="flex items-center justify-between rounded-xl border border-[var(--enroll-surface-border)] px-3 py-2 text-sm">
+                  <span className="truncate text-[var(--enroll-fg)]">{file.name}</span>
                   <button
                     type="button"
                     onClick={() => setFiles((prev) => prev.filter((_, fileIndex) => fileIndex !== index))}
-                    className="ml-3 rounded-md p-1 text-black/45 hover:bg-black/5 hover:text-black"
+                    className="ml-3 rounded-md p-1 text-[var(--enroll-muted)] hover:bg-[var(--enroll-surface-inset)] hover:text-[var(--enroll-fg)]"
                     aria-label={copy.removeFile.replace("{name}", file.name)}
                   >
                     <X className="h-4 w-4" />
@@ -229,3 +229,5 @@ export function UploadPanel({
     </Card>
   );
 }
+
+

@@ -121,7 +121,7 @@ export function Select({
   }, [open]);
 
   const triggerClasses = cn(
-    "flex h-12 w-full items-center justify-between gap-3 rounded-2xl border-2 border-black/15 bg-white px-4 text-left text-sm font-semibold text-black outline-none transition hover:border-black/30 focus-visible:border-black focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-55",
+    "flex h-12 w-full items-center justify-between gap-3 rounded-2xl border-2 border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] px-4 text-left text-sm font-semibold text-[var(--enroll-fg)] outline-none transition hover:border-[var(--enroll-surface-border-strong)] focus-visible:border-[var(--enroll-strong-border)] focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-55",
     className,
   );
 
@@ -132,7 +132,7 @@ export function Select({
           role="listbox"
           id={listboxId}
           className={cn(
-            "z-[80] overflow-hidden rounded-[22px] border-2 border-black bg-white p-1 shadow-[0_8px_0_rgba(0,0,0,0.14)]",
+            "z-[80] overflow-hidden rounded-[22px] border-2 border-[var(--enroll-strong-border)] bg-[var(--enroll-surface-elevated)] p-1 shadow-[0_8px_0_var(--enroll-strong-shadow)]",
             menuClassName,
           )}
           style={{
@@ -158,17 +158,17 @@ export function Select({
                     setOpen(false);
                   }}
                   className={cn(
-                    "flex w-full items-center justify-between gap-3 rounded-2xl px-4 py-3 text-left text-sm font-semibold text-black transition",
+                    "flex w-full items-center justify-between gap-3 rounded-2xl px-4 py-3 text-left text-sm font-semibold text-[var(--enroll-fg)] transition",
                     option.disabled
                       ? "cursor-not-allowed opacity-40"
                       : selected
-                        ? "bg-[#DAF5F0]"
-                        : "hover:bg-[#FFF9E8]",
+                        ? "bg-[var(--enroll-cyan)]"
+                        : "hover:bg-[color-mix(in_srgb,var(--enroll-fg)_5%,transparent)]",
                     optionClassName,
                   )}
                 >
                   <span className="min-w-0 truncate">{option.label}</span>
-                  {selected ? <Check className="h-4 w-4 shrink-0 text-black/75" /> : null}
+                  {selected ? <Check className="h-4 w-4 shrink-0 text-[var(--enroll-fg)]" /> : null}
                 </button>
               );
             })}

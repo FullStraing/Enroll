@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import type { ReactNode, RefObject } from "react";
 import { Download, Share2, Trophy } from "lucide-react";
@@ -80,11 +80,11 @@ function DashboardSnapshotSurface({
   const hiddenHonorsCount = Math.max(0, honors.length - visibleHonors.length);
 
   return (
-    <Card className="relative overflow-hidden border border-black/10 bg-white shadow-none">
+    <Card className="relative overflow-hidden border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] text-[var(--enroll-fg)] shadow-none">
       <div className="relative">
         <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
           <div>
-            <div className="inline-flex items-center gap-2 rounded-xl border-2 border-black bg-white px-3 py-1 text-sm font-semibold">
+            <div className="inline-flex items-center gap-2 rounded-xl border-2 border-[var(--enroll-strong-border)] bg-[var(--enroll-surface-elevated)] px-3 py-1 text-sm font-semibold text-[var(--enroll-fg)]">
               {copy.badge}
             </div>
             <CardTitle className="mt-3 text-2xl">{copy.title}</CardTitle>
@@ -92,9 +92,9 @@ function DashboardSnapshotSurface({
               {copy.description}
             </CardDescription>
           </div>
-          <div className="mt-3 inline-flex items-center gap-2 self-start text-black sm:ml-auto">
+          <div className="mt-3 inline-flex items-center gap-2 self-start text-[var(--enroll-fg)] sm:ml-auto">
             <div className="leading-none">
-              <p className="text-[11px] font-black uppercase tracking-[0.22em] text-black/45">{copy.poweredBy}</p>
+              <p className="text-[11px] font-black uppercase tracking-[0.22em] text-[var(--enroll-muted)]">{copy.poweredBy}</p>
               <div className="mt-1">
                 <EnrollWordmark size="md" />
               </div>
@@ -103,42 +103,42 @@ function DashboardSnapshotSurface({
         </div>
 
         <div className="mt-5 grid gap-4 xl:grid-cols-[1.3fr_0.7fr]">
-          <div className="rounded-2xl bg-white p-5">
+          <div className="rounded-2xl bg-[var(--enroll-surface-elevated)] p-5 text-[var(--enroll-fg)] ring-1 ring-[var(--enroll-surface-border)]">
             <div>
-              <h2 className="text-3xl font-black tracking-[-0.04em] text-black">{shareName}</h2>
-              <p className="mt-2 text-base font-semibold text-black/70">{shareCountry}</p>
-              <p className="mt-1 text-base font-semibold text-black/70">{shareIntake}</p>
-              <p className="mt-4 text-lg font-bold text-black">{copy.major}: {profileMajor}</p>
+              <h2 className="text-3xl font-black tracking-[-0.04em] text-[var(--enroll-fg)]">{shareName}</h2>
+              <p className="mt-2 text-base font-semibold text-[var(--enroll-muted)]">{shareCountry}</p>
+              <p className="mt-1 text-base font-semibold text-[var(--enroll-muted-strong)]">{shareIntake}</p>
+              <p className="mt-4 text-lg font-bold text-[var(--enroll-fg)]">{copy.major}: {profileMajor}</p>
             </div>
 
-            <div className="mt-6 overflow-hidden rounded-2xl bg-white ring-1 ring-black/8">
+            <div className="mt-6 overflow-hidden rounded-2xl bg-[var(--enroll-surface-elevated)] ring-1 ring-[var(--enroll-surface-border)]">
               <div className="grid grid-cols-2 md:grid-cols-4">
-                <div className="border-r border-black/8 px-4 py-3 md:last:border-r">
-                  <p className="text-xs font-black uppercase tracking-[0.16em] text-black/40">GPA</p>
-                  <p className="mt-1 text-lg font-black text-black">{gpaLabel}</p>
+                <div className="border-r border-[var(--enroll-surface-border)] px-4 py-3 md:last:border-r">
+                  <p className="text-xs font-black uppercase tracking-[0.16em] text-[var(--enroll-muted)]">GPA</p>
+                  <p className="mt-1 text-lg font-black text-[var(--enroll-fg)]">{gpaLabel}</p>
                 </div>
-                <div className="border-r border-black/8 px-4 py-3 md:last:border-r">
-                  <p className="text-xs font-black uppercase tracking-[0.16em] text-black/40">{academicStatLabel}</p>
-                  <p className="mt-1 text-lg font-black text-black">{primaryAcademicLabel}</p>
+                <div className="border-r border-[var(--enroll-surface-border)] px-4 py-3 md:last:border-r">
+                  <p className="text-xs font-black uppercase tracking-[0.16em] text-[var(--enroll-muted)]">{academicStatLabel}</p>
+                  <p className="mt-1 text-lg font-black text-[var(--enroll-fg)]">{primaryAcademicLabel}</p>
                 </div>
-                <div className="border-r border-black/8 px-4 py-3">
-                  <p className="text-xs font-black uppercase tracking-[0.16em] text-black/40">{languageStatLabel}</p>
-                  <p className="mt-1 text-lg font-black text-black">{primaryLanguageLabel}</p>
+                <div className="border-r border-[var(--enroll-surface-border)] px-4 py-3">
+                  <p className="text-xs font-black uppercase tracking-[0.16em] text-[var(--enroll-muted)]">{languageStatLabel}</p>
+                  <p className="mt-1 text-lg font-black text-[var(--enroll-fg)]">{primaryLanguageLabel}</p>
                 </div>
                 <div className="px-4 py-3">
-                  <p className="text-xs font-black uppercase tracking-[0.16em] text-black/40">{copy.level}</p>
-                  <p className="mt-1 text-lg font-black text-black">{profileClass}</p>
+                  <p className="text-xs font-black uppercase tracking-[0.16em] text-[var(--enroll-muted)]">{copy.level}</p>
+                  <p className="mt-1 text-lg font-black text-[var(--enroll-fg)]">{profileClass}</p>
                 </div>
               </div>
 
               {showAllTests ? (
-                <div className="border-t border-black/8 px-4 py-3">
-                  <p className="text-xs font-black uppercase tracking-[0.16em] text-black/40">{copy.allTests}</p>
+                <div className="border-t border-[var(--enroll-surface-border)] px-4 py-3">
+                  <p className="text-xs font-black uppercase tracking-[0.16em] text-[var(--enroll-muted)]">{copy.allTests}</p>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {allTestLabels.map((label, index) => (
                       <span
                         key={`test-${index}-${label}`}
-                        className="inline-flex shrink-0 items-center rounded-full border border-black/12 bg-[#DAF5F0]/45 px-3 py-1 text-xs font-black leading-none tracking-[0.03em] text-black/70 whitespace-nowrap"
+                        className="inline-flex shrink-0 items-center rounded-full border border-[var(--enroll-surface-border)] bg-[var(--enroll-cyan)]/55 px-3 py-1 text-xs font-black leading-none tracking-[0.03em] text-[var(--enroll-fg)] whitespace-nowrap"
                       >
                         {label}
                       </span>
@@ -148,13 +148,13 @@ function DashboardSnapshotSurface({
               ) : null}
 
               {apLabels.length ? (
-                <div className="border-t border-black/8 px-4 py-3">
-                  <p className="text-xs font-black uppercase tracking-[0.16em] text-black/40">{copy.apExams}</p>
+                <div className="border-t border-[var(--enroll-surface-border)] px-4 py-3">
+                  <p className="text-xs font-black uppercase tracking-[0.16em] text-[var(--enroll-muted)]">{copy.apExams}</p>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {apLabels.map((label, index) => (
                       <span
                         key={`ap-${index}-${label}`}
-                        className="inline-flex shrink-0 items-center rounded-full border border-black/12 bg-[#FFF4CC] px-3 py-1 text-xs font-black leading-none tracking-[0.03em] text-black/70 whitespace-nowrap"
+                        className="inline-flex shrink-0 items-center rounded-full border border-[var(--enroll-surface-border)] bg-[var(--enroll-yellow-soft)] px-3 py-1 text-xs font-black leading-none tracking-[0.03em] text-[var(--enroll-fg)] whitespace-nowrap"
                       >
                         {label}
                       </span>
@@ -165,31 +165,31 @@ function DashboardSnapshotSurface({
             </div>
 
             <div className="mt-6 grid gap-4 lg:grid-cols-[1fr_0.86fr]">
-              <div className="rounded-2xl bg-[#DAF5F0]/35 p-4 ring-1 ring-black/8">
-                <p className="text-sm font-black uppercase tracking-[0.14em] text-black/45">{copy.activities}</p>
+              <div className="rounded-2xl bg-[var(--enroll-cyan)]/25 p-4 ring-1 ring-[var(--enroll-surface-border)]">
+                <p className="text-sm font-black uppercase tracking-[0.14em] text-[var(--enroll-muted)]">{copy.activities}</p>
                 {activities.length ? (
                   <ul className="mt-3 grid gap-3">
                     {activities.map((activity, index) => (
-                      <li key={`activity-${index}-${activity}`} className="flex gap-2 text-sm font-semibold leading-relaxed text-black/80">
-                        <span className="mt-[1px] text-black">&bull;</span>
+                      <li key={`activity-${index}-${activity}`} className="flex gap-2 text-sm font-semibold leading-relaxed text-[var(--enroll-fg)]">
+                        <span className="mt-[1px] text-[var(--enroll-fg)]">&bull;</span>
                         <span>{activity}</span>
                       </li>
                     ))}
                   </ul>
                 ) : (
-                  <p className="mt-3 text-sm text-black/55">{copy.noActivities}</p>
+                  <p className="mt-3 text-sm text-[var(--enroll-muted)]">{copy.noActivities}</p>
                 )}
               </div>
 
-              <div className="rounded-2xl bg-[#FFF4CC]/45 p-4 ring-1 ring-black/8">
-                <p className="text-sm font-black uppercase tracking-[0.14em] text-black/45">{copy.targetUniversities}</p>
+              <div className="rounded-2xl bg-[var(--enroll-yellow-soft)] p-4 ring-1 ring-[var(--enroll-surface-border)]">
+                <p className="text-sm font-black uppercase tracking-[0.14em] text-[var(--enroll-muted)]">{copy.targetUniversities}</p>
                 {targetUniversityEntries.length ? (
                   <ul className="mt-3 grid gap-2.5">
                     {targetUniversityEntries.map((item) => (
                       <li key={item.id} className="flex items-start justify-between gap-3 text-sm">
-                        <span className="min-w-0 flex-1 font-semibold leading-relaxed text-black">{item.name}</span>
+                        <span className="min-w-0 flex-1 font-semibold leading-relaxed text-[var(--enroll-fg)]">{item.name}</span>
                         <span
-                          className={`inline-flex shrink-0 rounded-full border px-2.5 py-1 text-xs font-black uppercase tracking-[0.12em] text-black/70 ${statusSelectTone(
+                          className={`inline-flex shrink-0 rounded-full border px-2.5 py-1 text-xs font-black uppercase tracking-[0.12em] text-[var(--enroll-muted-strong)] ${statusSelectTone(
                             (item.statusKey || item.status) as never,
                           )}`}
                         >
@@ -199,7 +199,7 @@ function DashboardSnapshotSurface({
                     ))}
                   </ul>
                 ) : (
-                  <p className="mt-3 text-sm text-black/55">{copy.noUniversities}</p>
+                  <p className="mt-3 text-sm text-[var(--enroll-muted)]">{copy.noUniversities}</p>
                 )}
               </div>
             </div>
@@ -207,8 +207,8 @@ function DashboardSnapshotSurface({
           </div>
 
           <div className="flex h-full flex-col gap-4">
-            <div className="rounded-2xl bg-white p-4 ring-1 ring-black/8">
-              <div className="inline-flex items-center gap-2 rounded-xl border-2 border-black bg-[#FFDB58]/40 px-3 py-1 text-sm font-semibold">
+            <div className="rounded-2xl bg-[var(--enroll-surface-elevated)] p-4 ring-1 ring-[var(--enroll-surface-border)]">
+              <div className="inline-flex items-center gap-2 rounded-xl border-2 border-[var(--enroll-strong-border)] bg-[#FFDB58]/40 px-3 py-1 text-sm font-semibold">
                 <Trophy className="h-4 w-4" />
                 {copy.admissionsScore}
               </div>
@@ -221,11 +221,11 @@ function DashboardSnapshotSurface({
               </div>
             </div>
 
-            <div className="rounded-2xl bg-[#FFF4CC]/25 p-4 ring-1 ring-black/8">
+            <div className="rounded-2xl bg-[var(--enroll-yellow-soft)]/70 p-4 ring-1 ring-[var(--enroll-surface-border)]">
               <div className="flex items-center justify-between gap-3">
-                <p className="text-sm font-black uppercase tracking-[0.14em] text-black/45">{copy.honors}</p>
+                <p className="text-sm font-black uppercase tracking-[0.14em] text-[var(--enroll-muted)]">{copy.honors}</p>
                 {hiddenHonorsCount > 0 ? (
-                  <span className="rounded-full bg-[#FFF4CC] px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.12em] text-black/55">
+                  <span className="rounded-full bg-[var(--enroll-yellow-soft)] px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.12em] text-[var(--enroll-muted)]">
                     +{hiddenHonorsCount} {copy.more}
                   </span>
                 ) : null}
@@ -235,14 +235,14 @@ function DashboardSnapshotSurface({
                   {visibleHonors.map((honor, index) => (
                     <div
                       key={`honor-${index}-${honor}`}
-                      className="rounded-xl border border-black/12 bg-[#FFF4CC] px-3 py-3 text-sm font-semibold leading-relaxed text-black/80"
+                      className="rounded-xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-yellow-soft)] px-3 py-3 text-sm font-semibold leading-relaxed text-[var(--enroll-fg)]"
                     >
                       {honor}
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="mt-3 text-sm text-black/55">{copy.noHonors}</p>
+                <p className="mt-3 text-sm text-[var(--enroll-muted)]">{copy.noHonors}</p>
               )}
             </div>
 
@@ -306,10 +306,12 @@ export function DashboardExportCard({
   ...surfaceProps
 }: DashboardSnapshotSurfaceProps & { snapshotRef: RefObject<HTMLDivElement> }) {
   return (
-    <div ref={snapshotRef} className="w-[1600px] bg-white p-10">
+    <div ref={snapshotRef} className="w-[1600px] bg-[var(--enroll-surface-elevated)] p-10">
       <div className="mx-auto w-[1520px]">
         <DashboardSnapshotSurface {...surfaceProps} donutMode="export" />
       </div>
     </div>
   );
 }
+
+

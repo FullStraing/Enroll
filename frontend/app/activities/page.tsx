@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Hammer, Sparkles, Target } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { ProtectedPage } from "@/components/protected-page";
+import { DeepWorkflowTheme } from "@/components/deep-workflow-theme";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ActivitiesFiltersPanel } from "@/components/activities/activities-filters";
@@ -176,7 +177,8 @@ export default function ActivitiesPage() {
         title="Activities"
         subtitle="Useful extracurricular opportunities that can realistically strengthen a student profile for CA, CIS, and international admissions paths."
       >
-        <div className="space-y-5">
+        <DeepWorkflowTheme>
+          <div className="theme-workflow space-y-5">
           <Card className="border-2 border-black bg-[#FFF4CC] shadow-none">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
@@ -297,7 +299,8 @@ export default function ActivitiesPage() {
               ) : null}
             </div>
           </div>
-        </div>
+          </div>
+        </DeepWorkflowTheme>
       </AppShell>
     </ProtectedPage>
   );

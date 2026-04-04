@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -193,7 +193,7 @@ export default function SettingsPage() {
     <ProtectedPage>
       <AppShell title={copy.title} subtitle={copy.subtitle}>
         <div className="grid gap-5 xl:grid-cols-2">
-          <section className="glass rounded-2xl p-5">
+          <section className="glass rounded-2xl p-5 text-[var(--enroll-fg)]">
             <h2 className="text-lg font-semibold">{copy.profile}</h2>
             {loading ? (
               <div className="mt-4 flex justify-center py-6">
@@ -201,31 +201,31 @@ export default function SettingsPage() {
               </div>
             ) : (
               <form onSubmit={saveProfile} className="mt-4 grid gap-3">
-                <label className="text-sm text-white/70">
+                <label className="text-sm text-[var(--enroll-muted-strong)]">
                   {copy.fullName}
                   <input
                     value={form.full_name}
                     onChange={(event) => setForm((prev) => ({ ...prev, full_name: event.target.value }))}
-                    className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2"
+                    className="mt-1 w-full rounded-xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] px-3 py-2 text-[var(--enroll-fg)]"
                   />
                 </label>
-                <label className="text-sm text-white/70">
+                <label className="text-sm text-[var(--enroll-muted-strong)]">
                   {copy.country}
                   <input
                     value={form.country}
                     onChange={(event) => setForm((prev) => ({ ...prev, country: event.target.value }))}
-                    className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2"
+                    className="mt-1 w-full rounded-xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] px-3 py-2 text-[var(--enroll-fg)]"
                   />
                 </label>
-                <label className="text-sm text-white/70">
+                <label className="text-sm text-[var(--enroll-muted-strong)]">
                   {copy.school}
                   <input
                     value={form.school_name}
                     onChange={(event) => setForm((prev) => ({ ...prev, school_name: event.target.value }))}
-                    className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2"
+                    className="mt-1 w-full rounded-xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] px-3 py-2 text-[var(--enroll-fg)]"
                   />
                 </label>
-                <label className="text-sm text-white/70">
+                <label className="text-sm text-[var(--enroll-muted-strong)]">
                   {copy.graduationYear}
                   <input
                     type="number"
@@ -236,15 +236,15 @@ export default function SettingsPage() {
                         graduation_year: event.target.value ? Number(event.target.value) : null,
                       }))
                     }
-                    className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2"
+                    className="mt-1 w-full rounded-xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] px-3 py-2 text-[var(--enroll-fg)]"
                   />
                 </label>
-                <label className="text-sm text-white/70">
+                <label className="text-sm text-[var(--enroll-muted-strong)]">
                   {copy.intendedMajor}
                   <input
                     value={form.intended_major}
                     onChange={(event) => setForm((prev) => ({ ...prev, intended_major: event.target.value }))}
-                    className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2"
+                    className="mt-1 w-full rounded-xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] px-3 py-2 text-[var(--enroll-fg)]"
                   />
                 </label>
                 <button
@@ -259,28 +259,28 @@ export default function SettingsPage() {
             )}
           </section>
 
-          <section className="glass rounded-2xl p-5">
+          <section className="glass rounded-2xl p-5 text-[var(--enroll-fg)]">
             <h2 className="text-lg font-semibold">{copy.security}</h2>
             <form onSubmit={changePassword} className="mt-4 grid gap-3">
-              <label className="text-sm text-white/70">
+              <label className="text-sm text-[var(--enroll-muted-strong)]">
                 {copy.currentPassword}
                 <RequiredMark />
                 <input
                   type="password"
                   value={oldPassword}
                   onChange={(event) => setOldPassword(event.target.value)}
-                  className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2"
+                  className="mt-1 w-full rounded-xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] px-3 py-2 text-[var(--enroll-fg)]"
                   required
                 />
               </label>
-              <label className="text-sm text-white/70">
+              <label className="text-sm text-[var(--enroll-muted-strong)]">
                 {copy.newPassword}
                 <RequiredMark />
                 <input
                   type="password"
                   value={newPassword}
                   onChange={(event) => setNewPassword(event.target.value)}
-                  className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2"
+                  className="mt-1 w-full rounded-xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] px-3 py-2 text-[var(--enroll-fg)]"
                   required
                 />
               </label>
@@ -294,20 +294,20 @@ export default function SettingsPage() {
               </button>
             </form>
 
-            <div className="mt-8 border-t border-white/10 pt-5">
-              <h3 className="text-sm font-semibold uppercase tracking-wide text-white/65">{copy.session}</h3>
-              <p className="mt-2 text-sm text-white/70">{copy.logoutHint}</p>
-              <button onClick={handleLogout} className="mt-3 rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-sm hover:bg-white/10">
+            <div className="mt-8 border-t border-[var(--enroll-surface-border)] pt-5">
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-[var(--enroll-muted)]">{copy.session}</h3>
+              <p className="mt-2 text-sm text-[var(--enroll-muted-strong)]">{copy.logoutHint}</p>
+              <button onClick={handleLogout} className="mt-3 rounded-xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-inset)] px-4 py-2 text-sm hover:bg-[var(--enroll-surface-elevated)]">
                 {copy.logout}
               </button>
             </div>
 
-            <div className="mt-8 border-t border-white/10 pt-5">
-              <h3 className="text-sm font-semibold uppercase tracking-wide text-white/65">{copy.legal}</h3>
-              <p className="mt-2 text-sm text-white/70">{copy.legalHint}</p>
+            <div className="mt-8 border-t border-[var(--enroll-surface-border)] pt-5">
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-[var(--enroll-muted)]">{copy.legal}</h3>
+              <p className="mt-2 text-sm text-[var(--enroll-muted-strong)]">{copy.legalHint}</p>
               <a
                 href="/privacy-policy"
-                className="mt-3 inline-flex rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-sm hover:bg-white/10"
+                className="mt-3 inline-flex rounded-xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-inset)] px-4 py-2 text-sm hover:bg-[var(--enroll-surface-elevated)]"
               >
                 {copy.privacyPolicy}
               </a>
@@ -324,39 +324,40 @@ export default function SettingsPage() {
               ) : analytics ? (
                 <div className="mt-4 grid gap-4">
                   <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-7">
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-3"><p className="text-xs text-white/55">{locale === "ru" ? "Пользователи" : "Users"}</p><p className="mt-1 text-2xl font-semibold">{analytics.totals.registered_users}</p></div>
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-3"><p className="text-xs text-white/55">{locale === "ru" ? "Начали регистрацию" : "Signup started"}</p><p className="mt-1 text-2xl font-semibold">{analytics.totals.signup_started}</p></div>
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-3"><p className="text-xs text-white/55">{locale === "ru" ? "Завершили регистрацию" : "Signup completed"}</p><p className="mt-1 text-2xl font-semibold">{analytics.totals.signup_completed}</p></div>
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-3"><p className="text-xs text-white/55">{locale === "ru" ? "Онбординг" : "Onboarding"}</p><p className="mt-1 text-2xl font-semibold">{analytics.totals.onboarding_completed}</p></div>
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-3"><p className="text-xs text-white/55">{locale === "ru" ? "Первая задача" : "First task"}</p><p className="mt-1 text-2xl font-semibold">{analytics.totals.first_task_created}</p></div>
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-3"><p className="text-xs text-white/55">{locale === "ru" ? "Первый университет" : "First university"}</p><p className="mt-1 text-2xl font-semibold">{analytics.totals.first_university_added}</p></div>
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-3"><p className="text-xs text-white/55">{locale === "ru" ? "Первое эссе" : "First essay"}</p><p className="mt-1 text-2xl font-semibold">{analytics.totals.first_essay_started}</p></div>
+                    <div className="rounded-xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-inset)] p-3"><p className="text-xs text-[var(--enroll-muted)]">{locale === "ru" ? "РџРѕР»СЊР·РѕРІР°С‚РµР»Рё" : "Users"}</p><p className="mt-1 text-2xl font-semibold">{analytics.totals.registered_users}</p></div>
+                    <div className="rounded-xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-inset)] p-3"><p className="text-xs text-[var(--enroll-muted)]">{locale === "ru" ? "РќР°С‡Р°Р»Рё СЂРµРіРёСЃС‚СЂР°С†РёСЋ" : "Signup started"}</p><p className="mt-1 text-2xl font-semibold">{analytics.totals.signup_started}</p></div>
+                    <div className="rounded-xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-inset)] p-3"><p className="text-xs text-[var(--enroll-muted)]">{locale === "ru" ? "Р—Р°РІРµСЂС€РёР»Рё СЂРµРіРёСЃС‚СЂР°С†РёСЋ" : "Signup completed"}</p><p className="mt-1 text-2xl font-semibold">{analytics.totals.signup_completed}</p></div>
+                    <div className="rounded-xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-inset)] p-3"><p className="text-xs text-[var(--enroll-muted)]">{locale === "ru" ? "РћРЅР±РѕСЂРґРёРЅРі" : "Onboarding"}</p><p className="mt-1 text-2xl font-semibold">{analytics.totals.onboarding_completed}</p></div>
+                    <div className="rounded-xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-inset)] p-3"><p className="text-xs text-[var(--enroll-muted)]">{locale === "ru" ? "РџРµСЂРІР°СЏ Р·Р°РґР°С‡Р°" : "First task"}</p><p className="mt-1 text-2xl font-semibold">{analytics.totals.first_task_created}</p></div>
+                    <div className="rounded-xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-inset)] p-3"><p className="text-xs text-[var(--enroll-muted)]">{locale === "ru" ? "РџРµСЂРІС‹Р№ СѓРЅРёРІРµСЂСЃРёС‚РµС‚" : "First university"}</p><p className="mt-1 text-2xl font-semibold">{analytics.totals.first_university_added}</p></div>
+                    <div className="rounded-xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-inset)] p-3"><p className="text-xs text-[var(--enroll-muted)]">{locale === "ru" ? "РџРµСЂРІРѕРµ СЌСЃСЃРµ" : "First essay"}</p><p className="mt-1 text-2xl font-semibold">{analytics.totals.first_essay_started}</p></div>
                   </div>
-                  <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                    <h3 className="text-sm font-semibold uppercase tracking-wide text-white/65">{copy.recentEvents}</h3>
+                  <div className="rounded-xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-inset)] p-4">
+                    <h3 className="text-sm font-semibold uppercase tracking-wide text-[var(--enroll-muted)]">{copy.recentEvents}</h3>
                     <div className="mt-3 space-y-2">
                       {analytics.recent_events.length ? (
                         analytics.recent_events.map((event, index) => (
-                          <div key={`${event.name}-${event.created_at}-${index}`} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-white/10 bg-black/10 px-3 py-2 text-sm text-white/80">
+                          <div key={`${event.name}-${event.created_at}-${index}`} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-inset)] px-3 py-2 text-sm text-[var(--enroll-fg)]">
                             <span className="font-medium">{event.name}</span>
-                            <span>{event.user__username || event.user__email || event.client_id || (locale === "ru" ? "анонимно" : "anonymous")}</span>
+                            <span>{event.user__username || event.user__email || event.client_id || (locale === "ru" ? "Р°РЅРѕРЅРёРјРЅРѕ" : "anonymous")}</span>
                           </div>
                         ))
                       ) : (
-                        <p className="text-sm text-white/65">{copy.noEvents}</p>
+                        <p className="text-sm text-[var(--enroll-muted)]">{copy.noEvents}</p>
                       )}
                     </div>
                   </div>
                 </div>
               ) : (
-                <p className="mt-4 text-sm text-white/70">{copy.analyticsUnavailable}</p>
+                <p className="mt-4 text-sm text-[var(--enroll-muted-strong)]">{copy.analyticsUnavailable}</p>
               )}
             </section>
           ) : null}
 
-          {statusText ? <p className="xl:col-span-2 text-sm text-white/70">{statusText}</p> : null}
+          {statusText ? <p className="xl:col-span-2 text-sm text-[var(--enroll-muted-strong)]">{statusText}</p> : null}
         </div>
       </AppShell>
     </ProtectedPage>
   );
 }
+

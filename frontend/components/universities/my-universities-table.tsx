@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import {
   type CSSProperties,
@@ -298,7 +298,7 @@ function ActionMenuPopup({ anchorRect, children }: ActionMenuPopupProps) {
   return createPortal(
     <div
       ref={menuRef}
-      className="fixed z-50 w-52 rounded-xl border-2 border-black bg-white p-1 shadow-[0_4px_0_#000]"
+      className="fixed z-50 w-52 rounded-xl border-2 border-[var(--enroll-strong-border)] bg-[var(--enroll-surface-elevated)] p-1 shadow-[0_4px_0_#000]"
       style={position}
     >
       {children}
@@ -580,10 +580,10 @@ export function MyUniversitiesTable({
 
           {tableSettingsOpen && tableSettingsAnchorRect ? (
             <TableSettingsPopup anchorRect={tableSettingsAnchorRect}>
-              <div className="flex items-center justify-between gap-2 border-b border-black/10 pb-3">
+              <div className="flex items-center justify-between gap-2 border-b border-[var(--enroll-surface-border)] pb-3">
                 <div>
-                  <p className="text-sm font-semibold text-black">{copy.editTable}</p>
-                  <p className="text-xs text-black/55">{copy.editTableDescription}</p>
+                  <p className="text-sm font-semibold text-[var(--enroll-fg)]">{copy.editTable}</p>
+                  <p className="text-xs text-[var(--enroll-muted)]">{copy.editTableDescription}</p>
                 </div>
               </div>
 
@@ -596,8 +596,8 @@ export function MyUniversitiesTable({
                       onClick={() => setTableSettingsSection(section)}
                       className={`rounded-full border px-3 py-1.5 text-sm font-semibold transition ${
                         tableSettingsSection === section
-                          ? "border-black bg-[#DAF5F0] text-black"
-                          : "border-black/15 bg-white text-black/55 hover:border-black/40"
+                          ? "border-[var(--enroll-strong-border)] bg-[var(--enroll-cyan)] text-[var(--enroll-fg)]"
+                          : "border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] text-[var(--enroll-muted)] hover:border-[var(--enroll-strong-border)]/40"
                       }`}
                     >
                       {section === "columns" ? copy.columns : copy.sort}
@@ -609,11 +609,11 @@ export function MyUniversitiesTable({
               {tableSettingsSection === "columns" ? (
                 <div className="mt-3 flex min-h-0 flex-1 flex-col space-y-2">
                   <div className="flex items-center justify-between">
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-black/45">{copy.visibleColumns}</p>
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--enroll-muted)]">{copy.visibleColumns}</p>
                     <button
                       type="button"
                       onClick={() => setVisibleColumns(MY_UNIVERSITIES_DEFAULT_COLUMNS)}
-                      className="text-xs font-semibold text-black/55 underline underline-offset-2"
+                      className="text-xs font-semibold text-[var(--enroll-muted)] underline underline-offset-2"
                     >
                       Reset
                     </button>
@@ -625,12 +625,12 @@ export function MyUniversitiesTable({
                       return (
                         <label
                           key={column.id}
-                          className="flex cursor-pointer items-center justify-between rounded-xl border border-black/10 px-3 py-2 transition hover:border-black/25 hover:bg-black/[0.02]"
+                          className="flex cursor-pointer items-center justify-between rounded-xl border border-[var(--enroll-surface-border)] px-3 py-2 transition hover:border-[var(--enroll-strong-border)] hover:bg-[var(--enroll-surface-inset)]"
                         >
-                          <span className="text-sm font-medium text-black">{column.label}</span>
+                          <span className="text-sm font-medium text-[var(--enroll-fg)]">{column.label}</span>
                           <span
-                            className={`flex h-5 w-5 items-center justify-center rounded-md border text-black transition ${
-                              checked ? "border-black bg-[#DAF5F0]" : "border-black/20 bg-white"
+                            className={`flex h-5 w-5 items-center justify-center rounded-md border text-[var(--enroll-fg)] transition ${
+                              checked ? "border-[var(--enroll-strong-border)] bg-[var(--enroll-cyan)]" : "border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)]"
                             }`}
                           >
                             {checked ? <Check className="h-3.5 w-3.5" /> : null}
@@ -651,11 +651,11 @@ export function MyUniversitiesTable({
               {tableSettingsSection === "sort" ? (
                 <div className="mt-3 flex min-h-0 flex-1 flex-col space-y-3 overflow-y-auto pr-1">
                   <div className="flex items-center justify-between">
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-black/45">{copy.sortRows}</p>
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--enroll-muted)]">{copy.sortRows}</p>
                     <button
                       type="button"
                       onClick={() => setSortState(DEFAULT_SORT_STATE)}
-                      className="text-xs font-semibold text-black/55 underline underline-offset-2"
+                      className="text-xs font-semibold text-[var(--enroll-muted)] underline underline-offset-2"
                     >
                       Reset
                     </button>
@@ -669,8 +669,8 @@ export function MyUniversitiesTable({
                         onClick={() => setSortState((prev) => ({ ...prev, direction }))}
                         className={`rounded-xl border px-3 py-2 text-sm font-semibold transition ${
                           sortState.direction === direction
-                            ? "border-black bg-[#DAF5F0] text-black"
-                            : "border-black/15 bg-white text-black/55 hover:border-black/40"
+                            ? "border-[var(--enroll-strong-border)] bg-[var(--enroll-cyan)] text-[var(--enroll-fg)]"
+                            : "border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] text-[var(--enroll-muted)] hover:border-[var(--enroll-strong-border)]/40"
                         }`}
                       >
                         {direction === "asc" ? copy.ascending : copy.descending}
@@ -688,14 +688,14 @@ export function MyUniversitiesTable({
                           onClick={() => setSortState((prev) => ({ ...prev, column: definition.id }))}
                           className={`flex items-center justify-between rounded-xl border px-3 py-2 text-left transition ${
                             checked
-                              ? "border-black bg-[#DAF5F0]"
-                              : "border-black/10 bg-white hover:border-black/25 hover:bg-black/[0.02]"
+                              ? "border-[var(--enroll-strong-border)] bg-[var(--enroll-cyan)]"
+                              : "border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] hover:border-[var(--enroll-strong-border)]/25 hover:bg-[var(--enroll-surface-inset)]"
                           }`}
                         >
-                          <span className="text-sm font-medium text-black">{definition.label}</span>
+                          <span className="text-sm font-medium text-[var(--enroll-fg)]">{definition.label}</span>
                           <span
-                            className={`flex h-5 w-5 items-center justify-center rounded-md border text-black transition ${
-                              checked ? "border-black bg-white" : "border-black/20 bg-white"
+                            className={`flex h-5 w-5 items-center justify-center rounded-md border text-[var(--enroll-fg)] transition ${
+                              checked ? "border-[var(--enroll-strong-border)] bg-[var(--enroll-surface-elevated)]" : "border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)]"
                             }`}
                           >
                             {checked ? <Check className="h-3.5 w-3.5" /> : null}
@@ -714,7 +714,7 @@ export function MyUniversitiesTable({
 
       <table className="min-w-full text-left text-sm">
         <thead>
-          <tr className="border-b border-black/15 text-black/60">
+          <tr className="border-b border-[var(--enroll-surface-border)] text-[var(--enroll-muted)]">
             <th className="px-2 py-2 font-semibold">{copy.university}</th>
             {activeColumns.map((column) => (
               <th key={column.id} className="px-2 py-2 font-semibold">
@@ -729,7 +729,7 @@ export function MyUniversitiesTable({
             <tr
               key={item.id}
               data-row-id={item.id}
-              className={`border-b border-black/10 transition ${rowStatusTone(item.status)} ${
+              className={`border-b border-[var(--enroll-surface-border)] transition ${rowStatusTone(item.status)} ${
                 draggingItemId === item.id
                   ? "opacity-60"
                   : dropTargetItemId === item.id && draggingItemId !== item.id
@@ -742,7 +742,7 @@ export function MyUniversitiesTable({
                   <button
                     type="button"
                     onPointerDown={(event) => onBeginDrag(event, item.id)}
-                    className="cursor-grab rounded-md border border-black/20 bg-white px-1.5 py-1 text-black/60 active:cursor-grabbing"
+                    className="cursor-grab rounded-md border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] px-1.5 py-1 text-[var(--enroll-muted)] active:cursor-grabbing"
                     aria-label={copy.dragLabel.replace("{name}", item.university.name)}
                     title={copy.dragTitle}
                   >
@@ -759,7 +759,7 @@ export function MyUniversitiesTable({
                       <Select
                         value={item.category}
                         onChange={(value) => onUpdateCategory(item.id, value as StudentUniversity["category"])}
-                        className={`h-10 rounded-xl border-2 px-3 py-2 text-sm font-semibold text-black shadow-[0_2px_0_#000] ${categorySelectToneClass(item.category)}`}
+                        className={`h-10 rounded-xl border-2 px-3 py-2 text-sm font-semibold text-[var(--enroll-fg)] shadow-[0_2px_0_#000] ${categorySelectToneClass(item.category)}`}
                         disabled={updatingItemId === item.id}
                         options={[
                           { value: "high_reach", label: categoryLabelForLocale("high_reach", locale) },
@@ -776,7 +776,7 @@ export function MyUniversitiesTable({
                       <Select
                         value={item.status}
                         onChange={(value) => onUpdateStatus(item.id, value as StudentUniversity["status"])}
-                        className={`h-10 rounded-xl border-2 px-3 py-2 text-sm font-semibold text-black shadow-[0_2px_0_#000] ${statusSelectTone(item.status)}`}
+                        className={`h-10 rounded-xl border-2 px-3 py-2 text-sm font-semibold text-[var(--enroll-fg)] shadow-[0_2px_0_#000] ${statusSelectTone(item.status)}`}
                         disabled={updatingItemId === item.id}
                         options={STATUS_OPTIONS.map((statusOption) => ({ value: statusOption.value, label: statusLabels[statusOption.value] }))}
                         ariaLabel={`${copy.sort}: ${item.university.name}`}
@@ -797,14 +797,14 @@ export function MyUniversitiesTable({
                       <button
                         type="button"
                         onClick={() => onOpenUniversity(item.university.id)}
-                        className="block w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-black/5"
+                        className="block w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-[var(--enroll-surface-inset)]"
                       >
                         {copy.openUniversityPage}
                       </button>
                       <button
                         type="button"
                         onClick={() => onOpenUniversity(item.university.id)}
-                        className="block w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-black/5"
+                        className="block w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-[var(--enroll-surface-inset)]"
                       >
                         {copy.editDetails}
                       </button>
@@ -826,10 +826,10 @@ export function MyUniversitiesTable({
       </table>
 
       <div className="grid gap-3 md:grid-cols-1">
-        <div className="surface-card rounded-2xl px-4 py-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-black/55">{copy.applicationFees}</p>
-          <p className="mt-2 text-2xl font-black text-black">{money(appFeeSummary.total)}</p>
-          <p className="mt-1 text-xs text-black/55">
+        <div className="surface-card rounded-2xl px-4 py-4 text-[var(--enroll-fg)]">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--enroll-muted)]">{copy.applicationFees}</p>
+          <p className="mt-2 text-2xl font-black text-[var(--enroll-fg)]">{money(appFeeSummary.total)}</p>
+          <p className="mt-1 text-xs text-[var(--enroll-muted)]">
             {appFeeSummary.missing
               ? copy.applicationFeesMissing.replace("{count}", String(appFeeSummary.missing))
               : copy.applicationFeesAll.replace("{count}", String(appFeeSummary.known))}
@@ -839,3 +839,5 @@ export function MyUniversitiesTable({
     </div>
   );
 }
+
+

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import type { ProgressBlock } from "@/app/dashboard/progress";
@@ -14,7 +14,7 @@ export function ProgressBlockCard({ block }: { block: ProgressBlock }) {
   const copy = getDashboardCopy(locale).progress;
 
   return (
-    <Card className="flex h-full flex-col border border-black/10 bg-white/90 shadow-none">
+    <Card className="flex h-full flex-col border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] shadow-none">
       <div className="flex items-start justify-between gap-3">
         <div>
           <CardTitle>{block.title}</CardTitle>
@@ -34,3 +34,4 @@ export function ProgressBlockCard({ block }: { block: ProgressBlock }) {
     </Card>
   );
 }
+

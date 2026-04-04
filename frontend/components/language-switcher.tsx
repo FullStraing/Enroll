@@ -30,7 +30,7 @@ export function LanguageSwitcher({
   return (
     <div
       className={cn(
-        "inline-flex items-center rounded-full border-2 border-black bg-white p-1",
+        "inline-flex items-center rounded-full border-2 p-1 shadow-[0_3px_0_var(--enroll-strong-shadow)] border-[var(--enroll-strong-border)] bg-[var(--enroll-surface-elevated)]",
         isPending ? "opacity-80" : "",
         className,
       )}
@@ -43,7 +43,9 @@ export function LanguageSwitcher({
           className={cn(
             "rounded-full font-black uppercase tracking-[0.12em] transition",
             buttonClass,
-            locale === option ? "bg-[#FFDB58] text-black" : "text-black/55 hover:text-black",
+            locale === option
+              ? "bg-[var(--enroll-yellow)] text-[var(--enroll-strong-fg,var(--enroll-strong-border))]"
+              : "text-[var(--enroll-muted-strong)] hover:text-[var(--enroll-fg)]",
           )}
           aria-pressed={locale === option}
         >

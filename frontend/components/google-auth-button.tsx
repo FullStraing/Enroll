@@ -127,15 +127,15 @@ export function GoogleAuthButton({
   return (
     <div className="mt-4">
       {unavailableMessage ? (
-        <div className="rounded-xl border border-black/20 bg-white px-4 py-3 text-sm text-black/70">{unavailableMessage}</div>
+        <div className="rounded-xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] px-4 py-3 text-sm text-[var(--enroll-muted)]">{unavailableMessage}</div>
       ) : clientId ? (
         <div className={disabled || loading ? "pointer-events-none opacity-70" : ""} ref={containerRef} />
       ) : (
-        <div className="rounded-xl border border-black/20 bg-white px-4 py-3 text-sm text-black/70">{messages.auth.googleEnvMissing}</div>
+        <div className="rounded-xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] px-4 py-3 text-sm text-[var(--enroll-muted)]">{messages.auth.googleEnvMissing}</div>
       )}
       {scriptFailed ? <p className="mt-2 text-sm text-red-600">{messages.auth.googleLoadFailed}</p> : null}
       {loading ? (
-        <div className="mt-2 flex items-center gap-2 text-sm text-black/70">
+        <div className="mt-2 flex items-center gap-2 text-sm text-[var(--enroll-muted)]">
           <Loader size="sm" />
           <span>{messages.auth.checkingGoogle}</span>
         </div>
