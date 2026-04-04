@@ -3,6 +3,8 @@
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import type { DiscoverFilters } from "@/app/universities/types";
+import { getProductCopy } from "@/lib/product-copy";
+import { useLocale } from "@/components/locale-provider";
 
 type DiscoverFiltersProps = {
   open: boolean;
@@ -22,25 +24,6 @@ type FieldConfig = {
   placeholder?: string;
 };
 
-const INPUT_FIELDS: FieldConfig[] = [
-  { key: "major", label: "Major", placeholder: "CS, Business, Biology" },
-  { key: "state", label: "State", placeholder: "CA, NY, TX" },
-  { key: "acceptanceMin", label: "Acceptance % min", type: "number" },
-  { key: "acceptanceMax", label: "Acceptance % max", type: "number" },
-  { key: "tuitionMin", label: "Tuition min ($)", type: "number" },
-  { key: "tuitionMax", label: "Tuition max ($)", type: "number" },
-  { key: "satMin", label: "SAT min", type: "number" },
-  { key: "satMax", label: "SAT max", type: "number" },
-  { key: "actMin", label: "ACT min", type: "number" },
-  { key: "actMax", label: "ACT max", type: "number" },
-  { key: "gpaMin", label: "GPA min", type: "number", step: "0.01" },
-  { key: "gpaMax", label: "GPA max", type: "number", step: "0.01" },
-  { key: "netPriceMin", label: "Net cost min ($)", type: "number" },
-  { key: "netPriceMax", label: "Net cost max ($)", type: "number" },
-  { key: "housingMin", label: "Housing min ($)", type: "number" },
-  { key: "housingMax", label: "Housing max ($)", type: "number" },
-];
-
 export function DiscoverFiltersPanel({
   open,
   activeFiltersCount,
@@ -50,20 +33,40 @@ export function DiscoverFiltersPanel({
   onReset,
   onApply,
 }: DiscoverFiltersProps) {
+  const { locale } = useLocale();
+  const copy = getProductCopy(locale).universities;
+
+  const inputFields: FieldConfig[] = [
+    { key: "major", label: copy.major, placeholder: copy.majorPlaceholder },
+    { key: "state", label: copy.state, placeholder: copy.statePlaceholder },
+    { key: "acceptanceMin", label: copy.acceptanceMin, type: "number" },
+    { key: "acceptanceMax", label: copy.acceptanceMax, type: "number" },
+    { key: "tuitionMin", label: copy.tuitionMin, type: "number" },
+    { key: "tuitionMax", label: copy.tuitionMax, type: "number" },
+    { key: "satMin", label: copy.satMin, type: "number" },
+    { key: "satMax", label: copy.satMax, type: "number" },
+    { key: "actMin", label: copy.actMin, type: "number" },
+    { key: "actMax", label: copy.actMax, type: "number" },
+    { key: "gpaMin", label: copy.gpaMin, type: "number", step: "0.01" },
+    { key: "gpaMax", label: copy.gpaMax, type: "number", step: "0.01" },
+    { key: "netPriceMin", label: copy.netPriceMin, type: "number" },
+    { key: "netPriceMax", label: copy.netPriceMax, type: "number" },
+    { key: "housingMin", label: copy.housingMin, type: "number" },
+    { key: "housingMax", label: copy.housingMax, type: "number" },
+  ];
+
   return (
     <>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <Button size="sm" variant="outline" onClick={onToggle} className={open ? "bg-[#DAF5F0]" : ""}>
-          {open ? "Hide filters" : "Show filters"}
+          {open ? copy.hideFilters : copy.showFilters}
         </Button>
-        <div className="text-sm text-black/65">
-          Active filters: <span className="font-semibold text-black">{activeFiltersCount}</span>
-        </div>
+        <div className="text-sm text-black/65">{copy.activeFilters.replace("{count}", String(activeFiltersCount))}</div>
       </div>
 
       {open ? (
         <div className="grid gap-3 rounded-xl border border-black/10 bg-black/[0.02] p-3 md:grid-cols-2 xl:grid-cols-4">
-          {INPUT_FIELDS.slice(0, 2).map((field) => (
+          {inputFields.slice(0, 2).map((field) => (
             <label key={field.key} className="text-xs text-black/70">
               {field.label}
               <input
@@ -78,40 +81,40 @@ export function DiscoverFiltersPanel({
           ))}
 
           <label className="text-xs text-black/70">
-            Chances
+            {copy.chanceBand}
             <Select
               value={filtersDraft.chanceBand}
               onChange={(value) => onChange((prev) => ({ ...prev, chanceBand: value as DiscoverFilters["chanceBand"] }))}
               options={[
-                { value: "", label: "All chances" },
-                { value: "safety", label: "Safety" },
-                { value: "likely", label: "Likely" },
-                { value: "target", label: "Target" },
-                { value: "reach", label: "Reach" },
-                { value: "high_reach", label: "High Reach" },
+                { value: "", label: copy.anyChance },
+                { value: "safety", label: copy.chanceLabels.safety },
+                { value: "likely", label: copy.chanceLabels.likely },
+                { value: "target", label: copy.chanceLabels.target },
+                { value: "reach", label: copy.chanceLabels.reach },
+                { value: "high_reach", label: copy.chanceLabels.high_reach },
               ]}
               className="mt-1 w-full rounded-lg border border-black/15 px-2 py-2 text-sm"
-              ariaLabel="Filter by chances"
+              ariaLabel={copy.chanceBand}
             />
           </label>
 
           <label className="text-xs text-black/70">
-            Ranking band
+            {copy.rankingBand}
             <Select
               value={filtersDraft.rankingBand}
               onChange={(value) => onChange((prev) => ({ ...prev, rankingBand: value as DiscoverFilters["rankingBand"] }))}
               options={[
-                { value: "", label: "Any" },
-                { value: "high", label: "High selectivity" },
-                { value: "medium", label: "Medium selectivity" },
-                { value: "low", label: "Low selectivity" },
+                { value: "", label: copy.any },
+                { value: "high", label: copy.highSelectivity },
+                { value: "medium", label: copy.mediumSelectivity },
+                { value: "low", label: copy.lowSelectivity },
               ]}
               className="mt-1 w-full rounded-lg border border-black/15 px-2 py-2 text-sm"
-              ariaLabel="Filter by ranking band"
+              ariaLabel={copy.rankingBand}
             />
           </label>
 
-          {INPUT_FIELDS.slice(2).map((field) => (
+          {inputFields.slice(2).map((field) => (
             <label key={field.key} className="text-xs text-black/70">
               {field.label}
               <input
@@ -126,10 +129,10 @@ export function DiscoverFiltersPanel({
 
           <div className="col-span-full flex flex-wrap justify-end gap-2">
             <Button size="sm" variant="outline" onClick={onReset}>
-              Reset
+              {copy.reset}
             </Button>
             <Button size="sm" onClick={onApply}>
-              Apply filters
+              {copy.applyFilters}
             </Button>
           </div>
         </div>

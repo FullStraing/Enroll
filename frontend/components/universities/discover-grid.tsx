@@ -4,6 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useLocale } from "@/components/locale-provider";
+import { getProductCopy } from "@/lib/product-copy";
 import { UniversityLogo } from "@/components/universities/university-logo";
 import { categoryToneClass, chanceLabel, formatUniversityLocation, getChanceBandFromAcceptance, money } from "@/app/universities/utils";
 import type { University } from "@/app/universities/types";
@@ -27,6 +29,9 @@ export function DiscoverGrid({
   onOpen,
   onAdd,
 }: DiscoverGridProps) {
+  const { locale } = useLocale();
+  const copy = getProductCopy(locale).universities;
+
   return (
     <div className="mt-4 grid gap-4 xl:grid-cols-2">
       {loading
@@ -60,11 +65,11 @@ export function DiscoverGrid({
                       <CardTitle>{university.name}</CardTitle>
                       <CardDescription className="mt-1">{formatUniversityLocation(university)}</CardDescription>
                       <div className="mt-2 flex flex-wrap gap-2">
-                        <Badge>Acceptance: {university.acceptance_rate != null ? `${university.acceptance_rate}%` : "N/A"}</Badge>
+                        <Badge>{copy.acceptance.replace("{value}", university.acceptance_rate != null ? `${university.acceptance_rate}%` : "N/A")}</Badge>
                         <Badge className={categoryToneClass(chanceBand)}>
-                          {chanceLabel(chanceBand)}
+                          {chanceLabel(chanceBand, locale)}
                         </Badge>
-                        <Badge variant="cyan">Tuition: {money(university.tuition_out_state)}</Badge>
+                        <Badge variant="cyan">{copy.tuition.replace("{value}", money(university.tuition_out_state))}</Badge>
                       </div>
                     </div>
                   </div>
@@ -72,7 +77,7 @@ export function DiscoverGrid({
                   <div className="flex w-full justify-start self-start sm:w-auto sm:min-w-[148px] sm:justify-end">
                     {myUniversityIds.has(university.id) ? (
                       <div className="inline-flex min-h-10 items-center justify-center rounded-2xl border-2 border-black bg-[#FFF4CC] px-4 text-sm font-semibold text-black shadow-[0_2px_0_#000]">
-                        Added to list
+                        {copy.addedToList}
                       </div>
                     ) : (
                       <Button
@@ -83,7 +88,7 @@ export function DiscoverGrid({
                         }}
                         disabled={updatingItemId === university.id}
                       >
-                        Add to my list
+                        {copy.addToList}
                       </Button>
                     )}
                   </div>

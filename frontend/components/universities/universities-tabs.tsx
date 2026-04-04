@@ -2,6 +2,8 @@
 
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
+import { useLocale } from "@/components/locale-provider";
+import { getProductCopy } from "@/lib/product-copy";
 
 type UniversitiesTabsProps = {
   activeTab: "my" | "discover";
@@ -18,6 +20,9 @@ export function UniversitiesTabs({
   pageSizeOptions,
   onPageSizeChange,
 }: UniversitiesTabsProps) {
+  const { locale } = useLocale();
+  const copy = getProductCopy(locale).universities;
+
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 border-b border-black/10 pb-4">
       <div className="flex items-center gap-2 rounded-xl border border-black/15 bg-black/[0.02] p-1">
@@ -28,7 +33,7 @@ export function UniversitiesTabs({
             activeTab === "my" ? "bg-[#FFDB58] text-black" : "text-black/70 hover:bg-black/5"
           }`}
         >
-          My Universities
+          {copy.myTab}
         </button>
         <button
           type="button"
@@ -37,19 +42,19 @@ export function UniversitiesTabs({
             activeTab === "discover" ? "bg-[#DAF5F0] text-black" : "text-black/70 hover:bg-black/5"
           }`}
         >
-          Discover Universities
+          {copy.discoverTab}
         </button>
       </div>
 
       {activeTab === "discover" ? (
         <label className="flex items-center gap-2 text-sm text-black/70">
-          Per page
+          {copy.perPage}
           <Select
             value={String(pageSize)}
             onChange={(value) => onPageSizeChange(Number(value) || 10)}
             options={pageSizeOptions.map((size) => ({ value: String(size), label: String(size) }))}
             className="h-9 min-w-[92px] rounded-lg border border-black/20 px-3 py-1 text-sm shadow-none"
-            ariaLabel="Results per page"
+            ariaLabel={copy.perPage}
           />
         </label>
       ) : null}

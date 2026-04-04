@@ -10,15 +10,8 @@ import { apiFetch } from "@/lib/api";
 import type { CommunityGroupSummary, CommunityPost } from "@/app/community/types";
 import { RuntimeNotice } from "@/components/runtime-notice";
 import { fetchRuntimeConfig, type RuntimeConfig } from "@/lib/runtime-config";
-
-const TAGS = [
-  { value: "", label: "General" },
-  { value: "essay", label: "Essay" },
-  { value: "visa", label: "Visa" },
-  { value: "financial_aid", label: "Financial Aid" },
-  { value: "documents", label: "Documents" },
-  { value: "deadlines", label: "Deadlines" },
-] as const;
+import { getProductCopy } from "@/lib/product-copy";
+import { useLocale } from "@/components/locale-provider";
 
 const TAG_STYLES: Record<string, string> = {
   "": "bg-white text-black/60 border-black/10",
@@ -72,11 +65,22 @@ function RoomSkeleton() {
 }
 
 export default function CommunityPage() {
+  const { locale } = useLocale();
+  const copy = getProductCopy(locale).community;
+  const tags = [
+    { value: "", label: copy.general },
+    { value: "essay", label: copy.essay },
+    { value: "visa", label: copy.visa },
+    { value: "financial_aid", label: copy.financialAid },
+    { value: "documents", label: copy.documents },
+    { value: "deadlines", label: copy.deadlines },
+  ] as const;
+
   const [rooms, setRooms] = useState<CommunityGroupSummary[]>([]);
   const [activeRoomSlug, setActiveRoomSlug] = useState<string>("");
   const [messages, setMessages] = useState<CommunityPost[]>([]);
   const [draft, setDraft] = useState("");
-  const [selectedTag, setSelectedTag] = useState<(typeof TAGS)[number]["value"]>("");
+  const [selectedTag, setSelectedTag] = useState<(typeof tags)[number]["value"]>("");
   const [loadingRooms, setLoadingRooms] = useState(true);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [sending, setSending] = useState(false);
@@ -93,6 +97,7 @@ export default function CommunityPage() {
   const loadRooms = useCallback(async () => {
     const token = getToken();
     if (!token) return;
+
     const requestId = ++roomsRequestIdRef.current;
     setLoadingRooms(true);
     try {
@@ -117,18 +122,19 @@ export default function CommunityPage() {
       setStatusText("");
     } catch (error) {
       if (requestId === roomsRequestIdRef.current) {
-        setStatusText(error instanceof Error ? error.message : "Could not load chat rooms.");
+        setStatusText(error instanceof Error ? error.message : copy.loadRoomsFailed);
       }
     } finally {
       if (requestId === roomsRequestIdRef.current) {
         setLoadingRooms(false);
       }
     }
-  }, []);
+  }, [copy.loadRoomsFailed]);
 
   const loadMessages = useCallback(async (slug: string) => {
     const token = getToken();
     if (!token || !slug) return;
+
     const requestId = ++messagesRequestIdRef.current;
     setLoadingMessages(true);
     try {
@@ -138,14 +144,14 @@ export default function CommunityPage() {
       setStatusText("");
     } catch (error) {
       if (requestId === messagesRequestIdRef.current) {
-        setStatusText(error instanceof Error ? error.message : "Could not load room messages.");
+        setStatusText(error instanceof Error ? error.message : copy.loadMessagesFailed);
       }
     } finally {
       if (requestId === messagesRequestIdRef.current) {
         setLoadingMessages(false);
       }
     }
-  }, []);
+  }, [copy.loadMessagesFailed]);
 
   useEffect(() => {
     void loadRooms();
@@ -190,13 +196,16 @@ export default function CommunityPage() {
 
   async function sendMessage() {
     if (runtimeConfig?.features.community_posting_enabled === false) {
-      setStatusText("Community posting is temporarily unavailable.");
+      setStatusText(copy.postingUnavailable);
       return;
     }
+
     const token = getToken();
     if (!token || !activeRoomSlug) return;
+
     const body = draft.trim();
     if (!body) return;
+
     setSending(true);
     try {
       await ensureMembership(activeRoomSlug);
@@ -222,7 +231,7 @@ export default function CommunityPage() {
       setSelectedTag("");
       setStatusText("");
     } catch (error) {
-      setStatusText(error instanceof Error ? error.message : "Could not send message.");
+      setStatusText(error instanceof Error ? error.message : copy.sendFailed);
     } finally {
       setSending(false);
     }
@@ -230,12 +239,13 @@ export default function CommunityPage() {
 
   return (
     <ProtectedPage>
-      <AppShell title="Applicants Chat" subtitle="One live space to ask, update, and help each other.">
+      <AppShell title={copy.title} subtitle={copy.subtitle}>
         {runtimeConfig?.features.community_posting_enabled === false ? (
           <div className="mb-4">
-            <RuntimeNotice message="Community posting is temporarily unavailable. You can still read the room while we stabilize moderation or infrastructure." />
+            <RuntimeNotice message={copy.postingUnavailableLong} />
           </div>
         ) : null}
+
         {loadingRooms ? (
           <RoomSkeleton />
         ) : (
@@ -246,8 +256,8 @@ export default function CommunityPage() {
                   <Users2 className="h-4 w-4 text-black" />
                 </span>
                 <div>
-                  <h2 className="text-lg font-black text-black">Rooms</h2>
-                  <p className="text-sm text-black/55">Start simple. Keep it active.</p>
+                  <h2 className="text-lg font-black text-black">{copy.rooms}</h2>
+                  <p className="text-sm text-black/55">{copy.roomsHint}</p>
                 </div>
               </div>
 
@@ -289,16 +299,18 @@ export default function CommunityPage() {
                         <MessageSquare className="h-5 w-5 text-black" />
                         <h2 className="text-2xl font-black text-black">{activeRoom.title}</h2>
                       </div>
-                      <p className="mt-1 text-sm text-black/60">{activeRoom.member_count} participants</p>
+                      <p className="mt-1 text-sm text-black/60">
+                        {copy.participants.replace("{count}", String(activeRoom.member_count))}
+                      </p>
                     </div>
                     <div className="rounded-full border border-black/10 bg-[#DAF5F0] px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-black/70">
-                      Applicants chat
+                      {copy.applicantsChat}
                     </div>
                   </div>
 
                   <div className="mt-4 rounded-2xl border border-black/10 bg-[#DAF5F0]/20 px-4 py-3 text-sm text-black/70">
-                    <span className="font-semibold text-black">Pinned:</span>{" "}
-                    {activeRoom.pinned_prompt || "Представьтесь и напишите, на какой вы стадии поступления."}
+                    <span className="font-semibold text-black">{copy.pinned}</span>{" "}
+                    {activeRoom.pinned_prompt || copy.defaultPinned}
                   </div>
 
                   <div className="mt-4 min-h-0 flex-1 overflow-y-auto rounded-2xl border border-black/10 bg-[#FFFDFC] p-3">
@@ -322,10 +334,8 @@ export default function CommunityPage() {
                                 {message.author.status_badge}
                               </span>
                               {message.tag ? (
-                                <span
-                                  className={`rounded-full border px-2 py-0.5 text-[11px] font-semibold ${TAG_STYLES[message.tag]}`}
-                                >
-                                  {TAGS.find((tag) => tag.value === message.tag)?.label || message.tag}
+                                <span className={`rounded-full border px-2 py-0.5 text-[11px] font-semibold ${TAG_STYLES[message.tag]}`}>
+                                  {tags.find((tag) => tag.value === message.tag)?.label || message.tag}
                                 </span>
                               ) : null}
                               <span className="ml-auto text-[11px] text-black/45">{formatMessageTime(message.created_at)}</span>
@@ -336,14 +346,16 @@ export default function CommunityPage() {
                       </div>
                     ) : (
                       <div className="rounded-2xl border border-dashed border-black/15 bg-white p-6 text-sm text-black/60">
-                        No messages yet. Start the room with a quick intro or one real admissions question.
+                        {locale === "ru"
+                          ? "Сообщений пока нет. Начни комнату с короткого знакомства или одного реального вопроса по подаче."
+                          : "No messages yet. Start the room with a quick intro or one real admissions question."}
                       </div>
                     )}
                   </div>
 
                   <div className="mt-4 rounded-2xl border border-black/10 bg-white p-4">
                     <div className="flex flex-wrap gap-2">
-                      {TAGS.map((tag) => {
+                      {tags.map((tag) => {
                         const active = selectedTag === tag.value;
                         return (
                           <button
@@ -362,11 +374,12 @@ export default function CommunityPage() {
                         );
                       })}
                     </div>
+
                     <div className="mt-3 flex flex-col gap-3 sm:flex-row">
                       <textarea
                         value={draft}
                         onChange={(event) => setDraft(event.target.value)}
-                        placeholder="Write one useful message. Ask, update, or help someone."
+                        placeholder={copy.messagePlaceholder}
                         rows={3}
                         className="min-h-[104px] flex-1 rounded-2xl border border-black/10 bg-[#FFFDFC] px-4 py-3 text-sm text-black outline-none transition placeholder:text-black/35 focus:border-black/30 disabled:cursor-not-allowed disabled:bg-black/[0.03]"
                         disabled={runtimeConfig?.features.community_posting_enabled === false || sending}
@@ -378,17 +391,16 @@ export default function CommunityPage() {
                         className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border-2 border-black bg-[#FFDB58] px-5 text-sm font-semibold text-black transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 sm:self-end"
                       >
                         <Send className="h-4 w-4" />
-                        {sending ? "Sending..." : "Send"}
+                        {sending ? copy.sending : copy.send}
                       </button>
                     </div>
-                    {statusText ? (
-                      <p className="mt-3 text-sm text-black/55">{statusText}</p>
-                    ) : null}
+
+                    {statusText ? <p className="mt-3 text-sm text-black/55">{statusText}</p> : null}
                   </div>
                 </div>
               ) : (
                 <div className="rounded-2xl border border-dashed border-black/15 bg-white p-6 text-sm text-black/60">
-                  No chat rooms available yet.
+                  {locale === "ru" ? "Комнаты чата пока недоступны." : "No chat rooms available yet."}
                 </div>
               )}
             </section>

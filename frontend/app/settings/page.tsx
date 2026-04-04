@@ -1,6 +1,6 @@
-﻿"use client";
+"use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { ProtectedPage } from "@/components/protected-page";
@@ -10,6 +10,8 @@ import { Loader } from "@/components/loader";
 import { useAuth } from "@/components/auth-provider";
 import { RequiredMark } from "@/components/ui/required-mark";
 import { clearSessionCaches, readSessionCache, SESSION_CACHE_KEYS, SESSION_CACHE_TTLS, writeSessionCache } from "@/lib/session-cache";
+import { getProductCopy } from "@/lib/product-copy";
+import { useLocale } from "@/components/locale-provider";
 
 type ProfileForm = {
   full_name: string;
@@ -55,6 +57,8 @@ const initialForm: ProfileForm = {
 
 export default function SettingsPage() {
   const router = useRouter();
+  const { locale } = useLocale();
+  const copy = getProductCopy(locale).settings;
   const { logout: logoutSession, profile } = useAuth();
   const [form, setForm] = useState<ProfileForm>(initialForm);
   const [oldPassword, setOldPassword] = useState("");
@@ -66,10 +70,15 @@ export default function SettingsPage() {
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [statusText, setStatusText] = useState("");
 
-  async function loadProfile() {
+  const loadProfile = useCallback(async () => {
     const token = getToken();
     if (!token) return;
-    const { payload: cached, isFresh } = readSessionCache<ProfileForm>(SESSION_CACHE_KEYS.settings, SESSION_CACHE_TTLS.settings);
+
+    const { payload: cached, isFresh } = readSessionCache<ProfileForm>(
+      SESSION_CACHE_KEYS.settings,
+      SESSION_CACHE_TTLS.settings,
+    );
+
     if (cached) {
       setForm({ ...initialForm, ...cached });
       setLoading(false);
@@ -83,31 +92,32 @@ export default function SettingsPage() {
     }
 
     try {
-      const profile = await apiFetch<Partial<ProfileForm>>("/api/auth/profile/", { method: "GET" }, token);
+      const profilePayload = await apiFetch<Partial<ProfileForm>>("/api/auth/profile/", { method: "GET" }, token);
       const nextForm = {
         ...initialForm,
-        ...profile,
-        graduation_year: profile.graduation_year ?? null,
+        ...profilePayload,
+        graduation_year: profilePayload.graduation_year ?? null,
       };
       setForm(nextForm);
       writeSessionCache(SESSION_CACHE_KEYS.settings, nextForm);
       setStatusText("");
     } catch (error) {
       if (!cached) {
-        setStatusText(error instanceof Error ? error.message : "Не удалось загрузить профиль.");
+        setStatusText(error instanceof Error ? error.message : copy.loadProfileFailed);
       }
     } finally {
       setLoading(false);
     }
-  }
+  }, [copy.loadProfileFailed]);
 
   useEffect(() => {
     void loadProfile();
-  }, []);
+  }, [loadProfile]);
 
   useEffect(() => {
     const token = getToken();
     if (!token || !profile?.is_staff) return;
+
     setAnalyticsLoading(true);
     void apiFetch<AnalyticsSummary>("/api/analytics/summary/", { method: "GET" }, token)
       .then((payload) => {
@@ -130,14 +140,15 @@ export default function SettingsPage() {
     event.preventDefault();
     const token = getToken();
     if (!token) return;
+
     setSavingProfile(true);
     try {
       await apiFetch("/api/auth/profile/", { method: "PUT", body: JSON.stringify(form) }, token);
       writeSessionCache(SESSION_CACHE_KEYS.settings, form);
       clearSessionCaches([SESSION_CACHE_KEYS.dashboard, SESSION_CACHE_KEYS.activities, SESSION_CACHE_KEYS.onboarding]);
-      setStatusText("Профиль обновлен.");
+      setStatusText(copy.profileUpdated);
     } catch (error) {
-      setStatusText(error instanceof Error ? error.message : "Не удалось сохранить профиль.");
+      setStatusText(error instanceof Error ? error.message : copy.saveProfileFailed);
     } finally {
       setSavingProfile(false);
     }
@@ -147,21 +158,27 @@ export default function SettingsPage() {
     event.preventDefault();
     const token = getToken();
     if (!token) return;
+
     if (!oldPassword || !newPassword) {
-      setStatusText("Заполните текущий и новый пароль.");
+      setStatusText(copy.fillPasswords);
       return;
     }
+
     setChangingPassword(true);
     try {
-      await apiFetch("/api/auth/change-password/", {
-        method: "POST",
-        body: JSON.stringify({ old_password: oldPassword, new_password: newPassword }),
-      }, token);
+      await apiFetch(
+        "/api/auth/change-password/",
+        {
+          method: "POST",
+          body: JSON.stringify({ old_password: oldPassword, new_password: newPassword }),
+        },
+        token,
+      );
       setOldPassword("");
       setNewPassword("");
-      setStatusText("Пароль изменен.");
+      setStatusText(copy.passwordUpdated);
     } catch (error) {
-      setStatusText(error instanceof Error ? error.message : "Не удалось изменить пароль.");
+      setStatusText(error instanceof Error ? error.message : copy.changePasswordFailed);
     } finally {
       setChangingPassword(false);
     }
@@ -174,40 +191,61 @@ export default function SettingsPage() {
 
   return (
     <ProtectedPage>
-      <AppShell title="Настройки" subtitle="Профиль, безопасность и управление сессией.">
+      <AppShell title={copy.title} subtitle={copy.subtitle}>
         <div className="grid gap-5 xl:grid-cols-2">
           <section className="glass rounded-2xl p-5">
-            <h2 className="text-lg font-semibold">Профиль</h2>
+            <h2 className="text-lg font-semibold">{copy.profile}</h2>
             {loading ? (
               <div className="mt-4 flex justify-center py-6">
-                <Loader size="md" label="Загружаем профиль..." />
+                <Loader size="md" label={copy.loadingProfile} />
               </div>
             ) : (
               <form onSubmit={saveProfile} className="mt-4 grid gap-3">
                 <label className="text-sm text-white/70">
-                  Полное имя
-                  <input value={form.full_name} onChange={(event) => setForm((prev) => ({ ...prev, full_name: event.target.value }))} className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2" />
-                </label>
-                <label className="text-sm text-white/70">
-                  Страна
-                  <input value={form.country} onChange={(event) => setForm((prev) => ({ ...prev, country: event.target.value }))} className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2" />
-                </label>
-                <label className="text-sm text-white/70">
-                  Школа
-                  <input value={form.school_name} onChange={(event) => setForm((prev) => ({ ...prev, school_name: event.target.value }))} className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2" />
-                </label>
-                <label className="text-sm text-white/70">
-                  Год выпуска
+                  {copy.fullName}
                   <input
-                    type="number"
-                    value={form.graduation_year ?? ""}
-                    onChange={(event) => setForm((prev) => ({ ...prev, graduation_year: event.target.value ? Number(event.target.value) : null }))}
+                    value={form.full_name}
+                    onChange={(event) => setForm((prev) => ({ ...prev, full_name: event.target.value }))}
                     className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2"
                   />
                 </label>
                 <label className="text-sm text-white/70">
-                  Intended major
-                  <input value={form.intended_major} onChange={(event) => setForm((prev) => ({ ...prev, intended_major: event.target.value }))} className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2" />
+                  {copy.country}
+                  <input
+                    value={form.country}
+                    onChange={(event) => setForm((prev) => ({ ...prev, country: event.target.value }))}
+                    className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2"
+                  />
+                </label>
+                <label className="text-sm text-white/70">
+                  {copy.school}
+                  <input
+                    value={form.school_name}
+                    onChange={(event) => setForm((prev) => ({ ...prev, school_name: event.target.value }))}
+                    className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2"
+                  />
+                </label>
+                <label className="text-sm text-white/70">
+                  {copy.graduationYear}
+                  <input
+                    type="number"
+                    value={form.graduation_year ?? ""}
+                    onChange={(event) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        graduation_year: event.target.value ? Number(event.target.value) : null,
+                      }))
+                    }
+                    className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2"
+                  />
+                </label>
+                <label className="text-sm text-white/70">
+                  {copy.intendedMajor}
+                  <input
+                    value={form.intended_major}
+                    onChange={(event) => setForm((prev) => ({ ...prev, intended_major: event.target.value }))}
+                    className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2"
+                  />
                 </label>
                 <button
                   type="submit"
@@ -215,17 +253,18 @@ export default function SettingsPage() {
                   className="mt-1 inline-flex w-fit items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold hover:bg-blue-500 disabled:opacity-70"
                 >
                   {savingProfile ? <Loader size="sm" /> : null}
-                  <span>{savingProfile ? "Сохраняем..." : "Сохранить профиль"}</span>
+                  <span>{savingProfile ? copy.savingProfile : copy.saveProfile}</span>
                 </button>
               </form>
             )}
           </section>
 
           <section className="glass rounded-2xl p-5">
-            <h2 className="text-lg font-semibold">Безопасность</h2>
+            <h2 className="text-lg font-semibold">{copy.security}</h2>
             <form onSubmit={changePassword} className="mt-4 grid gap-3">
               <label className="text-sm text-white/70">
-                Текущий пароль<RequiredMark />
+                {copy.currentPassword}
+                <RequiredMark />
                 <input
                   type="password"
                   value={oldPassword}
@@ -235,7 +274,8 @@ export default function SettingsPage() {
                 />
               </label>
               <label className="text-sm text-white/70">
-                Новый пароль<RequiredMark />
+                {copy.newPassword}
+                <RequiredMark />
                 <input
                   type="password"
                   value={newPassword}
@@ -250,62 +290,66 @@ export default function SettingsPage() {
                 className="inline-flex w-fit items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold hover:bg-blue-500 disabled:opacity-70"
               >
                 {changingPassword ? <Loader size="sm" /> : null}
-                <span>{changingPassword ? "Обновляем..." : "Сменить пароль"}</span>
+                <span>{changingPassword ? copy.changingPassword : copy.changePassword}</span>
               </button>
             </form>
 
             <div className="mt-8 border-t border-white/10 pt-5">
-              <h3 className="text-sm font-semibold uppercase tracking-wide text-white/65">Сессия</h3>
-              <p className="mt-2 text-sm text-white/70">Выход очищает локальные токены и cookie, затем возвращает на landing.</p>
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-white/65">{copy.session}</h3>
+              <p className="mt-2 text-sm text-white/70">{copy.logoutHint}</p>
               <button onClick={handleLogout} className="mt-3 rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-sm hover:bg-white/10">
-                Выйти из аккаунта
+                {copy.logout}
               </button>
             </div>
 
             <div className="mt-8 border-t border-white/10 pt-5">
-              <h3 className="text-sm font-semibold uppercase tracking-wide text-white/65">Legal</h3>
-              <p className="mt-2 text-sm text-white/70">Privacy terms and data handling details.</p>
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-white/65">{copy.legal}</h3>
+              <p className="mt-2 text-sm text-white/70">{copy.legalHint}</p>
               <a
                 href="/privacy-policy"
                 className="mt-3 inline-flex rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-sm hover:bg-white/10"
               >
-                Privacy Policy
+                {copy.privacyPolicy}
               </a>
             </div>
           </section>
 
           {profile?.is_staff ? (
             <section className="glass rounded-2xl p-5 xl:col-span-2">
-              <h2 className="text-lg font-semibold">Beta analytics</h2>
+              <h2 className="text-lg font-semibold">{copy.betaAnalytics}</h2>
               {analyticsLoading ? (
                 <div className="mt-4 flex justify-center py-6">
-                  <Loader size="md" label="Loading analytics..." />
+                  <Loader size="md" label={copy.loadingAnalytics} />
                 </div>
               ) : analytics ? (
                 <div className="mt-4 grid gap-4">
                   <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-7">
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-3"><p className="text-xs text-white/55">Users</p><p className="mt-1 text-2xl font-semibold">{analytics.totals.registered_users}</p></div>
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-3"><p className="text-xs text-white/55">Signup started</p><p className="mt-1 text-2xl font-semibold">{analytics.totals.signup_started}</p></div>
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-3"><p className="text-xs text-white/55">Signup completed</p><p className="mt-1 text-2xl font-semibold">{analytics.totals.signup_completed}</p></div>
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-3"><p className="text-xs text-white/55">Onboarding</p><p className="mt-1 text-2xl font-semibold">{analytics.totals.onboarding_completed}</p></div>
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-3"><p className="text-xs text-white/55">First task</p><p className="mt-1 text-2xl font-semibold">{analytics.totals.first_task_created}</p></div>
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-3"><p className="text-xs text-white/55">First university</p><p className="mt-1 text-2xl font-semibold">{analytics.totals.first_university_added}</p></div>
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-3"><p className="text-xs text-white/55">First essay</p><p className="mt-1 text-2xl font-semibold">{analytics.totals.first_essay_started}</p></div>
+                    <div className="rounded-xl border border-white/10 bg-white/5 p-3"><p className="text-xs text-white/55">{locale === "ru" ? "Пользователи" : "Users"}</p><p className="mt-1 text-2xl font-semibold">{analytics.totals.registered_users}</p></div>
+                    <div className="rounded-xl border border-white/10 bg-white/5 p-3"><p className="text-xs text-white/55">{locale === "ru" ? "Начали регистрацию" : "Signup started"}</p><p className="mt-1 text-2xl font-semibold">{analytics.totals.signup_started}</p></div>
+                    <div className="rounded-xl border border-white/10 bg-white/5 p-3"><p className="text-xs text-white/55">{locale === "ru" ? "Завершили регистрацию" : "Signup completed"}</p><p className="mt-1 text-2xl font-semibold">{analytics.totals.signup_completed}</p></div>
+                    <div className="rounded-xl border border-white/10 bg-white/5 p-3"><p className="text-xs text-white/55">{locale === "ru" ? "Онбординг" : "Onboarding"}</p><p className="mt-1 text-2xl font-semibold">{analytics.totals.onboarding_completed}</p></div>
+                    <div className="rounded-xl border border-white/10 bg-white/5 p-3"><p className="text-xs text-white/55">{locale === "ru" ? "Первая задача" : "First task"}</p><p className="mt-1 text-2xl font-semibold">{analytics.totals.first_task_created}</p></div>
+                    <div className="rounded-xl border border-white/10 bg-white/5 p-3"><p className="text-xs text-white/55">{locale === "ru" ? "Первый университет" : "First university"}</p><p className="mt-1 text-2xl font-semibold">{analytics.totals.first_university_added}</p></div>
+                    <div className="rounded-xl border border-white/10 bg-white/5 p-3"><p className="text-xs text-white/55">{locale === "ru" ? "Первое эссе" : "First essay"}</p><p className="mt-1 text-2xl font-semibold">{analytics.totals.first_essay_started}</p></div>
                   </div>
                   <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                    <h3 className="text-sm font-semibold uppercase tracking-wide text-white/65">Recent events</h3>
+                    <h3 className="text-sm font-semibold uppercase tracking-wide text-white/65">{copy.recentEvents}</h3>
                     <div className="mt-3 space-y-2">
-                      {analytics.recent_events.length ? analytics.recent_events.map((event, index) => (
-                        <div key={`${event.name}-${event.created_at}-${index}`} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-white/10 bg-black/10 px-3 py-2 text-sm text-white/80">
-                          <span className="font-medium">{event.name}</span>
-                          <span>{event.user__username || event.user__email || event.client_id || "anonymous"}</span>
-                        </div>
-                      )) : <p className="text-sm text-white/65">No events recorded yet.</p>}
+                      {analytics.recent_events.length ? (
+                        analytics.recent_events.map((event, index) => (
+                          <div key={`${event.name}-${event.created_at}-${index}`} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-white/10 bg-black/10 px-3 py-2 text-sm text-white/80">
+                            <span className="font-medium">{event.name}</span>
+                            <span>{event.user__username || event.user__email || event.client_id || (locale === "ru" ? "анонимно" : "anonymous")}</span>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-sm text-white/65">{copy.noEvents}</p>
+                      )}
                     </div>
                   </div>
                 </div>
               ) : (
-                <p className="mt-4 text-sm text-white/70">Analytics summary is unavailable right now.</p>
+                <p className="mt-4 text-sm text-white/70">{copy.analyticsUnavailable}</p>
               )}
             </section>
           ) : null}
@@ -316,4 +360,3 @@ export default function SettingsPage() {
     </ProtectedPage>
   );
 }
-

@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect } from "react";
 import { Search } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
+import { useLocale } from "@/components/locale-provider";
 import { ProtectedPage } from "@/components/protected-page";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
@@ -14,8 +15,11 @@ import { UniversitiesTabs } from "@/components/universities/universities-tabs";
 import { PAGE_SIZE_OPTIONS } from "@/app/universities/constants";
 import { chanceLabel } from "@/app/universities/utils";
 import { useUniversitiesPage } from "@/app/universities/use-universities-page";
+import { getProductCopy } from "@/lib/product-copy";
 
 function UniversitiesPageContent() {
+  const { locale } = useLocale();
+  const copy = getProductCopy(locale).universities;
   const router = useRouter();
   const searchParams = useSearchParams();
   const state = useUniversitiesPage();
@@ -30,7 +34,7 @@ function UniversitiesPageContent() {
 
   return (
     <ProtectedPage>
-      <AppShell title="Universities" subtitle="My list and discover flow in one screen.">
+      <AppShell title={copy.title} subtitle={copy.subtitle}>
         <section className="surface-panel rounded-[28px] p-5 sm:p-6">
           <UniversitiesTabs
             activeTab={state.activeTab}
@@ -84,7 +88,7 @@ function UniversitiesPageContent() {
                     <input
                       value={state.searchQuery}
                       onChange={(event) => state.setSearchQuery(event.target.value)}
-                      placeholder="Search universities by name"
+                      placeholder={copy.searchPlaceholder}
                       className="w-full rounded-2xl border border-black/15 bg-white py-2.5 pl-10 pr-4 text-sm text-black outline-none transition placeholder:text-black/40 focus:border-black/30 focus:bg-[#DAF5F0]/20"
                     />
                   </label>
@@ -95,19 +99,19 @@ function UniversitiesPageContent() {
                       state.setChanceBandFilter(nextChanceBand);
                     }}
                     options={[
-                      { value: "", label: chanceLabel("") },
-                      { value: "safety", label: chanceLabel("safety") },
-                      { value: "likely", label: chanceLabel("likely") },
-                      { value: "target", label: chanceLabel("target") },
-                      { value: "reach", label: chanceLabel("reach") },
-                      { value: "high_reach", label: chanceLabel("high_reach") },
+                      { value: "", label: chanceLabel("", locale) },
+                      { value: "safety", label: chanceLabel("safety", locale) },
+                      { value: "likely", label: chanceLabel("likely", locale) },
+                      { value: "target", label: chanceLabel("target", locale) },
+                      { value: "reach", label: chanceLabel("reach", locale) },
+                      { value: "high_reach", label: chanceLabel("high_reach", locale) },
                     ]}
                     className="min-w-[190px] border border-black/15 bg-white px-4 py-2.5 text-sm font-semibold"
-                    ariaLabel="Chance band"
+                    ariaLabel={copy.chanceBand}
                   />
                 </div>
                 <div className="text-sm text-black/60">
-                  {state.loadingDiscover ? "Searching..." : `Results across all pages: ${state.discoverCount}`}
+                  {state.loadingDiscover ? copy.searchResults : copy.resultsAcrossPages.replace("{count}", String(state.discoverCount))}
                 </div>
               </div>
 
@@ -122,7 +126,7 @@ function UniversitiesPageContent() {
               />
 
               <div className="mt-3 flex items-center justify-between text-sm text-black/70">
-                <span>Total: {state.discoverCount}</span>
+                <span>{copy.total.replace("{count}", String(state.discoverCount))}</span>
                 <div className="flex items-center gap-2">
                   <Button
                     size="sm"
@@ -130,7 +134,7 @@ function UniversitiesPageContent() {
                     onClick={() => void state.loadDiscover(Math.max(1, state.discoverPage - 1), state.filters, state.pageSize)}
                     disabled={state.discoverPage <= 1 || state.loadingDiscover}
                   >
-                    Back
+                    {copy.back}
                   </Button>
                   <span>
                     {state.discoverPage} / {state.discoverTotalPages}
@@ -143,7 +147,7 @@ function UniversitiesPageContent() {
                     }
                     disabled={state.discoverPage >= state.discoverTotalPages || state.loadingDiscover}
                   >
-                    Next
+                    {copy.next}
                   </Button>
                 </div>
               </div>

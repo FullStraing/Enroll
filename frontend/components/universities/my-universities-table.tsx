@@ -26,8 +26,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { UniversityLogo } from "@/components/universities/university-logo";
 import { STATUS_OPTIONS } from "@/app/universities/constants";
 import type { ActionMenuState, MyUniversitiesColumnId, MyUniversitiesSortId, StudentUniversity } from "@/app/universities/types";
-import { categorySelectToneClass, getNetCostValue, money, rowStatusTone, statusSelectTone, sumKnown } from "@/app/universities/utils";
+import { categoryLabelForLocale, categorySelectToneClass, getNetCostValue, money, rowStatusTone, statusSelectTone, sumKnown } from "@/app/universities/utils";
 import { formatDateShort } from "@/lib/date-format";
+import { useLocale } from "@/components/locale-provider";
+import { getProductCopy } from "@/lib/product-copy";
 
 type MyUniversitiesTableProps = {
   loading: boolean;
@@ -374,6 +376,8 @@ export function MyUniversitiesTable({
   onOpenUniversity,
   onRemove,
 }: MyUniversitiesTableProps) {
+  const { locale } = useLocale();
+  const copy = getProductCopy(locale).universities;
   const appFeeSummary = sumKnown(items.map((item) => item.university.application_fee));
   const [tableSettingsOpen, setTableSettingsOpen] = useState(false);
   const [tableSettingsSection, setTableSettingsSection] = useState<TableSettingsSection>("columns");
@@ -382,14 +386,88 @@ export function MyUniversitiesTable({
   const tableSettingsRef = useRef<HTMLDivElement | null>(null);
   const tableSettingsAnchorRef = useRef<HTMLDivElement | null>(null);
   const [tableSettingsAnchorRect, setTableSettingsAnchorRect] = useState<DOMRect | null>(null);
+  const statusLabels: Record<StudentUniversity["status"], string> =
+    locale === "ru"
+      ? {
+          planning: "Планирование",
+          preparing: "Подготовка",
+          applying: "Подача",
+          submitted: "Отправлено",
+          admitted: "Зачислен",
+          rejected: "Отказ",
+        }
+      : {
+          planning: "Planning",
+          preparing: "Preparing",
+          applying: "Applying",
+          submitted: "Submitted",
+          admitted: "Admitted",
+          rejected: "Rejected",
+        };
+
+  const localizedColumns = useMemo<ColumnDefinition[]>(() => {
+    return COLUMN_DEFINITIONS.map((column) => {
+      switch (column.id) {
+        case "category":
+          return { ...column, label: locale === "ru" ? "Категория" : "Category", header: locale === "ru" ? "Категория" : "Category" };
+        case "status":
+          return { ...column, label: locale === "ru" ? "Статус" : "Status", header: locale === "ru" ? "Статус" : "Status" };
+        case "acceptance":
+          return { ...column, label: locale === "ru" ? "Шанс поступления" : "Acceptance rate", header: locale === "ru" ? "Шанс" : "Acceptance" };
+        case "sat":
+          return { ...column, label: "SAT", header: "SAT" };
+        case "tuition":
+          return { ...column, label: locale === "ru" ? "Стоимость" : "Tuition", header: locale === "ru" ? "Стоимость" : "Tuition" };
+        case "scholarship":
+          return { ...column, label: locale === "ru" ? "Стипендия" : "Scholarship", header: locale === "ru" ? "Стипендия" : "Scholarship" };
+        case "netCost":
+          return { ...column, label: locale === "ru" ? "Net cost" : "Net cost", header: locale === "ru" ? "Net cost" : "Net cost" };
+        case "appFee":
+          return { ...column, label: locale === "ru" ? "Сбор" : "App fee", header: locale === "ru" ? "Сбор" : "App fee" };
+        case "deadline":
+          return { ...column, label: locale === "ru" ? "Дедлайн" : "Deadline", header: locale === "ru" ? "Дедлайн" : "Deadline" };
+        default:
+          return column;
+      }
+    });
+  }, [locale]);
+
+  const localizedSortDefinitions = useMemo<SortDefinition[]>(() => {
+    return SORT_DEFINITIONS.map((definition) => {
+      switch (definition.id) {
+        case "university":
+          return { ...definition, label: copy.university };
+        case "category":
+          return { ...definition, label: locale === "ru" ? "Категория" : "Category" };
+        case "status":
+          return { ...definition, label: locale === "ru" ? "Статус" : "Status" };
+        case "acceptance":
+          return { ...definition, label: locale === "ru" ? "Шанс поступления" : "Acceptance rate" };
+        case "sat":
+          return { ...definition, label: "SAT" };
+        case "tuition":
+          return { ...definition, label: locale === "ru" ? "Стоимость" : "Tuition" };
+        case "scholarship":
+          return { ...definition, label: locale === "ru" ? "Стипендия" : "Scholarship" };
+        case "netCost":
+          return { ...definition, label: locale === "ru" ? "Net cost" : "Net cost" };
+        case "appFee":
+          return { ...definition, label: locale === "ru" ? "Сбор" : "App fee" };
+        case "deadline":
+          return { ...definition, label: locale === "ru" ? "Дедлайн" : "Deadline" };
+        default:
+          return definition;
+      }
+    });
+  }, [copy.university, locale]);
 
   const activeColumns = useMemo(() => {
     const visibleSet = new Set(visibleColumns);
-    return COLUMN_DEFINITIONS.filter((column) => visibleSet.has(column.id));
-  }, [visibleColumns]);
+    return localizedColumns.filter((column) => visibleSet.has(column.id));
+  }, [localizedColumns, visibleColumns]);
 
   const sortedItems = useMemo(() => {
-    const sortDefinition = SORT_DEFINITIONS.find((definition) => definition.id === sortState.column);
+    const sortDefinition = localizedSortDefinitions.find((definition) => definition.id === sortState.column);
     if (!sortDefinition) return items;
 
     return [...items].sort((left, right) => {
@@ -401,7 +479,7 @@ export function MyUniversitiesTable({
       if (valueResult !== 0) return valueResult;
       return left.sort_order - right.sort_order;
     });
-  }, [items, sortState]);
+  }, [items, localizedSortDefinitions, sortState]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -468,11 +546,11 @@ export function MyUniversitiesTable({
   if (items.length === 0) {
     return (
       <Card>
-        <CardTitle className="text-lg">My list is empty</CardTitle>
-        <CardDescription className="mt-2">Find universities in the Discover tab and add them to your list.</CardDescription>
+        <CardTitle className="text-lg">{copy.emptyListTitle}</CardTitle>
+        <CardDescription className="mt-2">{copy.emptyListBody}</CardDescription>
         <div className="mt-3">
           <Button size="sm" onClick={onStartDiscover}>
-            Start building your university list
+            {copy.openDiscover}
           </Button>
         </div>
       </Card>
@@ -496,7 +574,7 @@ export function MyUniversitiesTable({
             aria-haspopup="dialog"
           >
             <SlidersHorizontal className="h-4 w-4" />
-            Edit table
+            {copy.editTable}
           </Button>
           </div>
 
@@ -504,8 +582,8 @@ export function MyUniversitiesTable({
             <TableSettingsPopup anchorRect={tableSettingsAnchorRect}>
               <div className="flex items-center justify-between gap-2 border-b border-black/10 pb-3">
                 <div>
-                  <p className="text-sm font-semibold text-black">Edit table</p>
-                  <p className="text-xs text-black/55">Control how your university list is displayed.</p>
+                  <p className="text-sm font-semibold text-black">{copy.editTable}</p>
+                  <p className="text-xs text-black/55">{copy.editTableDescription}</p>
                 </div>
               </div>
 
@@ -522,7 +600,7 @@ export function MyUniversitiesTable({
                           : "border-black/15 bg-white text-black/55 hover:border-black/40"
                       }`}
                     >
-                      {section === "columns" ? "Columns" : "Sort"}
+                      {section === "columns" ? copy.columns : copy.sort}
                     </button>
                   );
                 })}
@@ -531,7 +609,7 @@ export function MyUniversitiesTable({
               {tableSettingsSection === "columns" ? (
                 <div className="mt-3 flex min-h-0 flex-1 flex-col space-y-2">
                   <div className="flex items-center justify-between">
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-black/45">Visible columns</p>
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-black/45">{copy.visibleColumns}</p>
                     <button
                       type="button"
                       onClick={() => setVisibleColumns(MY_UNIVERSITIES_DEFAULT_COLUMNS)}
@@ -573,7 +651,7 @@ export function MyUniversitiesTable({
               {tableSettingsSection === "sort" ? (
                 <div className="mt-3 flex min-h-0 flex-1 flex-col space-y-3 overflow-y-auto pr-1">
                   <div className="flex items-center justify-between">
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-black/45">Sort rows</p>
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-black/45">{copy.sortRows}</p>
                     <button
                       type="button"
                       onClick={() => setSortState(DEFAULT_SORT_STATE)}
@@ -595,13 +673,13 @@ export function MyUniversitiesTable({
                             : "border-black/15 bg-white text-black/55 hover:border-black/40"
                         }`}
                       >
-                        {direction === "asc" ? "Ascending" : "Descending"}
+                        {direction === "asc" ? copy.ascending : copy.descending}
                       </button>
                     ))}
                   </div>
 
                   <div className="grid gap-2">
-                    {SORT_DEFINITIONS.map((definition) => {
+                    {localizedSortDefinitions.map((definition) => {
                       const checked = sortState.column === definition.id;
                       return (
                         <button
@@ -637,13 +715,13 @@ export function MyUniversitiesTable({
       <table className="min-w-full text-left text-sm">
         <thead>
           <tr className="border-b border-black/15 text-black/60">
-            <th className="px-2 py-2 font-semibold">University</th>
+            <th className="px-2 py-2 font-semibold">{copy.university}</th>
             {activeColumns.map((column) => (
               <th key={column.id} className="px-2 py-2 font-semibold">
                 {column.header}
               </th>
             ))}
-            <th className="px-2 py-2 font-semibold">Actions</th>
+            <th className="px-2 py-2 font-semibold">{copy.actions}</th>
           </tr>
         </thead>
         <tbody>
@@ -665,8 +743,8 @@ export function MyUniversitiesTable({
                     type="button"
                     onPointerDown={(event) => onBeginDrag(event, item.id)}
                     className="cursor-grab rounded-md border border-black/20 bg-white px-1.5 py-1 text-black/60 active:cursor-grabbing"
-                    aria-label={`Drag ${item.university.name}`}
-                    title="Drag to reorder"
+                    aria-label={copy.dragLabel.replace("{name}", item.university.name)}
+                    title={copy.dragTitle}
                   >
                     <GripVertical className="h-4 w-4" />
                   </button>
@@ -684,13 +762,13 @@ export function MyUniversitiesTable({
                         className={`h-10 rounded-xl border-2 px-3 py-2 text-sm font-semibold text-black shadow-[0_2px_0_#000] ${categorySelectToneClass(item.category)}`}
                         disabled={updatingItemId === item.id}
                         options={[
-                          { value: "high_reach", label: "High Reach" },
-                          { value: "reach", label: "Reach" },
-                          { value: "target", label: "Target" },
-                          { value: "likely", label: "Likely" },
-                          { value: "safety", label: "Safety" },
+                          { value: "high_reach", label: categoryLabelForLocale("high_reach", locale) },
+                          { value: "reach", label: categoryLabelForLocale("reach", locale) },
+                          { value: "target", label: categoryLabelForLocale("target", locale) },
+                          { value: "likely", label: categoryLabelForLocale("likely", locale) },
+                          { value: "safety", label: categoryLabelForLocale("safety", locale) },
                         ]}
-                        ariaLabel={`Category for ${item.university.name}`}
+                        ariaLabel={`${copy.columns}: ${item.university.name}`}
                       />
                     </div>
                   ) : column.id === "status" ? (
@@ -700,8 +778,8 @@ export function MyUniversitiesTable({
                         onChange={(value) => onUpdateStatus(item.id, value as StudentUniversity["status"])}
                         className={`h-10 rounded-xl border-2 px-3 py-2 text-sm font-semibold text-black shadow-[0_2px_0_#000] ${statusSelectTone(item.status)}`}
                         disabled={updatingItemId === item.id}
-                        options={STATUS_OPTIONS.map((statusOption) => ({ value: statusOption.value, label: statusOption.label }))}
-                        ariaLabel={`Status for ${item.university.name}`}
+                        options={STATUS_OPTIONS.map((statusOption) => ({ value: statusOption.value, label: statusLabels[statusOption.value] }))}
+                        ariaLabel={`${copy.sort}: ${item.university.name}`}
                       />
                     </div>
                   ) : (
@@ -711,7 +789,7 @@ export function MyUniversitiesTable({
               ))}
               <td className="px-2 py-3">
                 <div className="relative inline-block" data-actions-menu-root>
-                  <Button size="sm" variant="outline" onClick={(event) => onOpenActionMenu(event, item.id)} aria-label="Open actions">
+                  <Button size="sm" variant="outline" onClick={(event) => onOpenActionMenu(event, item.id)} aria-label={copy.openActions}>
                     <MoreVertical className="h-4 w-4" />
                   </Button>
                   {actionMenu?.itemId === item.id ? (
@@ -721,14 +799,14 @@ export function MyUniversitiesTable({
                         onClick={() => onOpenUniversity(item.university.id)}
                         className="block w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-black/5"
                       >
-                        Open university page
+                        {copy.openUniversityPage}
                       </button>
                       <button
                         type="button"
                         onClick={() => onOpenUniversity(item.university.id)}
                         className="block w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-black/5"
                       >
-                        Edit details
+                        {copy.editDetails}
                       </button>
                       <button
                         type="button"
@@ -736,7 +814,7 @@ export function MyUniversitiesTable({
                         disabled={updatingItemId === item.id}
                         className="block w-full rounded-lg px-3 py-2 text-left text-sm text-rose-700 hover:bg-rose-50 disabled:opacity-60"
                       >
-                        Remove from list
+                        {copy.removeFromList}
                       </button>
                     </ActionMenuPopup>
                   ) : null}
@@ -749,10 +827,12 @@ export function MyUniversitiesTable({
 
       <div className="grid gap-3 md:grid-cols-1">
         <div className="surface-card rounded-2xl px-4 py-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-black/55">Application Fees</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-black/55">{copy.applicationFees}</p>
           <p className="mt-2 text-2xl font-black text-black">{money(appFeeSummary.total)}</p>
           <p className="mt-1 text-xs text-black/55">
-            {appFeeSummary.missing ? `N/A for ${appFeeSummary.missing} universities` : `All ${appFeeSummary.known} universities included`}
+            {appFeeSummary.missing
+              ? copy.applicationFeesMissing.replace("{count}", String(appFeeSummary.missing))
+              : copy.applicationFeesAll.replace("{count}", String(appFeeSummary.known))}
           </p>
         </div>
       </div>

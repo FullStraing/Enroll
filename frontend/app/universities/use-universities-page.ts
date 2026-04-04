@@ -16,10 +16,14 @@ import { buildQuery, chanceBandToStudentCategory, filtersHash } from "@/app/univ
 import { apiFetch } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import { getUserScopedSessionCacheKey } from "@/lib/session-cache";
+import { useLocale } from "@/components/locale-provider";
+import { getProductCopy } from "@/lib/product-copy";
 
 type StatusAction = { label: string; onClick: () => void } | null;
 
 export function useUniversitiesPage() {
+  const { locale } = useLocale();
+  const copy = getProductCopy(locale).universities;
   const [activeTab, setActiveTab] = useState<"my" | "discover">("my");
 
   const [myItems, setMyItems] = useState<StudentUniversity[]>([]);
@@ -75,7 +79,7 @@ export function useUniversitiesPage() {
         window.sessionStorage.setItem(scopedUiKey(MY_UNIVERSITIES_CACHE_KEY), JSON.stringify({ items }));
       }
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Failed to load your universities.");
+      setStatus(error instanceof Error ? error.message : copy.loadMineFailed);
     } finally {
       if (!silent) setLoadingMy(false);
     }
@@ -114,11 +118,11 @@ export function useUniversitiesPage() {
         );
       }
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Failed to load universities.");
+      setStatus(error instanceof Error ? error.message : copy.loadDiscoverFailed);
     } finally {
       if (!silent) setLoadingDiscover(false);
     }
-  }, [discoverPage, filters, pageSize, scopedUiKey]);
+  }, [copy.loadDiscoverFailed, discoverPage, filters, pageSize, scopedUiKey]);
 
   async function patchMyUniversity(itemId: number, payload: Partial<Pick<StudentUniversity, "category" | "status" | "sort_order">>) {
     const token = getToken();
@@ -129,7 +133,7 @@ export function useUniversitiesPage() {
       await apiFetch(`/api/my-universities/${itemId}/`, { method: "PATCH", body: JSON.stringify(payload) }, token);
       setMyItems((prev) => prev.map((item) => (item.id === itemId ? { ...item, ...payload } : item)));
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Failed to update university.");
+      setStatus(error instanceof Error ? error.message : copy.updateFailed);
     } finally {
       setUpdatingItemId(null);
     }
@@ -149,7 +153,7 @@ export function useUniversitiesPage() {
         ),
       );
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Failed to save list order.");
+      setStatus(error instanceof Error ? error.message : copy.saveOrderFailed);
       await loadMyUniversities();
     }
   }
@@ -235,10 +239,10 @@ export function useUniversitiesPage() {
     try {
       await apiFetch(`/api/my-universities/${item.id}/`, { method: "DELETE" }, token);
       await loadMyUniversities();
-      setStatus(`${item.university.name} removed from your list.`);
+      setStatus(copy.removed.replace("{name}", item.university.name));
       setStatusAction(null);
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Failed to remove university.");
+      setStatus(error instanceof Error ? error.message : copy.removeFailed);
     } finally {
       setUpdatingItemId(null);
     }
@@ -263,10 +267,10 @@ export function useUniversitiesPage() {
       );
 
       await loadMyUniversities();
-      setStatus(`Added to your university list: ${university.name}`);
-      setStatusAction({ label: "View my list", onClick: () => setActiveTab("my") });
+      setStatus(copy.added.replace("{name}", university.name));
+      setStatusAction({ label: copy.statusActionViewMyList, onClick: () => setActiveTab("my") });
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Failed to add university.");
+      setStatus(error instanceof Error ? error.message : copy.addFailed);
     } finally {
       setUpdatingItemId(null);
     }

@@ -1,4 +1,6 @@
 import type { ChanceBand, DiscoverFilters, StudentUniversity, University } from "./types";
+import type { Locale } from "@/lib/i18n";
+import { getProductCopy } from "@/lib/product-copy";
 
 const CHANCE_RANGES: Record<Exclude<ChanceBand, "">, { min: number; max: number }> = {
   high_reach: { min: 0, max: 10 },
@@ -26,11 +28,12 @@ export function money(value?: number | string | null): string {
 }
 
 export function categoryLabel(category: StudentUniversity["category"]): string {
-  if (category === "high_reach") return "High Reach";
-  if (category === "reach") return "Reach";
-  if (category === "likely") return "Likely";
-  if (category === "safety") return "Safety";
-  return "Target";
+  return categoryLabelForLocale(category, "en");
+}
+
+export function categoryLabelForLocale(category: StudentUniversity["category"], locale: Locale): string {
+  const labels = getProductCopy(locale).universities.categoryLabels;
+  return labels[category];
 }
 
 export function categoryToneClass(category: StudentUniversity["category"] | ChanceBand): string {
@@ -58,13 +61,14 @@ export function getChanceBandFromAcceptance(acceptanceRate?: number | null): Cha
   return "safety";
 }
 
-export function chanceLabel(chanceBand: ChanceBand): string {
-  if (chanceBand === "high_reach") return "High Reach";
-  if (chanceBand === "reach") return "Reach";
-  if (chanceBand === "target") return "Target";
-  if (chanceBand === "likely") return "Likely";
-  if (chanceBand === "safety") return "Safety";
-  return "All chances";
+export function chanceLabel(chanceBand: ChanceBand, locale: Locale = "en"): string {
+  const labels = getProductCopy(locale).universities.chanceLabels;
+  if (chanceBand === "high_reach") return labels.high_reach;
+  if (chanceBand === "reach") return labels.reach;
+  if (chanceBand === "target") return labels.target;
+  if (chanceBand === "likely") return labels.likely;
+  if (chanceBand === "safety") return labels.safety;
+  return labels.all;
 }
 
 export function chanceBandToStudentCategory(acceptanceRate?: number | null): StudentUniversity["category"] {
