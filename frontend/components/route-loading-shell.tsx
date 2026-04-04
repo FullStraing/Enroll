@@ -90,6 +90,7 @@ function GenericPageLoading() {
 
 export function RouteLoadingShell({
   title,
+  subtitle,
   variant = "generic",
 }: {
   title: string;
@@ -98,7 +99,7 @@ export function RouteLoadingShell({
 }) {
   return (
     <ProtectedPage>
-      <AppShell title={title}>
+      <AppShell title={title} subtitle={subtitle}>
         {variant === "dashboard" ? <DashboardLikeLoading /> : <GenericPageLoading />}
       </AppShell>
     </ProtectedPage>

@@ -14,8 +14,10 @@ import { trackProductEvent } from "@/lib/product-analytics";
 import { RequiredMark } from "@/components/ui/required-mark";
 import { RuntimeNotice } from "@/components/runtime-notice";
 import { fetchRuntimeConfig, type RuntimeConfig } from "@/lib/runtime-config";
+import { useMessages } from "@/components/locale-provider";
 
 export default function RegisterPage() {
+  const messages = useMessages();
   const router = useRouter();
   const { setSession, status, profile } = useAuth();
   const [username, setUsername] = useState("");
@@ -47,9 +49,10 @@ export default function RegisterPage() {
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     if (runtimeConfig?.features.registration_enabled === false) {
-      setError("Registration is temporarily unavailable.");
+      setError(messages.auth.registrationDisabled);
       return;
     }
+
     setPending(true);
     setError("");
     try {
@@ -73,24 +76,27 @@ export default function RegisterPage() {
       }
       window.location.assign(await resolvePostAuthDestination(data.access));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Register failed");
+      setError(err instanceof Error ? err.message : messages.auth.registerFailed);
     } finally {
       setPending(false);
     }
   }
 
-  const handleGoogleTokens = useCallback(async (access: string, refresh: string) => {
-    await setSession(access, refresh);
-    try {
-      await syncStoredIntroQuizToProfile(access);
-    } catch {
-      if (hasPendingStoredIntroQuiz()) {
-        window.location.assign("/intro-quiz?resume=1");
-        return;
+  const handleGoogleTokens = useCallback(
+    async (access: string, refresh: string) => {
+      await setSession(access, refresh);
+      try {
+        await syncStoredIntroQuizToProfile(access);
+      } catch {
+        if (hasPendingStoredIntroQuiz()) {
+          window.location.assign("/intro-quiz?resume=1");
+          return;
+        }
       }
-    }
-    window.location.assign(await resolvePostAuthDestination(access));
-  }, [setSession]);
+      window.location.assign(await resolvePostAuthDestination(access));
+    },
+    [setSession],
+  );
 
   const handleGoogleError = useCallback((message: string) => {
     setError(message);
@@ -98,9 +104,9 @@ export default function RegisterPage() {
 
   const registrationDisabled = runtimeConfig?.features.registration_enabled === false;
   const googleUnavailableMessage = registrationDisabled
-    ? "Google account creation is temporarily unavailable."
+    ? messages.auth.googleCreationUnavailable
     : runtimeConfig?.features.google_auth_enabled === false
-      ? "Google sign-in is temporarily unavailable."
+      ? messages.auth.googleUnavailable
       : undefined;
 
   return (
@@ -108,51 +114,67 @@ export default function RegisterPage() {
       <form onSubmit={onSubmit} className="glass w-full rounded-3xl p-6">
         <div className="mb-4 flex justify-end">
           <Link href="/" className="text-sm font-semibold text-black/70 underline underline-offset-2 transition hover:text-black">
-            На главную
+            {messages.common.backHome}
           </Link>
         </div>
-        <h1 className="text-2xl font-semibold">Регистрация</h1>
+
+        <h1 className="text-2xl font-semibold">{messages.auth.registerTitle}</h1>
+
         {registrationDisabled ? (
           <div className="mt-4">
-            <RuntimeNotice message="Registration is temporarily unavailable. Existing users can still sign in." />
+            <RuntimeNotice message={messages.auth.registrationDisabled} />
           </div>
         ) : runtimeConfig?.features.maintenance_mode ? (
           <div className="mt-4">
-            <RuntimeNotice tone="info" message="Maintenance mode is active. New account creation may be temporarily limited." />
+            <RuntimeNotice tone="info" message={messages.auth.maintenanceRegister} />
           </div>
         ) : null}
-        <label className="mt-4 block text-sm text-black/70">Username<RequiredMark /></label>
+
+        <label className="mt-4 block text-sm text-black/70">
+          {messages.auth.username}
+          <RequiredMark />
+        </label>
         <input
           className="mt-1 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-black placeholder:text-black/45 disabled:cursor-not-allowed disabled:bg-black/[0.03]"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
-          placeholder="Введите username"
+          placeholder={messages.auth.usernamePlaceholder}
           required
           disabled={pending || registrationDisabled}
         />
-        <label className="mt-4 block text-sm text-black/70">Email<RequiredMark /></label>
+
+        <label className="mt-4 block text-sm text-black/70">
+          {messages.auth.email}
+          <RequiredMark />
+        </label>
         <input
           type="email"
           className="mt-1 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-black placeholder:text-black/45 disabled:cursor-not-allowed disabled:bg-black/[0.03]"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="Введите email"
+          placeholder={messages.auth.emailPlaceholder}
           required
           disabled={pending || registrationDisabled}
         />
-        <label className="mt-4 block text-sm text-black/70">Password<RequiredMark /></label>
+
+        <label className="mt-4 block text-sm text-black/70">
+          {messages.auth.password}
+          <RequiredMark />
+        </label>
         <input
           type="password"
           className="mt-1 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-black placeholder:text-black/45 disabled:cursor-not-allowed disabled:bg-black/[0.03]"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          placeholder="Введите пароль"
+          placeholder={messages.auth.passwordPlaceholder}
           required
           disabled={pending || registrationDisabled}
         />
+
         <Button disabled={pending || registrationDisabled} className="mt-6 w-full">
-          {pending ? <Loader size="sm" /> : "Создать аккаунт"}
+          {pending ? <Loader size="sm" /> : messages.auth.createAccount}
         </Button>
+
         <GoogleAuthButton
           disabled={pending || registrationDisabled}
           onTokens={handleGoogleTokens}
@@ -160,11 +182,13 @@ export default function RegisterPage() {
           unavailableMessage={googleUnavailableMessage}
           onBeforeExchange={() => trackProductEvent("signup_started", { source: "google" })}
         />
+
         {error ? <p className="mt-3 text-sm text-red-600">{error}</p> : null}
+
         <p className="mt-4 text-sm text-black/70">
-          Уже есть аккаунт?{" "}
+          {messages.auth.alreadyAccount}{" "}
           <Link href="/login" className="font-semibold text-black underline">
-            Войти
+            {messages.common.login}
           </Link>
         </p>
       </form>

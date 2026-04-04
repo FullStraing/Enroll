@@ -1,40 +1,45 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  LayoutDashboard,
-  UserRoundCheck,
-  GraduationCap,
-  Medal,
+  ArrowUpRight,
   CalendarDays,
-  FolderKanban,
   FileText,
-  Settings,
+  FolderKanban,
+  GraduationCap,
   Home,
-  Users2,
+  LayoutDashboard,
+  Medal,
   Menu,
+  Settings,
+  UserRoundCheck,
+  Users2,
   X,
 } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
+import { EnrollWordmark } from "@/components/brand/enroll-wordmark";
+import { LanguageSwitcher } from "@/components/language-switcher";
+import { useLocale, useMessages } from "@/components/locale-provider";
 import { RuntimeNotice } from "@/components/runtime-notice";
 import { Button } from "@/components/ui/button";
 import { fetchRuntimeConfig, type RuntimeConfig } from "@/lib/runtime-config";
+import { translateAppShellSubtitle, translateAppShellTitle } from "@/lib/i18n";
 
 const nav = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/onboarding", label: "Edit Profile", icon: UserRoundCheck },
-  { href: "/universities", label: "Universities", icon: GraduationCap },
-  { href: "/activities", label: "Activities", icon: Medal },
-  { href: "/calendar", label: "Tasks", icon: CalendarDays },
-  { href: "/community", label: "Community", icon: Users2 },
-  { href: "/documents", label: "Documents", icon: FolderKanban },
-  { href: "/essays", label: "Essays", icon: FileText },
-  { href: "/common-app", label: "Common App", icon: FileText },
-  { href: "/settings", label: "Settings", icon: Settings },
-];
+  { href: "/dashboard", key: "dashboard", icon: LayoutDashboard },
+  { href: "/onboarding", key: "editProfile", icon: UserRoundCheck },
+  { href: "/universities", key: "universities", icon: GraduationCap },
+  { href: "/activities", key: "activities", icon: Medal },
+  { href: "/calendar", key: "tasks", icon: CalendarDays },
+  { href: "/community", key: "community", icon: Users2 },
+  { href: "/documents", key: "documents", icon: FolderKanban },
+  { href: "/essays", key: "essays", icon: FileText },
+  { href: "/common-app", key: "commonApp", icon: FileText },
+  { href: "/settings", key: "settings", icon: Settings },
+] as const;
+
 const sidebarStorageKey = "enroll_sidebar_collapsed";
 
 function buildLocalDateTime(now: Date) {
@@ -58,12 +63,15 @@ function buildLocalDateTime(now: Date) {
 
 export function AppShell({
   title,
+  subtitle,
   children,
 }: {
   title: string;
   subtitle?: string;
   children: React.ReactNode;
 }) {
+  const messages = useMessages();
+  const { locale } = useLocale();
   const pathname = usePathname();
   const router = useRouter();
   const { profile, logout } = useAuth();
@@ -77,7 +85,18 @@ export function AppShell({
   const [runtimeConfig, setRuntimeConfig] = useState<RuntimeConfig | null>(null);
   const navTimerRef = useRef<number | null>(null);
 
-  const name = profile?.full_name || profile?.username || profile?.email || "User";
+  const translatedTitle = translateAppShellTitle(locale, title) ?? title;
+  const translatedSubtitle = translateAppShellSubtitle(locale, subtitle);
+  const name = profile?.full_name || profile?.username || profile?.email || messages.common.account;
+
+  const localizedNav = useMemo(
+    () =>
+      nav.map((item) => ({
+        ...item,
+        label: messages.shell.nav[item.key],
+      })),
+    [messages.shell.nav],
+  );
 
   function toggleSidebar() {
     setCollapsed((prev) => {
@@ -139,10 +158,7 @@ export function AppShell({
     };
   }, []);
 
-  function navigateWithTransition(
-    event: React.MouseEvent<HTMLAnchorElement>,
-    href: string,
-  ) {
+  function navigateWithTransition(event: React.MouseEvent<HTMLAnchorElement>, href: string) {
     if (
       event.defaultPrevented ||
       event.button !== 0 ||
@@ -189,7 +205,7 @@ export function AppShell({
         type="button"
         onClick={() => setMobileMenuOpen((prev) => !prev)}
         className="fixed left-3 top-3 z-50 rounded-xl border-2 border-black bg-white p-2 shadow-[0_4px_0_rgba(0,0,0,0.08)] lg:hidden"
-        aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+        aria-label={mobileMenuOpen ? messages.shell.closeMenu : messages.shell.openMenu}
       >
         {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
       </button>
@@ -197,7 +213,7 @@ export function AppShell({
       {mobileMenuOpen ? (
         <button
           type="button"
-          aria-label="Close menu overlay"
+          aria-label={messages.shell.closeOverlay}
           className="fixed inset-0 z-40 bg-black/30 lg:hidden"
           onClick={() => setMobileMenuOpen(false)}
         />
@@ -211,19 +227,15 @@ export function AppShell({
         } lg:sticky lg:top-6 lg:block lg:h-fit lg:w-auto`}
       >
         <div className="mb-4 grid gap-3 lg:hidden">
-          <div className="flex items-center justify-between gap-3 rounded-2xl border border-black/10 bg-white px-3 py-3">
-            <div className="flex min-w-0 items-center gap-2">
-              <Image src="/brand/logo-mark.svg" alt="Enroll" width={20} height={20} className="h-6 w-6 shrink-0" />
-              <div className="min-w-0">
-                <p className="truncate text-sm font-black text-black">Enroll</p>
-                <p className="truncate text-[11px] uppercase tracking-[0.16em] text-black/45">Admissions OS</p>
-              </div>
+          <div className="flex items-center justify-between gap-3 px-2 py-1">
+            <div className="min-w-0">
+              <EnrollWordmark size="md" subtitle className="translate-y-[1px]" />
             </div>
             <button
               type="button"
               onClick={() => setMobileMenuOpen(false)}
               className="rounded-xl border-2 border-black bg-white p-2"
-              aria-label="Close menu"
+              aria-label={messages.shell.closeMenu}
             >
               <X className="h-4 w-4" />
             </button>
@@ -236,13 +248,17 @@ export function AppShell({
               </span>
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold text-black">{name}</p>
-                <p className="truncate text-xs text-black/45">{profile?.email || "Enroll workspace"}</p>
+                <p className="truncate text-xs text-black/45">{profile?.email || messages.shell.workspaceFallback}</p>
               </div>
             </div>
 
             <div className="mt-3 rounded-2xl border border-black/10 bg-[#FFF4CC] px-3 py-2">
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-black/45">{localDateTime.dateLabel}</p>
               <p className="mt-1 text-sm font-semibold text-black">{localDateTime.timeLabel}</p>
+            </div>
+
+            <div className="mt-3">
+              <LanguageSwitcher compact />
             </div>
           </div>
         </div>
@@ -255,8 +271,8 @@ export function AppShell({
               size="sm"
               onClick={toggleSidebar}
               className="relative h-9 w-9 overflow-hidden px-0"
-              aria-label="Expand menu"
-              title="Expand menu"
+              aria-label={messages.shell.openMenu}
+              title={messages.shell.openMenu}
             >
               <Menu
                 className={`absolute h-4 w-4 transition-all duration-200 ${
@@ -272,37 +288,39 @@ export function AppShell({
           ) : (
             <>
               <Link href="/" className="block">
-                <div className="flex h-12 w-36 items-center gap-2 rounded-lg border-2 border-black bg-white px-3 transition-all duration-300 ease-in-out">
-                  <Image src="/brand/logo-mark.svg" alt="Enroll" width={20} height={20} className="h-5 w-5 shrink-0" />
-                  <span className="text-sm font-bold">Enroll</span>
+                <div className="flex h-14 w-[172px] items-center px-1.5 transition-all duration-300 ease-in-out">
+                  <EnrollWordmark size="md" className="translate-y-[1px]" />
                 </div>
               </Link>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={toggleSidebar}
-                className="relative h-9 w-9 overflow-hidden px-0"
-                aria-label="Collapse menu"
-                title="Collapse menu"
-              >
-                <Menu
-                  className={`absolute h-4 w-4 transition-all duration-200 ${
-                    collapsed ? "rotate-0 scale-100 opacity-100" : "rotate-90 scale-0 opacity-0"
-                  }`}
-                />
-                <X
-                  className={`absolute h-4 w-4 transition-all duration-200 ${
-                    collapsed ? "-rotate-90 scale-0 opacity-0" : "rotate-0 scale-100 opacity-100"
-                  }`}
-                />
-              </Button>
+              <div className="flex items-center gap-2">
+                <LanguageSwitcher compact />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={toggleSidebar}
+                  className="relative h-9 w-9 overflow-hidden px-0"
+                  aria-label={messages.shell.closeMenu}
+                  title={messages.shell.closeMenu}
+                >
+                  <Menu
+                    className={`absolute h-4 w-4 transition-all duration-200 ${
+                      collapsed ? "rotate-0 scale-100 opacity-100" : "rotate-90 scale-0 opacity-0"
+                    }`}
+                  />
+                  <X
+                    className={`absolute h-4 w-4 transition-all duration-200 ${
+                      collapsed ? "-rotate-90 scale-0 opacity-0" : "rotate-0 scale-100 opacity-100"
+                    }`}
+                  />
+                </Button>
+              </div>
             </>
           )}
         </div>
 
         <nav className="grid gap-2">
-          {nav.map((item) => (
+          {localizedNav.map((item) => (
             <Link
               key={item.href}
               href={item.href}
@@ -310,28 +328,35 @@ export function AppShell({
               title={item.label}
               className={`rounded-xl px-3 py-2 text-sm font-semibold transition ${
                 pathname === item.href
-                  ? "bg-[#FFDB58] text-black border-2 border-black"
+                  ? "border-2 border-black bg-[#FFDB58] text-black"
                   : navigatingTo === item.href
                     ? "border-2 border-black/70 bg-[#DAF5F0] text-black"
                     : "text-black/75 hover:bg-black/5 hover:text-black"
               } ${collapsed ? "flex items-center justify-center px-0" : "flex items-center gap-2"}`}
             >
               <item.icon className="h-4 w-4 shrink-0" />
-              {!collapsed ? (
-                <span className="inline-block transition-all duration-200 ease-out">{item.label}</span>
-              ) : null}
+              {!collapsed ? <span className="inline-block transition-all duration-200 ease-out">{item.label}</span> : null}
             </Link>
           ))}
+
           <Link
             href="/"
             onClick={(event) => navigateWithTransition(event, "/")}
-            title="Landing"
-            className={`mt-3 rounded-xl border-2 border-black px-3 py-2 text-sm font-semibold text-black/75 hover:bg-black/5 hover:text-black ${
-              collapsed ? "flex items-center justify-center px-0" : "flex items-center gap-2"
+            title={messages.common.home}
+            className={`mt-4 rounded-2xl border-2 border-black bg-[#F3EDE2] px-4 py-3 text-sm text-black transition hover:-translate-y-0.5 hover:shadow-[0_5px_0_#000] ${
+              collapsed ? "flex items-center justify-center px-0" : "flex items-center gap-3"
             }`}
           >
             <Home className="h-4 w-4 shrink-0" />
-            {!collapsed ? "Landing" : null}
+            {!collapsed ? (
+              <>
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-black leading-none">{messages.common.home}</div>
+                  <div className="mt-1 text-[11px] leading-none text-black/45">{messages.shell.marketingPage}</div>
+                </div>
+                <ArrowUpRight className="h-4 w-4 shrink-0 text-black/55" />
+              </>
+            ) : null}
           </Link>
         </nav>
 
@@ -343,7 +368,7 @@ export function AppShell({
             }}
             className="w-full rounded-xl border-2 border-black bg-[#FFDB58] px-3 py-2 text-sm font-semibold hover:-translate-y-0.5"
           >
-            Выйти
+            {messages.common.logout}
           </button>
         </div>
       </aside>
@@ -355,9 +380,12 @@ export function AppShell({
       >
         <header className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b-2 border-black/80 pb-4 pl-10 sm:pl-0">
           <div>
-            <h1 className="text-2xl font-black">{title}</h1>
+            <h1 className="text-2xl font-black">{translatedTitle}</h1>
+            {translatedSubtitle ? <p className="mt-1 max-w-2xl text-sm text-black/60">{translatedSubtitle}</p> : null}
           </div>
+
           <div className="hidden items-center gap-2 sm:flex">
+            <LanguageSwitcher compact />
             <span
               className="rounded-xl border-2 border-black bg-white px-3 py-1.5 text-sm font-semibold leading-tight"
               title={localDateTime.timeZone}
@@ -380,20 +408,30 @@ export function AppShell({
               }}
               className="rounded-xl border-2 border-black bg-[#FFDB58] px-3 py-1.5 text-sm font-semibold hover:-translate-y-0.5"
             >
-              Выйти
+              {messages.common.logout}
             </button>
           </div>
+
           <div className="flex items-center gap-2 sm:hidden">
             <span className="inline-flex h-9 min-w-9 items-center justify-center rounded-full border border-black/10 bg-[#DAF5F0] px-3 text-sm font-bold text-black">
               {name.charAt(0).toUpperCase()}
             </span>
           </div>
         </header>
+
         {runtimeConfig?.features.maintenance_mode ? (
           <div className="mb-4">
-            <RuntimeNotice tone="info" message="Maintenance mode is enabled. Some features may be temporarily limited while we stabilize the launch." />
+            <RuntimeNotice
+              tone="info"
+              message={
+                locale === "ru"
+                  ? "Режим обслуживания включён. Часть функций может быть временно ограничена, пока мы стабилизируем запуск."
+                  : "Maintenance mode is enabled. Some features may be temporarily limited while we stabilize the launch."
+              }
+            />
           </div>
         ) : null}
+
         {children}
       </section>
     </div>

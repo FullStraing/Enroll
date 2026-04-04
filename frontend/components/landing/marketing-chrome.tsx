@@ -1,0 +1,179 @@
+"use client";
+
+import Link from "next/link";
+import type { ReactNode } from "react";
+import { landingTheme } from "@/app/landing-content";
+import { EnrollWordmark } from "@/components/brand/enroll-wordmark";
+import { LandingAuthActions } from "@/components/landing/landing-auth-actions";
+import { LanguageSwitcher } from "@/components/language-switcher";
+import { useMessages } from "@/components/locale-provider";
+
+type MarketingHeaderProps = {
+  initialHasSession: boolean;
+  primaryHref: string;
+  current?: "home" | "product" | "pricing";
+  brandVariant?: "default" | "minimal";
+  brandClassName?: string;
+};
+
+function navClass(active: boolean) {
+  return active ? "text-black" : "text-black/55 transition hover:text-black";
+}
+
+export function MarketingHeader({
+  initialHasSession,
+  primaryHref,
+  current = "home",
+  brandVariant = "default",
+  brandClassName = "",
+}: MarketingHeaderProps) {
+  const messages = useMessages();
+
+  return (
+    <header className="flex flex-wrap items-center justify-between gap-4 border-b-2 border-black px-5 py-5 md:px-8">
+      <Link href="/" className="inline-flex items-center gap-3">
+        {brandVariant === "minimal" ? (
+          <MinimalBrand className={brandClassName} />
+        ) : (
+          <DefaultBrand className={brandClassName} />
+        )}
+      </Link>
+
+      <div className="flex flex-wrap items-center gap-3 md:gap-6">
+        <nav className="hidden items-center gap-6 text-sm font-black md:flex">
+          <Link href="/" className={navClass(current === "home")}>
+            {messages.common.home}
+          </Link>
+          <Link href="/product" className={navClass(current === "product")}>
+            {messages.common.product}
+          </Link>
+          <Link href="/pricing" className={navClass(current === "pricing")}>
+            {messages.common.pricing}
+          </Link>
+        </nav>
+
+        <LanguageSwitcher compact />
+        <LandingAuthActions initialHasSession={initialHasSession} primaryHref={primaryHref} />
+      </div>
+    </header>
+  );
+}
+
+function DefaultBrand({ className = "" }: { className?: string }) {
+  return (
+    <>
+      <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-black/10 bg-[#FFF4CC]">
+        <MinimalBrandMark className="h-7 w-7" />
+      </div>
+      <EnrollWordmark size="sm" className={className} />
+    </>
+  );
+}
+
+function MinimalBrand({ className = "" }: { className?: string }) {
+  return <EnrollWordmark size="md" className={className} />;
+}
+
+function MinimalBrandMark({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 64 64"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      aria-hidden="true"
+    >
+      <path
+        d="M45 12H26.5C20.1487 12 15 17.1487 15 23.5V23.5C15 29.8513 20.1487 35 26.5 35H37.5C43.299 35 48 39.701 48 45.5V45.5C48 51.299 43.299 56 37.5 56H15"
+        stroke="#F5A623"
+        strokeWidth="10"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path d="M17 12H45" stroke="#F5A623" strokeWidth="10" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function MarketingFooter() {
+  const messages = useMessages();
+
+  return (
+    <footer className="border-t-2 border-black px-5 py-6 md:px-8">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <EnrollWordmark size="sm" />
+          <p className="mt-1 text-sm text-black/55">{messages.marketing.footerTagline}</p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-4 text-sm font-semibold text-black/65">
+          <Link href="/product" className="transition hover:text-black">
+            {messages.common.product}
+          </Link>
+          <Link href="/pricing" className="transition hover:text-black">
+            {messages.common.pricing}
+          </Link>
+          <Link href="/pilot" className="transition hover:text-black">
+            {messages.common.pilot}
+          </Link>
+          <Link href="/terms" className="transition hover:text-black">
+            {messages.marketing.terms}
+          </Link>
+          <Link href="/privacy-policy" className="transition hover:text-black">
+            {messages.marketing.privacy}
+          </Link>
+          <Link href="/refund-policy" className="transition hover:text-black">
+            {messages.marketing.refunds}
+          </Link>
+          <span className="text-black/45">© 2026 Enroll</span>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+export function MarketingSectionHeading({
+  eyebrow,
+  title,
+  description,
+}: {
+  eyebrow: string;
+  title: string;
+  description?: string;
+}) {
+  return (
+    <div className="mx-auto max-w-3xl text-center">
+      <p className="text-xs font-black uppercase tracking-[0.18em] text-black/45">{eyebrow}</p>
+      <h2 className="mt-3 text-3xl font-black leading-[0.96] tracking-[-0.05em] text-black sm:text-4xl md:text-5xl">
+        {title}
+      </h2>
+      {description ? <p className="mt-4 text-sm leading-7 text-black/65 sm:text-base md:text-lg">{description}</p> : null}
+    </div>
+  );
+}
+
+export function MarketingToneCard({
+  tone,
+  children,
+  className = "",
+}: {
+  tone: "yellow" | "cyan" | "sand" | "orange";
+  children: ReactNode;
+  className?: string;
+}) {
+  const backgroundMap = {
+    yellow: landingTheme.yellowSoft,
+    cyan: landingTheme.cyan,
+    sand: landingTheme.sand,
+    orange: landingTheme.orange,
+  };
+
+  return (
+    <div
+      className={`rounded-[28px] border-2 border-black bg-white p-6 shadow-[0_8px_0_#000] ${className}`}
+      style={{ backgroundColor: backgroundMap[tone] }}
+    >
+      {children}
+    </div>
+  );
+}

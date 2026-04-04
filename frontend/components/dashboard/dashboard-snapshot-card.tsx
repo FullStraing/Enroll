@@ -1,10 +1,10 @@
 "use client";
 
-import Image from "next/image";
 import type { ReactNode, RefObject } from "react";
 import { Download, Share2, Trophy } from "lucide-react";
 import { statusSelectTone } from "@/app/universities/utils";
 import type { AdmissionsScoreBreakdown } from "@/app/dashboard/utils";
+import { EnrollWordmark } from "@/components/brand/enroll-wordmark";
 import { AdmissionsScoreDonut } from "@/components/dashboard/admissions-score-donut";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
@@ -89,10 +89,11 @@ function DashboardSnapshotSurface({
             </CardDescription>
           </div>
           <div className="mt-3 inline-flex items-center gap-2 self-start text-black sm:ml-auto">
-            <Image src="/icons/logo.svg" alt="Enroll" width={28} height={28} className="h-7 w-7" />
             <div className="leading-none">
               <p className="text-[11px] font-black uppercase tracking-[0.22em] text-black/45">Powered by</p>
-              <p className="mt-1 text-[28px] font-black leading-none tracking-[-0.04em] text-black sm:text-[34px]">Enroll</p>
+              <div className="mt-1">
+                <EnrollWordmark size="md" />
+              </div>
             </div>
           </div>
         </div>

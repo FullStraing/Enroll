@@ -13,8 +13,10 @@ import { isProfileReadyForDashboard, resolvePostAuthDestination } from "@/lib/on
 import { RequiredMark } from "@/components/ui/required-mark";
 import { RuntimeNotice } from "@/components/runtime-notice";
 import { fetchRuntimeConfig, type RuntimeConfig } from "@/lib/runtime-config";
+import { useMessages } from "@/components/locale-provider";
 
 export default function LoginPage() {
+  const messages = useMessages();
   const router = useRouter();
   const { setSession, status, profile } = useAuth();
   const [username, setUsername] = useState("");
@@ -62,79 +64,94 @@ export default function LoginPage() {
       }
       window.location.assign(await resolvePostAuthDestination(data.access));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed");
+      setError(err instanceof Error ? err.message : messages.auth.loginFailed);
     } finally {
       setPending(false);
     }
   }
 
-  const handleGoogleTokens = useCallback(async (access: string, refresh: string) => {
-    await setSession(access, refresh);
-    try {
-      await syncStoredIntroQuizToProfile(access);
-    } catch {
-      if (hasPendingStoredIntroQuiz()) {
-        window.location.assign("/intro-quiz?resume=1");
-        return;
+  const handleGoogleTokens = useCallback(
+    async (access: string, refresh: string) => {
+      await setSession(access, refresh);
+      try {
+        await syncStoredIntroQuizToProfile(access);
+      } catch {
+        if (hasPendingStoredIntroQuiz()) {
+          window.location.assign("/intro-quiz?resume=1");
+          return;
+        }
       }
-    }
-    window.location.assign(await resolvePostAuthDestination(access));
-  }, [setSession]);
+      window.location.assign(await resolvePostAuthDestination(access));
+    },
+    [setSession],
+  );
 
   const handleGoogleError = useCallback((message: string) => {
     setError(message);
   }, []);
 
   const googleUnavailableMessage =
-    runtimeConfig?.features.google_auth_enabled === false
-      ? "Google sign-in is temporarily unavailable."
-      : undefined;
+    runtimeConfig?.features.google_auth_enabled === false ? messages.auth.googleUnavailable : undefined;
 
   return (
     <main className="theme-home mx-auto flex min-h-screen max-w-md items-center px-6 py-16">
       <form onSubmit={onSubmit} className="glass w-full rounded-3xl p-6">
         <div className="mb-4 flex justify-end">
           <Link href="/" className="text-sm font-semibold text-black/70 underline underline-offset-2 transition hover:text-black">
-            На главную
+            {messages.common.backHome}
           </Link>
         </div>
-        <h1 className="text-2xl font-semibold">Вход</h1>
+
+        <h1 className="text-2xl font-semibold">{messages.auth.loginTitle}</h1>
+
         {runtimeConfig?.features.maintenance_mode ? (
           <div className="mt-4">
-            <RuntimeNotice tone="info" message="Maintenance mode is active. Core login is still available, but some features may be limited." />
+            <RuntimeNotice tone="info" message={messages.auth.maintenanceLogin} />
           </div>
         ) : null}
-        <label className="mt-4 block text-sm text-black/70">Username<RequiredMark /></label>
+
+        <label className="mt-4 block text-sm text-black/70">
+          {messages.auth.username}
+          <RequiredMark />
+        </label>
         <input
           className="mt-1 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-black placeholder:text-black/45"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
-          placeholder="Введите username"
+          placeholder={messages.auth.usernamePlaceholder}
           required
         />
-        <label className="mt-4 block text-sm text-black/70">Password<RequiredMark /></label>
+
+        <label className="mt-4 block text-sm text-black/70">
+          {messages.auth.password}
+          <RequiredMark />
+        </label>
         <input
           type="password"
           className="mt-1 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-black placeholder:text-black/45"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          placeholder="Введите пароль"
+          placeholder={messages.auth.passwordPlaceholder}
           required
         />
+
         <Button disabled={pending} className="mt-6 w-full">
-          {pending ? <Loader size="sm" /> : "Войти"}
+          {pending ? <Loader size="sm" /> : messages.common.login}
         </Button>
+
         <GoogleAuthButton
           disabled={pending}
           onTokens={handleGoogleTokens}
           onError={handleGoogleError}
           unavailableMessage={googleUnavailableMessage}
         />
+
         {error ? <p className="mt-3 text-sm text-red-600">{error}</p> : null}
+
         <p className="mt-4 text-sm text-black/70">
-          Нет аккаунта?{" "}
+          {messages.auth.noAccount}{" "}
           <Link href="/register" className="font-semibold text-black underline">
-            Создать
+            {messages.auth.createAccount}
           </Link>
         </p>
       </form>

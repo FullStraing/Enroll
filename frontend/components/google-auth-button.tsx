@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { apiFetch } from "@/lib/api";
 import { Loader } from "@/components/loader";
+import { useLocale, useMessages } from "@/components/locale-provider";
+import { apiFetch } from "@/lib/api";
 
 type GoogleAuthButtonProps = {
   onTokens: (access: string, refresh: string) => Promise<void>;
@@ -45,6 +46,8 @@ export function GoogleAuthButton({
   unavailableMessage,
   onBeforeExchange,
 }: GoogleAuthButtonProps) {
+  const { locale } = useLocale();
+  const messages = useMessages();
   const [loading, setLoading] = useState(false);
   const [scriptFailed, setScriptFailed] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -67,7 +70,7 @@ export function GoogleAuthButton({
         client_id: clientId,
         callback: async ({ credential }) => {
           if (!credential) {
-            onError("Google did not return a credential.");
+            onError(messages.auth.googleNoCredential);
             return;
           }
           setLoading(true);
@@ -82,7 +85,7 @@ export function GoogleAuthButton({
             });
             await onTokens(data.access, data.refresh);
           } catch (err) {
-            onError(err instanceof Error ? err.message : "Google sign in failed");
+            onError(err instanceof Error ? err.message : messages.auth.googleUnavailable);
           } finally {
             setLoading(false);
           }
@@ -94,7 +97,7 @@ export function GoogleAuthButton({
         text: "continue_with",
         shape: "pill",
         width: "320",
-        locale: "ru",
+        locale,
       });
     };
 
@@ -112,14 +115,14 @@ export function GoogleAuthButton({
     script.onload = initGoogle;
     script.onerror = () => {
       setScriptFailed(true);
-      onError("Failed to load Google Sign-In.");
+      onError(messages.auth.googleLoadFailed);
     };
     document.head.appendChild(script);
 
     return () => {
       cancelled = true;
     };
-  }, [clientId, onBeforeExchange, onError, onTokens, unavailableMessage]);
+  }, [clientId, locale, messages.auth.googleLoadFailed, messages.auth.googleNoCredential, messages.auth.googleUnavailable, onBeforeExchange, onError, onTokens, unavailableMessage]);
 
   return (
     <div className="mt-4">
@@ -128,15 +131,13 @@ export function GoogleAuthButton({
       ) : clientId ? (
         <div className={disabled || loading ? "pointer-events-none opacity-70" : ""} ref={containerRef} />
       ) : (
-        <div className="rounded-xl border border-black/20 bg-white px-4 py-3 text-sm text-black/70">
-          Google Sign-In is not configured. Add `NEXT_PUBLIC_GOOGLE_CLIENT_ID` to the root `.env`.
-        </div>
+        <div className="rounded-xl border border-black/20 bg-white px-4 py-3 text-sm text-black/70">{messages.auth.googleEnvMissing}</div>
       )}
-      {scriptFailed ? <p className="mt-2 text-sm text-red-600">Failed to load the Google Sign-In script.</p> : null}
+      {scriptFailed ? <p className="mt-2 text-sm text-red-600">{messages.auth.googleLoadFailed}</p> : null}
       {loading ? (
         <div className="mt-2 flex items-center gap-2 text-sm text-black/70">
           <Loader size="sm" />
-          <span>Checking your Google account...</span>
+          <span>{messages.auth.checkingGoogle}</span>
         </div>
       ) : null}
     </div>

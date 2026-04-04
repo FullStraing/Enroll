@@ -4,7 +4,7 @@ import { landingTheme } from "@/app/landing-content";
 type ProductShotProps = {
   label: string;
   title: string;
-  rows: Array<{ label: string; value: string }>;
+  rows: ReadonlyArray<{ label: string; value: string }>;
   imageSrc?: string | null;
   tone?: "cyan" | "orange" | "yellow";
 };

@@ -4,10 +4,11 @@ import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
+import { useMessages } from "@/components/locale-provider";
 import { getToken, hasStoredAccessToken } from "@/lib/auth";
 
-function accountLabel(name?: string, username?: string) {
-  return (name || username || "Account").trim();
+function accountLabel(name: string | undefined, username: string | undefined, fallback: string) {
+  return (name || username || fallback).trim();
 }
 
 function useLandingAccountState(initialHasSession: boolean) {
@@ -57,8 +58,9 @@ export function LandingAuthActions({
   initialHasSession: boolean;
   primaryHref: string;
 }) {
+  const messages = useMessages();
   const { hasAccount, profile } = useLandingAccountState(initialHasSession);
-  const label = accountLabel(profile?.full_name, profile?.username);
+  const label = accountLabel(profile?.full_name, profile?.username, messages.common.account);
   const initial = label.charAt(0).toUpperCase() || "A";
 
   return (
@@ -66,7 +68,7 @@ export function LandingAuthActions({
       {hasAccount ? (
         <Link
           href="/dashboard"
-          className="inline-flex items-center gap-3 rounded-xl border-2 border-black bg-white px-3 py-2 text-sm font-semibold transition hover:-translate-y-0.5"
+          className="inline-flex items-center gap-3 rounded-2xl border-2 border-black bg-white px-3 py-2 text-sm font-semibold transition hover:-translate-y-0.5"
         >
           <span className="flex h-8 w-8 items-center justify-center rounded-full border border-black/15 bg-[#DAF5F0] text-xs font-black text-black">
             {initial}
@@ -74,17 +76,21 @@ export function LandingAuthActions({
           <span className="max-w-[10rem] truncate">{label}</span>
         </Link>
       ) : (
-        <Link href="/login" className="rounded-xl border-2 border-black bg-white px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5">
-          Войти
+        <Link
+          href="/login"
+          className="rounded-2xl border-2 border-black bg-white px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5"
+        >
+          {messages.common.login}
         </Link>
       )}
+
       <LandingPrimaryLink
         fallbackHref={primaryHref}
         initialHasSession={initialHasSession}
-        className="inline-flex items-center gap-2 rounded-xl border-2 border-black px-5 py-2 text-sm font-black transition hover:-translate-y-0.5 hover:shadow-[0_4px_0_#000]"
+        className="inline-flex items-center gap-2 rounded-2xl border-2 border-black px-5 py-2 text-sm font-black transition hover:-translate-y-0.5 hover:shadow-[0_4px_0_#000]"
         style={{ backgroundColor: "#FFDB58" }}
       >
-        Начать
+        {messages.common.startFree}
         <ArrowRight className="h-4 w-4" />
       </LandingPrimaryLink>
     </div>

@@ -135,6 +135,47 @@ body {
   }
 }
 
+@keyframes accordion-down {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+  }
+}
+
+@keyframes accordion-up {
+  from {
+    height: var(--radix-accordion-content-height);
+  }
+  to {
+    height: 0;
+  }
+}
+
+@keyframes marketing-route-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.992);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes marketing-route-overlay-fade {
+  0% {
+    opacity: 0.32;
+  }
+  75% {
+    opacity: 0.18;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
 .ProseMirror p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
   color: rgba(0, 0, 0, 0.42);
@@ -147,9 +188,31 @@ body {
   outline: none;
 }
 
+.animate-accordion-down {
+  animation: accordion-down 0.2s ease-out;
+}
+
+.animate-accordion-up {
+  animation: accordion-up 0.2s ease-out;
+}
+
+.marketing-route-enter {
+  animation: marketing-route-reveal 320ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.marketing-route-overlay {
+  background:
+    radial-gradient(rgba(0, 0, 0, 0.08) 1.2px, transparent 1.2px),
+    linear-gradient(rgba(249, 245, 246, 0.66), rgba(249, 245, 246, 0.66));
+  background-size: 10px 10px, auto;
+  animation: marketing-route-overlay-fade 420ms ease forwards;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .task-row-title,
-  .task-row-meta {
+  .task-row-meta,
+  .marketing-route-enter,
+  .marketing-route-overlay {
     animation: none;
   }
 }

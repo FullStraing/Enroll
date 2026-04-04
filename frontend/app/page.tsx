@@ -1,356 +1,253 @@
-import { cookies } from "next/headers";
-import dynamic from "next/dynamic";
-import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, CheckCircle2, CircleAlert, FileStack, GraduationCap, ListTodo } from "lucide-react";
-import { landingTheme, painPoints, productShowcase, proofPoints, storySections } from "@/app/landing-content";
-import { LandingAuthActions, LandingPrimaryLink } from "@/components/landing/landing-auth-actions";
-import { ProductShot } from "@/components/landing/product-shot";
+import { ArrowRight, Check, CheckCircle2, DollarSign, FileText, FolderKanban, GraduationCap, LayoutGrid, PenSquare, Target, X } from "lucide-react";
+import { cookies } from "next/headers";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { getLandingContent, landingTheme } from "@/app/landing-content";
+import { getServerLocale } from "@/lib/server-locale";
+import { getMessages } from "@/lib/i18n";
 import { INTRO_QUIZ_LINKED_COOKIE_KEY } from "@/lib/intro-quiz";
+import { LandingPrimaryLink } from "@/components/landing/landing-auth-actions";
+import { MarketingFooter, MarketingHeader, MarketingSectionHeading, MarketingToneCard } from "@/components/landing/marketing-chrome";
 
-const SocialLottieButtons = dynamic(
-  () => import("@/components/landing/social-lottie-button").then((mod) => mod.SocialLottieButtons),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div className="h-[112px] rounded-[24px] border-2 border-black bg-white" />
-        <div className="h-[112px] rounded-[24px] border-2 border-black bg-white" />
-      </div>
-    ),
-  },
-);
+const moduleIcons = {
+  Shortlist: Target,
+  "Дедлайны": GraduationCap,
+  Deadlines: GraduationCap,
+  "Essay workspace": PenSquare,
+  Dashboard: LayoutGrid,
+  "Document vault": FolderKanban,
+  "Common App": FileText,
+} as const;
 
-function SectionHeader({
-  eyebrow,
-  title,
-  description,
-}: {
-  eyebrow: string;
-  title: string;
-  description: string;
-}) {
-  return (
-    <div className="max-w-3xl">
-      <p className="text-xs font-black uppercase tracking-[0.18em] text-black/45">{eyebrow}</p>
-      <h2 className="mt-2 text-3xl font-black leading-[0.95] tracking-[-0.04em] text-black md:text-5xl">{title}</h2>
-      <p className="mt-4 text-base text-black/65 md:text-lg">{description}</p>
-    </div>
-  );
-}
+const toneAccentMap = {
+  yellow: "#FFDB58",
+  cyan: "#DAF5F0",
+  sand: "#F3EDE2",
+  orange: "#F8D6B3",
+} as const;
 
 export default function LandingPage() {
+  const locale = getServerLocale();
+  const messages = getMessages(locale);
+  const content = getLandingContent(locale);
   const token = cookies().get("enroll_session")?.value;
   const introQuizLinked = cookies().get(INTRO_QUIZ_LINKED_COOKIE_KEY)?.value === "1";
   const primaryHref = token ? "/dashboard" : introQuizLinked ? "/register" : "/intro-quiz";
 
   return (
-    <main
-      className="theme-home min-h-screen px-4 py-6 md:px-8"
-      style={{
-        color: landingTheme.black,
-      }}
-    >
-      <div className="blob blob-cyan" />
-      <div className="blob blob-orange" />
+    <main className="min-h-screen bg-transparent px-4 py-6 text-black md:px-8">
+      <div className="mx-auto max-w-7xl overflow-hidden rounded-[28px] border-2 border-black bg-white shadow-[0_10px_0_#000]">
+        <MarketingHeader initialHasSession={Boolean(token)} primaryHref={primaryHref} current="home" brandVariant="minimal" />
 
-      <div className="relative mx-auto max-w-7xl rounded-[28px] border-2 border-black bg-white shadow-[0_10px_0_#000]">
-        <header className="flex flex-wrap items-center justify-between gap-4 border-b-2 border-black px-5 py-4 md:px-8">
-          <Link href="/" className="inline-flex items-center gap-3">
-            <Image src="/brand/logo-mark.svg" alt="Enroll" width={44} height={44} className="h-11 w-11" />
-            <div>
-              <p className="text-xl font-black tracking-tight">Enroll</p>
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-black/45">Admissions OS</p>
-            </div>
-          </Link>
-
-          {false ? (
-            <div className="flex items-center gap-2">
-            <Link href="/login" className="rounded-xl border-2 border-black bg-white px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5">
-              Войти
-            </Link>
-            <Link
-              href={primaryHref}
-              className="rounded-xl border-2 border-black px-5 py-2 text-sm font-black transition hover:-translate-y-0.5 hover:shadow-[0_4px_0_#000]"
-              style={{ backgroundColor: landingTheme.primary }}
-            >
-              Начать
-            </Link>
-            </div>
-          ) : (
-            <LandingAuthActions initialHasSession={Boolean(token)} primaryHref={primaryHref} />
-          )}
-        </header>
-
-        <section className="grid gap-8 px-5 py-12 md:grid-cols-[1.08fr_0.92fr] md:px-8 md:py-16">
-          <div>
+        <section className="border-b-2 border-black px-5 py-12 sm:px-6 sm:py-14 md:px-8 md:py-20">
+          <div className="mx-auto max-w-4xl text-center">
             <span
-              className="inline-flex rounded-full border-2 border-black px-4 py-1 text-xs font-black uppercase tracking-[0.16em]"
-              style={{ backgroundColor: landingTheme.orange }}
+              className="inline-flex rounded-full border-2 border-black px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] sm:px-5 sm:text-xs sm:tracking-[0.2em]"
+              style={{ backgroundColor: landingTheme.yellowSoft }}
             >
-              От хаоса к контролю
+              {content.home.hero.badge}
             </span>
-            <h1 className="mt-5 text-4xl font-black leading-[0.92] tracking-[-0.06em] text-black md:text-7xl">
-              Поступление в США не должно быть разбросано по таблицам, письмам и заметкам.
+
+            <h1 className="mx-auto mt-6 max-w-3xl text-[clamp(2.4rem,8vw,5rem)] font-black leading-[0.94] tracking-[-0.06em] sm:mt-8">
+              {content.home.hero.title[0]}
+              <br />
+              {content.home.hero.title[1]}
             </h1>
-            <p className="mt-5 max-w-2xl text-base text-black/70 md:text-xl">
-              Enroll собирает shortlist, дедлайны, задачи, документы, essays и Common App в одну систему, чтобы студент всегда видел следующий правильный шаг.
+
+            <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-black/65 sm:text-lg md:mt-6 md:text-xl md:leading-9">
+              {content.home.hero.description}
             </p>
 
-            <div className="mt-8 flex flex-wrap gap-3">
+            <div className="mt-8 flex flex-col items-stretch justify-center gap-3 sm:mt-10 sm:flex-row sm:flex-wrap">
               <LandingPrimaryLink
                 fallbackHref={primaryHref}
                 initialHasSession={Boolean(token)}
-                className="inline-flex items-center gap-2 rounded-xl border-2 border-black px-8 py-3 text-lg font-black transition hover:-translate-y-0.5 hover:shadow-[0_5px_0_#000]"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-black px-6 py-3.5 text-base font-black transition hover:-translate-y-0.5 hover:shadow-[0_6px_0_#000] sm:w-auto sm:px-8 sm:py-4 sm:text-lg"
                 style={{ backgroundColor: landingTheme.primary }}
               >
-                Начать
+                {messages.common.startFree}
                 <ArrowRight className="h-5 w-5" />
               </LandingPrimaryLink>
+
               <Link
-                href="/pilot"
-                className="rounded-xl border-2 border-black px-8 py-3 text-lg font-bold transition hover:-translate-y-0.5"
-                style={{ backgroundColor: landingTheme.cyan }}
+                href="/product"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-black bg-white px-6 py-3.5 text-base font-black transition hover:-translate-y-0.5 sm:w-auto sm:px-8 sm:py-4 sm:text-lg"
               >
-                В пилот
+                {content.home.hero.secondaryCta}
               </Link>
             </div>
 
-            <div className="mt-8 grid gap-3 sm:grid-cols-3">
-              <div className="rounded-2xl border-2 border-black bg-white p-4">
-                <div className="flex items-center gap-2">
-                  <GraduationCap className="h-4 w-4" />
-                  <p className="text-sm font-black">Университеты</p>
+            <p className="mt-5 text-xs font-semibold text-black/45 sm:mt-6 sm:text-sm md:text-base">{content.home.hero.footer}</p>
+          </div>
+        </section>
+
+        <section className="border-b-2 border-black px-5 py-16 md:px-8 md:py-20">
+          <MarketingSectionHeading
+            eyebrow={content.home.problem.eyebrow}
+            title={content.home.problem.title}
+            description={content.home.problem.description}
+          />
+
+          <div className="mt-10 grid gap-4">
+            {content.home.comparisons.map((item) => (
+              <div
+                key={item.pain}
+                className="grid overflow-hidden rounded-[28px] border-2 border-black bg-white shadow-[0_8px_0_#000] md:grid-cols-[1fr_1fr]"
+              >
+                <div className="flex items-center gap-4 px-6 py-6">
+                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-black/10 bg-white text-black/35">
+                    <X className="h-5 w-5" />
+                  </span>
+                  <p className="max-w-xl text-base font-medium leading-7 text-black/75 sm:text-lg">{item.pain}</p>
                 </div>
-                <p className="mt-2 text-sm text-black/65">Shortlist, категории, acceptance rate и дедлайны в одном месте.</p>
-              </div>
-              <div className="rounded-2xl border-2 border-black bg-white p-4">
-                <div className="flex items-center gap-2">
-                  <ListTodo className="h-4 w-4" />
-                  <p className="text-sm font-black">Задачи</p>
+                <div className="border-t-2 border-black md:border-l-2 md:border-t-0" style={{ backgroundColor: toneAccentMap[item.tone] }}>
+                  <div className="flex items-center gap-4 px-6 py-6">
+                    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-black/10 bg-[#FFDB58]">
+                      <Check className="h-5 w-5" />
+                    </span>
+                    <p className="max-w-xl text-base font-black leading-7 text-black sm:text-lg">{item.relief}</p>
+                  </div>
                 </div>
-                <p className="mt-2 text-sm text-black/65">Today-first planning вместо перегруза календарём.</p>
               </div>
-              <div className="rounded-2xl border-2 border-black bg-white p-4">
-                <div className="flex items-center gap-2">
-                  <FileStack className="h-4 w-4" />
-                  <p className="text-sm font-black">Документы</p>
+            ))}
+          </div>
+        </section>
+
+        <section className="border-b-2 border-black px-5 py-16 md:px-8 md:py-20">
+          <MarketingSectionHeading
+            eyebrow={content.home.modules.eyebrow}
+            title={content.home.modules.title}
+            description={content.home.modules.description}
+          />
+
+          <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+            {content.home.modulesList.map((module) => {
+              const Icon = moduleIcons[module.title as keyof typeof moduleIcons];
+
+              return (
+                <MarketingToneCard key={module.title} tone={module.tone}>
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-black/10 bg-white">
+                    <Icon className="h-6 w-6" />
+                  </div>
+                  <h3 className="mt-8 text-3xl font-black tracking-[-0.04em]">{module.title}</h3>
+                  <p className="mt-4 text-base leading-7 text-black/70 sm:text-lg sm:leading-8">{module.body}</p>
+                </MarketingToneCard>
+              );
+            })}
+          </div>
+        </section>
+
+        <section id="process" className="border-b-2 border-black px-5 py-16 md:px-8 md:py-20">
+          <MarketingSectionHeading
+            eyebrow={content.home.process.eyebrow}
+            title={content.home.process.title}
+            description={content.home.process.description}
+          />
+
+          <div className="relative mx-auto mt-12 max-w-6xl">
+            <div className="absolute left-[2.5rem] top-0 hidden h-full w-px bg-black/15 md:block" />
+            <div className="grid gap-6">
+              {content.home.steps.map((step) => (
+                <div key={step.number} className="relative rounded-[32px] border-2 border-black bg-white px-6 py-8 shadow-[0_8px_0_#000] md:px-10">
+                  <div className="flex flex-col gap-6 md:flex-row md:items-start">
+                    <div
+                      className="flex h-24 w-24 shrink-0 items-center justify-center rounded-[28px] border-2 border-black text-2xl font-black"
+                      style={{ backgroundColor: toneAccentMap[step.tone] }}
+                    >
+                      {step.number}
+                    </div>
+                    <div className="pt-1">
+                      <h3 className="text-3xl font-black tracking-[-0.04em]">{step.title}</h3>
+                      <p className="mt-4 max-w-3xl text-base leading-7 text-black/65 sm:text-lg sm:leading-8">{step.body}</p>
+                    </div>
+                  </div>
                 </div>
-                <p className="mt-2 text-sm text-black/65">Transcript, resume, ID и letters внутри единого flow.</p>
-              </div>
+              ))}
             </div>
           </div>
-
-          <div className="grid gap-4">
-            <ProductShot
-              tone="cyan"
-              label="Главный экран продукта"
-              title="Одна рабочая система для всего процесса поступления"
-              rows={[
-                { label: "Dashboard", value: "Следующие шаги" },
-                { label: "Universities", value: "6 в списке" },
-                { label: "Tasks", value: "Фокус на сегодня" },
-                { label: "Documents", value: "3 загружены" },
-              ]}
-            />
-          </div>
         </section>
 
-        <section className="border-t-2 border-black px-5 py-10 md:px-8">
-          <SectionHeader
-            eyebrow="Проблема"
-            title="Пользователь должен сразу узнать свою ситуацию."
-            description="Первый экран не должен просто перечислять функции. Он должен показать знакомую проблему, её цену и только потом раскрыть новый механизм решения."
+        <section className="border-b-2 border-black px-5 py-16 md:px-8 md:py-20">
+          <MarketingSectionHeading
+            eyebrow={content.home.trust.eyebrow}
+            title={content.home.trust.title}
+            description={content.home.trust.description}
           />
 
-          <div className="mt-6 grid gap-3 md:grid-cols-2">
-            {painPoints.map((item) => (
-              <div key={item} className="rounded-2xl border-2 border-black bg-white p-4 text-sm font-semibold shadow-[0_4px_0_#000]">
-                {item}
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="border-t-2 border-black px-5 py-10 md:px-8">
-          <div className="grid gap-8">
-            {storySections.map((section, index) => (
-              <div key={section.title} className="grid gap-5 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
-                <div className={index % 2 === 1 ? "lg:order-2" : ""}>
-                  <p className="text-xs font-black uppercase tracking-[0.18em] text-black/45">{section.eyebrow}</p>
-                  <h3 className="mt-2 text-3xl font-black leading-[0.98] tracking-[-0.04em] text-black">{section.title}</h3>
-                  <p className="mt-4 text-base text-black/65">{section.body}</p>
-                </div>
-                <div className={index % 2 === 1 ? "lg:order-1" : ""}>
-                  <ProductShot
-                    tone={section.tone}
-                    label={section.preview.label}
-                    title={section.preview.title}
-                    rows={section.preview.rows}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="border-t-2 border-black px-5 py-10 md:px-8">
-          <SectionHeader
-            eyebrow="Продукт"
-            title="Покажи не абстрактный promise, а реальные части продукта."
-            description="Landing page должна быть готова к замене placeholder-блоков на реальные screenshots. Поэтому showcase ниже собран как редактируемая структура, а не как жёсткий монолит."
-          />
-
-          <div className="mt-6 grid gap-4 xl:grid-cols-3">
-            {productShowcase.map((item, index) => (
-              <div key={item.title} className="grid gap-3">
-                <ProductShot
-                  tone={index === 0 ? "orange" : index === 1 ? "cyan" : "yellow"}
-                  label={item.preview.label}
-                  title={item.preview.title}
-                  rows={item.preview.rows}
+          <div className="mt-10 grid gap-5 lg:grid-cols-3">
+            {content.home.trustReasons.map((reason, index) => (
+              <div key={reason} className="rounded-[28px] border-2 border-black bg-white p-6 shadow-[0_8px_0_#000]">
+                <span
+                  className="mb-6 block h-2 w-16 rounded-full"
+                  style={{
+                    backgroundColor:
+                      index === 0 ? landingTheme.primary : index === 1 ? landingTheme.cyan : landingTheme.sand,
+                  }}
                 />
-                <div className="rounded-2xl border-2 border-black bg-white p-4">
-                  <p className="text-lg font-black tracking-[-0.03em] text-black">{item.title}</p>
-                  <p className="mt-2 text-sm text-black/65">{item.body}</p>
-                </div>
+                <p className="text-xl font-medium leading-9 text-black">{reason}</p>
               </div>
             ))}
           </div>
         </section>
 
-        <section className="border-t-2 border-black px-5 py-10 md:px-8">
-          <SectionHeader
-            eyebrow="Почему верят"
-            title="После решения должен идти trust layer."
-            description="Не обещания «поступишь гарантированно», а честное объяснение, почему этот продукт стоит попробовать прямо сейчас."
+        <section className="border-b-2 border-black px-5 py-16 md:px-8 md:py-20">
+          <MarketingSectionHeading
+            eyebrow={content.home.faq.eyebrow}
+            title={content.home.faq.title}
+            description={content.home.faq.description}
           />
 
-          <div className="mt-6 grid gap-3 md:grid-cols-3">
-            {proofPoints.map((item) => (
-              <div key={item} className="rounded-2xl border-2 border-black bg-white p-4 shadow-[0_4px_0_#000]">
-                <div className="flex items-start gap-2">
-                  <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-black/65" />
-                  <p className="text-sm font-semibold text-black">{item}</p>
-                </div>
-              </div>
-            ))}
+          <div className="mx-auto mt-10 max-w-4xl rounded-[32px] border-2 border-black bg-white px-6 py-3 shadow-[0_10px_0_#000] md:px-10">
+            <Accordion type="single" collapsible>
+              {content.home.faqItems.map((item, index) => (
+                <AccordionItem key={item.question} value={`faq-${index}`} className={index === content.home.faqItems.length - 1 ? "border-b-0" : ""}>
+                  <AccordionTrigger>{item.question}</AccordionTrigger>
+                  <AccordionContent>{item.answer}</AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
           </div>
         </section>
 
-        <section className="border-t-2 border-black px-5 py-10 md:px-8">
-          <div
-            className="rounded-[28px] border-2 border-black px-6 py-8 text-center shadow-[0_8px_0_#000]"
-            style={{ backgroundColor: landingTheme.yellowSoft }}
-          >
-            <div className="mx-auto max-w-3xl">
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-black/45">Призыв к действию</p>
-              <h2 className="mt-3 text-3xl font-black leading-[0.95] tracking-[-0.04em] text-black md:text-5xl">
-                Если поступление уже похоже на хаос, лучше собрать систему до того, как начнутся дедлайны.
-              </h2>
-              <p className="mt-4 text-base text-black/65 md:text-lg">
-                Начни с shortlist, задач и документов в одном месте. Дальше Enroll поможет двигаться шаг за шагом.
-              </p>
+        <section className="px-5 py-16 md:px-8 md:py-20">
+          <div className="mx-auto max-w-5xl rounded-[32px] border-2 border-black bg-white px-6 py-12 text-center shadow-[0_10px_0_#000] md:px-10 md:py-16">
+            <h2 className="text-4xl font-black leading-[0.95] tracking-[-0.05em] md:text-7xl">
+              {content.home.final.title[0]}
+              <br />
+              {content.home.final.title[1]}
+            </h2>
+            <p className="mx-auto mt-6 max-w-3xl text-base leading-7 text-black/65 sm:text-lg sm:leading-8 md:text-xl md:leading-9">
+              {content.home.final.description}
+            </p>
 
-              <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-                <LandingPrimaryLink
-                  fallbackHref={primaryHref}
-                  initialHasSession={Boolean(token)}
-                  className="rounded-xl border-2 border-black px-8 py-3 text-lg font-black transition hover:-translate-y-0.5 hover:shadow-[0_5px_0_#000]"
-                  style={{ backgroundColor: landingTheme.primary }}
-                >
-                  Начать сейчас
-                </LandingPrimaryLink>
-                <Link href="/pilot" className="rounded-xl border-2 border-black bg-white px-8 py-3 text-lg font-bold transition hover:-translate-y-0.5">
-                  Записаться в пилот
-                </Link>
-              </div>
+            <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
+              <LandingPrimaryLink
+                fallbackHref={primaryHref}
+                initialHasSession={Boolean(token)}
+                className="inline-flex items-center gap-2 rounded-2xl border-2 border-black px-8 py-4 text-lg font-black transition hover:-translate-y-0.5 hover:shadow-[0_6px_0_#000]"
+                style={{ backgroundColor: landingTheme.primary }}
+              >
+                {messages.common.startFree}
+                <ArrowRight className="h-5 w-5" />
+              </LandingPrimaryLink>
+              <Link
+                href="/pricing"
+                className="inline-flex items-center gap-2 rounded-2xl border-2 border-black bg-white px-8 py-4 text-lg font-black transition hover:-translate-y-0.5"
+              >
+                <DollarSign className="h-5 w-5" />
+                {content.home.final.secondaryCta}
+              </Link>
+            </div>
 
-              <div className="mt-5 flex items-center justify-center gap-2 text-sm text-black/55">
-                <CircleAlert className="h-4 w-4" />
-                <span>Это не гарантия поступления. Решение принимает университет.</span>
-              </div>
-              <div className="mt-3">
-                <div className="flex flex-wrap items-center justify-center gap-3 text-sm font-semibold">
-                  <Link href="/pricing" className="underline underline-offset-2">
-                    Pricing
-                  </Link>
-                  <Link href="/terms" className="underline underline-offset-2">
-                    Terms
-                  </Link>
-                  <Link href="/privacy-policy" className="underline underline-offset-2">
-                    Privacy
-                  </Link>
-                  <Link href="/refund-policy" className="underline underline-offset-2">
-                    Refunds
-                  </Link>
-                </div>
-              </div>
+            <div className="mt-8 flex items-center justify-center gap-2 text-sm text-black/45">
+              <CheckCircle2 className="h-4 w-4" />
+              <span>{content.home.final.note}</span>
             </div>
           </div>
         </section>
 
-        <footer className="border-t-2 border-black px-5 py-10 md:px-8">
-          <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr] lg:items-end">
-            <div>
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-black/45">Соцсети</p>
-              <h2 className="mt-2 text-3xl font-black leading-[0.95] tracking-[-0.04em] text-black md:text-4xl">
-                Следи за Enroll и вне продукта.
-              </h2>
-              <p className="mt-4 max-w-2xl text-base text-black/65 md:text-lg">
-                Там мы показываем обновления продукта, отвечаем на вопросы и делимся тем, как студенты строят более сильный admissions workflow шаг за шагом.
-              </p>
-              <div className="mt-5 flex flex-wrap gap-2 text-sm text-black/55">
-                <span className="rounded-full border-2 border-black bg-white px-3 py-1 font-semibold">Telegram</span>
-                <span className="rounded-full border-2 border-black bg-white px-3 py-1 font-semibold">Instagram</span>
-              </div>
-            </div>
-
-            <SocialLottieButtons />
-          </div>
-        </footer>
+        <MarketingFooter />
       </div>
-
-      <style>{`
-        .blob {
-          position: fixed;
-          z-index: 0;
-          width: 280px;
-          height: 280px;
-          border-radius: 9999px;
-          filter: blur(55px);
-          opacity: 0.45;
-          animation: floaty 7s ease-in-out infinite;
-          pointer-events: none;
-        }
-        .blob-cyan {
-          top: 12%;
-          left: -40px;
-          background: ${landingTheme.cyan};
-        }
-        .blob-orange {
-          bottom: 5%;
-          right: -60px;
-          background: ${landingTheme.orange};
-          animation-delay: 1.4s;
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .blob {
-            animation: none;
-          }
-        }
-        @keyframes floaty {
-          0% {
-            transform: translateY(0) scale(1);
-          }
-          50% {
-            transform: translateY(-14px) scale(1.04);
-          }
-          100% {
-            transform: translateY(0) scale(1);
-          }
-        }
-      `}</style>
     </main>
   );
 }
