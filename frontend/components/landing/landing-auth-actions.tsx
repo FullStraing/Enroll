@@ -68,7 +68,7 @@ export function LandingAuthActions({
       {hasAccount ? (
         <Link
           href="/dashboard"
-          className="inline-flex items-center gap-3 rounded-2xl border-2 border-[var(--enroll-strong-border)] bg-[var(--enroll-surface-elevated)] px-3 py-2 text-sm font-semibold text-[var(--enroll-fg)] transition hover:-translate-y-0.5"
+          className="inline-flex h-12 items-center gap-3 rounded-2xl border-2 border-[var(--enroll-strong-border)] bg-[var(--enroll-surface-elevated)] px-3.5 text-sm font-semibold text-[var(--enroll-fg)] transition hover:-translate-y-0.5"
         >
           <span className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--enroll-surface-border)] bg-[var(--enroll-cyan)] text-xs font-black text-[var(--enroll-fg)]">
             {initial}
@@ -78,7 +78,7 @@ export function LandingAuthActions({
       ) : (
         <Link
           href="/login"
-          className="rounded-2xl border-2 border-[var(--enroll-strong-border)] bg-[var(--enroll-surface-elevated)] px-4 py-2 text-sm font-semibold text-[var(--enroll-fg)] transition hover:-translate-y-0.5"
+          className="inline-flex h-12 items-center rounded-2xl border-2 border-[var(--enroll-strong-border)] bg-[var(--enroll-surface-elevated)] px-4 text-sm font-semibold text-[var(--enroll-fg)] transition hover:-translate-y-0.5"
         >
           {messages.common.login}
         </Link>
@@ -87,7 +87,7 @@ export function LandingAuthActions({
       <LandingPrimaryLink
         fallbackHref={primaryHref}
         initialHasSession={initialHasSession}
-        className="inline-flex items-center gap-2 rounded-2xl border-2 border-[var(--enroll-strong-border)] px-5 py-2 text-sm font-black text-[var(--enroll-strong-fg)] transition hover:-translate-y-0.5 hover:shadow-[0_4px_0_var(--enroll-strong-shadow)]"
+        className="inline-flex h-12 items-center gap-2 rounded-2xl border-2 border-[var(--enroll-strong-border)] px-5 text-sm font-black text-[var(--enroll-strong-fg)] transition hover:-translate-y-0.5 hover:shadow-[0_4px_0_var(--enroll-strong-shadow)]"
         style={{ backgroundColor: "var(--enroll-yellow)" }}
       >
         {messages.common.startFree}

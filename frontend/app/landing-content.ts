@@ -5,10 +5,10 @@ export const landingTheme = {
   black: "var(--enroll-fg)",
   white: "var(--enroll-surface-elevated)",
   primary: "var(--enroll-yellow)",
-  orange: "var(--enroll-orange)",
-  cyan: "var(--enroll-cyan)",
-  sand: "var(--enroll-sand)",
-  yellowSoft: "var(--enroll-yellow-soft)",
+  orange: "var(--enroll-marketing-orange)",
+  cyan: "var(--enroll-marketing-cyan)",
+  sand: "var(--enroll-marketing-sand)",
+  yellowSoft: "var(--enroll-marketing-yellow)",
   line: "var(--enroll-surface-border)",
 };
 

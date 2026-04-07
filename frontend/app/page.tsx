@@ -35,7 +35,7 @@ export default function LandingPage() {
   const primaryHref = token ? "/dashboard" : introQuizLinked ? "/register" : "/intro-quiz";
 
   return (
-    <main className="marketing-shell min-h-screen bg-transparent px-4 py-6 text-black md:px-8">
+    <main className="marketing-shell min-h-screen bg-transparent px-4 py-6 text-[var(--enroll-fg)] md:px-8">
       <div className="mx-auto max-w-7xl overflow-hidden rounded-[28px] border-2 border-black bg-white shadow-[0_10px_0_#000]">
         <MarketingHeader initialHasSession={Boolean(token)} primaryHref={primaryHref} current="home" brandVariant="minimal" />
 
@@ -48,13 +48,13 @@ export default function LandingPage() {
               {content.home.hero.badge}
             </span>
 
-            <h1 className="mx-auto mt-6 max-w-3xl text-[clamp(2.4rem,8vw,5rem)] font-black leading-[0.94] tracking-[-0.06em] sm:mt-8">
+            <h1 className="mx-auto mt-6 max-w-3xl text-[clamp(2.4rem,8vw,5rem)] font-black leading-[0.94] tracking-[-0.06em] text-[var(--enroll-fg)] sm:mt-8">
               {content.home.hero.title[0]}
               <br />
               {content.home.hero.title[1]}
             </h1>
 
-            <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-black/65 sm:text-lg md:mt-6 md:text-xl md:leading-9">
+            <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-[var(--enroll-muted-strong)] sm:text-lg md:mt-6 md:text-xl md:leading-9">
               {content.home.hero.description}
             </p>
 
@@ -77,7 +77,7 @@ export default function LandingPage() {
               </Link>
             </div>
 
-            <p className="mt-5 text-xs font-semibold text-black/45 sm:mt-6 sm:text-sm md:text-base">{content.home.hero.footer}</p>
+            <p className="mt-5 text-xs font-semibold text-[var(--enroll-muted)] sm:mt-6 sm:text-sm md:text-base">{content.home.hero.footer}</p>
           </div>
         </section>
 
@@ -92,20 +92,20 @@ export default function LandingPage() {
             {content.home.comparisons.map((item) => (
               <div
                 key={item.pain}
-                className="grid overflow-hidden rounded-[28px] border-2 border-black bg-white shadow-[0_8px_0_#000] md:grid-cols-[1fr_1fr]"
+                className="grid overflow-hidden rounded-[28px] border-2 border-[var(--enroll-strong-border)] bg-[var(--enroll-surface-elevated)] shadow-[0_8px_0_var(--enroll-strong-shadow)] md:grid-cols-[1fr_1fr]"
               >
                 <div className="flex items-center gap-4 px-6 py-6">
-                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-black/10 bg-white text-black/35">
+                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-[var(--enroll-surface-border)] bg-[color-mix(in_srgb,var(--enroll-surface-elevated)_88%,transparent)] text-[var(--enroll-muted-strong)]">
                     <X className="h-5 w-5" />
                   </span>
-                  <p className="max-w-xl text-base font-medium leading-7 text-black/75 sm:text-lg">{item.pain}</p>
+                  <p className="max-w-xl text-base font-medium leading-7 text-[var(--enroll-fg-soft)] sm:text-lg">{item.pain}</p>
                 </div>
-                <div className="border-t-2 border-black md:border-l-2 md:border-t-0" style={{ backgroundColor: toneAccentMap[item.tone] }}>
+                <div className="border-t-2 border-[var(--enroll-strong-border)] md:border-l-2 md:border-t-0" style={{ backgroundColor: toneAccentMap[item.tone] }}>
                   <div className="flex items-center gap-4 px-6 py-6">
-                    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-black/10 bg-[#FFDB58]">
+                    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-black/10 bg-[var(--enroll-yellow)] text-[var(--enroll-strong-fg)]">
                       <Check className="h-5 w-5" />
                     </span>
-                    <p className="max-w-xl text-base font-black leading-7 text-black sm:text-lg">{item.relief}</p>
+                    <p className="max-w-xl text-base font-black leading-7 text-[var(--enroll-strong-fg)] sm:text-lg">{item.relief}</p>
                   </div>
                 </div>
               </div>
@@ -126,11 +126,11 @@ export default function LandingPage() {
 
               return (
                 <MarketingToneCard key={module.title} tone={module.tone}>
-                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-black/10 bg-white">
-                    <Icon className="h-6 w-6" />
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-black/10 bg-[color-mix(in_srgb,var(--enroll-surface-elevated)_70%,transparent)]">
+                    <Icon className="h-6 w-6 text-[var(--enroll-strong-fg)]" />
                   </div>
-                  <h3 className="mt-8 text-3xl font-black tracking-[-0.04em]">{module.title}</h3>
-                  <p className="mt-4 text-base leading-7 text-black/70 sm:text-lg sm:leading-8">{module.body}</p>
+                  <h3 className="mt-8 text-3xl font-black tracking-[-0.04em] text-[var(--enroll-strong-fg)]">{module.title}</h3>
+                  <p className="mt-4 text-base leading-7 text-[color:color-mix(in_srgb,var(--enroll-strong-fg)_72%,transparent)] sm:text-lg sm:leading-8">{module.body}</p>
                 </MarketingToneCard>
               );
             })}

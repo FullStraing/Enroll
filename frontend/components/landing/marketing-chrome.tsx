@@ -42,8 +42,8 @@ export function MarketingHeader({
         )}
       </Link>
 
-      <div className="flex flex-wrap items-center gap-3 md:gap-6">
-        <nav className="hidden items-center gap-6 text-sm font-black md:flex">
+      <div className="flex flex-wrap items-center justify-end gap-3 md:gap-4">
+        <nav className="hidden items-center gap-5 text-sm font-black lg:flex">
           <Link href="/" className={navClass(current === "home")}>
             {messages.common.home}
           </Link>
@@ -55,8 +55,10 @@ export function MarketingHeader({
           </Link>
         </nav>
 
-        <ThemeSwitcher compact />
-        <LanguageSwitcher compact />
+        <div className="flex items-center gap-2 rounded-2xl border border-[var(--enroll-surface-border)] bg-[color-mix(in_srgb,var(--enroll-surface-elevated)_92%,transparent)] p-1.5">
+          <ThemeSwitcher compact />
+          <LanguageSwitcher compact />
+        </div>
         <LandingAuthActions initialHasSession={initialHasSession} primaryHref={primaryHref} />
       </div>
     </header>
