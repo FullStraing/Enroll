@@ -7,7 +7,15 @@ import { getServerLocale } from "@/lib/server-locale";
 import { getMessages } from "@/lib/i18n";
 import { INTRO_QUIZ_LINKED_COOKIE_KEY } from "@/lib/intro-quiz";
 import { LandingPrimaryLink } from "@/components/landing/landing-auth-actions";
-import { MarketingFooter, MarketingHeader, MarketingSectionHeading, MarketingToneCard } from "@/components/landing/marketing-chrome";
+import {
+  MarketingFooter,
+  MarketingHeader,
+  MarketingIconChip,
+  MarketingSectionHeading,
+  MarketingToneCard,
+  marketingPrimaryButtonLgClass,
+  marketingSecondaryButtonLgClass,
+} from "@/components/landing/marketing-chrome";
 
 const moduleIcons = {
   Shortlist: Target,
@@ -42,8 +50,7 @@ export default function LandingPage() {
         <section className="border-b-2 border-black px-5 py-12 sm:px-6 sm:py-14 md:px-8 md:py-20">
           <div className="mx-auto max-w-4xl text-center">
             <span
-              className="inline-flex rounded-full border-2 border-black px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] sm:px-5 sm:text-xs sm:tracking-[0.2em]"
-              style={{ backgroundColor: landingTheme.yellowSoft }}
+              className="inline-flex rounded-full border-2 border-[var(--enroll-strong-border)] bg-[var(--enroll-yellow)] px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] text-[var(--enroll-strong-fg)] sm:px-5 sm:text-xs sm:tracking-[0.2em]"
             >
               {content.home.hero.badge}
             </span>
@@ -62,8 +69,7 @@ export default function LandingPage() {
               <LandingPrimaryLink
                 fallbackHref={primaryHref}
                 initialHasSession={Boolean(token)}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-black px-6 py-3.5 text-base font-black transition hover:-translate-y-0.5 hover:shadow-[0_6px_0_#000] sm:w-auto sm:px-8 sm:py-4 sm:text-lg"
-                style={{ backgroundColor: landingTheme.primary }}
+                className={marketingPrimaryButtonLgClass}
               >
                 {messages.common.startFree}
                 <ArrowRight className="h-5 w-5" />
@@ -71,7 +77,7 @@ export default function LandingPage() {
 
               <Link
                 href="/product"
-                className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-black bg-white px-6 py-3.5 text-base font-black transition hover:-translate-y-0.5 sm:w-auto sm:px-8 sm:py-4 sm:text-lg"
+                className={marketingSecondaryButtonLgClass}
               >
                 {content.home.hero.secondaryCta}
               </Link>
@@ -102,7 +108,7 @@ export default function LandingPage() {
                 </div>
                 <div className="border-t-2 border-[var(--enroll-strong-border)] md:border-l-2 md:border-t-0" style={{ backgroundColor: toneAccentMap[item.tone] }}>
                   <div className="flex items-center gap-4 px-6 py-6">
-                    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-black/10 bg-[var(--enroll-yellow)] text-[var(--enroll-strong-fg)]">
+                    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-black/10 bg-[var(--enroll-yellow)] text-[var(--enroll-strong-fg)] shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]">
                       <Check className="h-5 w-5" />
                     </span>
                     <p className="max-w-xl text-base font-black leading-7 text-[var(--enroll-strong-fg)] sm:text-lg">{item.relief}</p>
@@ -126,9 +132,9 @@ export default function LandingPage() {
 
               return (
                 <MarketingToneCard key={module.title} tone={module.tone}>
-                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-black/10 bg-[color-mix(in_srgb,var(--enroll-surface-elevated)_70%,transparent)]">
-                    <Icon className="h-6 w-6 text-[var(--enroll-strong-fg)]" />
-                  </div>
+                  <MarketingIconChip>
+                    <Icon className="h-6 w-6" strokeWidth={2.1} />
+                  </MarketingIconChip>
                   <h3 className="mt-8 text-3xl font-black tracking-[-0.04em] text-[var(--enroll-strong-fg)]">{module.title}</h3>
                   <p className="mt-4 text-base leading-7 text-[color:color-mix(in_srgb,var(--enroll-strong-fg)_72%,transparent)] sm:text-lg sm:leading-8">{module.body}</p>
                 </MarketingToneCard>
@@ -151,14 +157,14 @@ export default function LandingPage() {
                 <div key={step.number} className="relative rounded-[32px] border-2 border-black bg-white px-6 py-8 shadow-[0_8px_0_#000] md:px-10">
                   <div className="flex flex-col gap-6 md:flex-row md:items-start">
                     <div
-                      className="flex h-24 w-24 shrink-0 items-center justify-center rounded-[28px] border-2 border-black text-2xl font-black"
+                      className="flex h-24 w-24 shrink-0 items-center justify-center rounded-[28px] border-2 border-black text-2xl font-black text-[var(--enroll-strong-fg)] shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]"
                       style={{ backgroundColor: toneAccentMap[step.tone] }}
                     >
                       {step.number}
                     </div>
                     <div className="pt-1">
                       <h3 className="text-3xl font-black tracking-[-0.04em]">{step.title}</h3>
-                      <p className="mt-4 max-w-3xl text-base leading-7 text-black/65 sm:text-lg sm:leading-8">{step.body}</p>
+                      <p className="mt-4 max-w-3xl text-base leading-7 text-[var(--enroll-muted)] sm:text-lg sm:leading-8">{step.body}</p>
                     </div>
                   </div>
                 </div>
@@ -184,7 +190,7 @@ export default function LandingPage() {
                       index === 0 ? landingTheme.primary : index === 1 ? landingTheme.cyan : landingTheme.sand,
                   }}
                 />
-                <p className="text-xl font-medium leading-9 text-black">{reason}</p>
+                <p className="text-xl font-medium leading-9 text-[var(--enroll-fg)]">{reason}</p>
               </div>
             ))}
           </div>
@@ -216,7 +222,7 @@ export default function LandingPage() {
               <br />
               {content.home.final.title[1]}
             </h2>
-            <p className="mx-auto mt-6 max-w-3xl text-base leading-7 text-black/65 sm:text-lg sm:leading-8 md:text-xl md:leading-9">
+            <p className="mx-auto mt-6 max-w-3xl text-base leading-7 text-[var(--enroll-muted)] sm:text-lg sm:leading-8 md:text-xl md:leading-9">
               {content.home.final.description}
             </p>
 
@@ -224,22 +230,21 @@ export default function LandingPage() {
               <LandingPrimaryLink
                 fallbackHref={primaryHref}
                 initialHasSession={Boolean(token)}
-                className="inline-flex items-center gap-2 rounded-2xl border-2 border-black px-8 py-4 text-lg font-black transition hover:-translate-y-0.5 hover:shadow-[0_6px_0_#000]"
-                style={{ backgroundColor: landingTheme.primary }}
+                className={marketingPrimaryButtonLgClass}
               >
                 {messages.common.startFree}
                 <ArrowRight className="h-5 w-5" />
               </LandingPrimaryLink>
               <Link
                 href="/pricing"
-                className="inline-flex items-center gap-2 rounded-2xl border-2 border-black bg-white px-8 py-4 text-lg font-black transition hover:-translate-y-0.5"
+                className={marketingSecondaryButtonLgClass}
               >
                 <DollarSign className="h-5 w-5" />
                 {content.home.final.secondaryCta}
               </Link>
             </div>
 
-            <div className="mt-8 flex items-center justify-center gap-2 text-sm text-black/45">
+            <div className="mt-8 flex items-center justify-center gap-2 text-sm text-[var(--enroll-muted)]">
               <CheckCircle2 className="h-4 w-4" />
               <span>{content.home.final.note}</span>
             </div>

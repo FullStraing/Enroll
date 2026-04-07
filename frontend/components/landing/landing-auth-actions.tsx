@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
 import { useMessages } from "@/components/locale-provider";
+import { marketingPrimaryButtonSmClass } from "@/components/landing/marketing-chrome";
 import { getToken, hasStoredAccessToken } from "@/lib/auth";
 
 function accountLabel(name: string | undefined, username: string | undefined, fallback: string) {
@@ -13,12 +14,14 @@ function accountLabel(name: string | undefined, username: string | undefined, fa
 
 function useLandingAccountState(initialHasSession: boolean) {
   const { status, profile } = useAuth();
-  const [hasStoredToken] = useState(() => hasStoredAccessToken());
+  const [hasStoredToken, setHasStoredToken] = useState(false);
 
   useEffect(() => {
-    if (!hasStoredToken) return;
+    const storedToken = hasStoredAccessToken();
+    if (!storedToken) return;
+    setHasStoredToken(true);
     getToken();
-  }, [hasStoredToken]);
+  }, []);
 
   const hasAccount = status === "authenticated" || hasStoredToken || (status === "loading" && initialHasSession);
 
@@ -87,8 +90,7 @@ export function LandingAuthActions({
       <LandingPrimaryLink
         fallbackHref={primaryHref}
         initialHasSession={initialHasSession}
-        className="inline-flex h-12 items-center gap-2 rounded-2xl border-2 border-[var(--enroll-strong-border)] px-5 text-sm font-black text-[var(--enroll-strong-fg)] transition hover:-translate-y-0.5 hover:shadow-[0_4px_0_var(--enroll-strong-shadow)]"
-        style={{ backgroundColor: "var(--enroll-yellow)" }}
+        className={marketingPrimaryButtonSmClass}
       >
         {messages.common.startFree}
         <ArrowRight className="h-4 w-4" />

@@ -21,6 +21,9 @@
   --enroll-marketing-cyan: #daf5f0;
   --enroll-marketing-sand: #f3ede2;
   --enroll-marketing-orange: #f8d6b3;
+  --enroll-marketing-icon-chip: rgba(17, 17, 17, 0.12);
+  --enroll-marketing-icon-chip-border: rgba(17, 17, 17, 0.14);
+  --enroll-marketing-icon-fg: #111111;
   --enroll-strong-border: #000000;
   --enroll-strong-shadow: #000000;
   --enroll-surface-border: rgba(0, 0, 0, 0.12);
@@ -53,6 +56,9 @@ html.dark {
   --enroll-marketing-cyan: #bfe4de;
   --enroll-marketing-sand: #e7ddca;
   --enroll-marketing-orange: #efcda6;
+  --enroll-marketing-icon-chip: rgba(17, 17, 17, 0.18);
+  --enroll-marketing-icon-chip-border: rgba(17, 17, 17, 0.12);
+  --enroll-marketing-icon-fg: #111111;
   --enroll-strong-border: #d4dbd7;
   --enroll-strong-shadow: rgba(0, 0, 0, 0.42);
   --enroll-surface-border: rgba(236, 241, 239, 0.12);

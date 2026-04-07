@@ -8,6 +8,7 @@ import { LandingAuthActions } from "@/components/landing/landing-auth-actions";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { useMessages } from "@/components/locale-provider";
+import { cn } from "@/lib/utils";
 
 type MarketingHeaderProps = {
   initialHasSession: boolean;
@@ -21,6 +22,36 @@ function navClass(active: boolean) {
   return active
     ? "text-[var(--enroll-fg)]"
     : "text-[var(--enroll-muted-strong)] transition hover:text-[var(--enroll-fg)]";
+}
+
+export const marketingPrimaryButtonClass =
+  "inline-flex items-center justify-center gap-2 rounded-2xl border-2 border-[var(--enroll-strong-border)] bg-[var(--enroll-yellow)] text-[var(--enroll-strong-fg)] font-black shadow-[0_4px_0_var(--enroll-strong-shadow)] transition hover:-translate-y-0.5 hover:bg-[color-mix(in_srgb,var(--enroll-yellow)_92%,white)] hover:shadow-[0_6px_0_var(--enroll-strong-shadow)] active:translate-y-0.5 active:shadow-[0_2px_0_var(--enroll-strong-shadow)]";
+
+export const marketingPrimaryButtonLgClass = `${marketingPrimaryButtonClass} h-14 w-full px-6 text-base sm:w-auto sm:px-8 sm:text-lg`;
+
+export const marketingPrimaryButtonSmClass = `${marketingPrimaryButtonClass} h-12 px-5 text-sm`;
+
+export const marketingSecondaryButtonLgClass =
+  "inline-flex h-14 w-full items-center justify-center gap-2 rounded-2xl border-2 border-[var(--enroll-strong-border)] bg-[var(--enroll-surface-elevated)] px-6 text-base font-black text-[var(--enroll-fg)] shadow-[0_4px_0_var(--enroll-strong-shadow)] transition hover:-translate-y-0.5 hover:bg-[color-mix(in_srgb,var(--enroll-fg)_4%,var(--enroll-surface-elevated))] hover:shadow-[0_6px_0_var(--enroll-strong-shadow)] active:translate-y-0.5 active:shadow-[0_2px_0_var(--enroll-strong-shadow)] sm:w-auto sm:px-8 sm:text-lg";
+
+export function MarketingIconChip({
+  children,
+  className = "",
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "flex h-14 w-14 items-center justify-center rounded-2xl border shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]",
+        "border-[var(--enroll-marketing-icon-chip-border)] bg-[var(--enroll-marketing-icon-chip)] text-[var(--enroll-marketing-icon-fg)]",
+        className,
+      )}
+    >
+      {children}
+    </div>
+  );
 }
 
 export function MarketingHeader({

@@ -3,7 +3,14 @@ import { ArrowRight, CheckCircle2 } from "lucide-react";
 import { cookies } from "next/headers";
 import { getLandingContent, landingTheme } from "@/app/landing-content";
 import { LandingPrimaryLink } from "@/components/landing/landing-auth-actions";
-import { MarketingFooter, MarketingHeader, MarketingSectionHeading, MarketingToneCard } from "@/components/landing/marketing-chrome";
+import {
+  MarketingFooter,
+  MarketingHeader,
+  MarketingSectionHeading,
+  MarketingToneCard,
+  marketingPrimaryButtonLgClass,
+  marketingSecondaryButtonLgClass,
+} from "@/components/landing/marketing-chrome";
 import { ProductShot } from "@/components/landing/product-shot";
 import { getServerLocale } from "@/lib/server-locale";
 import { INTRO_QUIZ_LINKED_COOKIE_KEY } from "@/lib/intro-quiz";
@@ -25,15 +32,14 @@ export default function ProductPage() {
   const primaryHref = token ? "/dashboard" : introQuizLinked ? "/register" : "/intro-quiz";
 
   return (
-    <main className="marketing-shell min-h-screen bg-transparent px-4 py-6 text-black md:px-8">
+    <main className="marketing-shell min-h-screen bg-transparent px-4 py-6 text-[var(--enroll-fg)] md:px-8">
       <div className="mx-auto max-w-7xl overflow-hidden rounded-[28px] border-2 border-black bg-white shadow-[0_10px_0_#000]">
         <MarketingHeader initialHasSession={Boolean(token)} primaryHref={primaryHref} current="product" brandVariant="minimal" />
 
         <section className="border-b-2 border-black px-5 py-14 sm:px-6 md:px-8 md:py-20">
           <div className="mx-auto max-w-5xl text-center">
             <span
-              className="inline-flex rounded-full border-2 border-black px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] sm:px-5 sm:text-xs"
-              style={{ backgroundColor: landingTheme.yellowSoft }}
+              className="inline-flex rounded-full border-2 border-[var(--enroll-strong-border)] bg-[var(--enroll-yellow)] px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] text-[var(--enroll-strong-fg)] sm:px-5 sm:text-xs"
             >
               {content.product.hero.badge}
             </span>
@@ -44,7 +50,7 @@ export default function ProductPage() {
               {content.product.hero.title[1]}
             </h1>
 
-            <p className="mx-auto mt-5 max-w-3xl text-base leading-7 text-black/65 sm:text-lg sm:leading-8 md:text-xl md:leading-9">
+            <p className="mx-auto mt-5 max-w-3xl text-base leading-7 text-[var(--enroll-muted)] sm:text-lg sm:leading-8 md:text-xl md:leading-9">
               {content.product.hero.description}
             </p>
 
@@ -52,15 +58,14 @@ export default function ProductPage() {
               <LandingPrimaryLink
                 fallbackHref={primaryHref}
                 initialHasSession={Boolean(token)}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-black px-6 py-3.5 text-base font-black transition hover:-translate-y-0.5 hover:shadow-[0_6px_0_#000] sm:w-auto sm:px-8 sm:py-4 sm:text-lg"
-                style={{ backgroundColor: landingTheme.primary }}
+                className={marketingPrimaryButtonLgClass}
               >
                 {messages.common.startFree}
                 <ArrowRight className="h-5 w-5" />
               </LandingPrimaryLink>
               <Link
                 href="/pricing"
-                className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-black bg-white px-6 py-3.5 text-base font-black transition hover:-translate-y-0.5 sm:w-auto sm:px-8 sm:py-4 sm:text-lg"
+                className={marketingSecondaryButtonLgClass}
               >
                 {messages.common.pricing}
               </Link>
@@ -82,12 +87,12 @@ export default function ProductPage() {
                 className="flex items-start gap-4 rounded-[28px] border-2 border-black bg-white px-5 py-5 shadow-[0_8px_0_#000] sm:px-6"
               >
                 <span
-                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border-2 border-black text-sm font-black"
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border-2 border-black text-sm font-black text-[var(--enroll-strong-fg)] shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]"
                   style={{ backgroundColor: index % 2 === 0 ? landingTheme.yellowSoft : landingTheme.cyan }}
                 >
                   0{index + 1}
                 </span>
-                <p className="pt-1 text-base leading-7 text-black/75 sm:text-lg sm:leading-8">{item}</p>
+                <p className="pt-1 text-base leading-7 text-[var(--enroll-fg-soft)] sm:text-lg sm:leading-8">{item}</p>
               </div>
             ))}
           </div>
@@ -101,9 +106,9 @@ export default function ProductPage() {
                 className={`grid items-center gap-8 ${index % 2 === 0 ? "lg:grid-cols-[1.05fr_0.95fr]" : "lg:grid-cols-[0.95fr_1.05fr]"}`}
               >
                 <div className={index % 2 === 1 ? "lg:order-2" : ""}>
-                  <p className="text-xs font-black uppercase tracking-[0.18em] text-black/45">{section.eyebrow}</p>
+                  <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--enroll-muted)]">{section.eyebrow}</p>
                   <h2 className="mt-3 text-3xl font-black leading-[0.96] tracking-[-0.05em] md:text-5xl">{section.title}</h2>
-                  <p className="mt-5 max-w-2xl text-base leading-8 text-black/65 md:text-lg">{section.body}</p>
+                  <p className="mt-5 max-w-2xl text-base leading-8 text-[var(--enroll-muted)] md:text-lg">{section.body}</p>
                 </div>
 
                 <div className={index % 2 === 1 ? "lg:order-1" : ""}>
@@ -129,8 +134,8 @@ export default function ProductPage() {
           <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
             {content.home.modulesList.map((module) => (
               <MarketingToneCard key={module.title} tone={module.tone}>
-                <h3 className="text-3xl font-black tracking-[-0.04em]">{module.title}</h3>
-                <p className="mt-4 text-base leading-8 text-black/70 md:text-lg">{module.body}</p>
+                <h3 className="text-3xl font-black tracking-[-0.04em] text-[var(--enroll-strong-fg)]">{module.title}</h3>
+                <p className="mt-4 text-base leading-8 text-[color:color-mix(in_srgb,var(--enroll-strong-fg)_72%,transparent)] md:text-lg">{module.body}</p>
               </MarketingToneCard>
             ))}
           </div>
@@ -143,7 +148,7 @@ export default function ProductPage() {
               <br />
               {content.product.final.title[1]}
             </h2>
-            <p className="mx-auto mt-6 max-w-3xl text-base leading-7 text-black/65 sm:text-lg sm:leading-8 md:text-xl md:leading-9">
+            <p className="mx-auto mt-6 max-w-3xl text-base leading-7 text-[var(--enroll-muted)] sm:text-lg sm:leading-8 md:text-xl md:leading-9">
               {content.product.final.description}
             </p>
 
@@ -151,21 +156,20 @@ export default function ProductPage() {
               <LandingPrimaryLink
                 fallbackHref={primaryHref}
                 initialHasSession={Boolean(token)}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-black px-6 py-3.5 text-base font-black transition hover:-translate-y-0.5 hover:shadow-[0_6px_0_#000] sm:w-auto sm:px-8 sm:py-4 sm:text-lg"
-                style={{ backgroundColor: landingTheme.primary }}
+                className={marketingPrimaryButtonLgClass}
               >
                 {messages.common.startFree}
                 <ArrowRight className="h-5 w-5" />
               </LandingPrimaryLink>
               <Link
                 href="/pricing"
-                className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-black bg-white px-6 py-3.5 text-base font-black transition hover:-translate-y-0.5 sm:w-auto sm:px-8 sm:py-4 sm:text-lg"
+                className={marketingSecondaryButtonLgClass}
               >
                 {content.product.final.secondaryCta}
               </Link>
             </div>
 
-            <div className="mt-8 flex items-center justify-center gap-2 text-sm text-black/45">
+            <div className="mt-8 flex items-center justify-center gap-2 text-sm text-[var(--enroll-muted)]">
               <CheckCircle2 className="h-4 w-4" />
               <span>{content.product.final.note}</span>
             </div>

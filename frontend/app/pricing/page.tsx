@@ -9,7 +9,7 @@ export default function PricingPage() {
   const primaryHref = token ? "/dashboard" : introQuizLinked ? "/register" : "/intro-quiz";
 
   return (
-    <main className="marketing-shell min-h-screen bg-transparent text-black md:px-8">
+    <main className="marketing-shell min-h-screen bg-transparent px-4 py-6 text-[var(--enroll-fg)] md:px-8">
       <div className="mx-auto max-w-7xl overflow-hidden rounded-[28px] border-2 border-black bg-white shadow-[0_10px_0_#000]">
         <MarketingHeader
           initialHasSession={Boolean(token)}
