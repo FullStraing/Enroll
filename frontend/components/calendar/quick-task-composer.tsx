@@ -112,12 +112,12 @@ export function QuickTaskComposer({
     >
       <div className="flex flex-col gap-4">
         <div className="flex items-start gap-3">
-          <div className="mt-1 flex h-10 w-10 items-center justify-center rounded-full border border-black/10 bg-[#FFF4CC]">
-            <Plus className="h-5 w-5 text-black/70" />
+          <div className="mt-1 flex h-10 w-10 items-center justify-center rounded-full border border-[var(--enroll-surface-border)] bg-[var(--enroll-yellow-soft)]">
+            <Plus className="h-5 w-5 text-[var(--enroll-strong-fg)]" />
           </div>
 
           <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-black/45 sm:text-xs sm:tracking-[0.18em]">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--enroll-muted)] sm:text-xs sm:tracking-[0.18em]">
               Quick capture
             </p>
             <label className="mt-2 block">
@@ -127,20 +127,20 @@ export function QuickTaskComposer({
                   value={title}
                   onChange={(event) => onTitleChange(event.target.value)}
                   placeholder=""
-                  className="relative z-[1] w-full border-0 bg-transparent px-0 py-0 text-[18px] font-black leading-[1.2] tracking-[-0.03em] text-black outline-none sm:text-[26px] sm:tracking-[-0.04em]"
+                  className="relative z-[1] w-full border-0 bg-transparent px-0 py-0 text-[18px] font-black leading-[1.2] tracking-[-0.03em] text-[var(--enroll-fg)] outline-none sm:text-[26px] sm:tracking-[-0.04em]"
                 />
                 {!title.trim() ? (
                   <span
                     aria-hidden="true"
-                    className="pointer-events-none absolute inset-0 z-0 flex items-center overflow-hidden text-[18px] font-black leading-[1.2] tracking-[-0.03em] text-black/28 sm:text-[26px] sm:tracking-[-0.04em]"
+                    className="pointer-events-none absolute inset-0 z-0 flex items-center overflow-hidden text-[18px] font-black leading-[1.2] tracking-[-0.03em] text-[color:color-mix(in_srgb,var(--enroll-fg)_36%,transparent)] sm:text-[26px] sm:tracking-[-0.04em]"
                   >
                     <span className="truncate">{animatedPlaceholder}</span>
-                    <span className="ml-1 inline-block h-[1.05em] w-[2px] animate-pulse rounded-full bg-black/28" />
+                    <span className="ml-1 inline-block h-[1.05em] w-[2px] animate-pulse rounded-full bg-[color:color-mix(in_srgb,var(--enroll-fg)_36%,transparent)]" />
                   </span>
                 ) : null}
               </span>
             </label>
-            <p className="mt-2 hidden text-sm text-black/55 sm:block">
+            <p className="mt-2 hidden text-sm text-[var(--enroll-muted)] sm:block">
               New tasks are dated today by default, and you can override the date right after.
             </p>
           </div>
@@ -156,8 +156,8 @@ export function QuickTaskComposer({
                   onClick={() => onDuePresetChange(option.value)}
                   className={`rounded-full border px-3 py-1.5 text-sm font-semibold transition ${
                     duePreset === option.value
-                      ? "border-black bg-[#DAF5F0] text-black"
-                      : "border-black/10 bg-white text-black/65 hover:border-black/30"
+                      ? "border-[var(--enroll-strong-border)] bg-[var(--enroll-cyan)] text-[var(--enroll-fg)]"
+                      : "border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] text-[var(--enroll-muted-strong)] hover:border-[var(--enroll-surface-border-strong)]"
                   }`}
                 >
                   {option.label}
@@ -166,7 +166,7 @@ export function QuickTaskComposer({
             </div>
 
             <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-              <label className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-3 py-1.5 text-sm text-black/65">
+              <label className="inline-flex items-center gap-2 rounded-full border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] px-3 py-1.5 text-sm text-[var(--enroll-muted-strong)]">
                 <CalendarDays className="h-4 w-4" />
                 <input
                   type="date"
@@ -179,7 +179,7 @@ export function QuickTaskComposer({
                 />
               </label>
 
-              <label className="inline-flex min-w-0 items-center gap-2 rounded-full border border-black/10 bg-white px-3 py-1.5 text-sm text-black/65 sm:min-w-[240px]">
+              <label className="inline-flex min-w-0 items-center gap-2 rounded-full border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] px-3 py-1.5 text-sm text-[var(--enroll-muted-strong)] sm:min-w-[240px]">
                 <University className="h-4 w-4 shrink-0" />
                 <Select
                   value={universityId}
@@ -188,7 +188,7 @@ export function QuickTaskComposer({
                     { value: "all", label: "No university" },
                     ...universities.map((university) => ({ value: String(university.id), label: university.name })),
                   ]}
-                  className="h-auto min-w-0 flex-1 border-0 bg-transparent px-0 py-0 text-sm font-medium text-black/70 shadow-none hover:border-transparent focus-visible:border-transparent"
+                  className="h-auto min-w-0 flex-1 border-0 bg-transparent px-0 py-0 text-sm font-medium text-[var(--enroll-fg-soft)] shadow-none hover:border-transparent focus-visible:border-transparent"
                   menuClassName="z-[90]"
                   ariaLabel="Link task to university"
                 />

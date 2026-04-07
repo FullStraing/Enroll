@@ -132,12 +132,13 @@ export function AdmissionsScoreDonut({
       : activeKey
         ? breakdown.segments.find((segment) => segment.key === activeKey) || null
         : null;
+  const hasTooltip = activeKey === "missing" || Boolean(activeSegment);
   const coloredSpan = total * 3.6;
   const startAngle = coloredSpan / 2;
   const missingSummary = breakdown.segments.filter((segment) => segment.missingPoints > 0);
 
   return (
-    <div className={cn("relative mx-auto w-full max-w-[280px] pb-[108px] sm:pb-[104px]", className)}>
+    <div className={cn("relative mx-auto w-full max-w-[280px]", hasTooltip ? "pb-[108px] sm:pb-[104px]" : "pb-0", className)}>
       <div className="relative mx-auto h-[196px] w-[196px]">
         <PieChart width={196} height={196}>
           <Pie

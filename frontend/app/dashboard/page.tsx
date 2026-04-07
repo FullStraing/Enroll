@@ -403,7 +403,7 @@ function DashboardPageContent() {
           />
 
           {!loading && profile && !profileReadyForDashboard ? (
-            <Card className="mt-5 border border-[var(--enroll-surface-border)] bg-[var(--enroll-yellow-soft)] shadow-none">
+            <Card className="mt-5 border border-[var(--enroll-surface-border)] bg-[color-mix(in_srgb,var(--enroll-yellow)_22%,var(--enroll-surface-elevated))] shadow-none">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <CardTitle className="text-xl">{copy.progress.finishProfile}</CardTitle>
@@ -561,7 +561,7 @@ function DashboardPageContent() {
                   </Link>
                 </div>
               ) : (
-                <div className="rounded-2xl bg-[var(--enroll-yellow-soft)]/65 p-4 ring-1 ring-[var(--enroll-surface-border)]">
+                <div className="rounded-2xl bg-[color-mix(in_srgb,var(--enroll-yellow)_18%,var(--enroll-surface-elevated))] p-4 ring-1 ring-[var(--enroll-surface-border)]">
                   <p className="text-sm font-semibold">{copy.progress.personalEssayNotStarted}</p>
                   <p className="mt-1 text-sm text-[var(--enroll-muted)]">{copy.progress.personalEssayNotStartedBody}</p>
                   <Link href="/essays" className="mt-3 inline-flex">

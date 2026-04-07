@@ -181,7 +181,7 @@ function DashboardSnapshotSurface({
                 )}
               </div>
 
-              <div className="rounded-2xl bg-[var(--enroll-yellow-soft)] p-4 ring-1 ring-[var(--enroll-surface-border)]">
+              <div className="rounded-2xl bg-[color-mix(in_srgb,var(--enroll-yellow)_24%,var(--enroll-surface-elevated))] p-4 ring-1 ring-[var(--enroll-surface-border)]">
                 <p className="text-sm font-black uppercase tracking-[0.14em] text-[var(--enroll-muted)]">{copy.targetUniversities}</p>
                 {targetUniversityEntries.length ? (
                   <ul className="mt-3 grid gap-2.5">
@@ -206,9 +206,9 @@ function DashboardSnapshotSurface({
 
           </div>
 
-          <div className="flex h-full flex-col gap-4">
+            <div className="flex h-full flex-col gap-4">
             <div className="rounded-2xl bg-[var(--enroll-surface-elevated)] p-4 ring-1 ring-[var(--enroll-surface-border)]">
-              <div className="inline-flex items-center gap-2 rounded-xl border-2 border-[var(--enroll-strong-border)] bg-[#FFDB58]/40 px-3 py-1 text-sm font-semibold">
+              <div className="inline-flex items-center gap-2 rounded-xl border-2 border-[var(--enroll-strong-border)] bg-[var(--enroll-yellow)] px-3 py-1 text-sm font-semibold text-[var(--enroll-strong-fg)]">
                 <Trophy className="h-4 w-4" />
                 {copy.admissionsScore}
               </div>
@@ -221,11 +221,11 @@ function DashboardSnapshotSurface({
               </div>
             </div>
 
-            <div className="rounded-2xl bg-[var(--enroll-yellow-soft)]/70 p-4 ring-1 ring-[var(--enroll-surface-border)]">
+            <div className="rounded-2xl bg-[color-mix(in_srgb,var(--enroll-yellow)_24%,var(--enroll-surface-elevated))] p-4 ring-1 ring-[var(--enroll-surface-border)]">
               <div className="flex items-center justify-between gap-3">
                 <p className="text-sm font-black uppercase tracking-[0.14em] text-[var(--enroll-muted)]">{copy.honors}</p>
                 {hiddenHonorsCount > 0 ? (
-                  <span className="rounded-full bg-[var(--enroll-yellow-soft)] px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.12em] text-[var(--enroll-muted)]">
+                  <span className="rounded-full bg-[color-mix(in_srgb,var(--enroll-yellow)_38%,var(--enroll-surface-elevated))] px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.12em] text-[var(--enroll-fg)]">
                     +{hiddenHonorsCount} {copy.more}
                   </span>
                 ) : null}
@@ -235,7 +235,7 @@ function DashboardSnapshotSurface({
                   {visibleHonors.map((honor, index) => (
                     <div
                       key={`honor-${index}-${honor}`}
-                      className="rounded-xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-yellow-soft)] px-3 py-3 text-sm font-semibold leading-relaxed text-[var(--enroll-fg)]"
+                      className="rounded-xl border border-[var(--enroll-surface-border)] bg-[color-mix(in_srgb,var(--enroll-yellow)_18%,var(--enroll-surface-elevated))] px-3 py-3 text-sm font-semibold leading-relaxed text-[var(--enroll-fg)]"
                     >
                       {honor}
                     </div>
