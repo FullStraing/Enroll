@@ -1,125 +1,181 @@
-﻿# Tasks
+# Tasks
 
-## Current status
+## Current state
 
-The project is past the skeleton phase. The current state is:
-- working Next.js frontend with live auth flow
-- Django/DRF backend used as the main API layer
-- PostgreSQL as the main database
-- Common App draft flow partially implemented
-- essay workspace implemented as MVP baseline
-- universities and deadlines flow implemented as a real product module
+The project is beyond MVP skeleton stage.
+
+What is real and working now:
+
+- live marketing site
+- intro quiz and auth flow
+- dashboard
+- universities
+- tasks/calendar
+- documents
+- essays baseline
+- Common App baseline
+- community baseline
+- settings
+
+What was also added recently:
+
+- global RU / EN localization foundation
+- global light / dark theme
+- dashboard snapshot/share redesign
+- marketing refresh
+- security hardening for beta
 
 ## Done
 
 ### Product foundation
-- domain-based Django backend apps: `users`, `universities`, `tasks`, `documents`, `essays`, `ai`, `core`
-- JWT auth, registration, profile, password change
-- settings page with account actions
-- privacy policy page and legal links in core UI surfaces
-- documents now work as a simple admissions file vault with upload/delete/download and document grouping
-- documents support drag-and-drop upload, rename, per-file size limits, and an overall user storage cap
 
-### Frontend foundation
-- Next.js frontend established as the primary UI layer
-- shared app shell and protected page pattern
-- shared UI system and reusable components for design decisions
-- unified visual system governed by `docs/UI_SYSTEM_RULES.md`
-- dashboard visual redesign baseline with admissions profile, score, readiness, next step, universities, essays, and deadline blocks
+- domain-based Django apps
+- JWT auth, registration, Google auth, profile, password change
+- settings page
+- legal pages
+- shared app shell
+- protected page pattern
+- shared UI token system
 
-### Funnel and activation
-- public landing page
-- intro quiz before signup/login
-- quiz progress saved locally
-- "do not show again" logic after quiz completion
-- landing CTA routes to quiz or dashboard depending on known state
+### Marketing and funnel
+
+- landing `/`
+- product page `/product`
+- pricing page `/pricing`
+- pilot page `/pilot`
+- intro quiz before signup
+- CTA routing based on auth/session state
+
+### Dashboard
+
+- admissions overview shell
+- snapshot/export/share flow
+- admissions score donut
+- edit-profile integration
+- next-step / readiness surfaces baseline
 
 ### Universities and planning
-- universities list and detail views
-- pagination and search structure
-- richer admissions/cost/housing cards
-- Peterson enrichment now includes `application_fee` extraction and full `Financial Aid` rows as normalized metric payloads
-- deadlines ingestion and display
-- applications flow baseline
-- calendar page and task-oriented planning surface
-- direct add/remove university actions from cards into user profile (`my-universities`) with immediate dashboard reflection
 
-### Essays baseline
+- universities list
+- university detail
+- my-universities table
+- deadlines ingestion/display
+- applications baseline
+- tasks/calendar planning flow
+
+### Documents
+
+- upload / rename / delete / download
+- document typing
+- optional university link
+- production-safe object storage support
+
+### Essays
+
 - essay manager
-- create essay flow
 - essay workspace
-- versions list
-- latest-version edit rules
-- rich text editor
-- autosave with retry protection
-- compare endpoint and baseline compare UI
-- first-visit essay onboarding modal
+- versions
+- autosave
+- compare baseline
 
-### Common App progress system
-- backend progress API
-- per-section and per-subsection completion computation
-- persistent current-step restore after refresh
-- dynamic conditional fields and repeated grouped blocks
-- significant coverage for:
-  - Profile
-  - Family
-  - large parts of Education
-  - Testing baseline
-  - Activities baseline
-  - Writing baseline
-- backend Common App logic largely moved out of monolithic `users/views.py`
+### Common App
+
+- backend progress engine
+- section/subsection completion
+- conditional visibility
+- persistent resume state
+- major baseline coverage across Profile / Family / Education / Testing / Activities / Writing
+
+### Security hardening
+
+- identity linkage for auth
+- password validation
+- throttling
+- shorter JWT lifetime
+- upload allowlist
+- AI log redaction
+- active-only university exposure
+- safer community payloads
+
+### Theme and localization
+
+- shared RU / EN switcher
+- shared light / dark theme
+- shell + marketing + dashboard + intro quiz + documents + universities + settings + community localized/theme-aware to a meaningful degree
 
 ## In progress
 
-### 1. Common App completion
-Still needs final parity and polish for:
-- remaining testing detail flows
-- remaining activities detail flows
-- remaining writing detail flows
-- future plans polish
-- remaining conditional logic review
-- final UX consistency across all subsections
+### 1. Plan gating / billing readiness
 
-### 2. Dashboard as command center
-Needs stronger product logic:
-- completed: clearer readiness summary and next-step card tied to profile/deadlines/essays
-- completed: admissions profile snapshot with share action
-- remaining: stronger ranking logic and recommendation quality
-- remaining: tighter linkage to Common App completion edge cases
+Not solved yet:
 
-### 3. Essays phase continuation
+- no real subscription / entitlement model
+- no server-side enforcement for free vs paid limits
+- no hard limit on number of universities for free users
+- no restricted feature matrix yet
+
+This is now a real product/business task, not a future nice-to-have.
+
+### 2. Common App completion
+
+Still needs:
+
+- remaining detail flows
+- full parity and consistency
+- final UX cleanup
+
+### 3. Essays advanced loop
+
+Still needs:
+
+- stronger AI actions
+- better compare/review loop
+- tighter university context
+
+### 4. Full localization cleanup
+
 Still open:
-- AI Mentor actions that create new versions
-- essay score
-- richer diff UX
-- tighter university/prompt/deadline linkage
 
-### 4. Production readiness
+- some deeper screens remain partially untranslated
+- older copy files still contain mojibake
+- marketing copy source needs one final UTF-8 cleanup pass
+
+### 5. Production discipline
+
 Still open:
-- observability and error tracking
-- stronger tests for critical flows
-- deployment and recovery runbooks
-- cookie/privacy/legal completeness beyond the current baseline
-- performance pass on large interactive screens
+
+- clearer "pushed vs deployed" discipline
+- final visual QA before each deploy
+- more explicit rollout checklist for frontend-only releases
+
+### 6. Dashboard snapshot polish
+
+Still open:
+
+- donut hover tooltip should not shift card layout
+- snapshot interactions need final no-jump overlay treatment
 
 ## Next recommended order
 
-1. Finish Common App parity
-2. Upgrade Dashboard into a real application control center
-3. Complete the Essays product loop
-4. Harden for production
+1. implement a real account-plan / feature-entitlement model
+2. enforce free-account university cap server-side
+3. surface those limits cleanly in frontend
+4. finish Common App parity
+5. finish essays advanced loop
+6. complete UTF-8/localization cleanup
+7. finish dashboard snapshot tooltip stability
 
 ## Immediate next tasks
 
-- finish the remaining Common App sections so the flow is coherent end-to-end
-- connect dashboard widgets to real completion state and next actions
-- add legal links to login/register for full consistency
-- continue file-size and modularity cleanup where oversized files remain
-- normalize any remaining corrupted Russian strings in backend responses or older UI surfaces
+- add a real account-plan source of truth on backend
+- limit free users to 2 universities at API level
+- block protected premium-only actions with explicit UX
+- show upgrade/limit states in universities dashboard flow
+- clean remaining mojibake in `landing-content.ts`, `i18n.ts`, and older strings
+- move dashboard donut tooltip into an absolute/fixed overlay so hover does not reflow the snapshot
 
 ## Explicitly not the priority right now
 
-- another frontend rewrite
-- another backend framework change
-- speculative new modules before Common App / Dashboard / Essays are complete
-- expanding product scope before the current workflow is finished and hardened
+- new large modules
+- framework rewrites
+- speculative product expansion before plan gating and core workflow completion

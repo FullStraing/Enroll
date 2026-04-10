@@ -1,4 +1,16 @@
-﻿const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000";
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000";
+
+export class ApiError extends Error {
+  status: number;
+  data: unknown;
+
+  constructor(message: string, status: number, data: unknown) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.data = data;
+  }
+}
 
 export function apiUrl(path: string): string {
   if (path.startsWith("http")) return path;
@@ -25,7 +37,7 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}, token
 
   if (!response.ok) {
     const message = (data as { detail?: string })?.detail || JSON.stringify(data);
-    throw new Error(message || `Request failed: ${response.status}`);
+    throw new ApiError(message || `Request failed: ${response.status}`, response.status, data);
   }
 
   return data as T;

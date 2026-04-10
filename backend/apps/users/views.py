@@ -9,6 +9,7 @@ from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
+from apps.accounts.services import ensure_user_plan
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from apps.analytics.services import record_product_event
@@ -214,6 +215,7 @@ class GoogleAuthView(APIView):
                             email_verified=True,
                             google_sub=identity.sub,
                         )
+                        ensure_user_plan(user=user, source="default_signup")
                         created = True
 
             user = auth_identity.user

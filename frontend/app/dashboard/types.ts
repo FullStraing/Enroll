@@ -1,4 +1,5 @@
 import type { IntroAnswers as ProgressIntroAnswers } from "@/app/dashboard/progress";
+import type { AccountEntitlementsSummary, AccountPlanSummary } from "@/lib/account-plan";
 
 export type Section = {
   key: string;
@@ -33,6 +34,8 @@ export type Profile = {
   is_staff?: boolean;
   is_superuser?: boolean;
   onboarding_completed?: boolean;
+  account_plan?: AccountPlanSummary;
+  entitlements?: AccountEntitlementsSummary;
   country?: string;
   intended_major?: string;
   graduation_year?: number | null;

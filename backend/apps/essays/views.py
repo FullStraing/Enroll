@@ -8,6 +8,11 @@ from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.accounts.services import (
+    ENTITLEMENT_ESSAYS_MAX_COUNT,
+    ENTITLEMENT_ESSAY_VERSIONS_MAX_PER_ESSAY,
+    enforce_limit,
+)
 from apps.analytics.services import record_product_event
 from apps.essays.models import Essay, EssayVersion
 from apps.essays.serializers import EssaySerializer, EssayVersionSerializer
@@ -45,6 +50,13 @@ class EssayListCreateView(generics.ListCreateAPIView):
         )
 
     def perform_create(self, serializer):
+        current_count = Essay.objects.filter(student=self.request.user).count()
+        enforce_limit(
+            user=self.request.user,
+            entitlement_code=ENTITLEMENT_ESSAYS_MAX_COUNT,
+            used=current_count,
+            detail="Your current plan reached the essay limit.",
+        )
         essay_type = serializer.validated_data.get("essay_type", "other")
         title = serializer.validated_data.get("title", "").strip() or _default_title(essay_type)
         essay = serializer.save(student=self.request.user, title=title)
@@ -105,6 +117,13 @@ class EssayVersionListCreateView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         essay = self._get_essay()
+        versions_count = EssayVersion.objects.filter(essay=essay).count()
+        enforce_limit(
+            user=self.request.user,
+            entitlement_code=ENTITLEMENT_ESSAY_VERSIONS_MAX_PER_ESSAY,
+            used=versions_count,
+            detail="Your current plan reached the version limit for this essay.",
+        )
         latest = EssayVersion.objects.filter(essay=essay).order_by("-version_number").first()
         next_version = (latest.version_number if latest else 0) + 1
         source = serializer.validated_data.get("source", "user")

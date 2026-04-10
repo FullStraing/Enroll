@@ -6,6 +6,7 @@ import { Search } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { useLocale } from "@/components/locale-provider";
 import { ProtectedPage } from "@/components/protected-page";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { DiscoverFiltersPanel } from "@/components/universities/discover-filters";
@@ -36,6 +37,55 @@ function UniversitiesPageContent() {
     <ProtectedPage>
       <AppShell title={copy.title} subtitle={copy.subtitle}>
         <section className="surface-panel min-w-0 overflow-hidden rounded-[28px] p-5 sm:p-6">
+          <div
+            className={`mb-4 flex flex-col gap-3 rounded-2xl border px-4 py-4 ${
+              state.hasUniversityLimit
+                ? "border-[var(--enroll-strong-border)] bg-[color-mix(in_srgb,var(--enroll-yellow)_24%,var(--enroll-surface-elevated))]"
+                : "border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)]"
+            }`}
+          >
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--enroll-muted)]">
+                  {locale === "ru" ? "Текущий план" : "Current plan"}
+                </p>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <Badge variant="cyan">{state.accountPlanLabel}</Badge>
+                  <Badge>
+                    {state.universityUsage.maxCount > 0
+                      ? `${state.universityUsage.used} / ${state.universityUsage.maxCount} ${locale === "ru" ? "университетов" : "universities"}`
+                      : "N/A"}
+                  </Badge>
+                  <Badge variant={state.hasUniversityLimit ? "orange" : "default"}>
+                    {state.hasUniversityLimit
+                      ? state.universityLimitReachedLabel
+                      : state.universityUsage.maxCount > 0
+                        ? (locale === "ru"
+                            ? `Осталось ${state.universityUsage.remaining}`
+                            : `${state.universityUsage.remaining} left`)
+                        : "N/A"}
+                  </Badge>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => router.push("/pricing")}
+                >
+                  {locale === "ru" ? "Тарифы" : "Pricing"}
+                </Button>
+              </div>
+            </div>
+            <p className="text-sm text-[var(--enroll-muted)]">
+              {state.hasUniversityLimit
+                ? state.universityLimitMessage
+                : locale === "ru"
+                  ? "Лимит уже отображается в интерфейсе и дополнительно жёстко проверяется на backend."
+                  : "Your university limit is shown here and is also enforced on the backend."}
+            </p>
+          </div>
+
           <UniversitiesTabs
             activeTab={state.activeTab}
             onTabChange={state.setActiveTab}
@@ -157,6 +207,8 @@ function UniversitiesPageContent() {
                 items={state.discover}
                 pageSize={state.pageSize}
                 myUniversityIds={state.myUniversityIds}
+                addDisabled={state.hasUniversityLimit}
+                addDisabledLabel={state.universityLimitReachedLabel}
                 updatingItemId={state.updatingItemId}
                 onOpen={(universityId) => router.push(`/universities/${universityId}`)}
                 onAdd={(university) => void state.addToMyList(university)}

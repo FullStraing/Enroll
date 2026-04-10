@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from rest_framework import serializers
+from apps.accounts.services import build_user_entitlement_summary, ensure_user_plan, get_user_plan_assignment
 from .models import StudentProfile, UserAuthIdentity, normalize_identity_email
 from .progress import has_completed_minimum_profile
 
@@ -51,6 +52,7 @@ class RegisterSerializer(serializers.ModelSerializer):
                 normalized_email=validated_data["email"],
                 email_verified=False,
             )
+            ensure_user_plan(user=user, source="default_signup")
         return user
 
 
@@ -58,6 +60,8 @@ class StudentProfileSerializer(serializers.ModelSerializer):
     onboarding_completed = serializers.SerializerMethodField(read_only=True)
     is_staff = serializers.SerializerMethodField(read_only=True)
     is_superuser = serializers.SerializerMethodField(read_only=True)
+    account_plan = serializers.SerializerMethodField(read_only=True)
+    entitlements = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = StudentProfile
@@ -87,6 +91,8 @@ class StudentProfileSerializer(serializers.ModelSerializer):
             "onboarding_completed",
             "is_staff",
             "is_superuser",
+            "account_plan",
+            "entitlements",
         ]
 
     def get_onboarding_completed(self, obj: StudentProfile):
@@ -97,6 +103,19 @@ class StudentProfileSerializer(serializers.ModelSerializer):
 
     def get_is_superuser(self, obj: StudentProfile):
         return bool(obj.user.is_superuser)
+
+    def get_account_plan(self, obj: StudentProfile):
+        assignment = get_user_plan_assignment(user=obj.user)
+        return {
+            "code": assignment.plan.code,
+            "name": assignment.plan.name,
+            "source": assignment.source,
+            "is_public": assignment.plan.is_public,
+            "is_invite_only": assignment.plan.is_invite_only,
+        }
+
+    def get_entitlements(self, obj: StudentProfile):
+        return build_user_entitlement_summary(user=obj.user)
 
     def update(self, instance, validated_data):
         # Merge Common App draft payload instead of overwriting whole object on partial updates.

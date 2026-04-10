@@ -84,6 +84,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "corsheaders",
     "apps.core",
+    "apps.accounts",
     "apps.analytics",
     "apps.users",
     "apps.universities",

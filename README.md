@@ -1,47 +1,67 @@
-﻿# Enroll
+# Enroll
 
-Enroll is an admissions operating system for students applying to U.S. universities.
+Enroll is an admissions operating system for students applying abroad.
 
-The product focus is not auto-submission. It is structured preparation:
+The product is not about auto-submission. It is about keeping the full application cycle inside one structured workspace:
+
 - shortlist and university research
 - deadlines and planning
-- documents and essays
+- tasks and today-first execution
+- essays and versions
+- document vault
 - Common App-style profile completion
-- clear next actions inside one workspace
+- one visible next step instead of scattered tools
 
 ## Current stack
 
 - Backend: Django + Django REST Framework + PostgreSQL
 - Frontend: Next.js 14 + TypeScript + Tailwind CSS
-- Auth: JWT with frontend localStorage plus a non-HttpOnly cookie mirror for bootstrap
-- Rich text editor: Tiptap
+- Auth: JWT access token in frontend storage + lightweight `enroll_session` marker cookie for workspace bootstrap
+- Cache / queue: Redis
+- File storage: S3-compatible object storage in production
+- Theme / UI: shared Enroll token system, light + dark mode
+- Localization: shared RU / EN switcher with cookie-backed locale
 
 ## Current product state
 
-Implemented now:
-- public landing page
+Implemented:
+
+- marketing site: `/`, `/product`, `/pricing`, `/pilot`
 - intro quiz before auth
-- login / register / settings / password change
-- dashboard shell
-- universities list, university detail, applications flow
-- calendar page and task generation baseline
-- documents vault with upload, download, delete, document types, and optional university link
-- essays manager + essay workspace + versions + autosave baseline
-- Common App draft flow with backend-driven progress
-- privacy policy page
-- pricing / terms / refund policy public pages
+- login / register / Google sign-in
+- shared app shell with locale switcher and theme switcher
+- dashboard with snapshot/export/share flow
+- universities list and university detail
+- tasks / calendar planning flow
+- documents vault
+- essays manager + versions + autosave baseline
+- Common App workflow baseline
+- community chat baseline
+- settings
+- legal pages
+
+Recently added:
+
+- global RU / EN localization foundation across marketing, auth, shell, dashboard, intro quiz, documents, universities, settings, and community
+- global light / dark theme
+- marketing refresh for home / product / pricing
+- stronger beta security hardening
+- dashboard snapshot and share flow redesign
 
 Still in progress:
+
 - full Common App parity across all sections
-- stronger dashboard readiness and next-step logic
-- essay AI mentor, score, and deeper compare UX
-- production hardening, observability, and deployment polish
+- deeper essays workflow
+- complete bilingual coverage across every deep product surface
+- full production-grade quotas / billing / plan gating
+- final UTF-8 copy cleanup where older mojibake still survives in some legacy dictionaries
+- dashboard snapshot donut hover tooltip still needs a no-layout-shift presentation
 
 ## Local run
 
-### 1. Backend
+### Backend
 
-```bash
+```powershell
 python -m venv .venv
 .venv\Scripts\activate
 pip install -r backend/requirements.txt
@@ -49,68 +69,83 @@ python backend/manage.py migrate
 python backend/manage.py runserver
 ```
 
-Backend is available at:
+Backend:
+
 - API/Admin: `http://127.0.0.1:8000`
 
-### 2. Frontend
+### Frontend
 
-```bash
+```powershell
 cd frontend
 npm install
 npm run dev
 ```
 
-Frontend is available at:
+Frontend:
+
 - App: `http://localhost:3000`
 
 ## Environment
 
-All local environment variables now live in the single root-level `.env`.
+Local development uses one root `.env`.
 
 Important:
-- the root `.env` is for local development only
-- production secrets must be copied into Vercel / Railway / Render env panels instead of deploying the file itself
-- `.env.example` is the template of required keys
 
-Important backend variables:
-- `POSTGRES_DB`
-- `POSTGRES_USER`
-- `POSTGRES_PASSWORD`
-- `POSTGRES_HOST`
-- `POSTGRES_PORT`
-- `GRADGPT_INDEX_URL`
-- `CELERY_BROKER_URL`
-- `CELERY_RESULT_BACKEND`
-- `GOOGLE_OAUTH_CLIENT_ID` (Google Sign-In backend verification)
+- root `.env` is local-only
+- production secrets must live in Vercel / Railway env panels
+- `.env.example` is the template for required values
 
-Important frontend variables in the same root `.env`:
+Important frontend env:
+
 - `NEXT_PUBLIC_API_BASE_URL`
 - `NEXT_PUBLIC_GOOGLE_CLIENT_ID`
+
+Important backend env:
+
+- `DJANGO_*`
+- `POSTGRES_*`
+- `REDIS_*`
+- `GOOGLE_OAUTH_CLIENT_ID`
+- `SENTRY_*`
+- `AWS_*` / S3-compatible storage keys
+- feature flags such as:
+  - `AI_ENABLED`
+  - `FILE_UPLOADS_ENABLED`
+  - `COMMUNITY_POSTING_ENABLED`
+  - `REGISTRATION_ENABLED`
+  - `GOOGLE_AUTH_ENABLED`
+  - `MAINTENANCE_MODE`
 
 ## Main frontend routes
 
 Public:
+
 - `/`
+- `/product`
+- `/pricing`
+- `/pilot`
 - `/intro-quiz`
 - `/login`
 - `/register`
-- `/pricing`
 - `/terms`
 - `/privacy-policy`
 - `/refund-policy`
-- `/pilot`
 
 Protected workspace:
+
 - `/dashboard`
 - `/onboarding`
 - `/applications`
+- `/universities`
 - `/universities/[id]`
 - `/calendar`
 - `/tasks` -> redirects to `/calendar`
+- `/activities`
 - `/documents`
 - `/essays`
 - `/essays/[id]`
 - `/common-app`
+- `/community`
 - `/settings`
 
 ## Main backend API domains
@@ -125,30 +160,48 @@ Protected workspace:
 - `/api/documents/*`
 - `/api/essays/*`
 - `/api/ai/*`
+- `/api/community/*`
 - `/api/auth/common-app-progress/`
 
-See:
-- `docs/API.md`
-- `docs/ARCHITECTURE.md`
-- `docs/TASKS.md`
-- `docs/DEV_ROADMAP.md`
-- `docs/DEVELOPMENT_HISTORY.md`
+## Production topology
+
+Current live topology:
+
+- Frontend: Vercel project `frontend`
+- Backend: Railway project `enroll`, service `backend-api`
+- Database: Railway `postgres-db`
+- Cache: Railway `redis-cache`
+- File storage: Cloudflare R2 bucket `enroll-documents`
+
+Current important reality:
+
+- `main` can be ahead of production
+- in the latest known state, frontend production is behind the newest pushed `main`
+- the last explicitly confirmed frontend deploy in this workstream was based on commit `fa7cbf8`
+- later frontend commits such as `bd7fd76` and `3ca8273` are pushed but not part of that confirmed deploy
+- always distinguish:
+  - local changes
+  - pushed changes
+  - deployed changes
 
 ## Documentation map
 
-- `docs/TASKS.md` - actual implementation status and next priorities
-- `docs/DEV_ROADMAP.md` - product roadmap by phase
-- `docs/ARCHITECTURE.md` - backend/frontend/data architecture
-- `docs/API.md` - current API surface used by the frontend
-- `docs/DEVELOPMENT_HISTORY.md` - how the project evolved to the current state
-- `docs/UI_SYSTEM_RULES.md` - source of truth for UI and interaction decisions
-- `docs/PRODUCTION_LAUNCH.md` - deploy topology, env setup, and launch checklist
-- `docs/sales/*` - go-to-market and pilot sales materials
+- `docs/ARCHITECTURE.md` - current architecture and system boundaries
+- `docs/TASKS.md` - actual implementation state and next priorities
+- `docs/DEV_ROADMAP.md` - execution sequence by phase
+- `docs/PRODUCTION_LAUNCH.md` - live infra topology and launch checklist
+- `docs/API.md` - backend API surface
+- `docs/DEV_LOG.md` - chronological work log
+- `docs/PROJECT_HANDOFF.md` - current situation summary for the next chat
+- `docs/UI_SYSTEM_RULES.md` - source of truth for frontend UI decisions
 
 ## Current recommended focus
 
-The correct sequence is:
-1. finish Common App parity
-2. turn Dashboard into a real command center
-3. complete the Essays loop
-4. harden for production
+The correct order remains:
+
+1. add a real plan / entitlement model
+2. enforce the free-account 2-university cap server-side
+3. surface those limits cleanly in frontend
+4. finish Common App parity
+5. finish essays advanced loop
+6. clean remaining legacy mojibake and complete deep-screen localization

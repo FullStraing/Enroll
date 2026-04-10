@@ -141,8 +141,26 @@ class UniversityDataTests(APITestCase):
         )
 
         self.assertEqual(response.status_code, 201)
-        self.assertEqual(response.data["category"], "reach")
+        self.assertEqual(response.data["category"], "high_reach")
         self.assertEqual(ProductEvent.objects.filter(user=self.user, name="first_university_added").count(), 1)
+
+    def test_free_plan_blocks_third_university(self):
+        first = University.objects.create(name="First University", acceptance_rate=15)
+        second = University.objects.create(name="Second University", acceptance_rate=25)
+        third = University.objects.create(name="Third University", acceptance_rate=35)
+
+        self.client.post(reverse("my_universities_list_create"), {"university_id": first.id}, format="json")
+        self.client.post(reverse("my_universities_list_create"), {"university_id": second.id}, format="json")
+        response = self.client.post(
+            reverse("my_universities_list_create"),
+            {"university_id": third.id},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data["code"], "plan_limit_reached")
+        self.assertEqual(response.data["feature"], "universities.max_count")
+        self.assertEqual(response.data["plan"], "free")
 
     def test_category_from_acceptance_rate_helper(self):
         self.assertEqual(category_from_acceptance_rate(5), "high_reach")

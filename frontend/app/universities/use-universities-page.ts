@@ -13,7 +13,9 @@ import {
 } from "@/app/universities/constants";
 import type { ActionMenuState, DiscoverFilters, PaginatedResponse, StudentUniversity, University } from "@/app/universities/types";
 import { buildQuery, chanceBandToStudentCategory, filtersHash } from "@/app/universities/utils";
-import { apiFetch } from "@/lib/api";
+import { useAuth } from "@/components/auth-provider";
+import { ApiError, apiFetch } from "@/lib/api";
+import { formatPlanLabel, getUniversityUsage } from "@/lib/account-plan";
 import { getToken } from "@/lib/auth";
 import { getUserScopedSessionCacheKey } from "@/lib/session-cache";
 import { useLocale } from "@/components/locale-provider";
@@ -21,8 +23,51 @@ import { getProductCopy } from "@/lib/product-copy";
 
 type StatusAction = { label: string; onClick: () => void } | null;
 
+type PlanLimitPayload = {
+  code?: string;
+  feature?: string;
+  plan?: string;
+  limit?: number;
+  used?: number;
+  remaining?: number;
+  detail?: string;
+};
+
+function getUniversityLimitMessage(locale: "ru" | "en", limit: number) {
+  return locale === "ru"
+    ? `Лимит текущего плана: ${limit} университетов. Чтобы добавить ещё, нужен более высокий тариф.`
+    : `Your current plan includes up to ${limit} universities. Upgrade the plan to add more.`;
+}
+
+function getUniversityLimitReachedLabel(locale: "ru" | "en") {
+  return locale === "ru" ? "Лимит достигнут" : "Limit reached";
+}
+
+function getPricingAction(locale: "ru" | "en"): StatusAction {
+  return {
+    label: locale === "ru" ? "Тарифы" : "Pricing",
+    onClick: () => {
+      if (typeof window !== "undefined") {
+        window.location.href = "/pricing";
+      }
+    },
+  };
+}
+
+function extractPlanLimitPayload(error: unknown): PlanLimitPayload | null {
+  if (!(error instanceof ApiError) || typeof error.data !== "object" || error.data === null) {
+    return null;
+  }
+  const payload = error.data as PlanLimitPayload;
+  if (payload.code !== "plan_limit_reached") {
+    return null;
+  }
+  return payload;
+}
+
 export function useUniversitiesPage() {
   const { locale } = useLocale();
+  const { profile } = useAuth();
   const copy = getProductCopy(locale).universities;
   const [activeTab, setActiveTab] = useState<"my" | "discover">("my");
 
@@ -54,6 +99,28 @@ export function useUniversitiesPage() {
   const [uiStateReady, setUiStateReady] = useState(false);
 
   const scopedUiKey = useCallback((key: string) => getUserScopedSessionCacheKey(key), []);
+  const accountPlanLabel = useMemo(() => formatPlanLabel(profile?.account_plan), [profile?.account_plan]);
+  const accountPlanCode = profile?.account_plan?.code || "";
+  const profileUniversityUsage = getUniversityUsage(profile);
+  const universityUsage = useMemo(() => {
+    const maxCount = profileUniversityUsage.maxCount;
+    const used = loadingMy && myItems.length === 0 ? profileUniversityUsage.used : myItems.length;
+    const remaining = maxCount > 0 ? Math.max(maxCount - used, 0) : profileUniversityUsage.remaining;
+    return {
+      maxCount,
+      used,
+      remaining,
+      canCreate: maxCount > 0 ? used < maxCount : profileUniversityUsage.canCreate,
+    };
+  }, [loadingMy, myItems.length, profileUniversityUsage]);
+  const hasUniversityLimit = useMemo(
+    () => universityUsage.maxCount > 0 && !universityUsage.canCreate,
+    [universityUsage],
+  );
+  const universityLimitMessage = useMemo(
+    () => getUniversityLimitMessage(locale, universityUsage.maxCount),
+    [locale, universityUsage.maxCount],
+  );
 
   const myUniversityIds = useMemo(() => new Set(myItems.map((item) => item.university.id)), [myItems]);
   const activeFiltersCount = useMemo(
@@ -251,6 +318,11 @@ export function useUniversitiesPage() {
   async function addToMyList(university: University) {
     const token = getToken();
     if (!token) return;
+    if (hasUniversityLimit) {
+      setStatus(universityLimitMessage);
+      setStatusAction(getPricingAction(locale));
+      return;
+    }
 
     setUpdatingItemId(university.id);
     try {
@@ -270,7 +342,13 @@ export function useUniversitiesPage() {
       setStatus(copy.added.replace("{name}", university.name));
       setStatusAction({ label: copy.statusActionViewMyList, onClick: () => setActiveTab("my") });
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : copy.addFailed);
+      const limitPayload = extractPlanLimitPayload(error);
+      if (limitPayload?.feature === "universities.max_count") {
+        setStatus(getUniversityLimitMessage(locale, limitPayload.limit || universityUsage.maxCount));
+        setStatusAction(getPricingAction(locale));
+      } else {
+        setStatus(error instanceof Error ? error.message : copy.addFailed);
+      }
     } finally {
       setUpdatingItemId(null);
     }
@@ -524,6 +602,12 @@ export function useUniversitiesPage() {
     draggingItemId,
     dropTargetItemId,
     actionMenu,
+    accountPlanLabel,
+    accountPlanCode,
+    universityUsage,
+    hasUniversityLimit,
+    universityLimitMessage,
+    universityLimitReachedLabel: getUniversityLimitReachedLabel(locale),
     myUniversityIds,
     activeFiltersCount,
     setActionMenu,

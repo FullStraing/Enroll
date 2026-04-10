@@ -1,116 +1,143 @@
-﻿# Development Roadmap
+# Development Roadmap
 
 ## Product goal
 
-Ship Enroll as a usable admissions operating system for students applying to U.S. universities.
+Ship Enroll as a production-usable admissions operating system for students applying abroad.
 
 Core promise:
+
 - no chaos
-- clear next steps
-- deadlines, documents, essays, and profile data in one workflow
+- one visible next step
+- shortlist, deadlines, essays, documents, and profile in one workflow
 
 ## Phase 1: Funnel and activation
 
-Status: mostly done
+Status: delivered
 
 Delivered:
-- public landing page
-- intro quiz before signup
-- login / register flow
-- dashboard entry after auth
-- privacy policy baseline
 
-Remaining improvements:
-- add privacy links to login/register
-- improve intro quiz polish and character system
-- optionally push quiz answers into the user profile after auth
+- landing
+- product page
+- pricing page
+- pilot page
+- intro quiz before auth
+- login / register / Google auth
+- session-aware CTA routing
 
-## Phase 2: Common App profile system
+Remaining polish:
 
-Status: in progress
+- final marketing copy cleanup
+- deploy discipline and visual QA before release pushes
+
+## Phase 2: Workspace baseline
+
+Status: delivered baseline
 
 Delivered:
-- backend Common App progress engine
-- section / subsection completion
-- conditional visibility and required-state logic
-- persistent restore after refresh
-- substantial coverage for Profile, Family, and Education
+
+- dashboard
+- universities
+- tasks/calendar
+- documents
+- essays baseline
+- settings
+- community baseline
 
 Remaining:
-- finish Testing details
-- finish Activities details
-- finish Writing details
-- complete Future Plans polish
-- unify all step UX and validation patterns
 
-This is the highest-priority product block right now.
+- tighter cross-module orchestration
+- cleaner empty-state / premium-limit UX
 
-## Phase 3: Dashboard as operating center
+## Phase 3: Common App completion
+
+Status: still in progress
+
+Needed:
+
+- finish the remaining sections and detail flows
+- make UX consistent end-to-end
+- remove edge-case inconsistency
+
+This remains one of the highest product priorities.
+
+## Phase 4: Essays depth
+
+Status: baseline done, advanced loop not done
+
+Needed:
+
+- stronger AI actions
+- scoring/review depth
+- better compare workflow
+- tighter linkage to universities and deadlines
+
+## Phase 5: Monetization / plan gating
+
+Status: not implemented yet
+
+Needed:
+
+- account-plan source of truth
+- free vs paid feature matrix
+- backend enforcement
+- frontend upgrade/limit states
+- explicit university limit for free accounts
+
+This is now the most important business/product infrastructure gap.
+
+## Phase 6: Localization and copy integrity
 
 Status: partially done
 
 Delivered:
-- dashboard shell
-- early readiness visibility
-- shared workspace shell
 
-Remaining:
-- real readiness score
-- next-action logic
-- connection to deadlines, essays, tasks, and universities
-- stronger summary widgets users can act on immediately
+- RU / EN shared system
+- major shell/marketing/workspace coverage
 
-## Phase 4: Universities and deadlines
+Still needed:
 
-Status: usable baseline done
+- deep-screen completion
+- cleanup of remaining mojibake
+- make all visible user copy UTF-8 clean
 
-Delivered:
-- universities list and detail pages
-- richer data cards
-- deadlines ingestion and display
-- enrichment structure behind the UI
+## Phase 7: UX and release polish
 
-Remaining:
-- more product-quality filtering and sorting
-- tighter shortlist/application linkage
-- final detail-page polish
+Status: still active
 
-## Phase 5: Essays
+Needed:
 
-Status: MVP baseline done, advanced features still open
+- dashboard snapshot tooltip without layout shift
+- final dark-mode consistency pass on remaining deep screens
+- smaller and safer frontend release batches
+- explicit pushed-vs-deployed tracking before every release
+
+## Phase 8: Production hardening
+
+Status: partially done
 
 Delivered:
-- essay manager
-- essay workspace
-- version system
-- rich text editor
-- autosave
-- compare API baseline
 
-Remaining:
-- AI mentor actions
-- score system
-- deeper compare UX
-- university/prompt/deadline integration
+- major auth/security hardening
+- throttling
+- upload restrictions
+- safer production topology
+- dark-mode/theme system
 
-## Phase 6: Production hardening
+Still needed:
 
-Status: not done
-
-Must include:
-- backend and frontend critical-path tests
-- error tracking
-- deployment checklist
-- backup and recovery plan
-- cookie/privacy/legal consistency
-- performance review of heavy screens
+- stronger quotas
+- final entitlement enforcement
+- better release discipline
+- more complete observability / recovery docs
 
 ## Current recommendation
 
-Do not branch into large new product modules now.
+The correct order now is:
 
-The correct execution order is:
-1. finish Common App
-2. strengthen Dashboard
-3. complete Essays loop
-4. harden for production
+1. implement plan/entitlement model
+2. enforce free-account university limit
+3. complete Common App
+4. complete essays advanced loop
+5. finish localization/copy cleanup
+6. finish dashboard snapshot/release polish
+7. deploy in smaller, deliberate batches

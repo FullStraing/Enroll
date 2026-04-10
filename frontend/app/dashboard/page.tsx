@@ -37,6 +37,7 @@ import {
   buildInitialLanguageTests,
   normalizeGpaFromQuiz,
 } from "@/app/dashboard/utils";
+import { formatPlanLabel, getAiUsage, getUniversityUsage } from "@/lib/account-plan";
 import { apiFetch } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import { getDashboardCopy, translateDashboardStatus } from "@/lib/dashboard-copy";
@@ -293,6 +294,9 @@ function DashboardPageContent() {
   }));
   const shareAcademicTests = buildInitialAcademicTests(profile, quizAnswers).filter((item) => item.score.trim());
   const shareLanguageTests = buildInitialLanguageTests(profile, quizAnswers).filter((item) => item.score.trim());
+  const planLabel = formatPlanLabel(profile?.account_plan);
+  const universityUsage = getUniversityUsage(profile);
+  const aiUsage = getAiUsage(profile);
   const primaryAcademicTest = shareAcademicTests[0] || null;
   const primaryLanguageTest = shareLanguageTests[0] || null;
   const academicStatLabel = primaryAcademicTest?.type || "Academic";
@@ -503,8 +507,22 @@ function DashboardPageContent() {
                   <GraduationCap className="h-4 w-4" />
                   {copy.progress.universities}
                 </CardTitle>
-                <Badge variant="cyan">{myUniversities.length}</Badge>
+                <Badge variant="cyan">
+                  {universityUsage.maxCount > 0 ? `${universityUsage.used}/${universityUsage.maxCount}` : myUniversities.length}
+                </Badge>
               </div>
+              {!loading ? (
+                <div className="mb-3 flex flex-wrap items-center gap-2 text-xs text-[var(--enroll-muted)]">
+                  <Badge>{planLabel}</Badge>
+                  <span>
+                    {universityUsage.maxCount > 0
+                      ? locale === "ru"
+                        ? `${universityUsage.used} из ${universityUsage.maxCount} университетов занято`
+                        : `${universityUsage.used} of ${universityUsage.maxCount} universities used`
+                      : "N/A"}
+                  </span>
+                </div>
+              ) : null}
               {loading ? (
                 <div className="space-y-2">
                   <Skeleton className="h-10 w-full" />
@@ -572,7 +590,7 @@ function DashboardPageContent() {
             </Card>
           </div>
 
-          <div className="mt-5 grid gap-4 sm:grid-cols-3 text-[var(--enroll-fg)]">
+          <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4 text-[var(--enroll-fg)]">
             <Card className="border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] shadow-none">
               <CardDescription>{copy.progress.openTasks}</CardDescription>
               {loading ? <Skeleton className="mt-2 h-7 w-14" /> : <p className="mt-2 text-2xl font-black">{tasks.filter((task) => task.status !== "done").length}</p>}
@@ -584,6 +602,34 @@ function DashboardPageContent() {
             <Card className="border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] shadow-none">
               <CardDescription>{copy.progress.applications}</CardDescription>
               {loading ? <Skeleton className="mt-2 h-7 w-14" /> : <p className="mt-2 text-2xl font-black">{applications.length}</p>}
+            </Card>
+            <Card className="border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] shadow-none">
+              <CardDescription>{locale === "ru" ? "План и лимиты" : "Plan & limits"}</CardDescription>
+              {loading ? (
+                <Skeleton className="mt-2 h-7 w-28" />
+              ) : (
+                <>
+                  <p className="mt-2 text-2xl font-black">{planLabel}</p>
+                  <p className="mt-1 text-xs text-[var(--enroll-muted)]">
+                    {universityUsage.maxCount > 0
+                      ? locale === "ru"
+                        ? `Университеты: ${universityUsage.used}/${universityUsage.maxCount}`
+                        : `Universities: ${universityUsage.used}/${universityUsage.maxCount}`
+                      : locale === "ru"
+                        ? "Университеты: N/A"
+                        : "Universities: N/A"}
+                  </p>
+                  <p className="mt-1 text-xs text-[var(--enroll-muted)]">
+                    {aiUsage.monthlyLimit > 0
+                      ? locale === "ru"
+                        ? `AI в этом месяце: ${aiUsage.usedThisMonth}/${aiUsage.monthlyLimit}`
+                        : `AI this month: ${aiUsage.usedThisMonth}/${aiUsage.monthlyLimit}`
+                      : locale === "ru"
+                        ? "AI в этом месяце: N/A"
+                        : "AI this month: N/A"}
+                  </p>
+                </>
+              )}
             </Card>
           </div>
 

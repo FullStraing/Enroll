@@ -39,14 +39,14 @@ export function ThemeSwitcher({
     setMounted(true);
   }, []);
 
-  const currentTheme = useMemo<ThemeMode>(() => {
-    if (!mounted) return "light";
+  const currentTheme = useMemo<ThemeMode | null>(() => {
+    if (!mounted) return null;
     if (theme === "dark") return "dark";
     if (theme === "light") return "light";
     return resolvedTheme === "dark" ? "dark" : "light";
   }, [mounted, resolvedTheme, theme]);
 
-  const activeTone = resolvedTheme === "dark";
+  const activeTone = mounted && resolvedTheme === "dark";
   const buttonClass = compact ? "h-8 min-w-8 px-2.5 text-[11px]" : "h-10 min-w-10 px-3 text-xs";
 
   return (

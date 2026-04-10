@@ -2,6 +2,7 @@ from django.contrib.auth.models import User
 from django.urls import reverse
 from django.test import override_settings
 from rest_framework.test import APITestCase, APIClient
+from apps.accounts.models import UserPlanAssignment
 from apps.analytics.models import ProductEvent
 from apps.universities.models import StudentUniversity, University
 from .models import StudentProfile, UserAuthIdentity
@@ -25,6 +26,8 @@ class StudentProfileTests(APITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["activities"], [])
         self.assertEqual(response.data["honors"], [])
+        self.assertEqual(response.data["account_plan"]["code"], "free")
+        self.assertEqual(response.data["entitlements"]["universities"]["max_count"], 2)
 
     def test_profile_update_accepts_mvp_fields(self):
         payload = {
@@ -180,6 +183,7 @@ class GoogleAuthTests(APITestCase):
         self.assertTrue(response.data["is_new_user"])
         self.assertTrue(User.objects.filter(email="google.user@example.com").exists())
         google_user = User.objects.get(email="google.user@example.com")
+        self.assertEqual(UserPlanAssignment.objects.get(user=google_user).plan.code, "free")
         self.assertEqual(StudentUniversity.objects.filter(student=google_user).count(), 1)
         self.assertEqual(ProductEvent.objects.filter(user=google_user, name="signup_completed").count(), 1)
         self.assertEqual(ProductEvent.objects.filter(user=google_user, name="first_university_added").count(), 0)
@@ -268,6 +272,7 @@ class RegisterAnalyticsTests(APITestCase):
 
         self.assertEqual(response.status_code, 201)
         user = User.objects.get(username="new-user")
+        self.assertEqual(UserPlanAssignment.objects.get(user=user).plan.code, "free")
         self.assertEqual(StudentUniversity.objects.filter(student=user).count(), 1)
         self.assertEqual(ProductEvent.objects.filter(user=user, name="signup_completed").count(), 1)
         self.assertEqual(ProductEvent.objects.filter(user=user, name="first_university_added").count(), 0)

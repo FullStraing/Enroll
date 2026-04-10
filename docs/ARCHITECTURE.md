@@ -1,190 +1,299 @@
-﻿# Architecture
+# Architecture
 
 ## Overview
 
 Enroll uses a split product architecture:
-- Backend: Django + DRF for auth, data models, business rules, ingestion commands, and admin
-- Frontend: Next.js App Router for the full user-facing application
-- Database: PostgreSQL as the main system of record
-- Cache / queue: Redis for Django cache and Celery broker/result backend
 
-Django owns persistence and business logic. Next.js owns the product interface.
+- Backend: Django + DRF for auth, persistence, permissions, product rules, ingestion, and admin
+- Frontend: Next.js App Router for the full user-facing product
+- Database: PostgreSQL as the source of truth
+- Cache / queue: Redis for cache and async jobs
+- Storage: S3-compatible object storage in production
+
+Django owns data and business rules.  
+Next.js owns the application experience.
 
 ## High-level flow
 
-1. Public user lands on `/`
-2. Unauthenticated CTA can route into `/intro-quiz`
-3. User registers or logs in
-4. Protec-ted workspace opens in Next.js
-5. Frontend reads and writes product state through Django API endpoints
+1. User lands on `/`
+2. CTA routes to `/intro-quiz` or `/dashboard` depending on auth/session state
+3. User signs in or registers
+4. Frontend opens protected workspace routes
+5. Frontend reads and writes state through Django API endpoints
 
 ## Backend structure
 
 Location: `backend/apps/`
 
 Main apps:
-- `core` - health, identity, and API aggregation
-- `users` - auth, profile, password change, Common App progress
-- `universities` - catalog, deadlines, metrics, source snapshots, ingestion
-- `tasks` - roadmap stages, task generation, planning support
-- `documents` - admissions document vault with file upload and university linkage
-- `essays` - essays, versions, compare logic
-- `ai` - baseline AI endpoints
-- `community` - curated groups, memberships, posts, comments, saved posts, reports
+
+- `core` - health, token endpoints, aggregate API utilities
+- `analytics` - beta event intake and staff reporting
+- `users` - auth, profile, onboarding, Common App progress, identity linkage
+- `universities` - catalog, metrics, deadlines, snapshots, shortlist state
+- `tasks` - tasks and roadmap-stage generation
+- `documents` - document vault and upload flow
+- `essays` - essays, versions, compare data
+- `ai` - essay/assistant endpoints
+- `community` - groups, posts, comments, reports
 
 ## Frontend structure
 
 Location: `frontend/app/`
 
-Main route groups:
-- public marketing and acquisition: landing, intro quiz, legal pages
-- auth: login, register
-- workspace: dashboard, community, applications, calendar, documents, essays, common app, settings
-- support surfaces: pilot
+Main route layers:
+
+- marketing: `/`, `/product`, `/pricing`, `/pilot`
+- auth / activation: `/intro-quiz`, `/login`, `/register`
+- workspace: dashboard, universities, documents, essays, tasks/calendar, community, settings, common-app
 
 Shared UI entry points:
+
 - `frontend/components/app-shell.tsx`
 - `frontend/components/protected-page.tsx`
 - `frontend/components/ui/*`
-- `frontend/components/common-app/*`
+- `frontend/components/landing/*`
+- `frontend/components/dashboard/*`
 
 ## Auth model
 
-Backend:
-- JWT endpoints are exposed by DRF SimpleJWT
-- protected API endpoints use standard auth permissions
+### Backend
 
-Frontend:
-- token is stored in `localStorage` and mirrored into a non-HttpOnly cookie for frontend bootstrap
-- protected pages are guarded at the app layer
-- bootstrap logic determines whether to show workspace or redirect to auth
+- DRF SimpleJWT
+- protected endpoints use standard auth permissions
+- user identity hardening exists via `UserAuthIdentity`
+- Google auth is linked through verified identity mapping, not raw email matching
+
+### Frontend
+
+- access token is stored client-side
+- raw token is no longer mirrored into a readable cookie
+- frontend writes only a lightweight `enroll_session` marker cookie for bootstrap/routing hints
+- protected pages are guarded in the app shell / middleware layer
+
+Important debt still open:
+
+- auth is safer than before, but not yet a full HttpOnly-cookie architecture
+
+## Localization architecture
+
+Current localization is frontend-driven:
+
+- locale cookie: `enroll_locale`
+- shared locale provider in root layout
+- shared RU / EN switcher in marketing header and app shell
+- feature dictionaries currently include:
+  - `frontend/lib/i18n.ts`
+  - `frontend/lib/dashboard-copy.ts`
+  - `frontend/lib/product-copy.ts`
+  - `frontend/app/landing-content.ts`
+
+Important:
+
+- localization is not yet literally 100% complete across every deep screen
+- some legacy mojibake still remains in older dictionaries and needs cleanup
+
+## Theme architecture
+
+Dark mode is implemented globally through:
+
+- `next-themes`
+- shared CSS tokens in `frontend/app/globals.css`
+- shared `ThemeSwitcher`
+
+Current theme model:
+
+- `light`
+- `dark`
+
+`system` mode was intentionally removed during later polish to simplify UX.
 
 ## Common App architecture
 
 The Common App system is backend-driven.
 
-### Data shape
-- typed fields live on `StudentProfile`
-- flexible draft data lives in `StudentProfile.common_app_profile`
+Typed fields live on:
 
-### Schema and progress engine
-The implementation is intentionally modular:
+- `StudentProfile`
+
+Flexible draft data lives in:
+
+- `StudentProfile.common_app_profile`
+
+Main backend Common App modules:
+
 - `backend/apps/users/common_app/schema.py`
 - `backend/apps/users/common_app/progress.py`
 - `backend/apps/users/common_app/builders.py`
-- `backend/apps/users/common_app/sections/profile.py`
-- `backend/apps/users/common_app/sections/family.py`
-- `backend/apps/users/common_app/sections/education.py`
-- `backend/apps/users/common_app/sections/testing.py`
-- `backend/apps/users/common_app/sections/activities.py`
-- `backend/apps/users/common_app/sections/writing.py`
+- `backend/apps/users/common_app/sections/*`
 
-This split exists to avoid keeping all Common App logic inside a monolithic `users/views.py`.
+Frontend `/common-app` consumes backend progress payloads and renders:
 
-### Frontend behavior
-`/common-app` consumes the backend progress payload and renders:
 - section navigation
-- subsection forms
-- conditional visibility
-- per-section completion
-- persisted position / resume behavior
+- conditional forms
+- subsection completion
+- restore/resume state
 
-## Essays architecture
+## Universities architecture
 
-Core model:
-- `Essay`
-- `EssayVersion`
+Primary user-facing models:
 
-Current implemented behavior:
-- one essay has many versions
-- latest version acts as the working draft
-- older versions are immutable snapshots
-- compare endpoint exposes diff-ready data
-- frontend workspace handles autosave and editing
+- `University`
+- `StudentUniversity`
+- `Application`
 
-Product intent:
-- make essays feel closer to a versioned workspace than a plain text field
+Supporting data/history:
+
+- deadlines
+- metrics
+- source snapshots
+
+Important current rule:
+
+- user-facing university endpoints are restricted to `is_active=True`
+
+Current missing product layer:
+
+- no formal billing/plan model yet
+- free-vs-paid university limits are not enforced yet
+
+## Dashboard architecture
+
+Dashboard is both:
+
+- a live admissions-control surface
+- a shareable/exportable snapshot surface
+
+Key UI pieces:
+
+- admissions score / donut
+- readiness and next-step cards
+- university shortlist summary
+- snapshot export/copy/save
+
+Important recent work:
+
+- dashboard share snapshot and donut were heavily redesigned
+- dark mode and localization were added
+- snapshot export has a dedicated stable render path
+
+Known open UI issue:
+
+- the interactive donut tooltip can still shift layout when shown inside the card and should be moved to a non-layout-affecting overlay
 
 ## Documents architecture
 
 Documents are intentionally simpler than essays.
 
 Core model:
+
 - `Document`
 
-Current implemented behavior:
-- file upload for admissions-related documents
-- document typing (`transcript`, `resume`, `recommendation_letter`, `passport`, `test_score`, `financial`, `essay`, `other`)
-- optional link to a university from `My Universities`
-- file metadata and direct download URL
-- delete support
+Current behavior:
 
-Product intent:
-- keep documents as a lightweight admissions file locker inside the workflow
-- do not turn documents into a second rich-text editing/versioning product
+- uploads
+- rename
+- delete
+- document typing
+- optional link to a university
+- production object-storage support
 
-## University data architecture
+Security hardening already added:
 
-University data is layered rather than flat.
+- file-type allowlist
+- production uploads disabled if object storage is not configured
 
-Primary fast-read model:
-- `University`
+## Essays architecture
 
-Supporting ingestion/history layer:
-- deadlines
-- metrics
-- source snapshots
-- media/source references
-- scrape/ingestion run logs
+Core model layer:
 
-This allows the product to show clean cards in the UI while still retaining source and enrichment history.
+- `Essay`
+- `EssayVersion`
 
-## Planning architecture
+Implemented:
 
-Tasks and calendar are connected product surfaces:
-- tasks are API-backed
-- calendar aggregates actionable planning state
-- dashboard is intended to become the main orchestration surface tying profile readiness, deadlines, essays, and tasks together
+- versioned drafts
+- autosave
+- compare baseline
+- editor workspace
 
-## Cache and queue architecture
+Still incomplete:
 
-Redis is used in two roles:
-- Django cache backend for low-latency server-side caching
-- Celery broker / result backend for asynchronous ingestion and scraping jobs
+- deeper AI version actions
+- score/review loop
+- stronger university/deadline context linkage
 
-The Django cache layer is configured to:
-- use Redis when `REDIS_CACHE_URL` is available
-- fall back to local in-memory cache when Redis is not configured
-- tolerate temporary Redis unavailability without taking down the app
+## Community architecture
 
-## Legal and top-of-funnel surfaces
+Community is currently a product module, not a separate platform.
 
-Current public/legal surfaces include:
-- landing page
-- intro quiz
-- pricing page
-- terms of service
-- privacy policy
-- refund policy
+Implemented:
 
-The intro quiz is intentionally outside auth to reduce initial friction and improve activation.
+- seeded/applicant groups
+- main chat surface
+- posts/comments/report flow
+
+Security/privacy hardening already added:
+
+- safer public author payloads
+- throttled report endpoint
+
+Still open:
+
+- stronger privacy model decisions before scale
+
+## Security / abuse architecture
+
+Current hardening already present:
+
+- unique normalized identity mapping for auth
+- password validation on registration
+- throttling on auth, analytics, uploads, reports
+- reduced token lifetime
+- Sentry `send_default_pii=False`
+- upload allowlist
+- active-only university exposure
+- redacted AI logs
+
+Still open:
+
+- full HttpOnly-cookie auth architecture
+- quotas for free-vs-paid product usage
+- deeper abuse controls across essays/community/tasks
+
+## Infrastructure
+
+Current live infra:
+
+- Vercel: frontend
+- Railway: backend + Postgres + Redis
+- Cloudflare R2: documents
+
+Current operational truth:
+
+- Railway backend is a controlled deploy surface
+- Vercel frontend deploys are separate from local push state
+- custom domain is not yet the central documented production path
+- current `main` can be ahead of the latest deployed frontend
 
 ## Current architectural debt
 
-The main architectural risk is not stack choice. The stack is already correct for the product.
+Main debt is not the stack.
 
-The remaining debt is in completion and refinement:
-- finish Common App parity
-- further reduce oversized files in both backend and frontend domains where needed
-- harden session, validation, and error handling
-- add stronger production observability and test coverage
+Main debt is:
+
+- incomplete billing / subscription / feature gating model
+- incomplete localization cleanup
+- incomplete Common App parity
+- incomplete essays advanced loop
+- documentation drift vs real code
 
 ## Current direction
 
-The correct next architectural moves are incremental:
-1. finish modular Common App implementation
-2. strengthen dashboard orchestration logic
-3. complete essays advanced workflow
-4. harden the existing platform for production
+The correct next architectural sequence is:
 
-No stack rewrite is needed.
+1. introduce a real account plan / entitlement model
+2. enforce limits server-side first, then reflect them in UI
+3. finish Common App and essays depth
+4. clean old mojibake and docs drift
+5. keep production deploys deliberate and small

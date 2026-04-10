@@ -9,6 +9,12 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.accounts.services import (
+    ENTITLEMENT_AI_REQUESTS_MONTHLY_LIMIT,
+    ENTITLEMENT_ESSAY_VERSIONS_MAX_PER_ESSAY,
+    enforce_limit,
+    get_monthly_ai_request_count,
+)
 from apps.core.runtime import feature_disabled_response
 from apps.essays.models import Essay, EssayVersion
 from .models import AIInteraction
@@ -44,6 +50,16 @@ def log_interaction(user, payload, response_data):
     )
 
 
+def _enforce_monthly_ai_plan_limit(*, user):
+    used = get_monthly_ai_request_count(user=user)
+    enforce_limit(
+        user=user,
+        entitlement_code=ENTITLEMENT_AI_REQUESTS_MONTHLY_LIMIT,
+        used=used,
+        detail="Your current plan reached the monthly AI request limit.",
+    )
+
+
 class AiStubView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     response_type = "generic"
@@ -51,6 +67,7 @@ class AiStubView(APIView):
     def post(self, request):
         if not settings.AI_ENABLED:
             return feature_disabled_response("AI features are temporarily unavailable.")
+        _enforce_monthly_ai_plan_limit(user=request.user)
         payload = request.data if isinstance(request.data, dict) else {}
         response_data = {
             "type": self.response_type,
@@ -152,6 +169,14 @@ class EssayStarterDraftAiView(APIView):
         serializer = EssayStarterDraftRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         essay = _get_user_essay(request.user, serializer.validated_data["essay_id"])
+        _enforce_monthly_ai_plan_limit(user=request.user)
+        versions_count = EssayVersion.objects.filter(essay=essay).count()
+        enforce_limit(
+            user=request.user,
+            entitlement_code=ENTITLEMENT_ESSAY_VERSIONS_MAX_PER_ESSAY,
+            used=versions_count,
+            detail="Your current plan reached the version limit for this essay.",
+        )
         _enforce_daily_limit(
             user=request.user,
             context_type="essay_starter_draft",
@@ -204,6 +229,7 @@ class EssaySelectionFeedbackAiView(APIView):
         serializer = EssaySelectionFeedbackRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         essay = _get_user_essay(request.user, serializer.validated_data["essay_id"])
+        _enforce_monthly_ai_plan_limit(user=request.user)
         _enforce_daily_limit(
             user=request.user,
             context_type="essay_selection_feedback",
@@ -245,6 +271,7 @@ class EssayExplainPromptAiView(APIView):
         serializer = EssayExplainPromptRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         essay = _get_user_essay(request.user, serializer.validated_data["essay_id"])
+        _enforce_monthly_ai_plan_limit(user=request.user)
         _enforce_daily_limit(
             user=request.user,
             context_type="essay_explain_prompt",
@@ -274,6 +301,7 @@ class EssayOutlineAiView(APIView):
         serializer = EssayOutlineRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         essay = _get_user_essay(request.user, serializer.validated_data["essay_id"])
+        _enforce_monthly_ai_plan_limit(user=request.user)
         _enforce_daily_limit(
             user=request.user,
             context_type="essay_outline",

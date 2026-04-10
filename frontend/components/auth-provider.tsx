@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { apiFetch } from "@/lib/api";
+import type { AccountEntitlementsSummary, AccountPlanSummary } from "@/lib/account-plan";
 import { clearTokens, getToken, saveTokens } from "@/lib/auth";
 
 type AuthStatus = "loading" | "authenticated" | "unauthenticated";
@@ -14,6 +15,8 @@ type AuthProfile = {
   onboarding_completed?: boolean;
   is_staff?: boolean;
   is_superuser?: boolean;
+  account_plan?: AccountPlanSummary;
+  entitlements?: AccountEntitlementsSummary;
 };
 
 type AuthContextValue = {

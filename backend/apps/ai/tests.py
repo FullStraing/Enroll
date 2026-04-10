@@ -157,3 +157,23 @@ class EssayAiTests(APITestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["opening_idea"], "Start with your first robotics build.")
+
+    def test_free_plan_blocks_request_after_monthly_ai_limit(self):
+        for index in range(20):
+            AIInteraction.objects.create(
+                user=self.user,
+                context_type=f"seed_{index}",
+                context_id=str(index),
+                prompt="{}",
+                response="{}",
+            )
+
+        response = self.client.post(
+            reverse("ai_essay_explain_prompt"),
+            {"essay_id": self.essay.id},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data["code"], "plan_limit_reached")
+        self.assertEqual(response.data["feature"], "ai.requests.monthly_limit")

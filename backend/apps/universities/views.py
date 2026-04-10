@@ -6,7 +6,9 @@ from django.http import Http404
 from django.db import models
 from django.db.models import Max
 from rest_framework import generics, permissions
+from rest_framework.exceptions import ValidationError
 
+from apps.accounts.services import ENTITLEMENT_UNIVERSITIES_MAX_COUNT, enforce_limit
 from apps.analytics.services import record_product_event
 from rest_framework.pagination import PageNumberPagination
 from .models import Application, StudentUniversity, University, UniversityDeadline, UniversityMetric, UniversitySourceSnapshot
@@ -293,6 +295,13 @@ class StudentUniversityListCreateView(generics.ListCreateAPIView):
         )
 
     def perform_create(self, serializer):
+        current_count = StudentUniversity.objects.filter(student=self.request.user).count()
+        enforce_limit(
+            user=self.request.user,
+            entitlement_code=ENTITLEMENT_UNIVERSITIES_MAX_COUNT,
+            used=current_count,
+            detail="Your current plan reached the university limit.",
+        )
         next_order = (
             StudentUniversity.objects.filter(student=self.request.user).aggregate(max_order=Max("sort_order"))["max_order"] or 0
         ) + 1

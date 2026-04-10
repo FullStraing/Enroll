@@ -15,6 +15,8 @@ type DiscoverGridProps = {
   items: University[];
   pageSize: number;
   myUniversityIds: Set<number>;
+  addDisabled?: boolean;
+  addDisabledLabel?: string;
   updatingItemId: number | null;
   onOpen: (id: number) => void;
   onAdd: (university: University) => void;
@@ -25,6 +27,8 @@ export function DiscoverGrid({
   items,
   pageSize,
   myUniversityIds,
+  addDisabled = false,
+  addDisabledLabel,
   updatingItemId,
   onOpen,
   onAdd,
@@ -82,13 +86,14 @@ export function DiscoverGrid({
                     ) : (
                       <Button
                         size="sm"
+                        variant={addDisabled ? "outline" : "primary"}
                         onClick={(event) => {
                           event.stopPropagation();
                           onAdd(university);
                         }}
-                        disabled={updatingItemId === university.id}
+                        disabled={addDisabled || updatingItemId === university.id}
                       >
-                        {copy.addToList}
+                        {addDisabled ? addDisabledLabel || copy.addToList : copy.addToList}
                       </Button>
                     )}
                   </div>

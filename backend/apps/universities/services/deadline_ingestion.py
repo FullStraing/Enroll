@@ -442,6 +442,9 @@ def parse_deadlines_from_html(html: str, source_url: str) -> list[ParsedDeadline
         if (
             "deadline" not in low
             and "decision" not in low
+            and "early action" not in low
+            and "early decision" not in low
+            and "restrictive early action" not in low
             and "rolling" not in low
             and "transfer" not in low
             and "application due" not in low

@@ -127,15 +127,15 @@ export function QuickTaskComposer({
                   value={title}
                   onChange={(event) => onTitleChange(event.target.value)}
                   placeholder=""
-                  className="relative z-[1] w-full border-0 bg-transparent px-0 py-0 text-[18px] font-black leading-[1.2] tracking-[-0.03em] text-[var(--enroll-fg)] outline-none sm:text-[26px] sm:tracking-[-0.04em]"
+                  className="relative z-[2] w-full border-0 !bg-transparent px-0 py-0 text-[18px] font-black leading-[1.2] tracking-[-0.03em] text-[var(--enroll-fg)] outline-none sm:text-[26px] sm:tracking-[-0.04em]"
                 />
                 {!title.trim() ? (
                   <span
                     aria-hidden="true"
-                    className="pointer-events-none absolute inset-0 z-0 flex items-center overflow-hidden text-[18px] font-black leading-[1.2] tracking-[-0.03em] text-[color:color-mix(in_srgb,var(--enroll-fg)_36%,transparent)] sm:text-[26px] sm:tracking-[-0.04em]"
+                    className="pointer-events-none absolute inset-x-0 top-1/2 z-[1] flex -translate-y-1/2 items-center overflow-hidden whitespace-nowrap text-[18px] font-black leading-[1.2] tracking-[-0.03em] text-[var(--enroll-muted-strong)] sm:text-[26px] sm:tracking-[-0.04em]"
                   >
-                    <span className="truncate">{animatedPlaceholder}</span>
-                    <span className="ml-1 inline-block h-[1.05em] w-[2px] animate-pulse rounded-full bg-[color:color-mix(in_srgb,var(--enroll-fg)_36%,transparent)]" />
+                    <span className="min-w-0 truncate">{animatedPlaceholder}</span>
+                    <span className="ml-1 inline-block h-[1.05em] w-[2px] shrink-0 animate-pulse rounded-full bg-[var(--enroll-muted-strong)]" />
                   </span>
                 ) : null}
               </span>

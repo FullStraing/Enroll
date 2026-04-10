@@ -378,39 +378,47 @@ export function AppShell({
           navigatingTo ? "translate-y-1 scale-[0.995] opacity-80 blur-[1px]" : "translate-y-0 scale-100 opacity-100 blur-0"
         }`}
       >
-        <header className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b-2 border-[var(--enroll-strong-border)] pb-4 pl-10 sm:pl-0">
-          <div>
+        <header className="mb-5 grid gap-4 border-b-2 border-[var(--enroll-strong-border)] pb-4 pl-10 sm:pl-0 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
+          <div className="min-w-0">
             <h1 className="text-2xl font-black">{translatedTitle}</h1>
             {translatedSubtitle ? <p className="mt-1 max-w-2xl text-sm text-[var(--enroll-muted)]">{translatedSubtitle}</p> : null}
           </div>
 
-          <div className="hidden items-center gap-2 sm:flex">
-            <span
-              className="rounded-xl border-2 border-[var(--enroll-strong-border)] bg-[var(--enroll-surface-elevated)] px-3 py-1.5 text-sm font-semibold leading-tight"
-              title={localDateTime.timeZone}
-            >
-              <span className="block text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--enroll-muted)]">
-                {localDateTime.dateLabel}
+          <div className="hidden min-w-0 max-w-full flex-wrap items-start justify-end gap-2 sm:flex lg:justify-self-end">
+            <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+              <span
+                className="shrink-0 rounded-xl border-2 border-[var(--enroll-strong-border)] bg-[var(--enroll-surface-elevated)] px-3 py-1.5 text-sm font-semibold leading-tight"
+                title={localDateTime.timeZone}
+              >
+                <span className="block text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--enroll-muted)]">
+                  {localDateTime.dateLabel}
+                </span>
+                <span className="block text-sm font-semibold text-[var(--enroll-fg)]">{localDateTime.timeLabel}</span>
               </span>
-              <span className="block text-sm font-semibold text-[var(--enroll-fg)]">{localDateTime.timeLabel}</span>
-            </span>
-            <ThemeSwitcher compact />
-            <LanguageSwitcher compact />
-            <span className="rounded-xl border-2 border-[var(--enroll-strong-border)] bg-[var(--enroll-surface-elevated)] px-3 py-1.5 text-sm font-semibold">
-              <span className="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-[var(--enroll-cyan)] text-xs text-[var(--enroll-fg)]">
-                {name.charAt(0).toUpperCase()}
+              <div className="shrink-0">
+                <ThemeSwitcher compact />
+              </div>
+              <div className="shrink-0">
+                <LanguageSwitcher compact />
+              </div>
+            </div>
+            <div className="flex min-w-0 flex-[1_1_18rem] flex-wrap items-center justify-end gap-2">
+              <span className="inline-flex min-w-0 max-w-full flex-[1_1_12rem] items-center rounded-xl border-2 border-[var(--enroll-strong-border)] bg-[var(--enroll-surface-elevated)] px-3 py-1.5 text-sm font-semibold lg:max-w-[18rem]">
+                <span className="mr-2 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--enroll-cyan)] text-xs text-[var(--enroll-fg)]">
+                  {name.charAt(0).toUpperCase()}
+                </span>
+                <span className="min-w-0 truncate">{name}</span>
               </span>
-              {name}
-            </span>
-            <button
-              onClick={() => {
-                logout();
-                router.push("/");
-              }}
-              className="rounded-xl border-2 border-[var(--enroll-strong-border)] bg-[var(--enroll-yellow)] px-3 py-1.5 text-sm font-semibold text-[var(--enroll-strong-fg)] hover:-translate-y-0.5"
-            >
-              {messages.common.logout}
-            </button>
+              <button
+                onClick={() => {
+                  logout();
+                  router.push("/");
+                }}
+                className="shrink-0 rounded-xl border-2 border-[var(--enroll-strong-border)] bg-[var(--enroll-yellow)] px-3 py-1.5 text-sm font-semibold text-[var(--enroll-strong-fg)] hover:-translate-y-0.5"
+              >
+                {messages.common.logout}
+              </button>
+            </div>
           </div>
 
           <div className="flex items-center gap-2 sm:hidden">
