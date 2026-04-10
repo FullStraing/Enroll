@@ -158,7 +158,7 @@ export default function LandingPage() {
                   <div className="flex flex-col gap-6 md:flex-row md:items-start">
                     <div
                       className="flex h-24 w-24 shrink-0 items-center justify-center rounded-[28px] border-2 border-black text-2xl font-black text-[var(--enroll-strong-fg)] shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]"
-                      style={{ backgroundColor: toneAccentMap[step.tone] }}
+                      style={{ backgroundColor: toneAccentMap[step.tone], color: "var(--enroll-strong-fg)" }}
                     >
                       {step.number}
                     </div>

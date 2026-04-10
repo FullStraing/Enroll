@@ -88,7 +88,10 @@ export default function ProductPage() {
               >
                 <span
                   className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border-2 border-black text-sm font-black text-[var(--enroll-strong-fg)] shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]"
-                  style={{ backgroundColor: index % 2 === 0 ? landingTheme.yellowSoft : landingTheme.cyan }}
+                  style={{
+                    backgroundColor: index % 2 === 0 ? landingTheme.yellowSoft : landingTheme.cyan,
+                    color: "var(--enroll-strong-fg)",
+                  }}
                 >
                   0{index + 1}
                 </span>
@@ -134,8 +137,15 @@ export default function ProductPage() {
           <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
             {content.home.modulesList.map((module) => (
               <MarketingToneCard key={module.title} tone={module.tone}>
-                <h3 className="text-3xl font-black tracking-[-0.04em] text-[var(--enroll-strong-fg)]">{module.title}</h3>
-                <p className="mt-4 text-base leading-8 text-[color:color-mix(in_srgb,var(--enroll-strong-fg)_72%,transparent)] md:text-lg">{module.body}</p>
+                <h3 className="text-3xl font-black tracking-[-0.04em]" style={{ color: "var(--enroll-strong-fg)" }}>
+                  {module.title}
+                </h3>
+                <p
+                  className="mt-4 text-base leading-8 md:text-lg"
+                  style={{ color: "color-mix(in srgb, var(--enroll-strong-fg) 72%, transparent)" }}
+                >
+                  {module.body}
+                </p>
               </MarketingToneCard>
             ))}
           </div>

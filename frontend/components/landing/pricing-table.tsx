@@ -95,7 +95,7 @@ function getPricingContent(locale: "ru" | "en") {
       badge: "Pricing",
       title: "Clear pricing without extra noise",
       description:
-        "One free starting point and two paid options. You can see immediately what you get and where longer access costs less per month.",
+        "One free starting point and two paid options. You can immediately see what you get and why longer access costs less per month.",
       monthly: "Monthly",
       annually: "Annually",
       saveUpTo: "Save up to $60",
@@ -219,7 +219,7 @@ function PlanCard({
             <div className="mt-3">
               <Badge
                 variant="default"
-                className="border-[var(--enroll-strong-border)] bg-[var(--enroll-yellow)] px-3 py-1 text-[11px] uppercase tracking-[0.16em] text-[var(--enroll-strong-fg)]"
+                className="border-[var(--enroll-strong-border)] bg-[var(--enroll-yellow)] px-3 py-1 text-[11px] uppercase tracking-[0.16em] text-[var(--enroll-strong-fg)] shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]"
               >
                 {pricing.save}
               </Badge>
@@ -281,7 +281,7 @@ export function PricingTable({ initialHasSession, primaryHref }: PricingTablePro
         <div className="mx-auto max-w-4xl text-center">
           <Badge
             variant="primary"
-            className="border-2 border-[var(--enroll-strong-border)] bg-[var(--enroll-yellow)] px-4 py-2 text-[11px] uppercase tracking-[0.18em] text-[var(--enroll-strong-fg)]"
+            className="border-2 border-[var(--enroll-strong-border)] bg-[var(--enroll-yellow)] px-4 py-2 text-[11px] uppercase tracking-[0.18em] text-[var(--enroll-strong-fg)] shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]"
           >
             {content.intro.badge}
           </Badge>
