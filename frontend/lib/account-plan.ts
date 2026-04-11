@@ -52,6 +52,22 @@ export function formatPlanLabel(plan?: AccountPlanSummary | null) {
   return code.charAt(0).toUpperCase() + code.slice(1);
 }
 
+export function getPlanBadgeClassName(plan?: AccountPlanSummary | null) {
+  const code = plan?.code?.trim().toLowerCase();
+
+  switch (code) {
+    case "pilot":
+      return "border-[var(--enroll-surface-border-strong)] bg-[color-mix(in_srgb,var(--enroll-cyan)_34%,var(--enroll-surface-elevated))] text-[var(--enroll-fg)]";
+    case "pro":
+      return "border-[var(--enroll-surface-border-strong)] bg-[color-mix(in_srgb,var(--enroll-yellow-soft)_88%,var(--enroll-surface-elevated))] text-[var(--enroll-fg)]";
+    case "premium":
+      return "border-[var(--enroll-surface-border-strong)] bg-[color-mix(in_srgb,var(--enroll-orange)_42%,var(--enroll-surface-elevated))] text-[var(--enroll-fg)]";
+    case "free":
+    default:
+      return "border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-inset)] text-[var(--enroll-muted-strong)]";
+  }
+}
+
 export function getUniversityUsage(profile?: AccountScopedProfile | null) {
   const summary = profile?.entitlements?.universities;
   return {

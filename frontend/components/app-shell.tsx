@@ -20,11 +20,10 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
 import { EnrollWordmark } from "@/components/brand/enroll-wordmark";
-import { LanguageSwitcher } from "@/components/language-switcher";
 import { useLocale, useMessages } from "@/components/locale-provider";
 import { RuntimeNotice } from "@/components/runtime-notice";
-import { ThemeSwitcher } from "@/components/theme-switcher";
 import { Button } from "@/components/ui/button";
+import { formatPlanLabel, getPlanBadgeClassName } from "@/lib/account-plan";
 import { fetchRuntimeConfig, type RuntimeConfig } from "@/lib/runtime-config";
 import { translateAppShellSubtitle, translateAppShellTitle } from "@/lib/i18n";
 
@@ -89,6 +88,11 @@ export function AppShell({
   const translatedTitle = translateAppShellTitle(locale, title) ?? title;
   const translatedSubtitle = translateAppShellSubtitle(locale, subtitle);
   const name = profile?.full_name || profile?.username || profile?.email || messages.common.account;
+  const planLabel = formatPlanLabel(profile?.account_plan);
+  const planBadgeClassName = getPlanBadgeClassName(profile?.account_plan);
+  const desktopDateTimeLabel = `${localDateTime.dateLabel} · ${localDateTime.timeLabel}`;
+  const headerControlBaseClassName =
+    "inline-flex h-11 shrink-0 items-center rounded-xl border-2 border-[var(--enroll-strong-border)] bg-[var(--enroll-surface-elevated)] px-3 text-sm font-semibold text-[var(--enroll-fg)]";
 
   const localizedNav = useMemo(
     () =>
@@ -253,15 +257,17 @@ export function AppShell({
               </div>
             </div>
 
-            <div className="mt-3 grid gap-3 rounded-2xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-yellow-soft)] px-3 py-3">
-              <div className="flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--enroll-muted)]">{localDateTime.dateLabel}</p>
-                  <p className="mt-1 text-sm font-semibold text-[var(--enroll-fg)]">{localDateTime.timeLabel}</p>
-                </div>
-                <LanguageSwitcher compact />
-              </div>
-              <ThemeSwitcher compact className="justify-self-start" />
+            <div className="mt-3">
+              <span
+                className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.14em] ${planBadgeClassName}`}
+              >
+                {planLabel}
+              </span>
+            </div>
+
+            <div className="mt-3 rounded-2xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-yellow-soft)] px-3 py-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--enroll-muted)]">{localDateTime.dateLabel}</p>
+              <p className="mt-1 text-sm font-semibold text-[var(--enroll-fg)]">{localDateTime.timeLabel}</p>
             </div>
           </div>
         </div>
@@ -384,41 +390,33 @@ export function AppShell({
             {translatedSubtitle ? <p className="mt-1 max-w-2xl text-sm text-[var(--enroll-muted)]">{translatedSubtitle}</p> : null}
           </div>
 
-          <div className="hidden min-w-0 max-w-full flex-wrap items-start justify-end gap-2 sm:flex lg:justify-self-end">
-            <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
-              <span
-                className="shrink-0 rounded-xl border-2 border-[var(--enroll-strong-border)] bg-[var(--enroll-surface-elevated)] px-3 py-1.5 text-sm font-semibold leading-tight"
-                title={localDateTime.timeZone}
-              >
-                <span className="block text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--enroll-muted)]">
-                  {localDateTime.dateLabel}
-                </span>
-                <span className="block text-sm font-semibold text-[var(--enroll-fg)]">{localDateTime.timeLabel}</span>
+          <div className="hidden min-w-0 max-w-full items-center justify-end gap-2 sm:flex sm:flex-wrap lg:flex-nowrap lg:justify-self-end">
+            <span
+              className={`${headerControlBaseClassName} justify-center px-3 text-[11px] font-black uppercase tracking-[0.14em] ${planBadgeClassName}`}
+            >
+              {planLabel}
+            </span>
+            <span
+              className={`${headerControlBaseClassName} whitespace-nowrap`}
+              title={localDateTime.timeZone}
+            >
+              {desktopDateTimeLabel}
+            </span>
+            <span className={`${headerControlBaseClassName} min-w-0 max-w-[18rem]`}>
+              <span className="mr-2 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--enroll-cyan)] text-xs text-[var(--enroll-fg)]">
+                {name.charAt(0).toUpperCase()}
               </span>
-              <div className="shrink-0">
-                <ThemeSwitcher compact />
-              </div>
-              <div className="shrink-0">
-                <LanguageSwitcher compact />
-              </div>
-            </div>
-            <div className="flex min-w-0 flex-[1_1_18rem] flex-wrap items-center justify-end gap-2">
-              <span className="inline-flex min-w-0 max-w-full flex-[1_1_12rem] items-center rounded-xl border-2 border-[var(--enroll-strong-border)] bg-[var(--enroll-surface-elevated)] px-3 py-1.5 text-sm font-semibold lg:max-w-[18rem]">
-                <span className="mr-2 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--enroll-cyan)] text-xs text-[var(--enroll-fg)]">
-                  {name.charAt(0).toUpperCase()}
-                </span>
-                <span className="min-w-0 truncate">{name}</span>
-              </span>
-              <button
-                onClick={() => {
-                  logout();
-                  router.push("/");
-                }}
-                className="shrink-0 rounded-xl border-2 border-[var(--enroll-strong-border)] bg-[var(--enroll-yellow)] px-3 py-1.5 text-sm font-semibold text-[var(--enroll-strong-fg)] hover:-translate-y-0.5"
-              >
-                {messages.common.logout}
-              </button>
-            </div>
+              <span className="min-w-0 truncate">{name}</span>
+            </span>
+            <button
+              onClick={() => {
+                logout();
+                router.push("/");
+              }}
+              className="inline-flex h-11 shrink-0 items-center rounded-xl border-2 border-[var(--enroll-strong-border)] bg-[var(--enroll-yellow)] px-3 text-sm font-semibold text-[var(--enroll-strong-fg)] hover:-translate-y-0.5"
+            >
+              {messages.common.logout}
+            </button>
           </div>
 
           <div className="flex items-center gap-2 sm:hidden">

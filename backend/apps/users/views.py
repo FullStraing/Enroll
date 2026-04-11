@@ -9,9 +9,9 @@ from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
-from apps.accounts.services import ensure_user_plan
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from apps.accounts.services import ensure_user_plan
 from apps.analytics.services import record_product_event
 from apps.core.runtime import feature_disabled_response
 from apps.universities.categorying import category_from_acceptance_rate
@@ -118,33 +118,46 @@ class ChangePasswordView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
-        old_password = request.data.get("old_password")
+        current_password = request.data.get("current_password") or request.data.get("old_password")
         new_password = request.data.get("new_password")
-
-        if not old_password or not new_password:
-            return Response(
-                {"detail": "Укажите текущий и новый пароль."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
+        confirm_new_password = request.data.get("confirm_new_password")
         user = request.user
-        if not user.check_password(old_password):
+
+        if not new_password:
             return Response(
-                {"detail": "Текущий пароль неверный."},
+                {"detail": "New password is required."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+        if confirm_new_password is not None and new_password != confirm_new_password:
+            return Response(
+                {"detail": "New password and confirmation do not match."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if user.has_usable_password():
+            if not current_password:
+                return Response(
+                    {"detail": "Current password is required."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            if not user.check_password(current_password):
+                return Response(
+                    {"detail": "Current password is incorrect."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
         try:
             validate_password(new_password, user)
         except ValidationError as exc:
             return Response(
-                {"detail": exc.messages},
+                {"detail": list(exc.messages)},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         user.set_password(new_password)
         user.save(update_fields=["password"])
-        return Response({"detail": "Пароль обновлен."})
+        return Response({"detail": "Password updated.", "has_usable_password": True})
 
 
 class GoogleAuthView(APIView):

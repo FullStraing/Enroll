@@ -24,6 +24,9 @@ class StudentProfileTests(APITestCase):
         response = self.client.get(self.profile_url)
 
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["username"], "student")
+        self.assertEqual(response.data["email"], "student@example.com")
+        self.assertTrue(response.data["has_usable_password"])
         self.assertEqual(response.data["activities"], [])
         self.assertEqual(response.data["honors"], [])
         self.assertEqual(response.data["account_plan"]["code"], "free")
@@ -330,3 +333,62 @@ class RegisterAnalyticsTests(APITestCase):
 
         self.assertEqual(response.status_code, 400)
         self.assertIn("password", response.data)
+
+
+class ChangePasswordTests(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="password-user",
+            email="password-user@example.com",
+            password="Oldpass123!",
+        )
+        self.client = APIClient()
+        self.client.force_authenticate(user=self.user)
+        self.url = reverse("change_password")
+
+    def test_change_password_requires_current_password_for_usable_password_accounts(self):
+        response = self.client.post(
+            self.url,
+            {
+                "new_password": "Newpass123!",
+                "confirm_new_password": "Newpass123!",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data["detail"], "Current password is required.")
+
+    def test_change_password_updates_password_for_standard_accounts(self):
+        response = self.client.post(
+            self.url,
+            {
+                "current_password": "Oldpass123!",
+                "new_password": "Newpass123!",
+                "confirm_new_password": "Newpass123!",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["detail"], "Password updated.")
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password("Newpass123!"))
+
+    def test_change_password_allows_setting_first_password_for_google_only_account(self):
+        self.user.set_unusable_password()
+        self.user.save(update_fields=["password"])
+
+        response = self.client.post(
+            self.url,
+            {
+                "new_password": "Newpass123!",
+                "confirm_new_password": "Newpass123!",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.has_usable_password())
+        self.assertTrue(self.user.check_password("Newpass123!"))

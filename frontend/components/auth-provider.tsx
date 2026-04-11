@@ -15,6 +15,7 @@ type AuthProfile = {
   onboarding_completed?: boolean;
   is_staff?: boolean;
   is_superuser?: boolean;
+  has_usable_password?: boolean;
   account_plan?: AccountPlanSummary;
   entitlements?: AccountEntitlementsSummary;
 };

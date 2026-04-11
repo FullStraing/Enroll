@@ -1,184 +1,149 @@
-﻿"use client";
+"use client";
 
-import { FormEvent, useCallback, useEffect, useState } from "react";
+import Link from "next/link";
+import { FormEvent, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { LogOut, ShieldCheck, SlidersHorizontal, UserRound } from "lucide-react";
+import { useTheme } from "next-themes";
 import { AppShell } from "@/components/app-shell";
 import { ProtectedPage } from "@/components/protected-page";
+import { useAuth } from "@/components/auth-provider";
+import { LanguageSwitcher } from "@/components/language-switcher";
+import { ThemeSwitcher } from "@/components/theme-switcher";
+import { Button } from "@/components/ui/button";
+import { RequiredMark } from "@/components/ui/required-mark";
 import { getToken } from "@/lib/auth";
 import { apiFetch } from "@/lib/api";
-import { Loader } from "@/components/loader";
-import { useAuth } from "@/components/auth-provider";
-import { RequiredMark } from "@/components/ui/required-mark";
-import { clearSessionCaches, readSessionCache, SESSION_CACHE_KEYS, SESSION_CACHE_TTLS, writeSessionCache } from "@/lib/session-cache";
-import { getProductCopy } from "@/lib/product-copy";
 import { useLocale } from "@/components/locale-provider";
+import { getSettingsCopy } from "@/lib/settings-copy";
 
-type ProfileForm = {
-  full_name: string;
-  country: string;
-  school_name: string;
-  graduation_year: number | null;
-  intended_major: string;
-  budget_range: string;
-  activities_level: string;
-  target_country: string;
-};
+type PasswordStatusTone = "idle" | "success" | "error";
 
-type AnalyticsSummary = {
-  totals: {
-    registered_users: number;
-    signup_started: number;
-    signup_completed: number;
-    onboarding_completed: number;
-    first_task_created: number;
-    first_university_added: number;
-    first_essay_started: number;
-  };
-  recent_events: Array<{
-    name: string;
-    source: string;
-    client_id: string;
-    created_at: string;
-    user__username?: string;
-    user__email?: string;
-  }>;
-};
+function SettingsCard({
+  icon: Icon,
+  title,
+  description,
+  children,
+}: {
+  icon: typeof UserRound;
+  title: string;
+  description: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="surface-panel rounded-[28px] p-5 sm:p-6">
+      <div className="flex items-start gap-3">
+        <span className="settings-card-icon inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl">
+          <Icon className="h-5 w-5" />
+        </span>
+        <div className="min-w-0">
+          <h2 className="text-lg font-black tracking-[-0.03em] text-[var(--enroll-fg)]">{title}</h2>
+          <p className="mt-1 text-sm text-[var(--enroll-muted)]">{description}</p>
+        </div>
+      </div>
+      <div className="mt-5">{children}</div>
+    </section>
+  );
+}
 
-const initialForm: ProfileForm = {
-  full_name: "",
-  country: "",
-  school_name: "",
-  graduation_year: null,
-  intended_major: "",
-  budget_range: "",
-  activities_level: "low",
-  target_country: "USA",
-};
+function InfoRow({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-inset)] px-4 py-3">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--enroll-muted)]">{label}</p>
+      <p className="mt-2 text-sm font-semibold text-[var(--enroll-fg)]">{value}</p>
+    </div>
+  );
+}
 
 export default function SettingsPage() {
   const router = useRouter();
   const { locale } = useLocale();
-  const copy = getProductCopy(locale).settings;
-  const { logout: logoutSession, profile } = useAuth();
-  const [form, setForm] = useState<ProfileForm>(initialForm);
-  const [oldPassword, setOldPassword] = useState("");
+  const copy = getSettingsCopy(locale);
+  const { profile, logout: logoutSession, refreshSession } = useAuth();
+  const { resolvedTheme } = useTheme();
+
+  const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [savingProfile, setSavingProfile] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [changingPassword, setChangingPassword] = useState(false);
-  const [analytics, setAnalytics] = useState<AnalyticsSummary | null>(null);
-  const [analyticsLoading, setAnalyticsLoading] = useState(false);
-  const [statusText, setStatusText] = useState("");
+  const [passwordStatus, setPasswordStatus] = useState("");
+  const [passwordStatusTone, setPasswordStatusTone] = useState<PasswordStatusTone>("idle");
 
-  const loadProfile = useCallback(async () => {
-    const token = getToken();
-    if (!token) return;
+  const hasUsablePassword = Boolean(profile?.has_usable_password);
+  const accountName = profile?.full_name || profile?.username || "N/A";
+  const accountEmail = profile?.email || "N/A";
+  const themeLabel =
+    resolvedTheme === "dark"
+      ? locale === "ru"
+        ? "Тёмная"
+        : "Dark"
+      : locale === "ru"
+        ? "Светлая"
+        : "Light";
+  const localeLabel = locale === "ru" ? "Русский" : "English";
 
-    const { payload: cached, isFresh } = readSessionCache<ProfileForm>(
-      SESSION_CACHE_KEYS.settings,
-      SESSION_CACHE_TTLS.settings,
-    );
-
-    if (cached) {
-      setForm({ ...initialForm, ...cached });
-      setLoading(false);
-    } else {
-      setLoading(true);
+  const passwordStatusClass = useMemo(() => {
+    if (passwordStatusTone === "success") {
+      return "border-[var(--enroll-surface-border-strong)] bg-[color-mix(in_srgb,var(--enroll-cyan)_32%,var(--enroll-surface-inset))] text-[var(--enroll-fg)]";
     }
-
-    if (isFresh) {
-      setStatusText("");
-      return;
+    if (passwordStatusTone === "error") {
+      return "border-[var(--enroll-surface-border-strong)] bg-[color-mix(in_srgb,var(--enroll-orange)_26%,var(--enroll-surface-inset))] text-[var(--enroll-fg)]";
     }
+    return "";
+  }, [passwordStatusTone]);
 
-    try {
-      const profilePayload = await apiFetch<Partial<ProfileForm>>("/api/auth/profile/", { method: "GET" }, token);
-      const nextForm = {
-        ...initialForm,
-        ...profilePayload,
-        graduation_year: profilePayload.graduation_year ?? null,
-      };
-      setForm(nextForm);
-      writeSessionCache(SESSION_CACHE_KEYS.settings, nextForm);
-      setStatusText("");
-    } catch (error) {
-      if (!cached) {
-        setStatusText(error instanceof Error ? error.message : copy.loadProfileFailed);
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [copy.loadProfileFailed]);
-
-  useEffect(() => {
-    void loadProfile();
-  }, [loadProfile]);
-
-  useEffect(() => {
-    const token = getToken();
-    if (!token || !profile?.is_staff) return;
-
-    setAnalyticsLoading(true);
-    void apiFetch<AnalyticsSummary>("/api/analytics/summary/", { method: "GET" }, token)
-      .then((payload) => {
-        setAnalytics(payload);
-      })
-      .catch(() => {
-        setAnalytics(null);
-      })
-      .finally(() => {
-        setAnalyticsLoading(false);
-      });
-  }, [profile?.is_staff]);
-
-  useEffect(() => {
-    if (loading) return;
-    writeSessionCache(SESSION_CACHE_KEYS.settings, form);
-  }, [form, loading]);
-
-  async function saveProfile(event: FormEvent) {
-    event.preventDefault();
-    const token = getToken();
-    if (!token) return;
-
-    setSavingProfile(true);
-    try {
-      await apiFetch("/api/auth/profile/", { method: "PUT", body: JSON.stringify(form) }, token);
-      writeSessionCache(SESSION_CACHE_KEYS.settings, form);
-      clearSessionCaches([SESSION_CACHE_KEYS.dashboard, SESSION_CACHE_KEYS.activities, SESSION_CACHE_KEYS.onboarding]);
-      setStatusText(copy.profileUpdated);
-    } catch (error) {
-      setStatusText(error instanceof Error ? error.message : copy.saveProfileFailed);
-    } finally {
-      setSavingProfile(false);
-    }
+  function resetPasswordStatus() {
+    setPasswordStatus("");
+    setPasswordStatusTone("idle");
   }
 
-  async function changePassword(event: FormEvent) {
+  async function handlePasswordChange(event: FormEvent) {
     event.preventDefault();
     const token = getToken();
     if (!token) return;
 
-    if (!oldPassword || !newPassword) {
-      setStatusText(copy.fillPasswords);
+    if (newPassword !== confirmPassword) {
+      setPasswordStatus(copy.passwordMismatch);
+      setPasswordStatusTone("error");
       return;
     }
 
     setChangingPassword(true);
+    resetPasswordStatus();
     try {
+      const payload: Record<string, string> = {
+        new_password: newPassword,
+        confirm_new_password: confirmPassword,
+      };
+
+      if (hasUsablePassword) {
+        payload.current_password = currentPassword;
+      }
+
       await apiFetch(
         "/api/auth/change-password/",
         {
           method: "POST",
-          body: JSON.stringify({ old_password: oldPassword, new_password: newPassword }),
+          body: JSON.stringify(payload),
         },
         token,
       );
-      setOldPassword("");
+
+      setCurrentPassword("");
       setNewPassword("");
-      setStatusText(copy.passwordUpdated);
+      setConfirmPassword("");
+      await refreshSession();
+      setPasswordStatus(copy.passwordUpdated);
+      setPasswordStatusTone("success");
     } catch (error) {
-      setStatusText(error instanceof Error ? error.message : copy.changePasswordFailed);
+      setPasswordStatus(error instanceof Error ? error.message : copy.changePasswordFailed);
+      setPasswordStatusTone("error");
     } finally {
       setChangingPassword(false);
     }
@@ -192,172 +157,139 @@ export default function SettingsPage() {
   return (
     <ProtectedPage>
       <AppShell title={copy.title} subtitle={copy.subtitle}>
-        <div className="grid gap-5 xl:grid-cols-2">
-          <section className="glass rounded-2xl p-5 text-[var(--enroll-fg)]">
-            <h2 className="text-lg font-semibold">{copy.profile}</h2>
-            {loading ? (
-              <div className="mt-4 flex justify-center py-6">
-                <Loader size="md" label={copy.loadingProfile} />
+        <div className="grid gap-5 lg:grid-cols-2">
+          <SettingsCard icon={UserRound} title={copy.account} description={copy.accountHint}>
+            <div className="grid gap-3">
+              <InfoRow label={copy.displayName} value={accountName} />
+              <InfoRow label={copy.email} value={accountEmail} />
+              <div className="rounded-2xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-inset)] px-4 py-3">
+                <p className="text-sm text-[var(--enroll-muted-strong)]">
+                  {hasUsablePassword ? copy.emailLoginReady : copy.emailLoginMissing}
+                </p>
               </div>
-            ) : (
-              <form onSubmit={saveProfile} className="mt-4 grid gap-3">
-                <label className="text-sm text-[var(--enroll-muted-strong)]">
-                  {copy.fullName}
-                  <input
-                    value={form.full_name}
-                    onChange={(event) => setForm((prev) => ({ ...prev, full_name: event.target.value }))}
-                    className="mt-1 w-full rounded-xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] px-3 py-2 text-[var(--enroll-fg)]"
-                  />
-                </label>
-                <label className="text-sm text-[var(--enroll-muted-strong)]">
-                  {copy.country}
-                  <input
-                    value={form.country}
-                    onChange={(event) => setForm((prev) => ({ ...prev, country: event.target.value }))}
-                    className="mt-1 w-full rounded-xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] px-3 py-2 text-[var(--enroll-fg)]"
-                  />
-                </label>
-                <label className="text-sm text-[var(--enroll-muted-strong)]">
-                  {copy.school}
-                  <input
-                    value={form.school_name}
-                    onChange={(event) => setForm((prev) => ({ ...prev, school_name: event.target.value }))}
-                    className="mt-1 w-full rounded-xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] px-3 py-2 text-[var(--enroll-fg)]"
-                  />
-                </label>
-                <label className="text-sm text-[var(--enroll-muted-strong)]">
-                  {copy.graduationYear}
-                  <input
-                    type="number"
-                    value={form.graduation_year ?? ""}
-                    onChange={(event) =>
-                      setForm((prev) => ({
-                        ...prev,
-                        graduation_year: event.target.value ? Number(event.target.value) : null,
-                      }))
-                    }
-                    className="mt-1 w-full rounded-xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] px-3 py-2 text-[var(--enroll-fg)]"
-                  />
-                </label>
-                <label className="text-sm text-[var(--enroll-muted-strong)]">
-                  {copy.intendedMajor}
-                  <input
-                    value={form.intended_major}
-                    onChange={(event) => setForm((prev) => ({ ...prev, intended_major: event.target.value }))}
-                    className="mt-1 w-full rounded-xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] px-3 py-2 text-[var(--enroll-fg)]"
-                  />
-                </label>
-                <button
-                  type="submit"
-                  disabled={savingProfile}
-                  className="mt-1 inline-flex w-fit items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold hover:bg-blue-500 disabled:opacity-70"
-                >
-                  {savingProfile ? <Loader size="sm" /> : null}
-                  <span>{savingProfile ? copy.savingProfile : copy.saveProfile}</span>
-                </button>
-              </form>
-            )}
-          </section>
+            </div>
+            <div className="mt-4">
+              <Link
+                href="/onboarding"
+                className="inline-flex h-10 items-center justify-center rounded-xl border-2 border-[var(--enroll-strong-border)] bg-[var(--enroll-surface-elevated)] px-4 text-sm font-semibold text-[var(--enroll-fg)] transition hover:bg-[color-mix(in_srgb,var(--enroll-fg)_5%,var(--enroll-surface-elevated))]"
+              >
+                {copy.editProfile}
+              </Link>
+            </div>
+          </SettingsCard>
 
-          <section className="glass rounded-2xl p-5 text-[var(--enroll-fg)]">
-            <h2 className="text-lg font-semibold">{copy.security}</h2>
-            <form onSubmit={changePassword} className="mt-4 grid gap-3">
-              <label className="text-sm text-[var(--enroll-muted-strong)]">
-                {copy.currentPassword}
-                <RequiredMark />
-                <input
-                  type="password"
-                  value={oldPassword}
-                  onChange={(event) => setOldPassword(event.target.value)}
-                  className="mt-1 w-full rounded-xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] px-3 py-2 text-[var(--enroll-fg)]"
-                  required
-                />
-              </label>
-              <label className="text-sm text-[var(--enroll-muted-strong)]">
-                {copy.newPassword}
-                <RequiredMark />
+          <SettingsCard icon={SlidersHorizontal} title={copy.preferences} description={copy.preferencesHint}>
+            <div className="grid gap-4">
+              <div className="rounded-2xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-inset)] px-4 py-4">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-[var(--enroll-fg)]">{copy.theme}</p>
+                    <p className="mt-1 text-sm text-[var(--enroll-muted)]">{copy.themeHint}</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--enroll-muted)]">{themeLabel}</span>
+                    <ThemeSwitcher />
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-inset)] px-4 py-4">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-[var(--enroll-fg)]">{copy.language}</p>
+                    <p className="mt-1 text-sm text-[var(--enroll-muted)]">{copy.languageHint}</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--enroll-muted)]">{localeLabel}</span>
+                    <LanguageSwitcher />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </SettingsCard>
+
+          <SettingsCard icon={ShieldCheck} title={copy.security} description={copy.securityHint}>
+            <form onSubmit={handlePasswordChange} className="grid gap-4">
+              {hasUsablePassword ? (
+                <label className="block text-sm text-[var(--enroll-muted-strong)]">
+                  <span className="font-medium text-[var(--enroll-fg)]">
+                    {copy.currentPassword}
+                    <RequiredMark />
+                  </span>
+                  <span className="mt-1 block text-sm text-[var(--enroll-muted)]">{copy.currentPasswordHint}</span>
+                  <input
+                    type="password"
+                    value={currentPassword}
+                    onChange={(event) => {
+                      setCurrentPassword(event.target.value);
+                      resetPasswordStatus();
+                    }}
+                    className="mt-3 w-full rounded-2xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] px-4 py-3 text-[var(--enroll-fg)] outline-none focus:border-[var(--enroll-surface-border-strong)]"
+                    required
+                  />
+                </label>
+              ) : (
+                <div className="rounded-2xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-inset)] px-4 py-3 text-sm text-[var(--enroll-muted-strong)]">
+                  {copy.createPasswordHint}
+                </div>
+              )}
+
+              <label className="block text-sm text-[var(--enroll-muted-strong)]">
+                <span className="font-medium text-[var(--enroll-fg)]">
+                  {copy.newPassword}
+                  <RequiredMark />
+                </span>
                 <input
                   type="password"
                   value={newPassword}
-                  onChange={(event) => setNewPassword(event.target.value)}
-                  className="mt-1 w-full rounded-xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] px-3 py-2 text-[var(--enroll-fg)]"
+                  onChange={(event) => {
+                    setNewPassword(event.target.value);
+                    resetPasswordStatus();
+                  }}
+                  className="mt-3 w-full rounded-2xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] px-4 py-3 text-[var(--enroll-fg)] outline-none focus:border-[var(--enroll-surface-border-strong)]"
                   required
                 />
               </label>
-              <button
-                type="submit"
-                disabled={changingPassword}
-                className="inline-flex w-fit items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold hover:bg-blue-500 disabled:opacity-70"
-              >
-                {changingPassword ? <Loader size="sm" /> : null}
-                <span>{changingPassword ? copy.changingPassword : copy.changePassword}</span>
-              </button>
+
+              <label className="block text-sm text-[var(--enroll-muted-strong)]">
+                <span className="font-medium text-[var(--enroll-fg)]">
+                  {copy.confirmPassword}
+                  <RequiredMark />
+                </span>
+                <span className="mt-1 block text-sm text-[var(--enroll-muted)]">{copy.confirmPasswordHint}</span>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(event) => {
+                    setConfirmPassword(event.target.value);
+                    resetPasswordStatus();
+                  }}
+                  className="mt-3 w-full rounded-2xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] px-4 py-3 text-[var(--enroll-fg)] outline-none focus:border-[var(--enroll-surface-border-strong)]"
+                  required
+                />
+              </label>
+
+              {passwordStatus ? (
+                <div className={`rounded-2xl border px-4 py-3 text-sm ${passwordStatusClass}`}>
+                  {passwordStatus}
+                </div>
+              ) : null}
+
+              <div className="flex flex-wrap items-center gap-3">
+                <Button type="submit" disabled={changingPassword}>
+                  {changingPassword ? copy.changingPassword : copy.changePassword}
+                </Button>
+              </div>
             </form>
+          </SettingsCard>
 
-            <div className="mt-8 border-t border-[var(--enroll-surface-border)] pt-5">
-              <h3 className="text-sm font-semibold uppercase tracking-wide text-[var(--enroll-muted)]">{copy.session}</h3>
-              <p className="mt-2 text-sm text-[var(--enroll-muted-strong)]">{copy.logoutHint}</p>
-              <button onClick={handleLogout} className="mt-3 rounded-xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-inset)] px-4 py-2 text-sm hover:bg-[var(--enroll-surface-elevated)]">
-                {copy.logout}
-              </button>
-            </div>
-
-            <div className="mt-8 border-t border-[var(--enroll-surface-border)] pt-5">
-              <h3 className="text-sm font-semibold uppercase tracking-wide text-[var(--enroll-muted)]">{copy.legal}</h3>
-              <p className="mt-2 text-sm text-[var(--enroll-muted-strong)]">{copy.legalHint}</p>
-              <a
-                href="/privacy-policy"
-                className="mt-3 inline-flex rounded-xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-inset)] px-4 py-2 text-sm hover:bg-[var(--enroll-surface-elevated)]"
-              >
-                {copy.privacyPolicy}
-              </a>
-            </div>
-          </section>
-
-          {profile?.is_staff ? (
-            <section className="glass rounded-2xl p-5 xl:col-span-2">
-              <h2 className="text-lg font-semibold">{copy.betaAnalytics}</h2>
-              {analyticsLoading ? (
-                <div className="mt-4 flex justify-center py-6">
-                  <Loader size="md" label={copy.loadingAnalytics} />
-                </div>
-              ) : analytics ? (
-                <div className="mt-4 grid gap-4">
-                  <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-7">
-                    <div className="rounded-xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-inset)] p-3"><p className="text-xs text-[var(--enroll-muted)]">{locale === "ru" ? "РџРѕР»СЊР·РѕРІР°С‚РµР»Рё" : "Users"}</p><p className="mt-1 text-2xl font-semibold">{analytics.totals.registered_users}</p></div>
-                    <div className="rounded-xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-inset)] p-3"><p className="text-xs text-[var(--enroll-muted)]">{locale === "ru" ? "РќР°С‡Р°Р»Рё СЂРµРіРёСЃС‚СЂР°С†РёСЋ" : "Signup started"}</p><p className="mt-1 text-2xl font-semibold">{analytics.totals.signup_started}</p></div>
-                    <div className="rounded-xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-inset)] p-3"><p className="text-xs text-[var(--enroll-muted)]">{locale === "ru" ? "Р—Р°РІРµСЂС€РёР»Рё СЂРµРіРёСЃС‚СЂР°С†РёСЋ" : "Signup completed"}</p><p className="mt-1 text-2xl font-semibold">{analytics.totals.signup_completed}</p></div>
-                    <div className="rounded-xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-inset)] p-3"><p className="text-xs text-[var(--enroll-muted)]">{locale === "ru" ? "РћРЅР±РѕСЂРґРёРЅРі" : "Onboarding"}</p><p className="mt-1 text-2xl font-semibold">{analytics.totals.onboarding_completed}</p></div>
-                    <div className="rounded-xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-inset)] p-3"><p className="text-xs text-[var(--enroll-muted)]">{locale === "ru" ? "РџРµСЂРІР°СЏ Р·Р°РґР°С‡Р°" : "First task"}</p><p className="mt-1 text-2xl font-semibold">{analytics.totals.first_task_created}</p></div>
-                    <div className="rounded-xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-inset)] p-3"><p className="text-xs text-[var(--enroll-muted)]">{locale === "ru" ? "РџРµСЂРІС‹Р№ СѓРЅРёРІРµСЂСЃРёС‚РµС‚" : "First university"}</p><p className="mt-1 text-2xl font-semibold">{analytics.totals.first_university_added}</p></div>
-                    <div className="rounded-xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-inset)] p-3"><p className="text-xs text-[var(--enroll-muted)]">{locale === "ru" ? "РџРµСЂРІРѕРµ СЌСЃСЃРµ" : "First essay"}</p><p className="mt-1 text-2xl font-semibold">{analytics.totals.first_essay_started}</p></div>
-                  </div>
-                  <div className="rounded-xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-inset)] p-4">
-                    <h3 className="text-sm font-semibold uppercase tracking-wide text-[var(--enroll-muted)]">{copy.recentEvents}</h3>
-                    <div className="mt-3 space-y-2">
-                      {analytics.recent_events.length ? (
-                        analytics.recent_events.map((event, index) => (
-                          <div key={`${event.name}-${event.created_at}-${index}`} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-inset)] px-3 py-2 text-sm text-[var(--enroll-fg)]">
-                            <span className="font-medium">{event.name}</span>
-                            <span>{event.user__username || event.user__email || event.client_id || (locale === "ru" ? "Р°РЅРѕРЅРёРјРЅРѕ" : "anonymous")}</span>
-                          </div>
-                        ))
-                      ) : (
-                        <p className="text-sm text-[var(--enroll-muted)]">{copy.noEvents}</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <p className="mt-4 text-sm text-[var(--enroll-muted-strong)]">{copy.analyticsUnavailable}</p>
-              )}
-            </section>
-          ) : null}
-
-          {statusText ? <p className="xl:col-span-2 text-sm text-[var(--enroll-muted-strong)]">{statusText}</p> : null}
+          <SettingsCard icon={LogOut} title={copy.session} description={copy.sessionHint}>
+            <Button type="button" variant="outline" onClick={handleLogout}>
+              {copy.logout}
+            </Button>
+          </SettingsCard>
         </div>
       </AppShell>
     </ProtectedPage>
   );
 }
-

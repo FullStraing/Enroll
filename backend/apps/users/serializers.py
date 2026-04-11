@@ -57,15 +57,20 @@ class RegisterSerializer(serializers.ModelSerializer):
 
 
 class StudentProfileSerializer(serializers.ModelSerializer):
+    username = serializers.SerializerMethodField(read_only=True)
+    email = serializers.SerializerMethodField(read_only=True)
     onboarding_completed = serializers.SerializerMethodField(read_only=True)
     is_staff = serializers.SerializerMethodField(read_only=True)
     is_superuser = serializers.SerializerMethodField(read_only=True)
+    has_usable_password = serializers.SerializerMethodField(read_only=True)
     account_plan = serializers.SerializerMethodField(read_only=True)
     entitlements = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = StudentProfile
         fields = [
+            "username",
+            "email",
             "full_name",
             "country",
             "school_name",
@@ -91,9 +96,16 @@ class StudentProfileSerializer(serializers.ModelSerializer):
             "onboarding_completed",
             "is_staff",
             "is_superuser",
+            "has_usable_password",
             "account_plan",
             "entitlements",
         ]
+
+    def get_username(self, obj: StudentProfile):
+        return obj.user.username
+
+    def get_email(self, obj: StudentProfile):
+        return obj.user.email
 
     def get_onboarding_completed(self, obj: StudentProfile):
         return has_completed_minimum_profile(obj)
@@ -103,6 +115,9 @@ class StudentProfileSerializer(serializers.ModelSerializer):
 
     def get_is_superuser(self, obj: StudentProfile):
         return bool(obj.user.is_superuser)
+
+    def get_has_usable_password(self, obj: StudentProfile):
+        return obj.user.has_usable_password()
 
     def get_account_plan(self, obj: StudentProfile):
         assignment = get_user_plan_assignment(user=obj.user)

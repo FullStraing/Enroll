@@ -17,6 +17,37 @@ export function apiUrl(path: string): string {
   return `${API_BASE}${path}`;
 }
 
+function extractApiErrorMessage(data: unknown): string | null {
+  if (typeof data === "string") {
+    return data;
+  }
+
+  if (Array.isArray(data)) {
+    const joined = data
+      .map((item) => extractApiErrorMessage(item))
+      .filter((item): item is string => Boolean(item))
+      .join(" ");
+    return joined || null;
+  }
+
+  if (data && typeof data === "object") {
+    const record = data as Record<string, unknown>;
+    const detail = extractApiErrorMessage(record.detail);
+    if (detail) {
+      return detail;
+    }
+
+    for (const [key, value] of Object.entries(record)) {
+      const message = extractApiErrorMessage(value);
+      if (message) {
+        return key === "non_field_errors" ? message : `${key}: ${message}`;
+      }
+    }
+  }
+
+  return null;
+}
+
 export async function apiFetch<T>(path: string, options: RequestInit = {}, token?: string): Promise<T> {
   const isFormData = typeof FormData !== "undefined" && options.body instanceof FormData;
 
@@ -36,7 +67,7 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}, token
     : await response.text();
 
   if (!response.ok) {
-    const message = (data as { detail?: string })?.detail || JSON.stringify(data);
+    const message = extractApiErrorMessage(data) || JSON.stringify(data);
     throw new ApiError(message || `Request failed: ${response.status}`, response.status, data);
   }
 
