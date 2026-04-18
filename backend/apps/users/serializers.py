@@ -1,59 +1,22 @@
-from django.contrib.auth.password_validation import validate_password
-from django.contrib.auth.models import User
-from django.core.exceptions import ValidationError as DjangoValidationError
-from django.db import transaction
 from rest_framework import serializers
-from apps.accounts.services import build_user_entitlement_summary, ensure_user_plan, get_user_plan_assignment
-from .models import StudentProfile, UserAuthIdentity, normalize_identity_email
+from apps.accounts.services import build_user_entitlement_summary, get_user_plan_assignment
+from .models import StudentProfile
 from .progress import has_completed_minimum_profile
 
 
-class RegisterSerializer(serializers.ModelSerializer):
+class RegisterStartSerializer(serializers.Serializer):
+    username = serializers.CharField(required=True, allow_blank=False, max_length=150)
     email = serializers.EmailField(required=True, allow_blank=False)
     password = serializers.CharField(write_only=True, min_length=8, trim_whitespace=False)
 
-    class Meta:
-        model = User
-        fields = ["username", "email", "password"]
 
-    def validate_email(self, value):
-        normalized = normalize_identity_email(value)
-        if not normalized:
-            raise serializers.ValidationError("Email is required.")
-        if UserAuthIdentity.objects.filter(normalized_email=normalized).exists():
-            raise serializers.ValidationError("An account with this email already exists.")
-        if User.objects.filter(email__iexact=normalized).exists():
-            raise serializers.ValidationError("An account with this email already exists.")
-        return normalized
+class RegisterVerifySerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True, allow_blank=False)
+    code = serializers.CharField(required=True, allow_blank=False, max_length=6, min_length=6, trim_whitespace=True)
 
-    def validate_password(self, value):
-        user = User(
-            username=self.initial_data.get("username", ""),
-            email=normalize_identity_email(self.initial_data.get("email", "")),
-        )
-        try:
-            validate_password(value, user)
-        except DjangoValidationError as exc:
-            raise serializers.ValidationError(list(exc.messages)) from exc
-        return value
 
-    def create(self, validated_data):
-        password = validated_data.pop("password")
-        with transaction.atomic():
-            user = User(
-                username=validated_data.get("username"),
-                email=validated_data.get("email"),
-            )
-            user.set_password(password)
-            user.save()
-            StudentProfile.objects.create(user=user)
-            UserAuthIdentity.objects.create(
-                user=user,
-                normalized_email=validated_data["email"],
-                email_verified=False,
-            )
-            ensure_user_plan(user=user, source="default_signup")
-        return user
+class RegisterResendSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True, allow_blank=False)
 
 
 class StudentProfileSerializer(serializers.ModelSerializer):

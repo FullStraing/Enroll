@@ -10,6 +10,9 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Enroll",
   description: "Admissions planning workspace for students applying abroad.",
+  icons: {
+    icon: "/icon.svg",
+  },
 };
 
 const manrope = Manrope({

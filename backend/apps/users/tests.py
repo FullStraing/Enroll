@@ -1,11 +1,17 @@
+from datetime import timedelta
+
 from django.contrib.auth.models import User
-from django.urls import reverse
+from django.core import mail
 from django.test import override_settings
+from django.urls import reverse
+from django.utils import timezone
 from rest_framework.test import APITestCase, APIClient
+
 from apps.accounts.models import UserPlanAssignment
 from apps.analytics.models import ProductEvent
 from apps.universities.models import StudentUniversity, University
-from .models import StudentProfile, UserAuthIdentity
+
+from .models import PendingRegistration, StudentProfile, UserAuthIdentity
 
 
 class StudentProfileTests(APITestCase):
@@ -259,12 +265,18 @@ class GoogleAuthTests(APITestCase):
         self.assertEqual(response.status_code, 409)
 
 
-class RegisterAnalyticsTests(APITestCase):
-    def test_register_records_signup_completed(self):
-        University.objects.create(name="Stanford University", acceptance_rate=4, is_active=True)
+@override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
+class RegistrationFlowTests(APITestCase):
+    def _extract_code(self) -> str:
+        self.assertGreater(len(mail.outbox), 0)
+        body = mail.outbox[-1].body
+        marker = "Your verification code is: "
+        start = body.index(marker) + len(marker)
+        return body[start : start + 6]
 
+    def test_register_start_creates_pending_registration_and_sends_email(self):
         response = self.client.post(
-            reverse("register"),
+            reverse("register_start"),
             {
                 "username": "new-user",
                 "email": "new-user@example.com",
@@ -273,22 +285,31 @@ class RegisterAnalyticsTests(APITestCase):
             format="json",
         )
 
-        self.assertEqual(response.status_code, 201)
-        user = User.objects.get(username="new-user")
-        self.assertEqual(UserPlanAssignment.objects.get(user=user).plan.code, "free")
-        self.assertEqual(StudentUniversity.objects.filter(student=user).count(), 1)
-        self.assertEqual(ProductEvent.objects.filter(user=user, name="signup_completed").count(), 1)
-        self.assertEqual(ProductEvent.objects.filter(user=user, name="first_university_added").count(), 0)
+        self.assertEqual(response.status_code, 202)
+        self.assertTrue(response.data["verification_required"])
+        pending = PendingRegistration.objects.get(normalized_email="new-user@example.com")
+        self.assertEqual(pending.requested_username, "new-user")
+        self.assertNotEqual(pending.password_hash, "Strongpass123!")
+        self.assertNotEqual(pending.code_hash, self._extract_code())
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertFalse(User.objects.filter(username="new-user").exists())
+        self.assertEqual(ProductEvent.objects.filter(name="verification_code_sent").count(), 1)
 
-    def test_register_rejects_duplicate_email_and_creates_identity(self):
+    def test_register_start_rejects_duplicate_email(self):
         User.objects.create_user(
             username="existing",
             email="existing@example.com",
             password="password123",
         )
+        UserAuthIdentity.objects.create(
+            user=User.objects.get(username="existing"),
+            normalized_email="existing@example.com",
+            email_verified=True,
+            email_verified_at=timezone.now(),
+        )
 
         response = self.client.post(
-            reverse("register"),
+            reverse("register_start"),
             {
                 "username": "new-user",
                 "email": "existing@example.com",
@@ -300,29 +321,33 @@ class RegisterAnalyticsTests(APITestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn("email", response.data)
 
-    def test_register_creates_normalized_identity_record(self):
-        University.objects.create(name="Stanford University", acceptance_rate=4, is_active=True)
-
-        response = self.client.post(
-            reverse("register"),
+    def test_register_start_rejects_duplicate_username(self):
+        self.client.post(
+            reverse("register_start"),
             {
-                "username": "new-user-identity",
-                "email": " New-User@Example.COM ",
-                "password": "Differentpass123!",
+                "username": "reserved-user",
+                "email": "first@example.com",
+                "password": "Strongpass123!",
             },
             format="json",
         )
 
-        self.assertEqual(response.status_code, 201)
-        user = User.objects.get(username="new-user-identity")
-        identity = UserAuthIdentity.objects.get(user=user)
-        self.assertEqual(user.email, "new-user@example.com")
-        self.assertEqual(identity.normalized_email, "new-user@example.com")
-        self.assertFalse(identity.email_verified)
-
-    def test_register_rejects_weak_passwords(self):
         response = self.client.post(
-            reverse("register"),
+            reverse("register_start"),
+            {
+                "username": "reserved-user",
+                "email": "second@example.com",
+                "password": "Strongpass123!",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("username", response.data)
+
+    def test_register_start_rejects_weak_passwords(self):
+        response = self.client.post(
+            reverse("register_start"),
             {
                 "username": "weak-user",
                 "email": "weak@example.com",
@@ -333,6 +358,195 @@ class RegisterAnalyticsTests(APITestCase):
 
         self.assertEqual(response.status_code, 400)
         self.assertIn("password", response.data)
+        self.assertFalse(PendingRegistration.objects.filter(normalized_email="weak@example.com").exists())
+
+    def test_register_verify_creates_account_and_returns_tokens(self):
+        University.objects.create(name="Stanford University", acceptance_rate=4, is_active=True)
+        start = self.client.post(
+            reverse("register_start"),
+            {
+                "username": "new-user",
+                "email": "new-user@example.com",
+                "password": "Strongpass123!",
+            },
+            format="json",
+        )
+
+        self.assertEqual(start.status_code, 202)
+        code = self._extract_code()
+
+        response = self.client.post(
+            reverse("register_verify"),
+            {
+                "email": "new-user@example.com",
+                "code": code,
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("access", response.data)
+        self.assertIn("refresh", response.data)
+        user = User.objects.get(username="new-user")
+        self.assertEqual(UserPlanAssignment.objects.get(user=user).plan.code, "free")
+        self.assertEqual(StudentUniversity.objects.filter(student=user).count(), 1)
+        identity = UserAuthIdentity.objects.get(user=user)
+        self.assertTrue(identity.email_verified)
+        self.assertIsNotNone(identity.email_verified_at)
+        self.assertEqual(ProductEvent.objects.filter(user=user, name="signup_completed").count(), 1)
+        self.assertEqual(ProductEvent.objects.filter(user=user, name="first_university_added").count(), 0)
+        self.assertEqual(ProductEvent.objects.filter(user=user, name="verification_code_verified").count(), 1)
+
+    def test_register_verify_rejects_expired_code(self):
+        self.client.post(
+            reverse("register_start"),
+            {
+                "username": "new-user",
+                "email": "new-user@example.com",
+                "password": "Strongpass123!",
+            },
+            format="json",
+        )
+        pending = PendingRegistration.objects.get(normalized_email="new-user@example.com")
+        pending.code_expires_at = timezone.now() - timedelta(seconds=1)
+        pending.save(update_fields=["code_expires_at", "updated_at"])
+
+        response = self.client.post(
+            reverse("register_verify"),
+            {
+                "email": "new-user@example.com",
+                "code": self._extract_code(),
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data["detail"], "Verification code has expired. Request a new code.")
+
+    def test_register_verify_locks_after_repeated_wrong_codes(self):
+        self.client.post(
+            reverse("register_start"),
+            {
+                "username": "new-user",
+                "email": "new-user@example.com",
+                "password": "Strongpass123!",
+            },
+            format="json",
+        )
+
+        for _ in range(4):
+            response = self.client.post(
+                reverse("register_verify"),
+                {"email": "new-user@example.com", "code": "000000"},
+                format="json",
+            )
+            self.assertEqual(response.status_code, 400)
+            self.assertEqual(response.data["detail"], "Invalid or expired verification code.")
+
+        fifth_response = self.client.post(
+            reverse("register_verify"),
+            {"email": "new-user@example.com", "code": "000000"},
+            format="json",
+        )
+        self.assertEqual(fifth_response.status_code, 400)
+        self.assertEqual(fifth_response.data["detail"], "Invalid or expired verification code.")
+        pending = PendingRegistration.objects.get(normalized_email="new-user@example.com")
+        self.assertEqual(pending.failed_attempts, 5)
+
+        locked_response = self.client.post(
+            reverse("register_verify"),
+            {"email": "new-user@example.com", "code": "000000"},
+            format="json",
+        )
+        self.assertEqual(locked_response.status_code, 400)
+        self.assertEqual(locked_response.data["detail"], "Too many incorrect attempts. Request a new code.")
+
+    def test_register_resend_respects_cooldown_and_rotates_code(self):
+        self.client.post(
+            reverse("register_start"),
+            {
+                "username": "new-user",
+                "email": "new-user@example.com",
+                "password": "Strongpass123!",
+            },
+            format="json",
+        )
+        first_code = self._extract_code()
+
+        too_soon = self.client.post(
+            reverse("register_resend_code"),
+            {"email": "new-user@example.com"},
+            format="json",
+        )
+        self.assertEqual(too_soon.status_code, 400)
+        self.assertIn("retry_after_seconds", too_soon.data)
+
+        pending = PendingRegistration.objects.get(normalized_email="new-user@example.com")
+        pending.resend_available_at = timezone.now() - timedelta(seconds=1)
+        pending.save(update_fields=["resend_available_at", "updated_at"])
+
+        resend = self.client.post(
+            reverse("register_resend_code"),
+            {"email": "new-user@example.com"},
+            format="json",
+        )
+        self.assertEqual(resend.status_code, 200)
+        second_code = self._extract_code()
+        self.assertNotEqual(first_code, second_code)
+        pending.refresh_from_db()
+        self.assertEqual(pending.failed_attempts, 0)
+        self.assertEqual(pending.code_send_count, 2)
+        self.assertEqual(ProductEvent.objects.filter(name="verification_code_resent").count(), 1)
+
+    def test_login_is_blocked_for_unverified_password_account(self):
+        user = User.objects.create_user(
+            username="unverified",
+            email="unverified@example.com",
+            password="Strongpass123!",
+        )
+        UserAuthIdentity.objects.create(
+            user=user,
+            normalized_email="unverified@example.com",
+            email_verified=False,
+        )
+
+        response = self.client.post(
+            reverse("token_obtain_pair"),
+            {"username": "unverified", "password": "Strongpass123!"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.data["code"], "email_not_verified")
+
+    def test_existing_verified_password_users_can_still_log_in(self):
+        user = User.objects.create_user(
+            username="verified",
+            email="verified@example.com",
+            password="Strongpass123!",
+        )
+        UserAuthIdentity.objects.create(
+            user=user,
+            normalized_email="verified@example.com",
+            email_verified=True,
+            email_verified_at=timezone.now(),
+        )
+
+        response = self.client.post(
+            reverse("token_obtain_pair"),
+            {"username": "verified", "password": "Strongpass123!"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("access", response.data)
+
+    def test_register_resend_does_not_leak_missing_email(self):
+        response = self.client.post(
+            reverse("register_resend_code"),
+            {"email": "missing@example.com"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.data["verification_required"])
 
 
 class ChangePasswordTests(APITestCase):

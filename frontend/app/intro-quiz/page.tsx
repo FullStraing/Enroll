@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Check, CheckCircle2 } from "lucide-react";
 import { DeepWorkflowTheme } from "@/components/deep-workflow-theme";
 import { useLocale } from "@/components/locale-provider";
 import { Button } from "@/components/ui/button";
@@ -77,6 +77,7 @@ function OptionGrid({
           <button
             key={option}
             type="button"
+            aria-pressed={selected}
             onClick={() => {
               if (!multi) {
                 onChange(option);
@@ -95,11 +96,22 @@ function OptionGrid({
               onChange(next.includes(option) ? next.filter((item) => item !== option) : [...next, option]);
             }}
             className={cn(
-              "surface-panel rounded-2xl border px-4 py-4 text-left text-base font-semibold text-[var(--enroll-fg)] transition",
+              "surface-panel relative rounded-2xl border px-4 py-4 pr-14 text-left text-base font-semibold text-[var(--enroll-fg)] transition",
               "hover:-translate-y-0.5 hover:border-[var(--enroll-surface-border-strong)]",
-              selected && "border-[var(--enroll-yellow)] bg-[color-mix(in_srgb,var(--enroll-yellow)_18%,var(--enroll-surface-elevated))] text-[var(--enroll-fg)] ring-1 ring-[var(--enroll-yellow)] shadow-[0_4px_0_var(--enroll-strong-shadow)]",
+              selected &&
+                "border-[var(--enroll-yellow)] bg-[color-mix(in_srgb,var(--enroll-yellow)_24%,var(--enroll-surface-elevated))] text-[var(--enroll-fg)] ring-2 ring-[color-mix(in_srgb,var(--enroll-yellow)_48%,transparent)] shadow-[inset_0_0_0_1px_var(--enroll-yellow),0_4px_0_var(--enroll-strong-shadow)]",
             )}
           >
+            <span
+              className={cn(
+                "absolute right-4 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border transition",
+                selected
+                  ? "border-[var(--enroll-yellow)] bg-[var(--enroll-yellow)] text-[var(--enroll-strong-fg)]"
+                  : "border-[var(--enroll-surface-border-strong)] bg-[var(--enroll-surface-elevated)] text-transparent",
+              )}
+            >
+              <Check className="h-4 w-4" />
+            </span>
             {option}
           </button>
         );

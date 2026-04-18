@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.utils import timezone
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
@@ -14,13 +15,27 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from apps.accounts.services import ensure_user_plan
 from apps.analytics.services import record_product_event
 from apps.core.runtime import feature_disabled_response
-from apps.universities.categorying import category_from_acceptance_rate
-from apps.universities.models import StudentUniversity, University
+
 from .common_app import build_common_app_progress
 from .google_auth import GoogleTokenVerificationError, verify_google_id_token
 from .models import StudentProfile, UserAuthIdentity, normalize_identity_email
 from .progress import has_completed_minimum_profile
-from .serializers import RegisterSerializer, StudentProfileSerializer
+from .registration import (
+    AUTH_MESSAGE_RESEND_GENERIC,
+    AUTH_MESSAGE_VERIFICATION_CODE_SENT,
+    AUTH_MESSAGE_VERIFICATION_EMAIL_SEND_FAILED,
+    PendingRegistrationError,
+    _seed_example_university,
+    complete_pending_registration,
+    issue_pending_registration,
+    resend_pending_registration_code,
+)
+from .serializers import (
+    RegisterResendSerializer,
+    RegisterStartSerializer,
+    RegisterVerifySerializer,
+    StudentProfileSerializer,
+)
 
 
 def _build_unique_username(email: str) -> str:
@@ -39,54 +54,97 @@ def _get_expected_google_client_ids() -> set[str]:
     return {value.strip() for value in raw.split(",") if value.strip()}
 
 
-def _seed_example_university(user: User) -> None:
-    if StudentUniversity.objects.filter(student=user).exists():
-        return
-
-    example_names = [
-        "Stanford University",
-        "Harvard University",
-        "New York University",
-        "University of Michigan - Ann Arbor",
-        "Abilene Christian University",
-    ]
-    university = None
-    for example_name in example_names:
-        university = University.objects.filter(is_active=True, name=example_name).first()
-        if university:
-            break
-    if not university:
-        university = University.objects.filter(is_active=True).order_by("name").first()
-    if not university:
-        return
-
-    StudentUniversity.objects.get_or_create(
-        student=user,
-        university=university,
-        defaults={
-            "sort_order": 1,
-            "category": category_from_acceptance_rate(university.acceptance_rate),
-            "status": "planning",
-        },
-    )
-
-
-class RegisterView(generics.CreateAPIView):
-    queryset = User.objects.all()
-    serializer_class = RegisterSerializer
+class RegisterStartView(APIView):
     permission_classes = [permissions.AllowAny]
     throttle_classes = [ScopedRateThrottle]
-    throttle_scope = "auth_register"
+    throttle_scope = "auth_register_start"
 
-    def perform_create(self, serializer):
-        user = serializer.save()
-        _seed_example_university(user)
-        record_product_event("signup_completed", user=user, source="password")
-
-    def create(self, request, *args, **kwargs):
+    def post(self, request):
         if not settings.REGISTRATION_ENABLED:
             return feature_disabled_response("Registration is temporarily unavailable.")
-        return super().create(request, *args, **kwargs)
+
+        serializer = RegisterStartSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            result = issue_pending_registration(
+                username=serializer.validated_data["username"],
+                email=serializer.validated_data["email"],
+                password=serializer.validated_data["password"],
+                request=request,
+            )
+        except PendingRegistrationError as exc:
+            raise exc
+        except Exception:
+            return Response(
+                {"detail": AUTH_MESSAGE_VERIFICATION_EMAIL_SEND_FAILED},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
+        return Response(
+            {
+                "detail": AUTH_MESSAGE_VERIFICATION_CODE_SENT,
+                "verification_required": result.verification_required,
+                "resend_available_in_seconds": result.resend_available_in_seconds,
+                "expires_in_seconds": result.expires_in_seconds,
+            },
+            status=status.HTTP_202_ACCEPTED,
+        )
+
+
+class RegisterVerifyView(APIView):
+    permission_classes = [permissions.AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "auth_register_verify"
+
+    def post(self, request):
+        serializer = RegisterVerifySerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user = complete_pending_registration(
+            email=serializer.validated_data["email"],
+            code=serializer.validated_data["code"],
+        )
+        refresh = RefreshToken.for_user(user)
+        return Response(
+            {
+                "access": str(refresh.access_token),
+                "refresh": str(refresh),
+                "is_new_user": True,
+            }
+        )
+
+
+class RegisterResendCodeView(APIView):
+    permission_classes = [permissions.AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "auth_register_resend"
+
+    def post(self, request):
+        serializer = RegisterResendSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            result = resend_pending_registration_code(
+                email=serializer.validated_data["email"],
+                request=request,
+            )
+        except PendingRegistrationError as exc:
+            raise exc
+        except Exception:
+            return Response(
+                {"detail": AUTH_MESSAGE_VERIFICATION_EMAIL_SEND_FAILED},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
+        return Response(
+            {
+                "detail": AUTH_MESSAGE_RESEND_GENERIC,
+                "verification_required": result.verification_required,
+                "resend_available_in_seconds": result.resend_available_in_seconds,
+                "expires_in_seconds": result.expires_in_seconds,
+            }
+        )
 
 
 class StudentProfileView(generics.RetrieveUpdateAPIView):
@@ -194,7 +252,8 @@ class GoogleAuthView(APIView):
                         )
                     auth_identity.google_sub = identity.sub
                     auth_identity.email_verified = True
-                    auth_identity.save(update_fields=["google_sub", "email_verified", "updated_at"])
+                    auth_identity.email_verified_at = auth_identity.email_verified_at or timezone.now()
+                    auth_identity.save(update_fields=["google_sub", "email_verified", "email_verified_at", "updated_at"])
                 else:
                     legacy_matches = list(User.objects.filter(email__iexact=normalized_email)[:2])
                     if len(legacy_matches) > 1:
@@ -209,6 +268,7 @@ class GoogleAuthView(APIView):
                             user=user,
                             normalized_email=normalized_email,
                             email_verified=True,
+                            email_verified_at=timezone.now(),
                             google_sub=identity.sub,
                         )
                     else:
@@ -226,6 +286,7 @@ class GoogleAuthView(APIView):
                             user=user,
                             normalized_email=normalized_email,
                             email_verified=True,
+                            email_verified_at=timezone.now(),
                             google_sub=identity.sub,
                         )
                         ensure_user_plan(user=user, source="default_signup")
@@ -239,6 +300,9 @@ class GoogleAuthView(APIView):
             if not auth_identity.email_verified:
                 auth_identity.email_verified = True
                 identity_updates.append("email_verified")
+            if not auth_identity.email_verified_at:
+                auth_identity.email_verified_at = timezone.now()
+                identity_updates.append("email_verified_at")
             if identity_updates:
                 auth_identity.save(update_fields=[*identity_updates, "updated_at"])
             updated_fields = []

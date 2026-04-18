@@ -181,6 +181,9 @@ REST_FRAMEWORK = {
         "auth_token": "6/minute",
         "auth_refresh": "12/minute",
         "auth_register": "10/hour",
+        "auth_register_start": "10/hour",
+        "auth_register_verify": "20/hour",
+        "auth_register_resend": "12/hour",
         "auth_google": "12/hour",
         "analytics_track": "30/hour",
         "document_upload": "20/hour",
@@ -192,6 +195,16 @@ SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(hours=1),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=14),
 }
+
+
+EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend").strip()
+EMAIL_HOST = os.getenv("EMAIL_HOST", "").strip()
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "").strip()
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "").strip()
+EMAIL_USE_TLS = env_bool("EMAIL_USE_TLS", True)
+EMAIL_TIMEOUT = int(os.getenv("EMAIL_TIMEOUT", "10"))
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "Enroll <no-reply@localhost>").strip()
 
 
 # AI providers / essay coach

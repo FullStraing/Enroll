@@ -42,7 +42,7 @@ function extractApiErrorMessage(data: unknown): string | null {
     for (const [key, value] of Object.entries(record)) {
       const message = extractApiErrorMessage(value);
       if (message) {
-        return key === "non_field_errors" ? message : `${key}: ${message}`;
+        return message;
       }
     }
   }

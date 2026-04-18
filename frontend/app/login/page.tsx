@@ -3,27 +3,42 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { apiFetch } from "@/lib/api";
+import { ApiError, apiFetch } from "@/lib/api";
 import { Loader } from "@/components/loader";
 import { useAuth } from "@/components/auth-provider";
+import { useLocale, useMessages } from "@/components/locale-provider";
 import { Button } from "@/components/ui/button";
 import { GoogleAuthButton } from "@/components/google-auth-button";
+import { getAuthFlowCopy } from "@/lib/auth-copy";
 import { hasPendingStoredIntroQuiz, syncStoredIntroQuizToProfile } from "@/lib/intro-quiz";
 import { isProfileReadyForDashboard, resolvePostAuthDestination } from "@/lib/onboarding-gate";
 import { RequiredMark } from "@/components/ui/required-mark";
 import { RuntimeNotice } from "@/components/runtime-notice";
+import { FieldError, FormFeedback } from "@/components/ui/form-feedback";
 import { fetchRuntimeConfig, type RuntimeConfig } from "@/lib/runtime-config";
-import { useMessages } from "@/components/locale-provider";
+import { parseFormErrors, resolveFormErrorMessage } from "@/lib/form-errors";
+import { cn } from "@/lib/utils";
 
 export default function LoginPage() {
   const messages = useMessages();
+  const { locale } = useLocale();
+  const authCopy = getAuthFlowCopy(locale);
   const router = useRouter();
   const { setSession, status, profile } = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [runtimeConfig, setRuntimeConfig] = useState<RuntimeConfig | null>(null);
+
+  const applyParsedErrors = useCallback(
+    (parsed: ReturnType<typeof parseFormErrors>, fallback: string) => {
+      setFieldErrors(parsed.fieldErrors);
+      setError(resolveFormErrorMessage(parsed, fallback));
+    },
+    [],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -48,6 +63,7 @@ export default function LoginPage() {
     e.preventDefault();
     setPending(true);
     setError("");
+    setFieldErrors({});
     try {
       const data = await apiFetch<{ access: string; refresh: string }>("/api/auth/token/", {
         method: "POST",
@@ -64,7 +80,15 @@ export default function LoginPage() {
       }
       window.location.assign(await resolvePostAuthDestination(data.access));
     } catch (err) {
-      setError(err instanceof Error ? err.message : messages.auth.loginFailed);
+      if (
+        err instanceof ApiError &&
+        (err.data as { code?: string } | null)?.code === "email_not_verified"
+      ) {
+        setError(authCopy.verifyEmailBeforeLogin);
+      } else {
+        const parsed = parseFormErrors(err, ["username", "password"]);
+        applyParsedErrors(parsed, err instanceof Error ? err.message : messages.auth.loginFailed);
+      }
     } finally {
       setPending(false);
     }
@@ -87,8 +111,15 @@ export default function LoginPage() {
   );
 
   const handleGoogleError = useCallback((message: string) => {
+    setFieldErrors({});
     setError(message);
   }, []);
+
+  const inputClassName = (hasError: boolean) =>
+    cn(
+      "mt-1 w-full rounded-xl border bg-white px-3 py-2 text-black placeholder:text-black/45",
+      hasError ? "border-[#d93025] focus:border-[#d93025]" : "border-black/20",
+    );
 
   const googleUnavailableMessage =
     runtimeConfig?.features.google_auth_enabled === false ? messages.auth.googleUnavailable : undefined;
@@ -115,12 +146,16 @@ export default function LoginPage() {
           <RequiredMark />
         </label>
         <input
-          className="mt-1 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-black placeholder:text-black/45"
+          className={inputClassName(Boolean(fieldErrors.username))}
           value={username}
-          onChange={(e) => setUsername(e.target.value)}
+          onChange={(e) => {
+            setUsername(e.target.value);
+            setFieldErrors((current) => ({ ...current, username: "" }));
+          }}
           placeholder={messages.auth.usernamePlaceholder}
           required
         />
+        <FieldError message={fieldErrors.username} />
 
         <label className="mt-4 block text-sm text-black/70">
           {messages.auth.password}
@@ -128,12 +163,16 @@ export default function LoginPage() {
         </label>
         <input
           type="password"
-          className="mt-1 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-black placeholder:text-black/45"
+          className={inputClassName(Boolean(fieldErrors.password))}
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={(e) => {
+            setPassword(e.target.value);
+            setFieldErrors((current) => ({ ...current, password: "" }));
+          }}
           placeholder={messages.auth.passwordPlaceholder}
           required
         />
+        <FieldError message={fieldErrors.password} />
 
         <Button disabled={pending} className="mt-6 w-full">
           {pending ? <Loader size="sm" /> : messages.common.login}
@@ -146,7 +185,7 @@ export default function LoginPage() {
           unavailableMessage={googleUnavailableMessage}
         />
 
-        {error ? <p className="mt-3 text-sm text-red-600">{error}</p> : null}
+        <FormFeedback tone="error" message={error} />
 
         <p className="mt-4 text-sm text-black/70">
           {messages.auth.noAccount}{" "}

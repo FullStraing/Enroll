@@ -11,10 +11,12 @@ import { useAuth } from "@/components/auth-provider";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { Button } from "@/components/ui/button";
+import { FieldError, FormFeedback } from "@/components/ui/form-feedback";
 import { RequiredMark } from "@/components/ui/required-mark";
 import { getToken } from "@/lib/auth";
 import { apiFetch } from "@/lib/api";
 import { useLocale } from "@/components/locale-provider";
+import { parseFormErrors, resolveFormErrorMessage } from "@/lib/form-errors";
 import { getSettingsCopy } from "@/lib/settings-copy";
 
 type PasswordStatusTone = "idle" | "success" | "error";
@@ -74,6 +76,7 @@ export default function SettingsPage() {
   const [changingPassword, setChangingPassword] = useState(false);
   const [passwordStatus, setPasswordStatus] = useState("");
   const [passwordStatusTone, setPasswordStatusTone] = useState<PasswordStatusTone>("idle");
+  const [passwordFieldErrors, setPasswordFieldErrors] = useState<Record<string, string>>({});
 
   const hasUsablePassword = Boolean(profile?.has_usable_password);
   const accountName = profile?.full_name || profile?.username || "N/A";
@@ -81,19 +84,16 @@ export default function SettingsPage() {
   const themeLabel = resolvedTheme === "dark" ? copy.themeDark : copy.themeLight;
   const localeLabel = locale === "ru" ? copy.languageRussian : copy.languageEnglish;
 
-  const passwordStatusClass = useMemo(() => {
-    if (passwordStatusTone === "success") {
-      return "border-[var(--enroll-surface-border-strong)] bg-[color-mix(in_srgb,var(--enroll-cyan)_32%,var(--enroll-surface-inset))] text-[var(--enroll-fg)]";
-    }
-    if (passwordStatusTone === "error") {
-      return "border-[var(--enroll-surface-border-strong)] bg-[color-mix(in_srgb,var(--enroll-orange)_26%,var(--enroll-surface-inset))] text-[var(--enroll-fg)]";
-    }
-    return "";
-  }, [passwordStatusTone]);
-
   function resetPasswordStatus() {
     setPasswordStatus("");
     setPasswordStatusTone("idle");
+    setPasswordFieldErrors({});
+  }
+
+  function applyPasswordErrors(parsed: ReturnType<typeof parseFormErrors>, fallback: string) {
+    setPasswordFieldErrors(parsed.fieldErrors);
+    setPasswordStatus(resolveFormErrorMessage(parsed, fallback));
+    setPasswordStatusTone("error");
   }
 
   async function handlePasswordChange(event: FormEvent) {
@@ -135,8 +135,8 @@ export default function SettingsPage() {
       setPasswordStatus(copy.passwordUpdated);
       setPasswordStatusTone("success");
     } catch (error) {
-      setPasswordStatus(error instanceof Error ? error.message : copy.changePasswordFailed);
-      setPasswordStatusTone("error");
+      const parsed = parseFormErrors(error, ["current_password", "new_password", "confirm_new_password"]);
+      applyPasswordErrors(parsed, error instanceof Error ? error.message : copy.changePasswordFailed);
     } finally {
       setChangingPassword(false);
     }
@@ -215,11 +215,14 @@ export default function SettingsPage() {
                     value={currentPassword}
                     onChange={(event) => {
                       setCurrentPassword(event.target.value);
-                      resetPasswordStatus();
+                      setPasswordFieldErrors((current) => ({ ...current, current_password: "" }));
+                      setPasswordStatus("");
+                      setPasswordStatusTone("idle");
                     }}
                     className="mt-3 w-full rounded-2xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] px-4 py-3 text-[var(--enroll-fg)] outline-none focus:border-[var(--enroll-surface-border-strong)]"
                     required
                   />
+                  <FieldError message={passwordFieldErrors.current_password} />
                 </label>
               ) : (
                 <div className="rounded-2xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-inset)] px-4 py-3 text-sm text-[var(--enroll-muted-strong)]">
@@ -237,11 +240,14 @@ export default function SettingsPage() {
                   value={newPassword}
                   onChange={(event) => {
                     setNewPassword(event.target.value);
-                    resetPasswordStatus();
+                    setPasswordFieldErrors((current) => ({ ...current, new_password: "" }));
+                    setPasswordStatus("");
+                    setPasswordStatusTone("idle");
                   }}
                   className="mt-3 w-full rounded-2xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] px-4 py-3 text-[var(--enroll-fg)] outline-none focus:border-[var(--enroll-surface-border-strong)]"
                   required
                 />
+                <FieldError message={passwordFieldErrors.new_password} />
               </label>
 
               <label className="block text-sm text-[var(--enroll-muted-strong)]">
@@ -255,18 +261,17 @@ export default function SettingsPage() {
                   value={confirmPassword}
                   onChange={(event) => {
                     setConfirmPassword(event.target.value);
-                    resetPasswordStatus();
+                    setPasswordFieldErrors((current) => ({ ...current, confirm_new_password: "" }));
+                    setPasswordStatus("");
+                    setPasswordStatusTone("idle");
                   }}
                   className="mt-3 w-full rounded-2xl border border-[var(--enroll-surface-border)] bg-[var(--enroll-surface-elevated)] px-4 py-3 text-[var(--enroll-fg)] outline-none focus:border-[var(--enroll-surface-border-strong)]"
                   required
                 />
+                <FieldError message={passwordFieldErrors.confirm_new_password} />
               </label>
 
-              {passwordStatus ? (
-                <div className={`rounded-2xl border px-4 py-3 text-sm ${passwordStatusClass}`}>
-                  {passwordStatus}
-                </div>
-              ) : null}
+              <FormFeedback tone={passwordStatusTone === "success" ? "success" : "error"} message={passwordStatus} />
 
               <div className="flex flex-wrap items-center gap-3">
                 <Button type="submit" disabled={changingPassword}>
