@@ -3,13 +3,12 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ApiError, apiFetch } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 import { Loader } from "@/components/loader";
 import { useAuth } from "@/components/auth-provider";
-import { useLocale, useMessages } from "@/components/locale-provider";
+import { useMessages } from "@/components/locale-provider";
 import { Button } from "@/components/ui/button";
 import { GoogleAuthButton } from "@/components/google-auth-button";
-import { getAuthFlowCopy } from "@/lib/auth-copy";
 import { hasPendingStoredIntroQuiz, syncStoredIntroQuizToProfile } from "@/lib/intro-quiz";
 import { isProfileReadyForDashboard, resolvePostAuthDestination } from "@/lib/onboarding-gate";
 import { RequiredMark } from "@/components/ui/required-mark";
@@ -21,8 +20,6 @@ import { cn } from "@/lib/utils";
 
 export default function LoginPage() {
   const messages = useMessages();
-  const { locale } = useLocale();
-  const authCopy = getAuthFlowCopy(locale);
   const router = useRouter();
   const { setSession, status, profile } = useAuth();
   const [username, setUsername] = useState("");
@@ -80,15 +77,8 @@ export default function LoginPage() {
       }
       window.location.assign(await resolvePostAuthDestination(data.access));
     } catch (err) {
-      if (
-        err instanceof ApiError &&
-        (err.data as { code?: string } | null)?.code === "email_not_verified"
-      ) {
-        setError(authCopy.verifyEmailBeforeLogin);
-      } else {
-        const parsed = parseFormErrors(err, ["username", "password"]);
-        applyParsedErrors(parsed, err instanceof Error ? err.message : messages.auth.loginFailed);
-      }
+      const parsed = parseFormErrors(err, ["username", "password"]);
+      applyParsedErrors(parsed, err instanceof Error ? err.message : messages.auth.loginFailed);
     } finally {
       setPending(false);
     }
