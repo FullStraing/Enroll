@@ -8,6 +8,7 @@ export type AccountPlanSummary = {
 
 export type UniversitiesEntitlementSummary = {
   max_count?: number;
+  discover_visible_count?: number;
   used?: number;
   remaining?: number;
   can_create?: boolean;
@@ -74,6 +75,7 @@ export function getUniversityUsage(profile?: AccountScopedProfile | null) {
   const summary = profile?.entitlements?.universities;
   return {
     maxCount: summary?.max_count ?? 0,
+    discoverVisibleCount: summary?.discover_visible_count ?? 0,
     used: summary?.used ?? 0,
     remaining: summary?.remaining ?? 0,
     canCreate: Boolean(summary?.can_create),

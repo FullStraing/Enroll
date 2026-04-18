@@ -8,7 +8,12 @@ from django.db.models import Max
 from rest_framework import generics, permissions
 from rest_framework.exceptions import ValidationError
 
-from apps.accounts.services import ENTITLEMENT_UNIVERSITIES_MAX_COUNT, enforce_limit
+from apps.accounts.services import (
+    ENTITLEMENT_UNIVERSITIES_DISCOVER_VISIBLE_COUNT,
+    ENTITLEMENT_UNIVERSITIES_MAX_COUNT,
+    enforce_limit,
+    get_user_entitlement_value,
+)
 from apps.analytics.services import record_product_event
 from rest_framework.pagination import PageNumberPagination
 from .models import Application, StudentUniversity, University, UniversityDeadline, UniversityMetric, UniversitySourceSnapshot
@@ -90,6 +95,18 @@ class UniversityListView(generics.ListAPIView):
     serializer_class = UniversitySerializer
     permission_classes = [permissions.IsAuthenticated]
     pagination_class = UniversityPagination
+
+    def _apply_discover_visibility_limit(self, queryset):
+        visible_count = int(
+            get_user_entitlement_value(
+                user=self.request.user,
+                entitlement_code=ENTITLEMENT_UNIVERSITIES_DISCOVER_VISIBLE_COUNT,
+            )
+            or 0
+        )
+        if visible_count <= 0:
+            return queryset.none()
+        return queryset[:visible_count]
 
     def get_queryset(self):
         query = (self.request.query_params.get("q") or "").strip()
@@ -233,7 +250,7 @@ class UniversityListView(generics.ListAPIView):
         if housing_max_value is not None:
             qs = qs.filter(housing_cost_value__lte=housing_max_value)
 
-        return (
+        queryset = (
             qs
             .annotate(
                 core_metrics_count=models.Count(
@@ -274,12 +291,17 @@ class UniversityListView(generics.ListAPIView):
             .prefetch_related("metrics", "source_snapshots", "deadlines")
             .order_by("-completeness_bucket", "-core_metrics_count", "name")
         )
+        return self._apply_discover_visibility_limit(queryset)
 
 
 class UniversityDetailView(generics.RetrieveAPIView):
-    queryset = University.objects.filter(is_active=True)
     serializer_class = UniversitySerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        list_view = UniversityListView()
+        list_view.request = self.request
+        return list_view.get_queryset()
 
 
 class StudentUniversityListCreateView(generics.ListCreateAPIView):

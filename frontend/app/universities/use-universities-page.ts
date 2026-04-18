@@ -104,10 +104,12 @@ export function useUniversitiesPage() {
   const profileUniversityUsage = getUniversityUsage(profile);
   const universityUsage = useMemo(() => {
     const maxCount = profileUniversityUsage.maxCount;
+    const discoverVisibleCount = profileUniversityUsage.discoverVisibleCount;
     const used = loadingMy && myItems.length === 0 ? profileUniversityUsage.used : myItems.length;
     const remaining = maxCount > 0 ? Math.max(maxCount - used, 0) : profileUniversityUsage.remaining;
     return {
       maxCount,
+      discoverVisibleCount,
       used,
       remaining,
       canCreate: maxCount > 0 ? used < maxCount : profileUniversityUsage.canCreate,

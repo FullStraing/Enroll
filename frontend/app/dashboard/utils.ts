@@ -11,6 +11,7 @@ import type {
   StudentUniversity,
 } from "@/app/dashboard/types";
 import { getDashboardCopy } from "@/lib/dashboard-copy";
+import { getIntroQuizAnswersFromProfile } from "@/lib/intro-quiz";
 import type { Locale } from "@/lib/i18n";
 
 export function buildInitialAcademicTests(profile: Profile | null, quizAnswers: IntroAnswers): EditProfileForm["academicTests"] {
@@ -305,23 +306,25 @@ export function buildEmptyEditForm(): EditProfileForm {
 }
 
 export function buildInitialEditForm(profile: Profile | null, quizAnswers: IntroAnswers, universities: StudentUniversity[]): EditProfileForm {
+  const resolvedQuizAnswers =
+    Object.keys(quizAnswers || {}).length > 0 ? quizAnswers : getIntroQuizAnswersFromProfile(profile);
   const normalizedQuizScale =
-    quizAnswers.gpaScale?.includes("5.0")
+    resolvedQuizAnswers.gpaScale?.includes("5.0")
       ? "5.0"
-      : quizAnswers.gpaScale?.includes("Percent") || quizAnswers.gpaScale?.includes("Процент")
+      : resolvedQuizAnswers.gpaScale?.includes("Percent") || resolvedQuizAnswers.gpaScale?.includes("Процент")
         ? "Percent"
         : "4.0";
 
   return {
     fullName: profile?.full_name || "",
-    major: profile?.intended_major || quizAnswers.major || "",
-    country: profile?.country || quizAnswers.country || "",
-    intakeYear: quizAnswers.intakeYear || "",
-    schoolLevel: quizAnswers.schoolLevel || "",
-    gpaScale: quizAnswers.gpaScale ? normalizedQuizScale : "4.0",
-    gpaValue: quizAnswers.gpaValue || "",
-    academicTests: buildInitialAcademicTests(profile, quizAnswers),
-    languageTests: buildInitialLanguageTests(profile, quizAnswers),
+    major: profile?.intended_major || resolvedQuizAnswers.major || "",
+    country: profile?.country || resolvedQuizAnswers.country || "",
+    intakeYear: resolvedQuizAnswers.intakeYear || "",
+    schoolLevel: resolvedQuizAnswers.schoolLevel || "",
+    gpaScale: resolvedQuizAnswers.gpaScale ? normalizedQuizScale : "4.0",
+    gpaValue: resolvedQuizAnswers.gpaValue || "",
+    academicTests: buildInitialAcademicTests(profile, resolvedQuizAnswers),
+    languageTests: buildInitialLanguageTests(profile, resolvedQuizAnswers),
     apScores: buildInitialApScores(profile),
     activities: buildInitialActivities(profile),
     honors: Array.isArray(profile?.honors) ? profile.honors.slice(0, 4) : [],

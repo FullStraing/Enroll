@@ -56,6 +56,13 @@ function UniversitiesPageContent() {
                       ? `${state.universityUsage.used} / ${state.universityUsage.maxCount} ${locale === "ru" ? "университетов" : "universities"}`
                       : "N/A"}
                   </Badge>
+                  <Badge variant="default">
+                    {state.universityUsage.discoverVisibleCount > 0
+                      ? (locale === "ru"
+                          ? `Просмотр discover: ${state.universityUsage.discoverVisibleCount}`
+                          : `Discover preview: ${state.universityUsage.discoverVisibleCount}`)
+                      : "N/A"}
+                  </Badge>
                   <Badge variant={state.hasUniversityLimit ? "orange" : "default"}>
                     {state.hasUniversityLimit
                       ? state.universityLimitReachedLabel
@@ -81,8 +88,8 @@ function UniversitiesPageContent() {
               {state.hasUniversityLimit
                 ? state.universityLimitMessage
                 : locale === "ru"
-                  ? "Лимит уже отображается в интерфейсе и дополнительно жёстко проверяется на backend."
-                  : "Your university limit is shown here and is also enforced on the backend."}
+                  ? `Лимиты уже отображаются в интерфейсе и дополнительно жёстко проверяются на backend. В discover сейчас доступно только ${state.universityUsage.discoverVisibleCount || 0} карточек.`
+                  : `Limits are shown here and are also enforced on the backend. Discover currently exposes only ${state.universityUsage.discoverVisibleCount || 0} cards on this plan.`}
             </p>
           </div>
 

@@ -16,6 +16,12 @@ export type IntroQuizStorage = {
   answers?: IntroQuizAnswers;
 };
 
+type IntroQuizProfileLike = {
+  common_app_profile?: {
+    intro_quiz_answers?: IntroQuizAnswers | null;
+  } | null;
+} | null | undefined;
+
 export const INTRO_QUIZ_STORAGE_KEY = "enroll_intro_quiz_v1";
 export const INTRO_QUIZ_COMPLETED_STORAGE_KEY = "enroll_intro_quiz_done";
 export const INTRO_QUIZ_LINKED_STORAGE_KEY = "enroll_intro_quiz_linked";
@@ -85,6 +91,24 @@ function normalizeAnswers(answers: IntroQuizAnswers): IntroQuizAnswers {
     tests: Array.isArray(answers.tests) ? answers.tests.filter(Boolean) : [],
     shortlistSize: answers.shortlistSize || "",
   };
+}
+
+export function getIntroQuizAnswersFromProfile(profile: IntroQuizProfileLike): IntroQuizAnswers {
+  return profile?.common_app_profile?.intro_quiz_answers || {};
+}
+
+export function resolveIntroQuizAnswers({
+  stored,
+  profile,
+}: {
+  stored?: IntroQuizAnswers | null;
+  profile?: IntroQuizProfileLike;
+}): IntroQuizAnswers {
+  const storedAnswers = stored || {};
+  if (Object.keys(storedAnswers).length > 0) {
+    return storedAnswers;
+  }
+  return getIntroQuizAnswersFromProfile(profile);
 }
 
 export function readStoredIntroQuiz(): IntroQuizStorage | null {

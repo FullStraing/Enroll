@@ -13,22 +13,21 @@ class EssayPlanLimitTests(APITestCase):
         self.client = APIClient()
         self.client.force_authenticate(user=self.user)
 
-    def test_free_plan_blocks_sixth_essay(self):
-        for index in range(5):
-            response = self.client.post(
-                reverse("essay-list-create"),
-                {
-                    "title": f"Essay {index + 1}",
-                    "essay_type": "other",
-                },
-                format="json",
-            )
-            self.assertEqual(response.status_code, 201)
+    def test_free_plan_blocks_second_essay(self):
+        response = self.client.post(
+            reverse("essay-list-create"),
+            {
+                "title": "Essay 1",
+                "essay_type": "other",
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, 201)
 
         blocked = self.client.post(
             reverse("essay-list-create"),
             {
-                "title": "Essay 6",
+                "title": "Essay 2",
                 "essay_type": "other",
             },
             format="json",
@@ -38,7 +37,7 @@ class EssayPlanLimitTests(APITestCase):
         self.assertEqual(blocked.data["code"], "plan_limit_reached")
         self.assertEqual(blocked.data["feature"], "essays.max_count")
 
-    def test_free_plan_blocks_eleventh_version_for_single_essay(self):
+    def test_free_plan_blocks_sixth_version_for_single_essay(self):
         created = self.client.post(
             reverse("essay-list-create"),
             {
@@ -50,7 +49,7 @@ class EssayPlanLimitTests(APITestCase):
         self.assertEqual(created.status_code, 201)
         essay_id = created.data["id"]
 
-        for index in range(9):
+        for index in range(4):
             response = self.client.post(
                 reverse("essay-version-list-create", kwargs={"essay_id": essay_id}),
                 {
@@ -65,8 +64,8 @@ class EssayPlanLimitTests(APITestCase):
         blocked = self.client.post(
             reverse("essay-version-list-create", kwargs={"essay_id": essay_id}),
             {
-                "label": "Version 11",
-                "content": "Draft 11",
+                "label": "Version 6",
+                "content": "Draft 6",
                 "source": "user",
             },
             format="json",

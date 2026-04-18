@@ -162,6 +162,32 @@ class UniversityDataTests(APITestCase):
         self.assertEqual(response.data["feature"], "universities.max_count")
         self.assertEqual(response.data["plan"], "free")
 
+    def test_free_plan_discover_is_limited_to_first_six_cards(self):
+        University.objects.bulk_create(
+            [University(name=f"Preview University {index:02d}") for index in range(8)]
+        )
+
+        response = self.client.get(reverse("universities_list"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["count"], 6)
+        self.assertEqual(len(response.data["results"]), 5)
+
+    def test_free_plan_cannot_open_hidden_discover_university_detail(self):
+        visible = [
+            University.objects.create(name=f"Visible University {index:02d}")
+            for index in range(6)
+        ]
+        hidden = University.objects.create(name="Visible University 99")
+
+        list_response = self.client.get(reverse("universities_list"))
+        self.assertEqual(list_response.status_code, 200)
+        visible_ids = {item["id"] for item in list_response.data["results"]}
+        self.assertTrue(any(university.id in visible_ids for university in visible))
+
+        detail_response = self.client.get(reverse("universities_detail", kwargs={"pk": hidden.id}))
+        self.assertEqual(detail_response.status_code, 404)
+
     def test_category_from_acceptance_rate_helper(self):
         self.assertEqual(category_from_acceptance_rate(5), "high_reach")
         self.assertEqual(category_from_acceptance_rate(16), "reach")

@@ -14,6 +14,7 @@ PLAN_PRO = "pro"
 PLAN_PREMIUM = "premium"
 
 ENTITLEMENT_UNIVERSITIES_MAX_COUNT = "universities.max_count"
+ENTITLEMENT_UNIVERSITIES_DISCOVER_VISIBLE_COUNT = "universities.discover_visible_count"
 ENTITLEMENT_ESSAYS_MAX_COUNT = "essays.max_count"
 ENTITLEMENT_ESSAY_VERSIONS_MAX_PER_ESSAY = "essay_versions.max_per_essay"
 ENTITLEMENT_AI_REQUESTS_MONTHLY_LIMIT = "ai.requests.monthly_limit"
@@ -193,6 +194,9 @@ def build_user_entitlement_summary(*, user) -> dict:
         entitlement_code=ENTITLEMENT_UNIVERSITIES_MAX_COUNT,
         used=universities_used,
     )
+    universities_discover_visible_count = int(
+        get_user_entitlement_value(user=user, entitlement_code=ENTITLEMENT_UNIVERSITIES_DISCOVER_VISIBLE_COUNT) or 0
+    )
     essays_limit = build_limit_snapshot(
         user=user,
         entitlement_code=ENTITLEMENT_ESSAYS_MAX_COUNT,
@@ -213,6 +217,7 @@ def build_user_entitlement_summary(*, user) -> dict:
     return {
         "universities": {
             "max_count": universities_limit.limit,
+            "discover_visible_count": universities_discover_visible_count,
             "used": universities_limit.used,
             "remaining": universities_limit.remaining,
             "can_create": not universities_limit.reached,
@@ -247,4 +252,3 @@ def bulk_assign_plan(*, plan_code: str, users, source: str = "management_command
 def get_assignable_users_queryset():
     user_model = get_user_model()
     return user_model.objects.order_by("id")
-

@@ -41,7 +41,7 @@ import { formatPlanLabel, getAiUsage, getUniversityUsage } from "@/lib/account-p
 import { apiFetch } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import { getDashboardCopy, translateDashboardStatus } from "@/lib/dashboard-copy";
-import { readStoredIntroQuiz } from "@/lib/intro-quiz";
+import { readStoredIntroQuiz, resolveIntroQuizAnswers } from "@/lib/intro-quiz";
 import { isProfileReadyForDashboard } from "@/lib/onboarding-gate";
 import { formatDateShort, formatDateShortNoYear } from "@/lib/date-format";
 import { readSessionCache, SESSION_CACHE_KEYS, SESSION_CACHE_TTLS, writeSessionCache } from "@/lib/session-cache";
@@ -76,9 +76,8 @@ function DashboardPageContent() {
     setDocuments(payload.documents);
     setEssays(payload.essays);
     setApplications(payload.applications);
-    if (!readStoredIntroQuiz()?.answers && payload.profile?.common_app_profile?.intro_quiz_answers) {
-      setQuizAnswers(payload.profile.common_app_profile.intro_quiz_answers);
-    }
+    const storedQuiz = readStoredIntroQuiz()?.answers;
+    setQuizAnswers(resolveIntroQuizAnswers({ stored: storedQuiz, profile: payload.profile }));
   }, []);
 
   useEffect(() => {

@@ -159,7 +159,7 @@ class EssayAiTests(APITestCase):
         self.assertEqual(response.data["opening_idea"], "Start with your first robotics build.")
 
     def test_free_plan_blocks_request_after_monthly_ai_limit(self):
-        for index in range(20):
+        for index in range(10):
             AIInteraction.objects.create(
                 user=self.user,
                 context_type=f"seed_{index}",

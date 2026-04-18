@@ -28,7 +28,7 @@ import {
 } from "@/app/dashboard/utils";
 import { apiFetch } from "@/lib/api";
 import { getToken } from "@/lib/auth";
-import { readStoredIntroQuiz, writeStoredIntroQuiz } from "@/lib/intro-quiz";
+import { readStoredIntroQuiz, resolveIntroQuizAnswers, writeStoredIntroQuiz } from "@/lib/intro-quiz";
 import { clearSessionCaches, SESSION_CACHE_KEYS, writeSessionCache } from "@/lib/session-cache";
 
 function LoadingState() {
@@ -68,7 +68,6 @@ export default function OnboardingPage() {
     try {
       const parsed = readStoredIntroQuiz() as IntroStorage | null;
       storedQuiz = parsed?.answers || {};
-      setQuizAnswers(storedQuiz);
     } catch {
       storedQuiz = {};
     }
@@ -79,7 +78,12 @@ export default function OnboardingPage() {
         apiFetch<StudentUniversity[]>("/api/my-universities/", { method: "GET" }, token),
       ]);
 
-      const initialForm = buildInitialEditForm(profileResp, storedQuiz, universitiesResp);
+      const resolvedQuizAnswers = resolveIntroQuizAnswers({
+        stored: storedQuiz,
+        profile: profileResp,
+      });
+      const initialForm = buildInitialEditForm(profileResp, resolvedQuizAnswers, universitiesResp);
+      setQuizAnswers(resolvedQuizAnswers);
       setMyUniversities(universitiesResp);
       setEditForm(initialForm);
       lastSavedEditSignatureRef.current = JSON.stringify(initialForm);
