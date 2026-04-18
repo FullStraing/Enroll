@@ -14,8 +14,12 @@ export type SettingsCopy = {
   preferencesHint: string;
   theme: string;
   themeHint: string;
+  themeLight: string;
+  themeDark: string;
   language: string;
   languageHint: string;
+  languageRussian: string;
+  languageEnglish: string;
   security: string;
   securityHint: string;
   currentPassword: string;
@@ -46,11 +50,15 @@ const SETTINGS_COPY: Record<Locale, SettingsCopy> = {
     emailLoginMissing: "Сейчас вход идёт только через Google. Ниже можно создать пароль для входа по email.",
     editProfile: "Открыть Edit Profile",
     preferences: "Интерфейс",
-    preferencesHint: "Вынесли сюда язык и тему, чтобы верхняя панель оставалась чище.",
+    preferencesHint: "Язык и тема вынесены сюда, чтобы верхняя панель оставалась чище.",
     theme: "Тема",
     themeHint: "Светлая или тёмная тема для всего workspace.",
+    themeLight: "Светлая",
+    themeDark: "Тёмная",
     language: "Язык",
     languageHint: "Язык интерфейса применяется сразу во всём продукте.",
+    languageRussian: "Русский",
+    languageEnglish: "English",
     security: "Пароль",
     securityHint: "Меняй пароль здесь. Для Google-only аккаунта можно создать пароль с нуля.",
     currentPassword: "Текущий пароль",
@@ -82,8 +90,12 @@ const SETTINGS_COPY: Record<Locale, SettingsCopy> = {
     preferencesHint: "Theme and language live here now so the top bar stays cleaner.",
     theme: "Theme",
     themeHint: "Light or dark mode for the whole workspace.",
+    themeLight: "Light",
+    themeDark: "Dark",
     language: "Language",
     languageHint: "The interface language updates across the product immediately.",
+    languageRussian: "Russian",
+    languageEnglish: "English",
     security: "Password",
     securityHint: "Change your password here. Google-only accounts can create one from scratch.",
     currentPassword: "Current password",

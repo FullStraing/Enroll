@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import type { AccountEntitlementsSummary, AccountPlanSummary } from "@/lib/account-plan";
-import { clearTokens, getToken, saveTokens } from "@/lib/auth";
+import { clearTokens, getToken, hasStoredRefreshToken, refreshAccessToken, saveTokens } from "@/lib/auth";
 
 type AuthStatus = "loading" | "authenticated" | "unauthenticated";
 
@@ -34,18 +34,32 @@ async function loadProfile(token: string): Promise<AuthProfile> {
   return apiFetch<AuthProfile>("/api/auth/profile/", { method: "GET" }, token);
 }
 
+async function resolveBootstrapToken() {
+  const accessToken = getToken();
+  if (accessToken) {
+    return accessToken;
+  }
+
+  if (hasStoredRefreshToken()) {
+    return refreshAccessToken();
+  }
+
+  return "";
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<AuthStatus>("loading");
   const [profile, setProfile] = useState<AuthProfile | null>(null);
 
   const refreshSession = useCallback(async () => {
-    const token = getToken();
-    if (!token) {
-      setProfile(null);
-      setStatus("unauthenticated");
-      return;
-    }
     try {
+      const token = await resolveBootstrapToken();
+      if (!token) {
+        setProfile(null);
+        setStatus("unauthenticated");
+        return;
+      }
+
       const profileData = await loadProfile(token);
       setProfile(profileData);
       setStatus("authenticated");
@@ -62,7 +76,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const setSession = useCallback(async (access: string, refresh?: string) => {
     saveTokens(access, refresh);
-    await refreshSession();
+    try {
+      const profileData = await loadProfile(access);
+      setProfile(profileData);
+      setStatus("authenticated");
+    } catch {
+      await refreshSession();
+    }
   }, [refreshSession]);
 
   const logout = useCallback(() => {

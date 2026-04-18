@@ -78,15 +78,8 @@ export default function SettingsPage() {
   const hasUsablePassword = Boolean(profile?.has_usable_password);
   const accountName = profile?.full_name || profile?.username || "N/A";
   const accountEmail = profile?.email || "N/A";
-  const themeLabel =
-    resolvedTheme === "dark"
-      ? locale === "ru"
-        ? "Тёмная"
-        : "Dark"
-      : locale === "ru"
-        ? "Светлая"
-        : "Light";
-  const localeLabel = locale === "ru" ? "Русский" : "English";
+  const themeLabel = resolvedTheme === "dark" ? copy.themeDark : copy.themeLight;
+  const localeLabel = locale === "ru" ? copy.languageRussian : copy.languageEnglish;
 
   const passwordStatusClass = useMemo(() => {
     if (passwordStatusTone === "success") {

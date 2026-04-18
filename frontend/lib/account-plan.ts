@@ -44,6 +44,8 @@ export type AccountScopedProfile = {
   entitlements?: AccountEntitlementsSummary;
 };
 
+type SupportedLocale = "ru" | "en";
+
 export function formatPlanLabel(plan?: AccountPlanSummary | null) {
   if (!plan?.code) return "N/A";
   if (plan.name?.trim()) return plan.name.trim();
@@ -90,4 +92,18 @@ export function getAiUsage(profile?: AccountScopedProfile | null) {
     usedThisMonth: summary?.used_this_month ?? 0,
     remainingThisMonth: summary?.remaining_this_month ?? 0,
   };
+}
+
+export function getUniversityLimitMessage(locale: SupportedLocale, limit: number) {
+  return locale === "ru"
+    ? `Лимит текущего плана: ${limit} университетов. Чтобы добавить ещё, нужен более высокий тариф.`
+    : `Your current plan includes up to ${limit} universities. Upgrade the plan to add more.`;
+}
+
+export function getUniversityLimitReachedLabel(locale: SupportedLocale) {
+  return locale === "ru" ? "Лимит достигнут" : "Limit reached";
+}
+
+export function getPricingLabel(locale: SupportedLocale) {
+  return locale === "ru" ? "Тарифы" : "Pricing";
 }

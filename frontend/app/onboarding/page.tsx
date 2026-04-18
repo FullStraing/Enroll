@@ -54,8 +54,8 @@ export default function OnboardingPage() {
   const [editForm, setEditForm] = useState<EditProfileForm>(buildEmptyEditForm());
 
   const editFormSignature = useMemo(() => JSON.stringify(editForm), [editForm]);
-  const gpaMax = editForm.gpaScale === "5.0" ? 5 : editForm.gpaScale === "Percent" ? 100 : 4;
-  const gpaStep = editForm.gpaScale === "Percent" ? "1" : "0.01";
+  const gpaMax = editForm.gpaScale === "5.0" ? 5 : editForm.gpaScale === "Percent" || editForm.gpaScale === "Проценты" ? 100 : 4;
+  const gpaStep = editForm.gpaScale === "Percent" || editForm.gpaScale === "Проценты" ? "1" : "0.01";
 
   const loadWorkspace = useCallback(async () => {
     const token = getToken();

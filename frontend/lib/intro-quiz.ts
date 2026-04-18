@@ -22,31 +22,46 @@ export const INTRO_QUIZ_LINKED_STORAGE_KEY = "enroll_intro_quiz_linked";
 export const INTRO_QUIZ_LINKED_COOKIE_KEY = "enroll_intro_quiz_linked";
 
 const COUNTRY_MAP: Record<string, string> = {
+  Kyrgyzstan: "Kyrgyzstan",
   Кыргызстан: "Kyrgyzstan",
+  Kazakhstan: "Kazakhstan",
   Казахстан: "Kazakhstan",
+  Uzbekistan: "Uzbekistan",
   Узбекистан: "Uzbekistan",
+  Russia: "Russia",
   Россия: "Russia",
+  Ukraine: "Ukraine",
   Украина: "Ukraine",
+  Turkey: "Turkey",
   Турция: "Turkey",
+  India: "India",
   Индия: "India",
+  "Another country": "",
   "Другая страна": "",
 };
 
 const SCHOOL_LEVEL_MAP: Record<string, string> = {
+  "9th grade": "9",
   "9 класс": "9",
+  "10th grade": "10",
   "10 класс": "10",
+  "11th grade": "11",
   "11 класс": "11",
+  "12th grade": "12",
   "12 класс": "12",
   "Gap year": "Gap Year",
+  "Already in college": "College",
   "Уже в колледже": "College",
 };
 
 const INTAKE_MAP: Record<string, string> = {
-  "Еще не решил": "",
+  "Not sure yet": "",
+  "Ещё не решил": "",
 };
 
 const MAJOR_MAP: Record<string, string> = {
-  "Еще не определился": "",
+  "Not decided yet": "",
+  "Ещё не определился": "",
 };
 
 function normalizeGpa(scale?: string, raw?: string) {
@@ -55,7 +70,7 @@ function normalizeGpa(scale?: string, raw?: string) {
   if (Number.isNaN(numeric)) return null;
   if (scale.includes("4.0")) return Math.max(0, Math.min(4, numeric));
   if (scale.includes("5.0")) return Math.max(0, Math.min(5, numeric)) * (4 / 5);
-  if (scale.includes("Проценты")) return Math.max(0, Math.min(100, numeric)) * 0.04;
+  if (scale.includes("Percent") || scale.includes("Процент")) return Math.max(0, Math.min(100, numeric)) * 0.04;
   return null;
 }
 

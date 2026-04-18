@@ -1,39 +1,30 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
+import { DeepWorkflowTheme } from "@/components/deep-workflow-theme";
+import { useLocale } from "@/components/locale-provider";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { useLocale } from "@/components/locale-provider";
-import { getToken } from "@/lib/auth";
+import { getToken, hasStoredSession, refreshAccessToken } from "@/lib/auth";
+import { getIntroQuizContent, getGpaScaleDetails, localizeIntroQuizAnswers } from "@/lib/intro-quiz-content";
 import {
   INTRO_QUIZ_COMPLETED_STORAGE_KEY,
   INTRO_QUIZ_LINKED_STORAGE_KEY,
   hasPendingStoredIntroQuiz,
   readStoredIntroQuiz,
+  type IntroQuizAnswers,
   syncStoredIntroQuizToProfile,
   writeStoredIntroQuiz,
 } from "@/lib/intro-quiz";
 import { resolvePostAuthDestination } from "@/lib/onboarding-gate";
-import { getProductCopy } from "@/lib/product-copy";
-import { DeepWorkflowTheme } from "@/components/deep-workflow-theme";
-
-type IntroAnswers = {
-  country: string;
-  schoolLevel: string;
-  intakeYear: string;
-  major: string;
-  gpaScale: string;
-  gpaValue: string;
-  tests: string[];
-  shortlistSize: string;
-};
+import { cn } from "@/lib/utils";
 
 const totalSteps = 7;
 
-const initialAnswers: IntroAnswers = {
+const initialAnswers: IntroQuizAnswers = {
   country: "",
   schoolLevel: "",
   intakeYear: "",
@@ -43,6 +34,27 @@ const initialAnswers: IntroAnswers = {
   tests: [],
   shortlistSize: "",
 };
+
+function sanitizeGpaInput(raw: string, max: number) {
+  const normalized = raw.replace(",", ".");
+  if (normalized === "") return "";
+  if (!/^\d{0,3}(\.\d{0,2})?$/.test(normalized)) return null;
+  const numeric = Number(normalized);
+  if (!Number.isNaN(numeric) && numeric > max) {
+    return null;
+  }
+  return normalized;
+}
+
+function normalizeGpaInput(raw: string, max: number, step: string) {
+  if (!raw.trim()) return "";
+  const numeric = Number(raw);
+  if (Number.isNaN(numeric)) return "";
+
+  const decimals = step.includes(".") ? step.split(".")[1]?.length ?? 0 : 0;
+  const clamped = Math.max(0, Math.min(max, numeric));
+  return String(Number(clamped.toFixed(decimals)));
+}
 
 function OptionGrid({
   options,
@@ -77,12 +89,16 @@ function OptionGrid({
                 return;
               }
 
-              const next = noTestsOption && current.includes(noTestsOption) ? [] : [...current];
+              const next = noTestsOption && current.includes(noTestsOption)
+                ? []
+                : [...current];
               onChange(next.includes(option) ? next.filter((item) => item !== option) : [...next, option]);
             }}
-            className={`rounded-2xl border-2 px-4 py-4 text-left text-base font-semibold transition ${
-              selected ? "border-black bg-[#DAF5F0] shadow-[0_4px_0_#000]" : "border-black/20 bg-white hover:border-black"
-            }`}
+            className={cn(
+              "surface-panel rounded-2xl border px-4 py-4 text-left text-base font-semibold text-[var(--enroll-fg)] transition",
+              "hover:-translate-y-0.5 hover:border-[var(--enroll-surface-border-strong)]",
+              selected && "border-[var(--enroll-yellow)] bg-[color-mix(in_srgb,var(--enroll-yellow)_18%,var(--enroll-surface-elevated))] text-[var(--enroll-fg)] ring-1 ring-[var(--enroll-yellow)] shadow-[0_4px_0_var(--enroll-strong-shadow)]",
+            )}
           >
             {option}
           </button>
@@ -94,54 +110,99 @@ function OptionGrid({
 
 export default function IntroQuizPage() {
   const { locale } = useLocale();
-  const copy = getProductCopy(locale).introQuiz;
+  const copy = getIntroQuizContent(locale);
   const router = useRouter();
+
   const [step, setStep] = useState(0);
-  const [answers, setAnswers] = useState<IntroAnswers>(initialAnswers);
+  const [answers, setAnswers] = useState<IntroQuizAnswers>(initialAnswers);
   const [isAuthed, setIsAuthed] = useState(false);
   const [syncingProfile, setSyncingProfile] = useState(false);
   const [statusText, setStatusText] = useState("");
+  const [progressReady, setProgressReady] = useState(false);
+
+  const resolveSessionToken = useCallback(async () => {
+    const token = getToken();
+    if (token) {
+      return token;
+    }
+
+    if (!hasStoredSession()) {
+      return "";
+    }
+
+    try {
+      return await refreshAccessToken();
+    } catch {
+      return "";
+    }
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
-    setIsAuthed(Boolean(getToken()));
+
+    setIsAuthed(hasStoredSession());
+
     try {
       const linked = localStorage.getItem(INTRO_QUIZ_LINKED_STORAGE_KEY) === "1";
       if (linked) {
-        const token = getToken();
-        if (token) {
-          void resolvePostAuthDestination(token).then((destination) => {
-            if (!cancelled) {
-              router.replace(destination);
-            }
-          });
-        } else {
-          router.replace("/register");
-        }
+        void resolveSessionToken().then((token) => {
+          if (!cancelled && token) {
+            void resolvePostAuthDestination(token).then((destination) => {
+              if (!cancelled) {
+                router.replace(destination);
+              }
+            });
+            return;
+          }
+
+          if (!cancelled) {
+            router.replace("/register");
+          }
+        });
         return;
       }
-      const parsed = readStoredIntroQuiz() as { step: number; answers: IntroAnswers } | null;
-      if (!parsed) return;
-      if (parsed.answers) setAnswers({ ...initialAnswers, ...parsed.answers });
-      if (typeof parsed.step === "number") setStep(Math.min(Math.max(parsed.step, 0), totalSteps));
+
+      const parsed = readStoredIntroQuiz();
+      if (parsed?.answers) {
+        setAnswers(localizeIntroQuizAnswers({ ...initialAnswers, ...parsed.answers }, locale));
+      }
+      if (typeof parsed?.step === "number") {
+        setStep(Math.min(Math.max(parsed.step, 0), totalSteps));
+      }
     } catch {
-      // ignore invalid local data
+      setAnswers(initialAnswers);
+    } finally {
+      if (!cancelled) {
+        setProgressReady(true);
+      }
     }
+
     return () => {
       cancelled = true;
     };
-  }, [router]);
+  }, [locale, resolveSessionToken, router]);
 
   useEffect(() => {
+    if (!progressReady) return;
+    setAnswers((current) => localizeIntroQuizAnswers(current, locale));
+  }, [locale, progressReady]);
+
+  useEffect(() => {
+    if (!progressReady) return;
     writeStoredIntroQuiz({ step, answers });
-  }, [step, answers]);
+  }, [answers, progressReady, step]);
 
   useEffect(() => {
-    if (step < totalSteps) return;
+    if (!progressReady || step < totalSteps) return;
     localStorage.setItem(INTRO_QUIZ_COMPLETED_STORAGE_KEY, "1");
-  }, [step]);
+  }, [progressReady, step]);
 
-  const progress = useMemo(() => Math.round((Math.min(step, totalSteps) / totalSteps) * 100), [step]);
+  const progress = useMemo(
+    () => Math.round((Math.min(step, totalSteps) / totalSteps) * 100),
+    [step],
+  );
+  const currentStep = copy.steps[Math.min(step, totalSteps - 1)];
+  const gpaDetails = getGpaScaleDetails(answers.gpaScale, locale);
 
   function isCurrentStepValid() {
     if (step === 0) return Boolean(answers.country);
@@ -149,18 +210,18 @@ export default function IntroQuizPage() {
     if (step === 2) return Boolean(answers.intakeYear);
     if (step === 3) return Boolean(answers.major);
     if (step === 4) {
-      if (!answers.gpaScale) return false;
-      if (answers.gpaScale === copy.gpaScaleOptions[copy.gpaScaleOptions.length - 1]) return true;
-      return Boolean(answers.gpaValue);
+      if (!answers.gpaScale || !gpaDetails) return false;
+      return gpaDetails.requiresValue ? Boolean(answers.gpaValue) : true;
     }
-    if (step === 5) return answers.tests.length > 0;
+    if (step === 5) return Array.isArray(answers.tests) && answers.tests.length > 0;
     if (step === 6) return Boolean(answers.shortlistSize);
     return true;
   }
 
   async function handleAuthedContinue() {
-    const token = getToken();
+    const token = await resolveSessionToken();
     if (!token) return;
+
     setSyncingProfile(true);
     setStatusText("");
     try {
@@ -178,180 +239,224 @@ export default function IntroQuizPage() {
     }
   }
 
-  async function handleContinueToAuth(path: "/register" | "/login") {
+  function handleBack() {
+    if (step > 0) {
+      setStep((prev) => Math.max(prev - 1, 0));
+      return;
+    }
+
+    if (window.history.length > 1) {
+      router.back();
+      return;
+    }
+
+    router.push("/");
+  }
+
+  function handleGpaValueChange(raw: string) {
+    if (!gpaDetails?.requiresValue) return;
+    const nextValue = sanitizeGpaInput(raw, gpaDetails.max);
+    if (nextValue == null) return;
+    setAnswers((prev) => ({ ...prev, gpaValue: nextValue }));
+  }
+
+  function handleContinueToAuth(path: "/register" | "/login") {
     if (syncingProfile) return;
     window.location.assign(path);
   }
 
   return (
     <DeepWorkflowTheme>
-      <main className="theme-workflow min-h-screen px-4 py-6 md:px-8">
-      <div className="mx-auto max-w-4xl">
-        <Card className="p-5 md:p-8">
-          <div className="mb-6 flex items-center gap-3">
-            <button
-              type="button"
-              className="inline-flex h-9 w-9 items-center justify-center rounded-xl border-2 border-black bg-white"
-              onClick={() => setStep((prev) => Math.max(prev - 1, 0))}
-              disabled={step === 0}
-              aria-label={copy.back}
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </button>
-            <Progress value={progress} variant="primary" className="h-4" />
-            <span className="w-12 text-right text-sm font-bold">{progress}%</span>
-          </div>
-
-          <div className="mb-7 grid gap-4 rounded-2xl border-2 border-black/15 bg-white p-4 md:grid-cols-[120px_1fr]">
-            <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full border-2 border-black bg-[#DAF5F0] text-4xl">🎓</div>
-            <div className="rounded-2xl border-2 border-black/15 bg-[#F8F9FA] px-4 py-3">
-              <p className="text-base font-bold">{copy.greetingTitle}</p>
-              <p className="mt-1 text-sm text-black/70">{copy.greetingBody}</p>
-            </div>
-          </div>
-
-          <p className="text-sm font-semibold text-black/55">
-            {copy.step} {Math.min(step + 1, totalSteps)} {copy.of} {totalSteps}
-          </p>
-          <h1 className="mt-1 text-3xl font-black leading-tight md:text-4xl">
-            {step < totalSteps ? copy.steps[step].title : copy.completeTitle}
-          </h1>
-          <p className="mt-2 text-base text-black/65">
-            {step < totalSteps ? copy.steps[step].subtitle : copy.completeSubtitle}
-          </p>
-
-          <div className="mt-7 space-y-4">
-            {step === 0 ? (
-              <OptionGrid
-                options={copy.countryOptions}
-                value={answers.country}
-                onChange={(next) => setAnswers((prev) => ({ ...prev, country: String(next) }))}
-              />
-            ) : null}
-            {step === 1 ? (
-              <OptionGrid
-                options={copy.schoolLevelOptions}
-                value={answers.schoolLevel}
-                onChange={(next) => setAnswers((prev) => ({ ...prev, schoolLevel: String(next) }))}
-              />
-            ) : null}
-            {step === 2 ? (
-              <OptionGrid
-                options={copy.intakeOptions}
-                value={answers.intakeYear}
-                onChange={(next) => setAnswers((prev) => ({ ...prev, intakeYear: String(next) }))}
-              />
-            ) : null}
-            {step === 3 ? (
-              <OptionGrid
-                options={copy.majorOptions}
-                value={answers.major}
-                onChange={(next) => setAnswers((prev) => ({ ...prev, major: String(next) }))}
-              />
-            ) : null}
-
-            {step === 4 ? (
-              <>
-                <OptionGrid
-                  options={copy.gpaScaleOptions}
-                  value={answers.gpaScale}
-                  onChange={(next) => setAnswers((prev) => ({ ...prev, gpaScale: String(next), gpaValue: "" }))}
-                />
-                {answers.gpaScale && answers.gpaScale !== copy.gpaScaleOptions[copy.gpaScaleOptions.length - 1] ? (
-                  <div className="rounded-2xl border-2 border-black/15 bg-white p-4">
-                    <label className="mb-2 block text-sm font-semibold">{copy.enterValue}</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min={0}
-                      max={answers.gpaScale.includes("4.0") ? 4 : answers.gpaScale.includes("5.0") ? 5 : 100}
-                      value={answers.gpaValue}
-                      onChange={(event) => setAnswers((prev) => ({ ...prev, gpaValue: event.target.value }))}
-                      className="h-11 w-full rounded-xl border-2 border-black px-3"
-                      placeholder={
-                        answers.gpaScale.includes("Процент") || answers.gpaScale.includes("Percentage")
-                          ? copy.valuePercentExample
-                          : copy.valueGpaExample
-                      }
-                    />
-                  </div>
-                ) : null}
-              </>
-            ) : null}
-
-            {step === 5 ? (
-              <OptionGrid
-                options={copy.testOptions}
-                value={answers.tests}
-                multi
-                noTestsOption={copy.noTestsOption}
-                onChange={(next) => setAnswers((prev) => ({ ...prev, tests: next as string[] }))}
-              />
-            ) : null}
-            {step === 6 ? (
-              <OptionGrid
-                options={copy.shortlistOptions}
-                value={answers.shortlistSize}
-                onChange={(next) => setAnswers((prev) => ({ ...prev, shortlistSize: String(next) }))}
-              />
-            ) : null}
-
-            {step >= totalSteps ? (
-              <div className="rounded-2xl border-2 border-black bg-[#DAF5F0] p-5">
-                <div className="mb-3 inline-flex items-center gap-2 rounded-xl border-2 border-black bg-white px-3 py-1 text-sm font-bold">
-                  <CheckCircle2 className="h-4 w-4" />
-                  {copy.profileReady}
-                </div>
-                <p className="text-sm text-black/75">
-                  {copy.summaryCountry}: <b>{answers.country || copy.unknownValue}</b> · {copy.summaryLevel}: <b>{answers.schoolLevel || copy.unknownValue}</b> · {copy.summaryMajor}: <b>{answers.major || copy.unknownValue}</b>
-                </p>
-                <p className="mt-1 text-sm text-black/75">
-                  {copy.summaryPlan}: <b>{answers.intakeYear || copy.unknownValue}</b> · {copy.summaryShortlist}: <b>{answers.shortlistSize || copy.unknownValue}</b>
-                </p>
-                <div className="mt-5 flex flex-wrap gap-2">
-                  {isAuthed ? (
-                    <button
-                      type="button"
-                      onClick={() => void handleAuthedContinue()}
-                      disabled={syncingProfile}
-                      className="inline-flex h-11 items-center justify-center rounded-xl border-2 border-black bg-[#FFDB58] px-5 text-sm font-semibold transition hover:-translate-y-0.5"
-                    >
-                      {syncingProfile ? copy.saving : copy.goToDashboard}
-                    </button>
-                  ) : (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => void handleContinueToAuth("/register")}
-                        className="inline-flex h-11 items-center justify-center rounded-xl border-2 border-black bg-[#FFDB58] px-5 text-sm font-semibold transition hover:-translate-y-0.5"
-                      >
-                        {copy.createAccount}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => void handleContinueToAuth("/login")}
-                        className="inline-flex h-11 items-center justify-center rounded-xl border-2 border-black bg-white px-5 text-sm font-semibold transition hover:bg-black/5"
-                      >
-                        {copy.login}
-                      </button>
-                    </>
-                  )}
-                </div>
-                {statusText ? <p className="mt-3 text-sm text-red-600">{statusText}</p> : null}
-              </div>
-            ) : null}
-          </div>
-
-          {step < totalSteps ? (
-            <div className="mt-8 flex items-center justify-between border-t-2 border-black/10 pt-4">
-              <p className="text-xs text-black/60">{copy.answersSaved}</p>
-              <Button variant="primary" size="lg" disabled={!isCurrentStepValid()} onClick={() => setStep((prev) => Math.min(prev + 1, totalSteps))}>
-                {copy.next}
+      <main className="min-h-screen px-4 py-6 md:px-8">
+        <div className="mx-auto max-w-4xl">
+          <Card className="rounded-[28px] p-5 md:p-8">
+            <div className="mb-8 flex items-center gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleBack}
+                aria-label={copy.back}
+                className="h-12 w-12 rounded-2xl px-0"
+              >
+                <ArrowLeft className="h-5 w-5" />
               </Button>
+              <Progress value={progress} variant="primary" className="h-4 flex-1 rounded-full" />
+              <span className="w-14 text-right text-sm font-black text-[var(--enroll-fg)]">{progress}%</span>
             </div>
-          ) : null}
-        </Card>
-      </div>
+
+            <div className="space-y-6">
+              {step < totalSteps ? (
+                <>
+                  <div className="space-y-3">
+                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--enroll-muted-strong)]">
+                      {copy.step} {step + 1} {copy.of} {totalSteps}
+                    </p>
+                    <div className="space-y-2">
+                      <h1 className="text-3xl font-black leading-tight text-[var(--enroll-fg)] md:text-5xl">
+                        {currentStep.title}
+                      </h1>
+                      {currentStep.subtitle ? (
+                        <p className="max-w-2xl text-base text-[var(--enroll-muted-strong)] md:text-lg">
+                          {currentStep.subtitle}
+                        </p>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    {step === 0 ? (
+                      <OptionGrid
+                        options={copy.countryOptions}
+                        value={answers.country || ""}
+                        onChange={(next) => setAnswers((prev) => ({ ...prev, country: String(next) }))}
+                      />
+                    ) : null}
+                    {step === 1 ? (
+                      <OptionGrid
+                        options={copy.schoolLevelOptions}
+                        value={answers.schoolLevel || ""}
+                        onChange={(next) => setAnswers((prev) => ({ ...prev, schoolLevel: String(next) }))}
+                      />
+                    ) : null}
+                    {step === 2 ? (
+                      <OptionGrid
+                        options={copy.intakeOptions}
+                        value={answers.intakeYear || ""}
+                        onChange={(next) => setAnswers((prev) => ({ ...prev, intakeYear: String(next) }))}
+                      />
+                    ) : null}
+                    {step === 3 ? (
+                      <OptionGrid
+                        options={copy.majorOptions}
+                        value={answers.major || ""}
+                        onChange={(next) => setAnswers((prev) => ({ ...prev, major: String(next) }))}
+                      />
+                    ) : null}
+                    {step === 4 ? (
+                      <>
+                        <OptionGrid
+                          options={copy.gpaScaleOptions}
+                          value={answers.gpaScale || ""}
+                          onChange={(next) =>
+                            setAnswers((prev) => ({
+                              ...prev,
+                              gpaScale: String(next),
+                              gpaValue: "",
+                            }))}
+                        />
+                        {gpaDetails?.requiresValue ? (
+                          <div className="surface-inset rounded-2xl p-4 md:p-5">
+                            <div className="mb-3 flex items-start justify-between gap-3">
+                              <label htmlFor="intro-quiz-gpa" className="text-sm font-semibold text-[var(--enroll-fg)]">
+                                {copy.enterValue}
+                              </label>
+                              <span className="text-xs font-medium text-[var(--enroll-muted)]">
+                                {copy.gpaInputHint}
+                              </span>
+                            </div>
+                            <input
+                              id="intro-quiz-gpa"
+                              type="text"
+                              inputMode="decimal"
+                              value={answers.gpaValue || ""}
+                              onChange={(event) => handleGpaValueChange(event.target.value)}
+                              onBlur={() => {
+                                if (!gpaDetails?.requiresValue) return;
+                                setAnswers((prev) => ({
+                                  ...prev,
+                                  gpaValue: normalizeGpaInput(prev.gpaValue || "", gpaDetails.max, gpaDetails.step),
+                                }));
+                              }}
+                              className="h-12 w-full rounded-2xl border border-[var(--enroll-surface-border-strong)] bg-[var(--enroll-surface-elevated)] px-4 text-base font-semibold text-[var(--enroll-fg)] outline-none focus:border-[var(--enroll-strong-border)] focus:ring-2 focus:ring-[var(--enroll-primary-ring)]"
+                              placeholder={gpaDetails.placeholder}
+                              aria-describedby="intro-quiz-gpa-hint"
+                            />
+                            <p id="intro-quiz-gpa-hint" className="mt-2 text-sm text-[var(--enroll-muted)]">
+                              0-{gpaDetails.max}
+                            </p>
+                          </div>
+                        ) : null}
+                      </>
+                    ) : null}
+                    {step === 5 ? (
+                      <OptionGrid
+                        options={copy.testOptions}
+                        value={answers.tests || []}
+                        multi
+                        noTestsOption={copy.noTestsOption}
+                        onChange={(next) => setAnswers((prev) => ({ ...prev, tests: next as string[] }))}
+                      />
+                    ) : null}
+                    {step === 6 ? (
+                      <OptionGrid
+                        options={copy.shortlistOptions}
+                        value={answers.shortlistSize || ""}
+                        onChange={(next) => setAnswers((prev) => ({ ...prev, shortlistSize: String(next) }))}
+                      />
+                    ) : null}
+                  </div>
+
+                  <div className="flex justify-end border-t border-[var(--enroll-surface-border)] pt-6">
+                    <Button
+                      variant="primary"
+                      size="lg"
+                      disabled={!isCurrentStepValid()}
+                      onClick={() => setStep((prev) => Math.min(prev + 1, totalSteps))}
+                    >
+                      {copy.next}
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <div className="space-y-5 rounded-[24px] border border-[var(--enroll-surface-border-strong)] bg-[var(--enroll-cyan)]/50 p-5 md:p-6">
+                  <div className="inline-flex items-center gap-2 rounded-full border border-[var(--enroll-surface-border-strong)] bg-[var(--enroll-surface-elevated)] px-3 py-1.5 text-sm font-semibold text-[var(--enroll-fg)]">
+                    <CheckCircle2 className="h-4 w-4" />
+                    {copy.profileReady}
+                  </div>
+                  <div className="space-y-2">
+                    <h1 className="text-3xl font-black text-[var(--enroll-fg)] md:text-4xl">{copy.completeTitle}</h1>
+                    <p className="max-w-2xl text-base text-[var(--enroll-muted-strong)]">{copy.completeSubtitle}</p>
+                  </div>
+                  <div className="surface-inset rounded-2xl p-4 text-sm text-[var(--enroll-muted-strong)]">
+                    <p>
+                      {copy.summaryCountry}: <b>{answers.country || copy.unknownValue}</b> • {copy.summaryLevel}:{" "}
+                      <b>{answers.schoolLevel || copy.unknownValue}</b> • {copy.summaryMajor}:{" "}
+                      <b>{answers.major || copy.unknownValue}</b>
+                    </p>
+                    <p className="mt-2">
+                      {copy.summaryPlan}: <b>{answers.intakeYear || copy.unknownValue}</b> • {copy.summaryShortlist}:{" "}
+                      <b>{answers.shortlistSize || copy.unknownValue}</b>
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-3">
+                    {isAuthed ? (
+                      <Button
+                        type="button"
+                        variant="primary"
+                        size="lg"
+                        disabled={syncingProfile}
+                        onClick={() => void handleAuthedContinue()}
+                      >
+                        {syncingProfile ? copy.saving : copy.goToDashboard}
+                      </Button>
+                    ) : (
+                      <>
+                        <Button type="button" variant="primary" size="lg" onClick={() => handleContinueToAuth("/register")}>
+                          {copy.createAccount}
+                        </Button>
+                        <Button type="button" variant="outline" size="lg" onClick={() => handleContinueToAuth("/login")}>
+                          {copy.login}
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                  {statusText ? <p className="text-sm font-medium text-red-500">{statusText}</p> : null}
+                </div>
+              )}
+            </div>
+          </Card>
+        </div>
       </main>
     </DeepWorkflowTheme>
   );

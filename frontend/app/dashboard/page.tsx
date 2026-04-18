@@ -193,7 +193,7 @@ function DashboardPageContent() {
       ? "N/A"
       : quizAnswers.gpaScale?.includes("5.0")
         ? `${Number(quizAnswers.gpaValue || 0).toFixed(2)} / 5.0`
-        : quizAnswers.gpaScale?.includes("Percent")
+        : quizAnswers.gpaScale?.includes("Percent") || quizAnswers.gpaScale?.includes("Процент")
           ? `${Number(quizAnswers.gpaValue || 0).toFixed(0)}%`
           : `${normalizedGpa.toFixed(2)} / 4.0`;
 

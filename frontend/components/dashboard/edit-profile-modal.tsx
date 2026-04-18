@@ -445,7 +445,7 @@ export function EditProfileModal(props: Props) {
                       const clamped = Math.max(0, Math.min(gpaMax, numeric));
                       setEditForm((prev) => ({ ...prev, gpaValue: String(clamped) }));
                     }}
-                    placeholder={editForm.gpaScale === "Percent" ? "0-100%" : `0-${gpaMax}`}
+                    placeholder={editForm.gpaScale === "Percent" || editForm.gpaScale === "Проценты" ? "0-100%" : `0-${gpaMax}`}
                     className={MODAL_FIELD_CLASS}
                   />
                 </label>

@@ -112,7 +112,7 @@ export function normalizeGpaFromQuiz(scale?: string, raw?: string) {
   if (Number.isNaN(numeric)) return null;
   if (scale.includes("4.0")) return Math.max(0, Math.min(4, numeric));
   if (scale.includes("5.0")) return Math.max(0, Math.min(5, numeric)) * (4 / 5);
-  if (scale.includes("Percent")) return Math.max(0, Math.min(100, numeric)) * 0.04;
+  if (scale.includes("Percent") || scale.includes("Процент")) return Math.max(0, Math.min(100, numeric)) * 0.04;
   return null;
 }
 
@@ -305,13 +305,20 @@ export function buildEmptyEditForm(): EditProfileForm {
 }
 
 export function buildInitialEditForm(profile: Profile | null, quizAnswers: IntroAnswers, universities: StudentUniversity[]): EditProfileForm {
+  const normalizedQuizScale =
+    quizAnswers.gpaScale?.includes("5.0")
+      ? "5.0"
+      : quizAnswers.gpaScale?.includes("Percent") || quizAnswers.gpaScale?.includes("Процент")
+        ? "Percent"
+        : "4.0";
+
   return {
     fullName: profile?.full_name || "",
     major: profile?.intended_major || quizAnswers.major || "",
     country: profile?.country || quizAnswers.country || "",
     intakeYear: quizAnswers.intakeYear || "",
     schoolLevel: quizAnswers.schoolLevel || "",
-    gpaScale: quizAnswers.gpaScale || "4.0",
+    gpaScale: quizAnswers.gpaScale ? normalizedQuizScale : "4.0",
     gpaValue: quizAnswers.gpaValue || "",
     academicTests: buildInitialAcademicTests(profile, quizAnswers),
     languageTests: buildInitialLanguageTests(profile, quizAnswers),

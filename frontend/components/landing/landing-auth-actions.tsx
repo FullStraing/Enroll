@@ -6,7 +6,7 @@ import { ArrowRight } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
 import { useMessages } from "@/components/locale-provider";
 import { marketingPrimaryButtonSmClass } from "@/components/landing/marketing-chrome";
-import { getToken, hasStoredAccessToken } from "@/lib/auth";
+import { getToken, hasStoredSession } from "@/lib/auth";
 
 function accountLabel(name: string | undefined, username: string | undefined, fallback: string) {
   return (name || username || fallback).trim();
@@ -17,7 +17,7 @@ function useLandingAccountState(initialHasSession: boolean) {
   const [hasStoredToken, setHasStoredToken] = useState(false);
 
   useEffect(() => {
-    const storedToken = hasStoredAccessToken();
+    const storedToken = hasStoredSession();
     if (!storedToken) return;
     setHasStoredToken(true);
     getToken();

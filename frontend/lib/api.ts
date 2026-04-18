@@ -1,3 +1,5 @@
+import { clearTokens, getRefreshToken, refreshAccessToken } from "@/lib/auth";
+
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000";
 
 export class ApiError extends Error {
@@ -48,16 +50,24 @@ function extractApiErrorMessage(data: unknown): string | null {
   return null;
 }
 
-export async function apiFetch<T>(path: string, options: RequestInit = {}, token?: string): Promise<T> {
-  const isFormData = typeof FormData !== "undefined" && options.body instanceof FormData;
+type ApiResponse = {
+  response: Response;
+  data: unknown;
+};
 
+function buildHeaders(options: RequestInit, token?: string) {
+  const isFormData = typeof FormData !== "undefined" && options.body instanceof FormData;
+  return {
+    ...(isFormData ? {} : { "Content-Type": "application/json" }),
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(options.headers || {}),
+  };
+}
+
+async function executeRequest(path: string, options: RequestInit, token?: string): Promise<ApiResponse> {
   const response = await fetch(apiUrl(path), {
     ...options,
-    headers: {
-      ...(isFormData ? {} : { "Content-Type": "application/json" }),
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(options.headers || {}),
-    },
+    headers: buildHeaders(options, token),
     cache: "no-store",
   });
 
@@ -66,10 +76,39 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}, token
     ? await response.json()
     : await response.text();
 
-  if (!response.ok) {
-    const message = extractApiErrorMessage(data) || JSON.stringify(data);
-    throw new ApiError(message || `Request failed: ${response.status}`, response.status, data);
+  return { response, data };
+}
+
+function isRefreshEndpoint(path: string) {
+  return path.includes("/api/auth/token/refresh/");
+}
+
+export async function apiFetch<T>(path: string, options: RequestInit = {}, token?: string): Promise<T> {
+  const activeToken = token;
+  let result = await executeRequest(path, options, activeToken);
+
+  if (
+    result.response.status === 401 &&
+    activeToken &&
+    !isRefreshEndpoint(path) &&
+    getRefreshToken()
+  ) {
+    try {
+      const refreshedToken = await refreshAccessToken();
+      result = await executeRequest(path, options, refreshedToken);
+    } catch (error) {
+      clearTokens();
+      throw error instanceof Error ? error : new Error("Session refresh failed.");
+    }
   }
 
-  return data as T;
+  if (!result.response.ok) {
+    if (result.response.status === 401) {
+      clearTokens();
+    }
+    const message = extractApiErrorMessage(result.data) || JSON.stringify(result.data);
+    throw new ApiError(message || `Request failed: ${result.response.status}`, result.response.status, result.data);
+  }
+
+  return result.data as T;
 }
