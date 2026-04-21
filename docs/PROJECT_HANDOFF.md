@@ -1,6 +1,6 @@
 # Project Handoff
 
-Last updated: 2026-04-10
+Last updated: 2026-04-21
 
 ## 1. Current situation in one screen
 
@@ -56,6 +56,9 @@ Major recent work:
 - global RU / EN localization foundation
 - dashboard snapshot / share redesign
 - security hardening before beta
+- real backend account-plan / entitlement model
+- free-plan preview limits enforced on backend and surfaced in universities/dashboard
+- intro-quiz answers now hydrate onboarding / edit-profile from backend profile data after signup
 
 Recent pushed frontend work already in `main`:
 
@@ -69,13 +72,21 @@ Recent pushed frontend work already in `main`:
 
 The biggest real missing piece now is:
 
-- no proper account plan / entitlement system
+- production billing / payment provider integration
 
-That means:
+Current reality:
 
-- free vs paid is not enforced by backend
-- free users are not yet capped to 2 universities
-- "limited access" exists only as intention, not as a safe system
+- backend account-plan / entitlement system already exists
+- free vs paid limits are enforced on backend
+- free tier is already a preview plan, not unlimited access
+
+Current free preview defaults:
+
+- `my universities`: max `2`
+- `discover universities`: first `6` visible cards only
+- `essays`: max `1`
+- `essay versions`: max `5` per essay
+- `AI requests`: max `10` per month
 
 ### Product depth gaps
 
@@ -104,47 +115,41 @@ That means:
 
 ### Highest priority now
 
-Implement a real account-plan model.
+Add production billing / payment provider integration on top of the existing plan system.
 
 Minimum version:
 
-1. Add a backend source of truth for user plan:
-   - `free`
-   - `pro`
-   - optional `pilot` / `premium`
-2. Enforce free-tier university cap on backend:
-   - free user can create only 2 `StudentUniversity` items
-3. Reflect that in frontend:
-   - disable add button when limit reached
-   - show clear upgrade/limit state
-4. Keep enforcement server-side first:
-   - frontend should only mirror the rule, not own it
+1. Keep the current backend source of truth for plan / entitlement / usage
+2. Integrate a real payment provider without moving business access rules into frontend
+3. Keep free preview enforcement server-side
+4. Reflect billing state cleanly in frontend pricing / upgrade surfaces
 
-## 6. Concrete implementation path for free-account limit
+## 6. Concrete implementation path for billing on top of plans
 
 Recommended architecture:
 
 ### Backend
 
-Best place:
-
-- extend the user/account model with plan info
-- enforce in `StudentUniversityListCreateView`
-
 Current relevant backend files:
 
-- `backend/apps/users/models.py`
-- `backend/apps/universities/models.py`
+- `backend/apps/accounts/models.py`
+- `backend/apps/accounts/services.py`
 - `backend/apps/universities/views.py`
-- `backend/apps/universities/serializers.py`
+- `backend/apps/essays/views.py`
+- `backend/apps/ai/views.py`
+- `backend/apps/users/serializers.py`
 
-Recommended rule:
+Current rule layer already exists:
 
-- if user plan is `free` and `StudentUniversity.objects.filter(student=user).count() >= 2`
-- reject create with `400` or `403`
-- return explicit machine-readable error code like:
-  - `plan_limit_reached`
-  - `free_university_limit_reached`
+- plans live in `apps.accounts`
+- usage is enforced server-side before create/action success
+- `/api/auth/profile/` already exposes plan + usage summary
+
+Next billing layer should:
+
+- map payment state to existing plan assignments
+- keep access control in backend entitlements
+- avoid moving paid/free decisions into frontend
 
 ### Frontend
 
@@ -155,11 +160,11 @@ Relevant current frontend files:
 - `frontend/components/universities/my-universities-table.tsx`
 - `frontend/app/dashboard/page.tsx`
 
-Recommended UX:
+Current UX already exists:
 
-- show current usage: `2 / 2 universities`
-- disable or intercept add actions
-- show clean upgrade message, not a generic error toast
+- usage summary in universities and dashboard
+- clean preview/limit states for free users
+- shared plan badge in the workspace shell
 
 ## 7. Theme/localization state
 
@@ -190,8 +195,7 @@ Already improved:
 
 Still open:
 
-- full plan/entitlement system
-- stronger user quotas
+- production billing integration
 - more complete cookie/session hardening
 
 ## 9. Infra state
@@ -250,7 +254,7 @@ If the next chat needs the fastest accurate context, start with:
 
 Start here:
 
-1. add a real plan/entitlement model
-2. enforce the free user limit of 2 universities on backend
-3. reflect that cleanly in frontend
-4. then continue the UTF-8 cleanup and remaining localization pass
+1. verify current plan / entitlement docs and pricing copy stay aligned with real enforced limits
+2. implement production billing on top of the existing account-plan layer
+3. continue the UTF-8 cleanup and remaining localization pass
+4. keep deploy discipline strict about local vs pushed vs deployed

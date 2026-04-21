@@ -74,6 +74,7 @@ Shared UI entry points:
 Important debt still open:
 
 - auth is safer than before, but not yet a full HttpOnly-cookie architecture
+- password signup is direct again; the temporary email-code verification flow was removed after rollback
 
 ## Localization architecture
 
@@ -152,10 +153,20 @@ Important current rule:
 
 - user-facing university endpoints are restricted to `is_active=True`
 
-Current missing product layer:
+Current product-access layer:
 
-- no formal billing/plan model yet
-- free-vs-paid university limits are not enforced yet
+- formal backend plan / entitlement model exists in `backend/apps/accounts/*`
+- plan assignments are stored per user through `UserPlanAssignment`
+- frontend receives plan and usage summary through `/api/auth/profile/`
+- server-side free preview limits are already enforced
+
+Current free preview defaults:
+
+- `my universities`: max `2`
+- `discover universities` visible count: `6`
+- `essays.max_count`: `1`
+- `essay_versions.max_per_essay`: `5`
+- `ai.requests.monthly_limit`: `10`
 
 ## Dashboard architecture
 
@@ -258,7 +269,7 @@ Current hardening already present:
 Still open:
 
 - full HttpOnly-cookie auth architecture
-- quotas for free-vs-paid product usage
+- production billing / payment provider integration
 - deeper abuse controls across essays/community/tasks
 
 ## Infrastructure
@@ -282,7 +293,7 @@ Main debt is not the stack.
 
 Main debt is:
 
-- incomplete billing / subscription / feature gating model
+- incomplete payment / subscription integration on top of the existing entitlement model
 - incomplete localization cleanup
 - incomplete Common App parity
 - incomplete essays advanced loop
@@ -292,8 +303,8 @@ Main debt is:
 
 The correct next architectural sequence is:
 
-1. introduce a real account plan / entitlement model
-2. enforce limits server-side first, then reflect them in UI
+1. add production billing / payment-provider integration on top of the existing account-plan model
+2. keep limits enforced server-side first, then continue polishing limit-state UX
 3. finish Common App and essays depth
 4. clean old mojibake and docs drift
 5. keep production deploys deliberate and small

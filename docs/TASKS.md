@@ -107,14 +107,25 @@ What was also added recently:
 
 ### 1. Plan gating / billing readiness
 
-Not solved yet:
+Current state:
 
-- no real subscription / entitlement model
-- no server-side enforcement for free vs paid limits
-- no hard limit on number of universities for free users
-- no restricted feature matrix yet
+- real backend subscription / entitlement model exists
+- server-side free vs paid limits are enforced
+- restricted preview matrix exists for free users
 
-This is now a real product/business task, not a future nice-to-have.
+Current free preview defaults:
+
+- `my universities`: `2`
+- `discover universities`: `6`
+- `essays`: `1`
+- `essay versions per essay`: `5`
+- `AI requests / month`: `10`
+
+Still not solved:
+
+- production billing / payment provider integration
+- pricing-to-plan purchase flow
+- billing-state sync into the existing plan model
 
 ### 2. Common App completion
 
@@ -157,20 +168,19 @@ Still open:
 
 ## Next recommended order
 
-1. implement a real account-plan / feature-entitlement model
-2. enforce free-account university cap server-side
-3. surface those limits cleanly in frontend
-4. finish Common App parity
-5. finish essays advanced loop
-6. complete UTF-8/localization cleanup
-7. finish dashboard snapshot tooltip stability
+1. implement production billing on top of the existing account-plan / entitlement model
+2. continue polishing limit-state UX around the enforced free preview
+3. finish Common App parity
+4. finish essays advanced loop
+5. complete UTF-8/localization cleanup
+6. finish dashboard snapshot tooltip stability
 
 ## Immediate next tasks
 
-- add a real account-plan source of truth on backend
-- limit free users to 2 universities at API level
-- block protected premium-only actions with explicit UX
-- show upgrade/limit states in universities dashboard flow
+- connect a payment provider to the existing plan model
+- keep blocked premium-only actions behind explicit backend errors and clean UX
+- continue surfacing upgrade/limit states across universities, essays, and AI
+- audit docs/copy so plan limits stay aligned with the real backend configuration
 - clean remaining mojibake in `landing-content.ts`, `i18n.ts`, and older strings
 - move dashboard donut tooltip into an absolute/fixed overlay so hover does not reflow the snapshot
 
@@ -178,4 +188,4 @@ Still open:
 
 - new large modules
 - framework rewrites
-- speculative product expansion before plan gating and core workflow completion
+- speculative product expansion before billing integration and core workflow completion

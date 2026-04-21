@@ -144,7 +144,7 @@ Already hardened:
 
 Still open before a more public launch:
 
-- real entitlement / billing enforcement
+- production billing / payment provider integration
 - stronger quotas on user-generated actions
 - fuller HttpOnly-cookie auth architecture
 - dashboard snapshot tooltip still needs no-layout-shift behavior after hover/tap
@@ -167,8 +167,8 @@ Before backend release:
 
 Before broader beta:
 
-- free-account gating implemented
-- limit states visible in UI
+- billing / upgrade path connected to the existing plan system
+- pricing copy verified against real enforced limits
 - Common App and essays workflow deeper polish
 - remaining mojibake removed
 - dashboard snapshot hover/click behavior no longer reflows the page

@@ -47,13 +47,16 @@ Recently added:
 - marketing refresh for home / product / pricing
 - stronger beta security hardening
 - dashboard snapshot and share flow redesign
+- real backend account-plan / entitlement model
+- server-side free-plan preview limits across universities, essays, essay versions, and AI requests
+- intro-quiz answers now hydrate onboarding / edit-profile from backend profile data after signup
 
 Still in progress:
 
 - full Common App parity across all sections
 - deeper essays workflow
 - complete bilingual coverage across every deep product surface
-- full production-grade quotas / billing / plan gating
+- production billing / payment provider integration
 - final UTF-8 copy cleanup where older mojibake still survives in some legacy dictionaries
 - dashboard snapshot donut hover tooltip still needs a no-layout-shift presentation
 
@@ -197,11 +200,10 @@ Current important reality:
 
 ## Current recommended focus
 
-The correct order remains:
+The correct order now is:
 
-1. add a real plan / entitlement model
-2. enforce the free-account 2-university cap server-side
-3. surface those limits cleanly in frontend
-4. finish Common App parity
-5. finish essays advanced loop
-6. clean remaining legacy mojibake and complete deep-screen localization
+1. production billing / payment provider integration on top of the existing plan / entitlement layer
+2. continue tightening free-vs-paid UX around the already-enforced preview limits
+3. finish Common App parity
+4. finish essays advanced loop
+5. clean remaining legacy mojibake and complete deep-screen localization
