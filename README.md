@@ -197,6 +197,13 @@ Current important reality:
 - `docs/DEV_LOG.md` - chronological work log
 - `docs/PROJECT_HANDOFF.md` - current situation summary for the next chat
 - `docs/UI_SYSTEM_RULES.md` - source of truth for frontend UI decisions
+- `docs/DEVELOPMENT_HISTORY.md` - how the product direction evolved
+- `docs/ENROLL_UI_REFERENCE.md` - archival UI reference
+- `docs/GRADGPT_SCRAPER.md` - GradGPT scraper runbook (Common Data Set source)
+- `docs/INGESTION_AUTOMATION.md` - automated university ingestion runbook (1000+)
+- `docs/NICHE_SCRAPER.md` - Niche full-data scraper pipeline
+- `docs/SERENA_MCP.md` - Serena MCP setup for this repo
+- `docs/sales/` - sales playbooks: demo script, FAQ, call scripts, daily scoreboard
 
 ## Current recommended focus
 
